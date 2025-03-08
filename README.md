@@ -1,2 +1,3 @@
 # Hunger ARC
-cse 416 financial planner
+CSE 416 financial planner
+
