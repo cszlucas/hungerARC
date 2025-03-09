@@ -144,5 +144,34 @@ function getTaxes(scenario){
 }
     
 	
+function runInvestStrategy(scenario, year, inflationAmt,cashInvestment){ //run invest event strategy for current year
+    investStrategy = db.invest_strategy.assetAllocation.query({"_scenario_id": scenario.id, "startYear": year})
+    excessCash = investStrategy.maxCash - cashInvestment
+	  if (excessCash > 0){
+      preTaxLimits = scenario.irsLimits.initialPreTax.query({"_scenario_id": scenario.id})
+      afterTaxLimits = scenario.irsLimits.initialAfterTax.query({"_scenario_id": scenario.id})
+      preTaxAdjustedLimits = findInflation(preTaxLimits, year)
+      afterTaxAdjustedLimits = findInflation(afterTaxLimits, year)
+      preTaxRatio = scaleDownRatio("pre-tax retirement", investStrategy, preTaxAdjustedLimits, excessCash)
+      afterTaxRatio = scaleDownRatio("after-tax retirement", investStrategy, afterTaxAdjustedLimits, excessCash) 
+      nonRetirementRatio = figureOut()
+     
+		  for(let investment in investStrategy){
+			  
+    }
+  }
+}
 
-
+function scaleDownRatio(type, investStrategy, limit, excessCash){
+  sum=0
+  for(let investment in investStrategy){
+    if(investment.accountTaxStatus==type){
+      sum+=(investment.percentage * excessCash)
+    }
+  }
+  if(sum > limit){
+    return limit/sum
+  }else{
+    return 0
+  }
+}
