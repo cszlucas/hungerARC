@@ -187,16 +187,19 @@ function rebalance(scenario, year, curYearGains){
     sum = sumAmt(investment)
     target = sum*investment.percentage 
     if(investment.value > target){ //sell some of investment
-      investment.value-=(investment.value-target) //Zoe does this go here or at end of if?
+      sellAmt=investment.value-target
       if(investment.taxAccountStatus!="pre-tax retirement"){
-        if(investment.value<=0){ //sold entire investment
+        if(investment.value-sellAmt<=0){ //sold entire investment
           curYearGains+=investment.value-getPurchasePrice()
+          investment.value = 0
         }else{//sold part of investment
-          curYearGains+=((investment.value-target)*(investment.value-getPurchasePrice()))
+          curYearGains+=(sellAmt*(investment.value-getPurchasePrice()))
+          investment.value-=sellAmt
         }
       }
     }else if(investment.value < target){//buy some of investment
-
+      buyAmt=target-investment.value
+      investment.value+=buyAmt
     }
   }
 
