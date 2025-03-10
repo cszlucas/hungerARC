@@ -36,6 +36,81 @@ function updateStateDeduction(stateDeduction,inflationRate){
     stateDeduction *= (1+inflationRate);
 }
 
+function findUpperFedTaxBracket(curYearFedTaxableIncome, fedIncomeTaxBracket){
+    for(let taxBracket of fedIncomeTaxBracket){
+        if(curYearFedTaxableIncome<=taxBracket.incomeRange[1])
+            return taxBracket.upperBound;
+    }
+    return -1;
+}
+
+function rothConversion(scenario, year, curYearIncome, curYearSS, fedIncomeTaxBracket){
+    let curYearFedTaxableIncome=curYearIncome-0.15*curYearSS;
+    // upper limit of the tax bracket user is in
+    u=findUpperFedTaxBracket(curYearFedTaxableIncome, fedIncomeTaxBracket);
+    // roth conversation amount
+    rc=u-curYearFedTaxableIncome;
+    // transfer from pre-tax to after-tax retirement
+    for (let investment of scenario.rothConversionStrategyOrderPreTax){
+        if(investment.accountTaxStatus=="pre-tax retirement" && rc>0){
+            if(rc>=investment.value){
+                rc-=investment.value;
+                investment.accountTaxStatus="after-tax retirement";
+            }else{
+                investment.value-=rc;
+                // create new after tax investment in memory with transferred amount
+                scenario.investments.push({
+                    "investmentType": investment.investmentType,
+                    "value": rc,
+                    "accountTaxStatus": "after-tax retirement"
+                });
+                rc=0;
+            }
+        }
+    }
+    curYearIncome+=rc;
+    if(year-user.birthYearUser<59){
+        curYearEarlyWithdrawals+=rc;
+    }
+}
+
+function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment){
+    for (let incomeEvent of incomeEvents){
+        if(incomeEvent.startYear>=year && incomeEvent.endYear<=userEndYear){
+            let annualChange=incomeEvent.annualChange;
+            let incomeValue=incomeEvent.value;
+        
+            // update by annual change in amount
+            if(annualChange.type=="fixedAmt"){
+                incomeValue+=annualChange.amount;
+            }else if(annualChange.type=="fixedPercent"){
+                incomeValue*=(1+annualChange.amount);
+            }else if(annualChange.type=="uniform"){
+                incomeValue+=Math.random() * (annualChange.max - annualChange.min) + annualChange.min;
+            // normal distribution
+            }else{
+                const u=1-Math.random();
+                const v=Math.random();
+                const z=Math.sqrt(-2.0*Math.log(u)) * Math.cos(2.0*Math.PI*v);
+                incomeValue+=z * annualChange.mean.std + annualChange.mean;
+            }
+            if(incomeEvent.inflationAdjustment)
+                incomeValue*=(1+inflationRate);
+            // spouse is dead :(
+            if(filingStatus=="marriedFilingJointly" && year>scenario.birthYearSpouse+scenario.lifeExpectancySpouse){
+                incomeValue*=incomeEvent.userPercentage;
+            }
+            // is this right?
+            cashInvestment+=incomeValue;
+            curYearIncome+=cashInvestment; 
+            if(incomeEvent.incomeType=="socialSecurity"){
+                curYearSS+=incomeValue; // incomeValue because social security does not apply to cash investments
+            }   
+        }   
+    }
+    return {curYearIncome, curYearSS, cashInvestment};
+}
+
 function runSimulation(scenario){
     // is tax bracket part of the scenario;
     // current year tax
@@ -63,8 +138,8 @@ function runSimulation(scenario){
     }
     
     let currentYear=new Date().getFullYear();
-    
-    
+    let incomeEvents=scenario.incomeEvents;
+    let userEndYear=scenario.birthYearUser+scenario.lifeExpectancyUser;
     for (let year=currentYear; year<=userEndYear; year++){
         // PRELIMINARIES
         // can differ each year if sampled from distribution
@@ -79,9 +154,32 @@ function runSimulation(scenario){
         };
         // retirement account limits
         annualLimitRetirement*=(1+inflationRate);
-        
-        // Run income events
-        
+        totalIncome=0;
+        let curYearEarlyWithdrawals=0;
+
+        // RUN INCOME EVENTS   
+        let curYearIncome=0;
+        let curYearSS=0; 
+        let cashInvestment=scenario.investments.cashInvestment;
+        ({curYearIncome, curYearSS, cashInvestment}=updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment));
+
+        // PERFORM RMD FOR PREVIOUS YEAR
+
+        // UPDATE INVESTMENT VALUES
+
+        // RUN ROTH CONVERSION IF ENABLED
+        if(scenario.optimizerSettings && year>=scenario.optimizerSettings.startYear && year<=scenario.optimizerSettings.endYear){
+            rothConversion(scenario, year, curYearIncome, curYearSS, fedIncomeTaxBracket);
+        }
+
+        // PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
+
+        // PAY DISCRETIONARY EXPENSES
+
+        // RUN INVEST EVENT
+
+        // RUN REBALANCE EVENT
+
 
     } 
   }
