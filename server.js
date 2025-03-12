@@ -39,6 +39,40 @@ app.get('/scrape', async (req, res) => {
   }
 });
 
+
+const fs = require('fs');
+const yaml = require('js-yaml');
+const { MongoClient } = require('mongodb');
+
+
+async function run() {
+  try {
+    // Connect to MongoDB
+    const client = new MongoClient(url);
+    await client.connect();
+    console.log("Connected to MongoDB server");
+
+    const db = client.db(dbName);
+    const collection = db.collection('your_collection');
+
+    // Load and parse the YAML file
+    const stateTaxes = fs.readFileSync('state-taxes.yaml', 'utf8');
+    const data = yaml.load(stateTaxes);
+
+    // Insert parsed data into MongoDB collection
+    await stateTaxes.insertOne(data);
+    }
+
+    console.log("Data inserted successfully!");
+
+    // Close the connection
+    await client.close();
+  } catch (err) {
+    console.error("Error:", err.stack);
+  }
+}
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
