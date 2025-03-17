@@ -15,15 +15,15 @@ function performRMDs(scenario, RMDStrategyInvestOrder, currYearIncome, currYear)
       currYearIncome += rmd
 
       rmdCount = rmd
-      for( let preTaxInvest in getRMDStrategyOrder){
+      for( let preTaxInvest in RMDStrategyInvestOrder){
         if(rmdCount>0){
 
           if ( preTaxInvest.value - rmdCount >= 0 ){ //able to accomplish rmd with this investment, keep some of old investment and transfer new
-            transferInvestment(preTaxInvest, allInvestmentsAfterTax, rmdCount)
+            transferInvestment(preTaxInvest, RMDStrategyInvestOrder, rmdCount)
             preTaxInvest.value -= rmdCount
             break
           } else { //not able to accomplish rmd with this investment, transfer all of old investment and go to next investment in strategy order
-            transferInvestment(preTaxInvest, allInvestmentsAfterTax, preTaxInvest.value)
+            transferInvestment(preTaxInvest, RMDStrategyInvestOrder, preTaxInvest.value)
             rmdCount -= preTaxInvest.value
             remove(preTaxInvest)
           }
@@ -65,6 +65,8 @@ function payNonDiscretionaryExpenses(scenario, cashInvestment, currYearIncome, c
     cashInvestment-=withdrawalAmt
   }
   else{ //get money from investments
+    expense.value-=cashInvestment
+    cashInvestment = 0 //use up cash
     for(let investment in withdrawalStrategy){
         if(withdrawalAmt>0){
             withdrawalAmt -= payFromInvestment(withdrawalAmt, investment, userAge)
@@ -76,14 +78,18 @@ function payNonDiscretionaryExpenses(scenario, cashInvestment, currYearIncome, c
 function payDiscretionaryExpenses(scenario, cashInvestment){
     spendingStrategy = db.scenario.query({"_id": scenario.id}).spendingStrategy
     withdrawalStrategy =  db.scenario.query({"_id": scenario.id}).expenseWithdrawalStrategy
+  //pay expenses in order given from cashInvestment
 	for(let expense in spendingStrategy){
-        if (cashInvestment-expense.value >= 0){ //can pay from cash investment
-            cashInvestment-=expense.value
-            expense.value = 0
-            continue
-        }
+    if (cashInvestment-expense.value >= 0){ //can pay from cash investment
+        cashInvestment-=expense.value
+        expense.value = 0
+        continue
+    }
+    expense.value-=cashInvestment
+    cashInvestment = 0 //use up cash
+    //Can't pay from cash have to withdraw from investments
 		for(let investment in withdrawalStrategy){
-            if(expense.value>0 && (scenario.financialGoal - expense.value >=0 )){
+            if(expense.value>0 && (scenario.financialGoal - expense.value >=0 )){ //does not violate financial goal
                 expense.value-=payFromInvestment(expense.value, investment, userAge)
             }else if(expense.value>0 && (scenario.financialGoal - expense.value <0 )){ //only pay as much as does not violate financial goal
                 expense.value-=payFromInvestment((expense.value-scenario.financialGoal), investment, userAge)
@@ -209,15 +215,17 @@ function rebalance(scenario, curYearGains){
     target = sum*investment.percentage 
     if(investment.value > target){ //sell
       sellAmt=investment.value-target
-      if(investment.taxAccountStatus!="pre-tax retirement"){
-        if(investment.value-sellAmt<=0){ //sell entire investment
+      if(investment.value-sellAmt<=0){ //sell entire investment
+        if(investment.taxAccountStatus=="non-retirement"){
           curYearGains+=investment.value-investment.purchasePrice
-          remove(investment)
-        }else{//sell part of investment
+        }
+        remove(investment)
+      }else{//sell part of investment
+        if(investment.taxAccountStatus=="non-retirement"){
           curYearGains+=(sellAmt*(investment.value-investment.purchasePrice))
-          investment.value-=sellAmt
         }
       }
+      investment.value-=sellAmt
     }else if(investment.value < target){//buy some of investment
       buyAmt=target-investment.value
       investment.purchasePrice+=buyAmt
