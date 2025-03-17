@@ -1,14 +1,14 @@
 
 
 //zoe figure out year factor
-function performRMDs(scenario, RMDStrategyInvestOrder, currYear, currYearIncome){
+function performRMDs(scenario, RMDStrategyInvestOrder, currYearIncome, currYear){
   userAge = currYear - scenario.birthYearUser
   if(userAge>=73 && RMDStrategyInvestOrder!=null){ //at least one pretax investment in previous year
-      distributionPeriod = rmdTable("age": userAge).distributionPeriod
-      allInvestmentsPreTax = db.investments.query("scenario_id": scenario.id, "accountTaxStatus": "pre-tax retirement", "year": currYear-1)
-      allInvestmentsAfterTax = db.investments.query("scenario_id": scenario.id, "accountTaxStatus": "after-tax retirement", "year": currYear-1)
+      distributionPeriod = rmdTable({"age": userAge}).distributionPeriod
+      allInvestmentsPreTax = db.investments.query({"scenario_id": scenario.id, "accountTaxStatus": "pre-tax retirement"})
+      allInvestmentsAfterTax = db.investments.query({"scenario_id": scenario.id, "accountTaxStatus": "after-tax retirement"})
       sumInvestmentsPreTax = 0
-      for (let preTaxInvestment in allInvestmentsPreTax){ //get sum of all pretax investments from previous year...HOW w/ year?
+      for (let preTaxInvestment in allInvestmentsPreTax){
         sumInvestmentsPreTax += preTaxInvestment.value
       }
       rmd = sumInvestmentsPreTax / distributionPeriod
@@ -25,7 +25,7 @@ function performRMDs(scenario, RMDStrategyInvestOrder, currYear, currYearIncome)
           } else { //not able to accomplish rmd with this investment, transfer all of old investment and go to next investment in strategy order
             transferInvestment(preTaxInvest, allInvestmentsAfterTax, preTaxInvest.value)
             rmdCount -= preTaxInvest.value
-            preTaxInvest.value = 0
+            remove(preTaxInvest)
           }
         }
     }
@@ -55,11 +55,11 @@ function transferInvestment(preTaxInvest, allInvestmentsAfterTax, amountTransfer
 
 
 
-function payNonDiscretionaryExpenses(scenario, previousYearTax,cashInvestment, currYearIncome, currYearSS, curYearGains, currYearEarlyWithdrawals){
+function payNonDiscretionaryExpenses(scenario, cashInvestment, currYearIncome, currYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, ssRange){
 
-  nonDiscretionaryExpenses = db.scenario.query({"_id": scenario.id, expenseEvents.discretionary: false})
+  nonDiscretionaryExpenses = db.scenario.query({"_id": scenario.id, "expenseEvents.discretionary": false})
   withdrawalStrategy =  db.scenario.query({"_id": scenario.id}).expenseWithdrawalStrategy
-  withdrawalAmt = (sumAmt(nonDiscretionaryExpenses) + getTaxes(currYearIncome, currYearSS, curYearGains, currYearEarlyWithdrawals))
+  withdrawalAmt = (sumAmt(nonDiscretionaryExpenses) + getTaxes(currYearIncome, currYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, ssRange))
   
   if (cashInvestment-withdrawalAmt >= 0){ //can pay from cash investment
     cashInvestment-=withdrawalAmt
@@ -67,7 +67,7 @@ function payNonDiscretionaryExpenses(scenario, previousYearTax,cashInvestment, c
   else{ //get money from investments
     for(let investment in withdrawalStrategy){
         if(withdrawalAmt>0){
-            withdrawalAmt -= transferMoneyFromInvestment(withdrawalAmt, investment, userAge)
+            withdrawalAmt -= payFromInvestment(withdrawalAmt, investment, userAge)
         }
     }
   }
@@ -84,9 +84,9 @@ function payDiscretionaryExpenses(scenario, cashInvestment){
         }
 		for(let investment in withdrawalStrategy){
             if(expense.value>0 && (scenario.financialGoal - expense.value >=0 )){
-                expense.value-=transferMoneyFromInvestment(expense.value, investment, userAge)
+                expense.value-=payFromInvestment(expense.value, investment, userAge)
             }else if(expense.value>0 && (scenario.financialGoal - expense.value <0 )){ //only pay as much as does not violate financial goal
-                expense.value-=transferMoneyFromInvestment((expense. value-scenario.financialGoal), investment, userAge)
+                expense.value-=payFromInvestment((expense.value-scenario.financialGoal), investment, userAge)
             }
         }
         if(expense.value>0){
@@ -97,24 +97,24 @@ function payDiscretionaryExpenses(scenario, cashInvestment){
 
 
 
-function transferMoneyFromInvestment(withdrawalAmt, investment, userAge, curYearGains, curYearIncome, curYearEarlyWithdrawals){
-    if (investment.value - withdrawalAmt > 0){ //can pay all with this investment, what about break even??
+function payFromInvestment(withdrawalAmt, investment, userAge, curYearGains, curYearIncome, curYearEarlyWithdrawals){
+    if (investment.value - withdrawalAmt > 0){ //subtract needed and keep investment
         if(investment.accountTaxStatus!="pre-tax retirement"){
-            capitalGain = withdrawalAmt * (investment.value - getPurchasePrice ()) //Zoe implement getPurchasePrice() Purchase price = sum of the amounts of purchases of the investment plus initial value at start of simulation.
+            capitalGain = withdrawalAmt * (investment.value - investment.purchasePrice)
             curYearGains+=capitalGain
         }
         investment.value-=withdrawalAmt
         return withdrawalAmt
     }else{ //use up this investment "sell" and move onto next
         if(investment.accountTaxStatus!="pre-tax retirement"){
-            capitalGain = investment.value - getPurchasePrice()
+            capitalGain = investment.value - investment.purchasePrice
             curYearGains+=capitalGain
         }if(investment.accountTaxStatus=="pre-tax retirement"){
             curYearIncome-=investment.value 
         }if((investment.accountTaxStatus=="pre-tax retirement" || investment.accountTaxStatus=="after-tax retirement") && userAge<59){
             curYearEarlyWithdrawals+=investment.value
         }
-        investment.value = 0
+        remove(investment)
         return investment.value
     }
 }
@@ -128,41 +128,62 @@ function sumAmt(events){
 }
 
  //calculate tax income and ss prices
-function getTaxes(currYearIncome, currYearSS, curYearGains, currYearEarlyWithdrawals){
+function getTaxes(currYearIncome, currYearSS, curYearGains, currYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, ssRange){
   //federal income tax
-  federalTax = rateWithInflation(currYearIncome)
+  federalTax = taxAmt(currYearIncome, federalIncomeRange)
   //state income tax
-  stateTax = rateWithInflation(currYearIncome)
+  stateTax = taxAmt(currYearIncome, stateIncomeRange)
   //social security (ss) income tax
-  ssTax = rateWithInflation(currYearSS)
+  ssTax = taxAmt(currYearSS*.85, ssRange)
   //capital gains tax
-  capitalGainsTax = rateWithInflation(curYearGains)
+  capitalGainsTax = taxAmt(curYearGains)
   //early withdrawal tax
-  earlyWithdrawalTax = rateWithInflation(currYearEarlyWithdrawals)
+  earlyWithdrawalTax = taxAmt(currYearEarlyWithdrawals)
   return (federalTax+stateTax+ssTax+capitalGainsTax+earlyWithdrawalTax)
 }
-    
+
+function taxAmt(income, ranges){
+  for(let range in ranges){
+    if(income>=range[0]&&income<=range[1]){
+      return income*range.rate
+    }
+  }
+}
+
 	
-function runInvestStrategy(scenario, year, cashInvestment){ //run invest event strategy for current year
-    investStrategy = db.invest_strategy.assetAllocation.query({"_scenario_id": scenario.id, "startYear": year})
+function runInvestStrategy(scenario, cashInvestment, IRSLimits){ //run invest event strategy for current year
+    investStrategy = db.invest_strategy.assetAllocation.query({"_scenario_id": scenario.id})
     excessCash = investStrategy.maxCash - cashInvestment
 	  if (excessCash > 0){
-      preTaxLimits = rateWithInflation()
-      afterTaxLimits = rateWithInflation()
+      preTaxLimits = taxAmt(excessCash, IRSLimits)
+      afterTaxLimits = taxAmt()
       preTaxRatio = scaleDownRatio("pre-tax retirement", investStrategy, preTaxLimits, excessCash)
       afterTaxRatio = scaleDownRatio("after-tax retirement", investStrategy, afterTaxLimits, excessCash) 
-      nonRetirementRatio = figureOut() //Zoe
      
 		  for(let investment in investStrategy){
+        buyAmt = 0
         if(investment.accountTaxStatus=="pre-tax retirement"){
           buyAmt = (excessCash * investment.value) * preTaxRatio
         }else if(investment.accountTaxStatus=="after-tax retirement"){
           buyAmt = (excessCash * investment.value) * afterTaxRatio
-        }else if(investment.accountTaxStatus=="non-retirement"){
-          buyAmt = (excessCash * investment.value) * nonRetirementRatio
         }
-        investment.value+=buyAmt
+        investment.purchasePrice+=buyAmt
       }
+
+      if(excessCash-buyAmt>0){ //everything else in non-retirement
+        buyNonRetirement(investStrategy, excessCash-buyAmt)
+      }
+
+  }
+}
+
+buyNonRetirement(investStrategy, excessCash){
+  for(let investment in investStrategy){
+    buyAmt = 0
+    if(investment.accountTaxStatus=="non-retirement"){
+      buyAmt = excessCash* (investment.percentage / excessCash)
+      investment.purchasePrice+=buyAmt
+    }
   }
 }
 
@@ -176,30 +197,30 @@ function scaleDownRatio(type, investStrategy, limit, excessCash){
   if(sum > limit){
     return limit/sum
   }else{
-    return 0
+    return investment.percentage
   }
 }
 
-function rebalance(scenario, year, curYearGains){
-	rebalanceStrategy = db.rebalance.assetAllocation.query({"_scenario_id": scenario.id, "startYear": year})
+function rebalance(scenario, curYearGains){
+	rebalanceStrategy = db.rebalance.assetAllocation.query({"_scenario_id": scenario.id})
 
   for(let investment in rebalanceStrategy){
     sum = sumAmt(investment)
     target = sum*investment.percentage 
-    if(investment.value > target){ //sell some of investment
+    if(investment.value > target){ //sell
       sellAmt=investment.value-target
       if(investment.taxAccountStatus!="pre-tax retirement"){
-        if(investment.value-sellAmt<=0){ //sold entire investment
-          curYearGains+=investment.value-getPurchasePrice()
-          investment.value = 0
-        }else{//sold part of investment
-          curYearGains+=(sellAmt*(investment.value-getPurchasePrice()))
+        if(investment.value-sellAmt<=0){ //sell entire investment
+          curYearGains+=investment.value-investment.purchasePrice
+          remove(investment)
+        }else{//sell part of investment
+          curYearGains+=(sellAmt*(investment.value-investment.purchasePrice))
           investment.value-=sellAmt
         }
       }
     }else if(investment.value < target){//buy some of investment
       buyAmt=target-investment.value
-      investment.value+=buyAmt
+      investment.purchasePrice+=buyAmt
     }
   }
 

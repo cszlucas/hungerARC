@@ -140,46 +140,53 @@ function runSimulation(scenario){
     let currentYear=new Date().getFullYear();
     let incomeEvents=scenario.incomeEvents;
     let userEndYear=scenario.birthYearUser+scenario.lifeExpectancyUser;
+    let investments=db.investments.query({"scenario_id": scenario.id});
+    //save initial value and purchase price of investments
+    for(let investment in investments){
+        investment.purchasePrice = investment.value
+    }
+
     for (let year=currentYear; year<=userEndYear; year++){
         // PRELIMINARIES
         // can differ each year if sampled from distribution
         inflationRate=findInflation(scenario.inflationAssumption);
         // if(year!=currentYear){
-        updateFedIncomeTaxBracket(fedIncomeTaxBracket, inflationRate);
+        federalIncomeTax = updateFedIncomeTaxBracket(fedIncomeTaxBracket, inflationRate);
        
-        updateFedDeduction(fedDeduction, inflationRate);
+        fedDeduction=updateFedDeduction(fedDeduction, inflationRate);
         if(stateDeduction){ 
-            updateStateDeduction(stateDeduction, inflationRate);
-            updateStateIncomeTaxBracket(stateIncomeTaxBracket, inflationRate);
-        };
+            stateDeduction = updateStateDeduction(stateDeduction, inflationRate);
+            stateIncomeTax = updateStateIncomeTaxBracket(stateIncomeTaxBracket, inflationRate);
+        }
         // retirement account limits
         annualLimitRetirement*=(1+inflationRate);
-        totalIncome=0;
-        let curYearEarlyWithdrawals=0;
+        
 
         // RUN INCOME EVENTS   
         let curYearIncome=0;
         let curYearSS=0; 
+        let curYearEarlyWithdrawals = 0;
+        let curYearGains = 0;
         let cashInvestment=scenario.investments.cashInvestment;
         ({curYearIncome, curYearSS, cashInvestment}=updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment));
 
         // PERFORM RMD FOR PREVIOUS YEAR
-
+        performRMDs(scenario, RMDStrategyInvestOrder, currYearIncome, currYear)
         // UPDATE INVESTMENT VALUES
-
+        
         // RUN ROTH CONVERSION IF ENABLED
         if(scenario.optimizerSettings && year>=scenario.optimizerSettings.startYear && year<=scenario.optimizerSettings.endYear){
             rothConversion(scenario, year, curYearIncome, curYearSS, fedIncomeTaxBracket);
         }
 
         // PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
-
+        payNonDiscretionaryExpenses(scenario, cashInvestment, currYearIncome, currYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, ssRange)
         // PAY DISCRETIONARY EXPENSES
-
+        payDiscretionaryExpenses(scenario, cashInvestment)
         // RUN INVEST EVENT
-
+        runInvestStrategy(scenario, cashInvestment, IRSLimits)
         // RUN REBALANCE EVENT
-
+        rebalance(scenario, curYearGains)
 
     } 
   }
