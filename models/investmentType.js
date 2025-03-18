@@ -18,12 +18,4 @@ var investmentTypeSchema=new Schema({
     taxability: {type: String, required: true},
 });
 
-
-var investmentSchema=new Schema({
-    _scenario: { type: Schema.Types.ObjectId, ref: 'Scenario', required: true},
-    investmentType: { type: Schema.Types.ObjectId, ref: 'InvestmentType', required: true},
-    value: {type: Number, required: true},
-    accountTaxStatus: {type: String, required: true},
-});
-
-module.exports=mongoose.model('Investment', investmentSchema);
+module.exports=mongoose.model('InvestmentType', investmentTypeSchema);
