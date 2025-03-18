@@ -13,11 +13,16 @@ const GoogleAuth = () => {
         const decodedToken = jwtDecode(credentialResponse.credential);
         console.log("Decoded Token:", decodedToken);
 
+        const userData = {
+            googleId: decodedToken.sub,
+            email: decodedToken.email,
+            guest: false,
+        };
         // Send data to backend
         const res = await fetch("http://localhost:5000/auth/google", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ credential: credentialResponse.credential }),
+            body: JSON.stringify(userData),
         });
 
         const data = await res.json();
@@ -32,19 +37,27 @@ const GoogleAuth = () => {
     };
 
     const handleGuestLogin = () => {
-        setUser({
-            name: "Guest User",
-            picture: null, // No profile image for guest users
-        });
+        const guestUser = {
+            googleId: null,
+            email: "Guest@hungerArc.com", // No profile image for guest users
+            guest: true
+        };
+
+        setUser(guestUser);
+
+        localStorage.setItem("user", JSON.stringify(guestUser));
+        console.log(localStorage.getItem("user"));
         navigate("/"); // Redirect guest users to homepage
     };
 
     const handleLogout = () => {
         setUser(null);
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
         navigate("/login"); // Redirect back to login page
     };
 
+    console.log(localStorage);
     return (
         <GoogleOAuthProvider clientId="600916289393-qfjvma6fnncebuv070vt2h9oddeuddhd.apps.googleusercontent.com">
             <Container maxWidth="sm" sx={{ textAlign: "center", mt: 8 }}>

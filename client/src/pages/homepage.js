@@ -1,28 +1,28 @@
 // App.js
-import React, { useContext, useEffect } from "react";
+import React, { useContext } from "react";
 import { ThemeProvider, CssBaseline } from '@mui/material';
-import { AuthContext } from "../components/AuthContext";
 import theme from '../components/theme';
 import Navbar from '../components/navbar';
 import { Container } from '@mui/material';
-import { useNavigate } from "react-router-dom";
+import { AuthContext } from '../context/AuthContext';
 
+function extractPrefix(email) {
+    let match = email.match(/^[a-zA-Z0-9]+/);
+    return match ? match[0] : "Guest"; // Default to "Guest" if no match
+}
+function DisplayUser({ user }) {
+    // console.log("user");
+    // console.log(user);
+    const prefix = extractPrefix(user.email);
+    return <h1>Hello, {prefix || "Guest"}!</h1>;
+  }
+  
 const Homepage = () => {
-    const { user, logout } = useContext(AuthContext);
-    const navigate = useNavigate();
-
-    // Log user state every time it changes
-    useEffect(() => {
-        console.log("User State:", user);
-    }, [user]); // Runs when `user` changes
-
-    // Redirect to login if no user is found
-    useEffect(() => {
-        if (!user) {
-            console.log("No user found, redirecting to login...");
-            navigate("/login");
-        }
-    }, [user, navigate]);
+    const { user } = useContext(AuthContext); // If AuthContext is undefined, this throws an error
+    console.log("check for user and email");
+    console.log(user);
+    console.log(user.email);
+    // const user = localStorage.getItem("user");
     return (
         <ThemeProvider theme={theme}>
         <CssBaseline /> {/* Applies global styles based on the theme */}
@@ -30,7 +30,7 @@ const Homepage = () => {
         <Container>
         <div>
             {/* Your page content goes here */}
-            <h1>Welcome to the Page</h1>
+            <DisplayUser user = {user}/>
         </div>
         </Container>
         </ThemeProvider>
