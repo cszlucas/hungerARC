@@ -31,12 +31,12 @@ app.get("/standardDeductions", async (req, res) => {
             .each((colIndex, cell) => {
               const cellText = $(cell).text();
               if (colIndex == 1 && rowIndex == 1) {
-                const cleanedCell = cellText.replace(/[\$,]/g, '');
+                const cleanedCell = cellText.replace(/[\$,]/g, "");
                 Tax.updateOne({ _id: new ObjectId(taxId) }, { $set: { "single.standardDeductions": Number(cleanedCell) } })
                   .then((doc) => console.log("Saved Tax Document:", doc))
                   .catch((err) => console.error("Error Saving Document:", err));
               } else if (colIndex == 1 && rowIndex == 2) {
-                const cleanedCell = cellText.replace(/[\$,]/g, '');
+                const cleanedCell = cellText.replace(/[\$,]/g, "");
                 Tax.updateOne({ _id: new ObjectId(taxId) }, { $set: { "married.standardDeductions": Number(cleanedCell) } })
                   .then((doc) => console.log("Saved Tax Document:", doc))
                   .catch((err) => console.error("Error Saving Document:", err));
@@ -54,6 +54,158 @@ app.get("/standardDeductions", async (req, res) => {
   }
 });
 
+app.get("/incomeSingle", async (req, res) => {
+  try {
+    const response = await axios.get("https://www.irs.gov/filing/federal-income-tax-rates-and-brackets");
+    const $ = cheerio.load(response.data);
+    const targetParagraph = $('p:contains("For a single taxpayer, the rates are:")');
+    const newIncomeRanges = []
+    const newTaxRates = []
+    
+    const targetLink = targetParagraph.next("table");
+    //console.log("Found target link:", targetLink.text());
+
+    if (targetLink.length > 0) {
+      // Navigate to the sibling or parent elements to find the table
+      targetLink
+        .find("tbody tr") // Select rows within tbody of the table-contents
+        .each((rowIndex, row) => {
+          cleanedRate = null;
+          startRange = null;
+          endRange = null;
+          $(row)
+            .find("td")
+            .each((colIndex, cell) => {
+              const cellText = $(cell).text().trim();
+              //console.log(`Row ${rowIndex}, Column ${colIndex}: ${cellText}`);
+              if (colIndex === 0) {
+                // Assuming the rate is in column 0
+                cleanedRate = cellText.replace(/[\%,]/g, ""); // Remove percent sign and commas
+              } else if (colIndex === 1) {
+                startRange = cellText.replace(/[\$,]/g, ""); // Remove dollar signs and commas
+              } else if (colIndex === 2) {
+                endRange = cellText.replace(/[\$,]/g, ""); // Remove dollar signs and commas
+              }
+            });
+
+          // Once all the columns for a row are processed, update the document in MongoDB
+          if (cleanedRate && startRange && endRange) {
+            console.log(`Rate ${cleanedRate}, start ${startRange}, end ${endRange}`);
+            // Convert the cleaned rate, startRange, and endRange into numbers
+            const rateNum = Number(cleanedRate);
+            const startRangeNum = Number(startRange);
+            if (endRange == "And up") {
+              endRange = 1000000000;
+            }
+            const endRangeNum = Number(endRange);
+            newIncomeRanges.push([startRangeNum,endRangeNum]);
+            newTaxRates.push(rateNum);
+            // Now, update the MongoDB document for the correct tax bracket
+          }
+        });
+        Tax.updateOne(
+          { _id: new ObjectId(taxId) },
+          {
+            $set: {
+              "single.federalIncomeTaxRatesBrackets": newIncomeRanges.map((range, index) => ({
+                incomeRange: range,
+                taxRate: newTaxRates[index],
+              }))
+            }
+          }
+        )
+        .then(result => {
+          console.log('All income ranges and tax rates updated successfully:', result);
+        })
+        .catch(err => {
+          console.error('Error updating income ranges and tax rates:', err);
+        });
+
+    } else {
+      console.log("Target link not found. Please check the selector.");
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("An error occurred while scraping data.");
+  }
+});
+
+
+app.get("/incomeMarried", async (req, res) => {
+  try {
+    const response = await axios.get("https://www.irs.gov/filing/federal-income-tax-rates-and-brackets");
+    const $ = cheerio.load(response.data);
+    const newIncomeRanges = []
+    const newTaxRates = []
+    
+    const aTag = $('a:contains("Married filing jointly or qualifying surviving spouse")');
+    const targetLink = aTag.closest('div').next('div').find('table');
+    console.log("Found target link:", targetLink.text());
+
+    if (targetLink.length > 0) {
+      // Navigate to the sibling or parent elements to find the table
+      targetLink
+        .find("tbody tr") // Select rows within tbody of the table-contents
+        .each((rowIndex, row) => {
+          cleanedRate = null;
+          startRange = null;
+          endRange = null;
+          $(row)
+            .find("td")
+            .each((colIndex, cell) => {
+              const cellText = $(cell).text().trim();
+              console.log(`Row ${rowIndex}, Column ${colIndex}: ${cellText}`);
+              if (colIndex === 0) {
+                // Assuming the rate is in column 0
+                cleanedRate = cellText.replace(/[\%,]/g, ""); // Remove percent sign and commas
+              } else if (colIndex === 1) {
+                startRange = cellText.replace(/[\$,]/g, ""); // Remove dollar signs and commas
+              } else if (colIndex === 2) {
+                endRange = cellText.replace(/[\$,]/g, ""); // Remove dollar signs and commas
+              }
+            });
+
+          // Once all the columns for a row are processed, update the document in MongoDB
+          if (cleanedRate && startRange && endRange) {
+            console.log(`Rate ${cleanedRate}, start ${startRange}, end ${endRange}`);
+            // Convert the cleaned rate, startRange, and endRange into numbers
+            const rateNum = Number(cleanedRate);
+            const startRangeNum = Number(startRange);
+            if (endRange == "And up") {
+              endRange = 1000000000;
+            }
+            const endRangeNum = Number(endRange);
+            newIncomeRanges.push([startRangeNum,endRangeNum]);
+            newTaxRates.push(rateNum);
+            // Now, update the MongoDB document for the correct tax bracket
+          }
+        });
+        Tax.updateOne(
+          { _id: new ObjectId(taxId) },
+          {
+            $set: {
+              "married.federalIncomeTaxRatesBrackets": newIncomeRanges.map((range, index) => ({
+                incomeRange: range,
+                taxRate: newTaxRates[index],
+              }))
+            }
+          }
+        )
+        .then(result => {
+          console.log('All income ranges and tax rates updated successfully:', result);
+        })
+        .catch(err => {
+          console.error('Error updating income ranges and tax rates:', err);
+        });
+
+    } else {
+      console.log("Target link not found. Please check the selector.");
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("An error occurred while scraping data.");
+  }
+});
 // Save scraped data to MongoDB
 //   await Data.insertMany(scrapedData);
 
