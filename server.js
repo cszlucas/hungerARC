@@ -204,16 +204,16 @@ app.get("/incomeMarried", async (req, res) => {
   }
 });
 
-app.get("/", async (req, res) => {
+app.get("/capitalGains", async (req, res) => {
   try {
     const response = await axios.get("https://www.irs.gov/taxtopics/tc409");
     const $ = cheerio.load(response.data);
     const incomeRanges = [];
-    let stats = null;
 
     const pTags = $('p:contains("A capital gains rate of")');
 
-    pTags.each((rateIndex, pTag) => { //goes through each rate
+    pTags.each((rateIndex, pTag) => {
+      //goes through each rate
       const rateText = $(pTag).find("b").first().text();
       const rateNum = rateText.replace(/[\%,]/g, "");
       console.log("Rate: ", rateNum, rateText);
@@ -221,24 +221,26 @@ app.get("/", async (req, res) => {
       // Find the corresponding <ul> of income ranges
       const targetLink = $(pTag).next("ul");
 
-      targetLink.find("li").each((index, li) => { //goes through bullets for specific rate
-        if(index==0){
+      targetLink.find("li").each((index, li) => {
+        //goes through bullets for specific rate
+        let stats = null;
+        if (index == 0) {
           stats = "single";
-        } else if((rateIndex==0 && index==1) || (rateIndex==1 && index==2)){
+        } else if ((rateIndex == 0 && index == 1) || (rateIndex == 1 && index == 2)) {
           stats = "married";
         }
         const rangeText = $(li).text().trim();
         const regex = /[\$]([\d,]+)/g;
         const matches = rangeText.match(regex);
 
-        if (matches && stats!=null) {
+        if (matches && stats != null) {
           // Clean the ranges and push them into the incomeRanges array
           const cleanedRanges = matches.map((match) => match.replace(/[\,\$]/g, ""));
           console.log("Income Range: ", cleanedRanges); // Log the income ranges
           incomeRanges.push({
             rate: rateNum,
             ranges: cleanedRanges,
-            status: stats
+            status: stats,
           });
         }
       });
@@ -246,23 +248,31 @@ app.get("/", async (req, res) => {
 
     console.log("Rates and Income Ranges: ", incomeRanges);
 
-    Tax.updateOne(
-      { _id: new ObjectId(taxId) },
-      {
-        $set: {
-          "single.capitalGainsTaxRates": incomeRanges.map((range, index) => ({
-            incomeRange: range.ranges,
-            gainsRate: range.rate,
-          })),
+    incomeRanges.forEach((range) => {
+      console.log(range);
+      Tax.updateOne(
+        {
+          _id: new ObjectId(taxId),
+          [`${range.status}.capitalGainsTaxRates`]: {
+            $not: { $elemMatch: { gainsRate: range.rate } },
+          }, // Check if rate doesn't exist
         },
-      }
-    )
-      .then((result) => {
-        console.log("Data inserted successfully", result);
-      })
-      .catch((error) => {
-        console.error("Error inserting data:", error);
-      });
+        {
+          $push: {
+            [`${range.status}.capitalGainsTaxRates`]: {
+              incomeRange: range.ranges,
+              gainsRate: range.rate,
+            },
+          },
+        }
+      )
+        .then((result) => {
+          console.log("Data inserted successfully", result);
+        })
+        .catch((error) => {
+          console.error("Error inserting data:", error);
+        });
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send("An error occurred while scraping data.");
