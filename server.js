@@ -59,9 +59,9 @@ app.get("/incomeSingle", async (req, res) => {
     const response = await axios.get("https://www.irs.gov/filing/federal-income-tax-rates-and-brackets");
     const $ = cheerio.load(response.data);
     const targetParagraph = $('p:contains("For a single taxpayer, the rates are:")');
-    const newIncomeRanges = []
-    const newTaxRates = []
-    
+    const newIncomeRanges = [];
+    const newTaxRates = [];
+
     const targetLink = targetParagraph.next("table");
     //console.log("Found target link:", targetLink.text());
 
@@ -98,29 +98,28 @@ app.get("/incomeSingle", async (req, res) => {
               endRange = 1000000000;
             }
             const endRangeNum = Number(endRange);
-            newIncomeRanges.push([startRangeNum,endRangeNum]);
+            newIncomeRanges.push([startRangeNum, endRangeNum]);
             newTaxRates.push(rateNum);
             // Now, update the MongoDB document for the correct tax bracket
           }
         });
-        Tax.updateOne(
-          { _id: new ObjectId(taxId) },
-          {
-            $set: {
-              "single.federalIncomeTaxRatesBrackets": newIncomeRanges.map((range, index) => ({
-                incomeRange: range,
-                taxRate: newTaxRates[index],
-              }))
-            }
-          }
-        )
-        .then(result => {
-          console.log('All income ranges and tax rates updated successfully:', result);
+      Tax.updateOne(
+        { _id: new ObjectId(taxId) },
+        {
+          $set: {
+            "single.federalIncomeTaxRatesBrackets": newIncomeRanges.map((range, index) => ({
+              incomeRange: range,
+              taxRate: newTaxRates[index],
+            })),
+          },
+        }
+      )
+        .then((result) => {
+          console.log("All income ranges and tax rates updated successfully:", result);
         })
-        .catch(err => {
-          console.error('Error updating income ranges and tax rates:', err);
+        .catch((err) => {
+          console.error("Error updating income ranges and tax rates:", err);
         });
-
     } else {
       console.log("Target link not found. Please check the selector.");
     }
@@ -130,16 +129,15 @@ app.get("/incomeSingle", async (req, res) => {
   }
 });
 
-
 app.get("/incomeMarried", async (req, res) => {
   try {
     const response = await axios.get("https://www.irs.gov/filing/federal-income-tax-rates-and-brackets");
     const $ = cheerio.load(response.data);
-    const newIncomeRanges = []
-    const newTaxRates = []
-    
+    const newIncomeRanges = [];
+    const newTaxRates = [];
+
     const aTag = $('a:contains("Married filing jointly or qualifying surviving spouse")');
-    const targetLink = aTag.closest('div').next('div').find('table');
+    const targetLink = aTag.closest("div").next("div").find("table");
     console.log("Found target link:", targetLink.text());
 
     if (targetLink.length > 0) {
@@ -175,29 +173,28 @@ app.get("/incomeMarried", async (req, res) => {
               endRange = 1000000000;
             }
             const endRangeNum = Number(endRange);
-            newIncomeRanges.push([startRangeNum,endRangeNum]);
+            newIncomeRanges.push([startRangeNum, endRangeNum]);
             newTaxRates.push(rateNum);
             // Now, update the MongoDB document for the correct tax bracket
           }
         });
-        Tax.updateOne(
-          { _id: new ObjectId(taxId) },
-          {
-            $set: {
-              "married.federalIncomeTaxRatesBrackets": newIncomeRanges.map((range, index) => ({
-                incomeRange: range,
-                taxRate: newTaxRates[index],
-              }))
-            }
-          }
-        )
-        .then(result => {
-          console.log('All income ranges and tax rates updated successfully:', result);
+      Tax.updateOne(
+        { _id: new ObjectId(taxId) },
+        {
+          $set: {
+            "married.federalIncomeTaxRatesBrackets": newIncomeRanges.map((range, index) => ({
+              incomeRange: range,
+              taxRate: newTaxRates[index],
+            })),
+          },
+        }
+      )
+        .then((result) => {
+          console.log("All income ranges and tax rates updated successfully:", result);
         })
-        .catch(err => {
-          console.error('Error updating income ranges and tax rates:', err);
+        .catch((err) => {
+          console.error("Error updating income ranges and tax rates:", err);
         });
-
     } else {
       console.log("Target link not found. Please check the selector.");
     }
@@ -206,6 +203,72 @@ app.get("/incomeMarried", async (req, res) => {
     res.status(500).send("An error occurred while scraping data.");
   }
 });
+
+app.get("/", async (req, res) => {
+  try {
+    const response = await axios.get("https://www.irs.gov/taxtopics/tc409");
+    const $ = cheerio.load(response.data);
+    const incomeRanges = [];
+    let stats = null;
+
+    const pTags = $('p:contains("A capital gains rate of")');
+
+    pTags.each((rateIndex, pTag) => { //goes through each rate
+      const rateText = $(pTag).find("b").first().text();
+      const rateNum = rateText.replace(/[\%,]/g, "");
+      console.log("Rate: ", rateNum, rateText);
+
+      // Find the corresponding <ul> of income ranges
+      const targetLink = $(pTag).next("ul");
+
+      targetLink.find("li").each((index, li) => { //goes through bullets for specific rate
+        if(index==0){
+          stats = "single";
+        } else if((rateIndex==0 && index==1) || (rateIndex==1 && index==2)){
+          stats = "married";
+        }
+        const rangeText = $(li).text().trim();
+        const regex = /[\$]([\d,]+)/g;
+        const matches = rangeText.match(regex);
+
+        if (matches && stats!=null) {
+          // Clean the ranges and push them into the incomeRanges array
+          const cleanedRanges = matches.map((match) => match.replace(/[\,\$]/g, ""));
+          console.log("Income Range: ", cleanedRanges); // Log the income ranges
+          incomeRanges.push({
+            rate: rateNum,
+            ranges: cleanedRanges,
+            status: stats
+          });
+        }
+      });
+    });
+
+    console.log("Rates and Income Ranges: ", incomeRanges);
+
+    Tax.updateOne(
+      { _id: new ObjectId(taxId) },
+      {
+        $set: {
+          "single.capitalGainsTaxRates": incomeRanges.map((range, index) => ({
+            incomeRange: range.ranges,
+            gainsRate: range.rate,
+          })),
+        },
+      }
+    )
+      .then((result) => {
+        console.log("Data inserted successfully", result);
+      })
+      .catch((error) => {
+        console.error("Error inserting data:", error);
+      });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("An error occurred while scraping data.");
+  }
+});
+
 // Save scraped data to MongoDB
 //   await Data.insertMany(scrapedData);
 
