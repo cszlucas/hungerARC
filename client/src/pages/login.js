@@ -19,7 +19,7 @@ const GoogleAuth = () => {
             guest: false,
         };
         // Send data to backend
-        const res = await fetch("http://localhost:5000/auth/google", {
+        const res = await fetch("http://localhost:8080/auth/google", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(userData),
@@ -27,10 +27,11 @@ const GoogleAuth = () => {
 
         const data = await res.json();
         console.log("Server Response:", data);
-        setUser(data.user);
+        setUser(userData);
 
         // Store token in localStorage
         localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
 
         // ✅ Redirect to homepage
         navigate("/");
@@ -50,13 +51,6 @@ const GoogleAuth = () => {
         navigate("/"); // Redirect guest users to homepage
     };
 
-    const handleLogout = () => {
-        setUser(null);
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        navigate("/login"); // Redirect back to login page
-    };
-
     console.log(localStorage);
     return (
         <GoogleOAuthProvider clientId="600916289393-qfjvma6fnncebuv070vt2h9oddeuddhd.apps.googleusercontent.com">
@@ -66,7 +60,7 @@ const GoogleAuth = () => {
                         Sign in with Google
                     </Typography>
 
-                    {!user ? (
+                    {
                         <Stack spacing={2} mt={2}>
                             <GoogleLogin 
                                 onSuccess={handleSuccess} 
@@ -80,28 +74,7 @@ const GoogleAuth = () => {
                                 Sign in as Guest
                             </Button>
                         </Stack>
-                    ) : (
-                        <CardContent>
-                            <Avatar 
-                                src={user.picture || ""} 
-                                alt="Profile" 
-                                sx={{ width: 80, height: 80, margin: "auto", bgcolor: user.picture ? "transparent" : "grey.300" }}
-                            >
-                                {!user.picture && <AccountCircleIcon fontSize="large" />}
-                            </Avatar>
-                            <Typography variant="h6" mt={2}>
-                                Welcome, {user.name}!
-                            </Typography>
-                            <Button 
-                                variant="contained" 
-                                color="primary" 
-                                sx={{ mt: 2 }}
-                                onClick={handleLogout}
-                            >
-                                Logout
-                            </Button>
-                        </CardContent>
-                    )}
+                     }
                 </Card>
             </Container>
         </GoogleOAuthProvider>

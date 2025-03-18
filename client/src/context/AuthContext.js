@@ -3,7 +3,8 @@ import React, { createContext, useState, useEffect } from "react";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
+    const rawData = localStorage.getItem("user");
+    const [user, setUser] = useState((rawData != 'undefined' ? JSON.parse(rawData) : null));
 
     useEffect(() => {
         // Load user data from localStorage

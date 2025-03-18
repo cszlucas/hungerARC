@@ -13,6 +13,7 @@ function extractPrefix(email) {
 function DisplayUser({ user }) {
     // console.log("user");
     // console.log(user);
+    if (user == null) return  <h1>Hello werido!</h1>;
     const prefix = extractPrefix(user.email);
     return <h1>Hello, {prefix || "Guest"}!</h1>;
   }
@@ -22,6 +23,7 @@ const Homepage = () => {
     console.log("check for user and email");
     console.log(user);
     console.log(user.email);
+
     // const user = localStorage.getItem("user");
     return (
         <ThemeProvider theme={theme}>
@@ -30,7 +32,7 @@ const Homepage = () => {
         <Container>
         <div>
             {/* Your page content goes here */}
-            <DisplayUser user = {user}/>
+            <DisplayUser user = {(user)}/>
         </div>
         </Container>
         </ThemeProvider>

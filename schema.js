@@ -68,24 +68,24 @@ const Tax = mongoose.model('Tax', taxSchema);
 module.exports = Tax;
 
 // Example: Creating a new document based on the schema
-const newTaxData = new Tax({
-  year: 2025,
-  single: {
-    federalIncomeTaxRatesBrackets: [
-      { incomeRange: [0, 0], taxRate: 100 },
-      { incomeRange: [11601, 47150], taxRate: 12 },
-      // Add other brackets as needed...
-    ],
-    standardDeductions: 14600,
-    capitalGainsTaxRates: [
-      { incomeRange: [0, 47025], gainsRate: 0 },
-      { incomeRange: [47025, 518900], gainsRate: 15 },
-      // Add other capital gains brackets as needed...
-    ]
-  }
-});
+// const newTaxData = new Tax({
+//   year: 2025,
+//   single: {
+//     federalIncomeTaxRatesBrackets: [
+//       { incomeRange: [0, 0], taxRate: 100 },
+//       { incomeRange: [11601, 47150], taxRate: 12 },
+//       // Add other brackets as needed...
+//     ],
+//     standardDeductions: 14600,
+//     capitalGainsTaxRates: [
+//       { incomeRange: [0, 47025], gainsRate: 0 },
+//       { incomeRange: [47025, 518900], gainsRate: 15 },
+//       // Add other capital gains brackets as needed...
+//     ]
+//   }
+// });
 
-// Save the new tax data to the database
-newTaxData.save()
-  .then(() => console.log('Tax data for 2025 has been saved successfully!'))
-  .catch((err) => console.error('Error saving tax data:', err));
+// // Save the new tax data to the database
+// newTaxData.save()
+//   .then(() => console.log('Tax data for 2025 has been saved successfully!'))
+//   .catch((err) => console.error('Error saving tax data:', err));
