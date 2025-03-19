@@ -2,8 +2,11 @@ const express = require("express");
 const axios = require("axios");
 const cheerio = require("cheerio");
 const mongoose = require("mongoose");
-const Tax = require("./schema.js");
-const RMD = require("./rmd-schema.js");
+const Tax = require("./models/tax.js");
+const RMD = require("./models/rmd-schema.js");
+const { IncomeEvent } = require('./models/incomeEvent');
+const { scenario } = require('./models/Scenario');
+const { InvestmentType } = require('./models/InvestmentType');
 const { ObjectId } = require("mongoose").Types;
 const taxId = "67d8912a816a92a8fcb6dd55";
 
@@ -27,6 +30,96 @@ const PORT = 8080;
 
 // Connect to MongoDB
 mongoose.connect("mongodb://localhost:27017/hungerarc", { useNewUrlParser: true, useUnifiedTopology: true });
+
+
+app.post('/investmentType', async (req, res) => {
+  const { name, description, annualReturn, expenseRatio, annualIncome, taxability } = req.body;
+
+  try {
+    const newInvestmentType = new InvestmentType({
+      name,
+      description,
+      annualReturn: {
+        type: annualReturn.type,
+        fixed: annualReturn.fixed,
+        mean: annualReturn.mean,
+        stdDev: annualReturn.stdDev
+      },
+      expenseRatio,
+      annualIncome: {
+        type: annualIncome.type,
+        fixed: annualIncome.fixed,
+        mean: annualIncome.mean,
+        stdDev: annualIncome.stdDev
+      },
+      taxability
+    });
+
+    const savedInvestmentType = await newInvestmentType.save();
+    res.status(201).json(savedInvestmentType); 
+  } catch (err) {
+    console.error('Error saving InvestmentType:', err);
+    res.status(500).json({ error: 'Error saving InvestmentType' });
+  }
+});
+
+
+app.post('/basicInfo', async (req, res) => {
+  try {
+    const { name, filingStatus, financialGoal, inflationAssumption, birthYearUser, lifeExpectancy, stateResident} = req.body
+
+    const newBasicInfo = new scenario({
+      name,
+      filingStatus,
+      financialGoal,
+      inflationAssumption:{
+        type: inflationAssumption.inflationAssumptionType,
+        fixedRate: inflationAssumption.fixedRate,
+        mean: inflationAssumption.mean,
+        stdDev: inflationAssumption.stdDev,
+        min: inflationAssumption.min,
+        max: inflationAssumption.max
+      },
+      birthYearUser,
+      lifeExpectancy: {
+        type: lifeExpectancy.lifeExpectancyType,
+        fixedAge: lifeExpectancy.fixedAge, 
+        mean: lifeExpectancy.mean, 
+        stdDev: lifeExpectancy.stdDev
+      },
+      stateResident
+    });
+
+    const savedBasicInfo = await newBasicInfo.save();
+
+    res.status(201).json(savedBasicInfo);
+  } catch (err) {
+    console.error('Error creating basic info:', err);
+    res.status(500).json({ error: 'Failed to create basic info' });
+  }
+});
+
+
+app.post('/income-event', async (req, res) => {
+  try {
+    const { initialAmount, annualChange, userPercentage, inflationAdjustment, isSocialSecurity } = req.body;
+
+    const newIncomeEvent = new IncomeEvent({
+      initialAmount,
+      annualChange,
+      userPercentage,
+      inflationAdjustment,
+      isSocialSecurity
+    });
+
+    const savedIncomeEvent = await newIncomeEvent.save();
+
+    res.status(201).json(savedIncomeEvent);
+  } catch (err) {
+    console.error('Error creating IncomeEvent:', err);
+    res.status(500).json({ error: 'Failed to create IncomeEvent' });
+  }
+});
 
 // Web scraping route
 app.get("/standardDeductions", async (req, res) => {
@@ -224,7 +317,7 @@ app.get("/incomeMarried", async (req, res) => {
 app.post("/auth/google", async (req, res) => {
   // mongoose.connection.on("connected", () => console.log("MongoDB is connected ✅"));
   // mongoose.connection.on("error", (err) => console.error("MongoDB connection error ❌:", err));
-  const { googleId, email, guest} = req.body;
+  const { googleId, email, guest } = req.body;
   console.log("Received data:", { googleId, email, guest });
   try {
     let user = await User.findOne({ $or: [{ googleId }, { email }] });
@@ -232,13 +325,11 @@ app.post("/auth/google", async (req, res) => {
     console.log(user);
 
     if (!user) {
-      user = new User({ googleId, email, guest, lastLogin: Date.now()});
+      user = new User({ googleId, email, guest, lastLogin: Date.now() });
       console.log(user);
       await user.save();
-      console.log("user saved!")
-    }
-    else
-    {
+      console.log("user saved!");
+    } else {
       user.lastLogin = Date.now();
       await user.save();
     }
@@ -256,7 +347,6 @@ app.post("/auth/google", async (req, res) => {
     res.status(500).json({ message: err, error: err });
   }
 });
-
 
 app.get("/capitalGains", async (req, res) => {
   try {
@@ -332,7 +422,6 @@ app.get("/capitalGains", async (req, res) => {
     res.status(500).send("An error occurred while scraping data.");
   }
 });
-
 
 app.get("/rmd", async (req, res) => {
   try {
