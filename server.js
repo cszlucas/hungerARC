@@ -3,8 +3,10 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const mongoose = require("mongoose");
 const Tax = require("./schema.js");
+const RMD = require("./rmd-schema.js");
 const { ObjectId } = require("mongoose").Types;
 const taxId = "67d8912a816a92a8fcb6dd55";
+const rmdId = "67da256d6fc3c7abbf1d675d";
 const app = express();
 const PORT = 8080;
 
@@ -273,6 +275,70 @@ app.get("/capitalGains", async (req, res) => {
           console.error("Error inserting data:", error);
         });
     });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("An error occurred while scraping data.");
+  }
+});
+
+app.get("/", async (req, res) => {
+  try {
+    const response = await axios.get("https://www.irs.gov/publications/p590b#en_US_2023_publink100090310");
+    const $ = cheerio.load(response.data);
+
+    const targetLink = $('.table a[name="en_US_2023_publink100090310"]');
+    const rmd = [];
+    let age = "";
+    let distPeriod = "";
+
+    if (targetLink.length > 0) {
+      // Navigate to the sibling or parent elements to find the table
+      targetLink
+        .closest(".table") // Find the closest .table div
+        .find(".table-contents tbody tr") // Select rows within tbody of the table-contents
+        .each((rowIndex, row) => {
+          $(row)
+            .find("td")
+            .each((colIndex, cell) => {
+              if ((rowIndex > 4 && rowIndex < 29) || (rowIndex == 29 && colIndex == 0) || (rowIndex == 29 && colIndex == 1)) {
+                let cellText = $(cell).text().trim();
+                if (rowIndex == 28 && colIndex == 2) {
+                  const regex = /(\d[\d,]*)/;
+                  const match = cellText.match(regex);
+                  cellText = parseInt(match[1].replace(/,/g, ""), 10);
+                }
+                if (colIndex % 2 == 0) {
+                  age = cellText;
+                } else {
+                  distPeriod = cellText;
+                  rmd.push({
+                    age: Number(age),
+                    distributionPeriod: Number(distPeriod),
+                  });
+                }
+                //console.log(`Row ${rowIndex}, Column ${colIndex}: ${cellText}`);
+              }
+            });
+        });
+      console.log("RMD: ", rmd);
+      RMD.updateOne(
+        {
+          _id: new ObjectId(rmdId),
+          "rmd.age": { $ne: rmd.age }, // Check if age doesn't already exist
+        },
+        {
+          $push: {
+            rmd: {
+              age: rmd.age,
+              distributionPeriod: rmd.distributionPeriod,
+            },
+          },
+        },
+        { upsert: true } // Create document if it doesn't exist
+      )
+        .then((doc) => console.log("Saved RMD Document:", doc))
+        .catch((err) => console.error("Error Saving RMD Document:", err));
+    }
   } catch (error) {
     console.error(error);
     res.status(500).send("An error occurred while scraping data.");
