@@ -2,16 +2,24 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 
 import Homepage from './pages/homepage';
+import Profile from './pages/profile';
+import Scenarios from './scenarios';
 import Login from './pages/login';
 import ScenarioList from './pages/scenario/scenarioList';
-import Profile from './pages/profile';
+import Basics from './pages/scenario/basics';
+import InvestmentLists from './pages/scenario/invesments/investmentLists';
+import EventSeries from './pages/scenario/events/eventSeries';
+import Investment from './pages/scenario/invesments/investment';
+import InvestmentType from './pages/scenario/invesments/investmentType';
+import Income from './pages/scenario/events/income';
+import Expense from './pages/scenario/events/expense';
+import Invest from './pages/scenario/events/invest';
+import Rebalance from './pages/scenario/events/rebalance';
+import RunSimulations from './pages/scenario/runSimulations';
+
 import reportWebVitals from './reportWebVitals';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-// import { useContext, useEffect } from "react";
-// import { useNavigate } from "react-router-dom";
-
-// import { AuthContext } from "./components/AuthContext";
 import { AuthProvider } from './context/AuthContext';
 import { AppProvider } from './context/appContext';
 
@@ -25,24 +33,39 @@ const router = createBrowserRouter([
     element: <Login />,
   },
   {
+    path: "/profile",
+    element: <Profile />,
+  },
+  {
     path: "/scenarios",
     element: <ScenarioList />,
   },
   {
-    path: "/profile",
-    element: <Profile/>,
+    path: "/scenarios/:id",
+    element: <Scenarios />, // ✅ Make Scenarios the parent component
+    children: [
+      { index: true, element: <Basics /> }, // ✅ Defaults to Basics if no subpath
+      { path: "basics", element: <Basics /> },
+      { path: "investment_lists", element: <InvestmentLists /> },
+      { path: "event_series", element: <EventSeries /> },
+      { path: "investment", element: <Investment /> },
+      { path: "investment_type", element: <InvestmentType /> },
+      { path: "income", element: <Income /> },
+      { path: "expense", element: <Expense /> },
+      { path: "invest", element: <Invest /> },
+      { path: "rebalance", element: <Rebalance /> },
+      { path: "run_simulations", element: <RunSimulations /> },
+    ],
   },
 ]);
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <React.StrictMode>
     <AuthProvider>
-    <AppProvider>
-      <RouterProvider router={router} />
-    </AppProvider>
+      <AppProvider>
+        <RouterProvider router={router} />
+      </AppProvider>
     </AuthProvider>
-  </React.StrictMode>
 );
 
 reportWebVitals();
