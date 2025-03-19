@@ -281,13 +281,13 @@ app.get("/capitalGains", async (req, res) => {
   }
 });
 
-app.get("/", async (req, res) => {
+app.get("/rmd", async (req, res) => {
   try {
     const response = await axios.get("https://www.irs.gov/publications/p590b#en_US_2023_publink100090310");
     const $ = cheerio.load(response.data);
 
     const targetLink = $('.table a[name="en_US_2023_publink100090310"]');
-    const rmd = [];
+    const rmds = [];
     let age = "";
     let distPeriod = "";
 
@@ -311,7 +311,7 @@ app.get("/", async (req, res) => {
                   age = cellText;
                 } else {
                   distPeriod = cellText;
-                  rmd.push({
+                  rmds.push({
                     age: Number(age),
                     distributionPeriod: Number(distPeriod),
                   });
@@ -320,24 +320,25 @@ app.get("/", async (req, res) => {
               }
             });
         });
-      console.log("RMD: ", rmd);
-      RMD.updateOne(
-        {
-          _id: new ObjectId(rmdId),
-          "rmd.age": { $ne: rmd.age }, // Check if age doesn't already exist
-        },
-        {
-          $push: {
-            rmd: {
-              age: rmd.age,
-              distributionPeriod: rmd.distributionPeriod,
-            },
+      console.log("RMD: ", rmds);
+      rmds.forEach((rmd) => {
+        RMD.updateOne(
+          {
+            _id: new ObjectId(rmdId),
+            // "rmd.age": { $ne: rmd.age }, // Check if age doesn't already exist
           },
-        },
-        { upsert: true } // Create document if it doesn't exist
-      )
-        .then((doc) => console.log("Saved RMD Document:", doc))
-        .catch((err) => console.error("Error Saving RMD Document:", err));
+          {
+            $push: {
+              rmd: {
+                age: rmd.age,
+                distributionPeriod: rmd.distributionPeriod,
+              },
+            },
+          }
+        )
+          .then((doc) => console.log("Saved RMD Document:", doc))
+          .catch((err) => console.error("Error Saving RMD Document:", err));
+      });
     }
   } catch (error) {
     console.error(error);
