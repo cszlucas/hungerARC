@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
@@ -10,11 +10,13 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import Box from "@mui/material/Box";
-import ListItemButton from "@mui/material/ListItemButton";
 import Divider from "@mui/material/Divider";
+import Switch from "@mui/material/Switch"; // MUI Switch for light/dark mode toggle
 
 export default function NavBar({ currentPage }) {
   const [open, setOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const navigate = useNavigate();
 
   const toggleDrawer = (state) => (event) => {
     if (
@@ -26,14 +28,29 @@ export default function NavBar({ currentPage }) {
     setOpen(state);
   };
 
-  const menuItems = ["Profile", "Senario", "Login"];
-  const bottomItems = ["Light/Dark Mode", "Logout"];
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+
+  const handleThemeToggle = () => {
+    setIsDarkMode((prevMode) => !prevMode);
+  };
+
+  const menuItems = ["Profile", "Scenarios", "Login"];
 
   const DrawerList = (
     <Box
-      sx={{ width: 250, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}
+      sx={{
+        width: 250,
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+      }}
       role="presentation"
-      onClick={toggleDrawer(false)}
+      onClick={(e) => e.stopPropagation()}  // 👈 Prevent closing when clicking inside
     >
       {/* Top Section */}
       <List>
@@ -44,24 +61,24 @@ export default function NavBar({ currentPage }) {
           return (
             <ListItem key={text} disablePadding>
               {isCurrent ? (
-                <ListItemButton
-                  disabled
+                <Box
                   sx={{
                     backgroundColor: "#424242",
                     color: "#fff",
-                    "&:hover": { backgroundColor: "#424242" }
+                    width: "100%",
+                    padding: "10px 16px",
                   }}
                 >
                   <ListItemText primary={text} />
-                </ListItemButton>
+                </Box>
               ) : (
                 <Link
                   to={routePath}
                   style={{ textDecoration: "none", color: "inherit", width: "100%" }}
                 >
-                  <ListItemButton>
+                  <ListItem button>
                     <ListItemText primary={text} />
-                  </ListItemButton>
+                  </ListItem>
                 </Link>
               )}
             </ListItem>
@@ -73,13 +90,24 @@ export default function NavBar({ currentPage }) {
       <Box>
         <Divider />
         <List>
-          {bottomItems.map((text) => (
-            <ListItem key={text} disablePadding>
-              <ListItemButton>
-                <ListItemText primary={text} />
-              </ListItemButton>
+          {/* Theme Toggle */}
+          <ListItem disablePadding>
+            <Box sx={{ display: "flex", alignItems: "center", width: "100%", padding: "10px 16px" }}>
+              <ListItemText primary={isDarkMode ? "Dark Mode" : "Light Mode"} />
+              <Switch
+                checked={isDarkMode}
+                onChange={handleThemeToggle}
+                color="primary"
+              />
+            </Box>
+          </ListItem>
+
+          {/* Logout */}
+          <ListItem disablePadding>
+            <ListItem button onClick={handleLogout}>
+              <ListItemText primary={"Logout"} />
             </ListItem>
-          ))}
+          </ListItem>
         </List>
       </Box>
     </Box>
@@ -97,7 +125,7 @@ export default function NavBar({ currentPage }) {
           </IconButton>
         </Toolbar>
       </AppBar>
-      <Drawer anchor="right" open={open} onClose={toggleDrawer(false)}>
+      <Drawer anchor="right" open={open} onClose={toggleDrawer(false)} onClick={(e) => e.stopPropagation()}>
         {DrawerList}
       </Drawer>
     </>
