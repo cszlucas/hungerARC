@@ -19,16 +19,23 @@ function DisplayUser({ user }) {
   }
   
 const Homepage = () => {
-    const { user } = useContext(AuthContext); // If AuthContext is undefined, this throws an error
-    console.log("check for user and email");
-    console.log(user);
-    console.log(user.email);
+    // const { user } = useContext(AuthContext); // If AuthContext is undefined, this throws an error
+    // console.log(localStorage.user);
+    let user = null
+    const userString = localStorage.getItem('user');
+    if (userString) {
+        user = JSON.parse(userString); // Convert string to object
+        console.log("Parsed User:", user);
+        console.log("User Email:", user.email);
+    } else {
+        console.log("No user found in localStorage.");
+    }
 
     // const user = localStorage.getItem("user");
     return (
         <ThemeProvider theme={theme}>
         <CssBaseline /> {/* Applies global styles based on the theme */}
-        <Navbar currentPage={'profile'}/>
+        <Navbar currentPage={'homepage'}/>
         <Container>
         <div>
             {/* Your page content goes here */}

@@ -3,7 +3,8 @@ import ReactDOM from 'react-dom/client';
 
 import Homepage from './pages/homepage';
 import Login from './pages/login';
-import Scenarios from './pages/scenarios';
+import ScenarioList from './pages/scenario/scenarioList';
+import Profile from './pages/profile';
 import reportWebVitals from './reportWebVitals';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 
@@ -25,7 +26,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/scenarios",
-    element: <Scenarios />,
+    element: <ScenarioList />,
+  },
+  {
+    path: "/profile",
+    element: <Profile/>,
   },
 ]);
 
