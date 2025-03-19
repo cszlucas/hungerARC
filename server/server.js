@@ -2,8 +2,8 @@ const express = require("express");
 const axios = require("axios");
 const cheerio = require("cheerio");
 const mongoose = require("mongoose");
-const Tax = require("./schema.js");
-const RMD = require("./rmd-schema.js");
+const Tax = require("./models/tax.js");
+const RMD = require("./models/rmd-schema.js");
 const { ObjectId } = require("mongoose").Types;
 const taxId = "67d8912a816a92a8fcb6dd55";
 
@@ -27,6 +27,31 @@ const PORT = 8080;
 
 // Connect to MongoDB
 mongoose.connect("mongodb://localhost:27017/hungerarc", { useNewUrlParser: true, useUnifiedTopology: true });
+
+
+// var IncomeEventSchema=new Schema({
+//   ...BaseEventSchema.obj,
+//   initialAmount: {type: Number, required: true},
+//   annualChange: {type: AnnualChange},
+//   userPercentage: {type: Number},
+//   inflationAdjustment: {type: Boolean},
+//   // change in code
+//   isSocialSecurity: {type: Boolean, default: false},
+// });
+
+app.post("/incomeEvent", async (req, res) => {
+  try {
+    const { initialAmount, email, age } = req.body;
+
+    const newData = new FormData({ name, email, age });
+    await newData.save();
+
+    res.status(200).send("income data saved successfully");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error saving income data");
+  }
+});
 
 // Web scraping route
 app.get("/standardDeductions", async (req, res) => {
@@ -224,7 +249,7 @@ app.get("/incomeMarried", async (req, res) => {
 app.post("/auth/google", async (req, res) => {
   // mongoose.connection.on("connected", () => console.log("MongoDB is connected ✅"));
   // mongoose.connection.on("error", (err) => console.error("MongoDB connection error ❌:", err));
-  const { googleId, email, guest} = req.body;
+  const { googleId, email, guest } = req.body;
   console.log("Received data:", { googleId, email, guest });
   try {
     let user = await User.findOne({ $or: [{ googleId }, { email }] });
@@ -232,13 +257,11 @@ app.post("/auth/google", async (req, res) => {
     console.log(user);
 
     if (!user) {
-      user = new User({ googleId, email, guest, lastLogin: Date.now()});
+      user = new User({ googleId, email, guest, lastLogin: Date.now() });
       console.log(user);
       await user.save();
-      console.log("user saved!")
-    }
-    else
-    {
+      console.log("user saved!");
+    } else {
       user.lastLogin = Date.now();
       await user.save();
     }
@@ -256,7 +279,6 @@ app.post("/auth/google", async (req, res) => {
     res.status(500).json({ message: err, error: err });
   }
 });
-
 
 app.get("/capitalGains", async (req, res) => {
   try {
@@ -332,7 +354,6 @@ app.get("/capitalGains", async (req, res) => {
     res.status(500).send("An error occurred while scraping data.");
   }
 });
-
 
 app.get("/rmd", async (req, res) => {
   try {
