@@ -329,6 +329,7 @@ app.get("/capitalGains", async (req, res) => {
   }
 });
 
+
 // Save scraped data to MongoDB
 //   await Data.insertMany(scrapedData);
 
