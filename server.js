@@ -1,78 +1,300 @@
-const express = require('express');
-const axios = require('axios');
-const cheerio = require('cheerio');
-const mongoose = require('mongoose');
+const express = require("express");
+const axios = require("axios");
+const cheerio = require("cheerio");
+const mongoose = require("mongoose");
+const Tax = require("./schema.js");
+const { ObjectId } = require("mongoose").Types;
+const taxId = "67d8912a816a92a8fcb6dd55";
+const cors = require("cors");
+const jwt = require("jsonwebtoken");
+const User = require("./models/user.js");
+const dotenv = require("dotenv");
+const path = require("path");
+
+// Manually load the .env file
+dotenv.config({ path: path.resolve(__dirname, "process.env") });
+
+console.log("Loaded JWT_SECRET:", process.env.JWT_SECRET);
 
 const app = express();
-const PORT = 3000;
+app.use(cors());
+app.use(express.json());
+const PORT = 8080;
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/webscraper', { useNewUrlParser: true, useUnifiedTopology: true });
-
-// Define a schema and model for storing scraped data
-const DataSchema = new mongoose.Schema({
-  title: String,
-  content: String,
-});
-const Data = mongoose.model('Data', DataSchema);
+mongoose.connect("mongodb://localhost:27017/hungerarc", { useNewUrlParser: true, useUnifiedTopology: true });
 
 // Web scraping route
-app.get('/scrape', async (req, res) => {
+app.get("/standardDeductions", async (req, res) => {
   try {
-    const response = await axios.get('https://example.gov');
+    const response = await axios.get("https://www.irs.gov/publications/p17#en_US_2024_publink1000283782");
     const $ = cheerio.load(response.data);
 
-    const scrapedData = [];
-    $('selector').each((index, element) => { // Replace 'selector' with the actual HTML element selector
-      const title = $(element).find('title-selector').text(); // Replace 'title-selector' with the actual title selector
-      const content = $(element).find('content-selector').text(); // Replace 'content-selector' with the actual content selector
-      scrapedData.push({ title, content });
-    });
+    const targetLink = $('.table a[name="en_US_2024_publink1000283782"]');
+    console.log("Found target link:", targetLink.text());
 
-    // Save scraped data to MongoDB
-    await Data.insertMany(scrapedData);
+    if (targetLink.length > 0) {
+      // Navigate to the sibling or parent elements to find the table
+      targetLink
+        .closest(".table") // Find the closest .table div
+        .find(".table-contents tbody tr") // Select rows within tbody of the table-contents
+        .each((rowIndex, row) => {
+          $(row)
+            .find("td")
+            .each((colIndex, cell) => {
+              const cellText = $(cell).text();
+              if (colIndex == 1 && rowIndex == 1) {
+                const cleanedCell = cellText.replace(/[\$,]/g, "");
+                Tax.updateOne({ _id: new ObjectId(taxId) }, { $set: { "single.standardDeductions": Number(cleanedCell) } })
+                  .then((doc) => console.log("Saved Tax Document:", doc))
+                  .catch((err) => console.error("Error Saving Document:", err));
+              } else if (colIndex == 1 && rowIndex == 2) {
+                const cleanedCell = cellText.replace(/[\$,]/g, "");
+                Tax.updateOne({ _id: new ObjectId(taxId) }, { $set: { "married.standardDeductions": Number(cleanedCell) } })
+                  .then((doc) => console.log("Saved Tax Document:", doc))
+                  .catch((err) => console.error("Error Saving Document:", err));
+              }
 
-    res.send('Scraping and saving data completed!');
+              console.log(`Row ${rowIndex + 1}, Column ${colIndex + 1}: ${cellText}`);
+            });
+        });
+    } else {
+      console.log("Target link not found. Please check the selector.");
+    }
   } catch (error) {
     console.error(error);
-    res.status(500).send('An error occurred while scraping data.');
+    res.status(500).send("An error occurred while scraping data.");
+  }
+});
+
+app.get("/incomeSingle", async (req, res) => {
+  try {
+    const response = await axios.get("https://www.irs.gov/filing/federal-income-tax-rates-and-brackets");
+    const $ = cheerio.load(response.data);
+    const targetParagraph = $('p:contains("For a single taxpayer, the rates are:")');
+    const newIncomeRanges = []
+    const newTaxRates = []
+    
+    const targetLink = targetParagraph.next("table");
+    //console.log("Found target link:", targetLink.text());
+
+    if (targetLink.length > 0) {
+      // Navigate to the sibling or parent elements to find the table
+      targetLink
+        .find("tbody tr") // Select rows within tbody of the table-contents
+        .each((rowIndex, row) => {
+          cleanedRate = null;
+          startRange = null;
+          endRange = null;
+          $(row)
+            .find("td")
+            .each((colIndex, cell) => {
+              const cellText = $(cell).text().trim();
+              //console.log(`Row ${rowIndex}, Column ${colIndex}: ${cellText}`);
+              if (colIndex === 0) {
+                // Assuming the rate is in column 0
+                cleanedRate = cellText.replace(/[\%,]/g, ""); // Remove percent sign and commas
+              } else if (colIndex === 1) {
+                startRange = cellText.replace(/[\$,]/g, ""); // Remove dollar signs and commas
+              } else if (colIndex === 2) {
+                endRange = cellText.replace(/[\$,]/g, ""); // Remove dollar signs and commas
+              }
+            });
+
+          // Once all the columns for a row are processed, update the document in MongoDB
+          if (cleanedRate && startRange && endRange) {
+            console.log(`Rate ${cleanedRate}, start ${startRange}, end ${endRange}`);
+            // Convert the cleaned rate, startRange, and endRange into numbers
+            const rateNum = Number(cleanedRate);
+            const startRangeNum = Number(startRange);
+            if (endRange == "And up") {
+              endRange = 1000000000;
+            }
+            const endRangeNum = Number(endRange);
+            newIncomeRanges.push([startRangeNum,endRangeNum]);
+            newTaxRates.push(rateNum);
+            // Now, update the MongoDB document for the correct tax bracket
+          }
+        });
+        Tax.updateOne(
+          { _id: new ObjectId(taxId) },
+          {
+            $set: {
+              "single.federalIncomeTaxRatesBrackets": newIncomeRanges.map((range, index) => ({
+                incomeRange: range,
+                taxRate: newTaxRates[index],
+              }))
+            }
+          }
+        )
+        .then(result => {
+          console.log('All income ranges and tax rates updated successfully:', result);
+        })
+        .catch(err => {
+          console.error('Error updating income ranges and tax rates:', err);
+        });
+
+    } else {
+      console.log("Target link not found. Please check the selector.");
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("An error occurred while scraping data.");
   }
 });
 
 
-const fs = require('fs');
-const yaml = require('js-yaml');
-const { MongoClient } = require('mongodb');
-
-
-async function run() {
+app.get("/incomeMarried", async (req, res) => {
   try {
-    // Connect to MongoDB
-    const client = new MongoClient(url);
-    await client.connect();
-    console.log("Connected to MongoDB server");
+    const response = await axios.get("https://www.irs.gov/filing/federal-income-tax-rates-and-brackets");
+    const $ = cheerio.load(response.data);
+    const newIncomeRanges = []
+    const newTaxRates = []
+    
+    const aTag = $('a:contains("Married filing jointly or qualifying surviving spouse")');
+    const targetLink = aTag.closest('div').next('div').find('table');
+    console.log("Found target link:", targetLink.text());
 
-    const db = client.db(dbName);
-    const collection = db.collection('your_collection');
+    if (targetLink.length > 0) {
+      // Navigate to the sibling or parent elements to find the table
+      targetLink
+        .find("tbody tr") // Select rows within tbody of the table-contents
+        .each((rowIndex, row) => {
+          cleanedRate = null;
+          startRange = null;
+          endRange = null;
+          $(row)
+            .find("td")
+            .each((colIndex, cell) => {
+              const cellText = $(cell).text().trim();
+              console.log(`Row ${rowIndex}, Column ${colIndex}: ${cellText}`);
+              if (colIndex === 0) {
+                // Assuming the rate is in column 0
+                cleanedRate = cellText.replace(/[\%,]/g, ""); // Remove percent sign and commas
+              } else if (colIndex === 1) {
+                startRange = cellText.replace(/[\$,]/g, ""); // Remove dollar signs and commas
+              } else if (colIndex === 2) {
+                endRange = cellText.replace(/[\$,]/g, ""); // Remove dollar signs and commas
+              }
+            });
 
-    // Load and parse the YAML file
-    const stateTaxes = fs.readFileSync('state-taxes.yaml', 'utf8');
-    const data = yaml.load(stateTaxes);
+          // Once all the columns for a row are processed, update the document in MongoDB
+          if (cleanedRate && startRange && endRange) {
+            console.log(`Rate ${cleanedRate}, start ${startRange}, end ${endRange}`);
+            // Convert the cleaned rate, startRange, and endRange into numbers
+            const rateNum = Number(cleanedRate);
+            const startRangeNum = Number(startRange);
+            if (endRange == "And up") {
+              endRange = 1000000000;
+            }
+            const endRangeNum = Number(endRange);
+            newIncomeRanges.push([startRangeNum,endRangeNum]);
+            newTaxRates.push(rateNum);
+            // Now, update the MongoDB document for the correct tax bracket
+          }
+        });
+        Tax.updateOne(
+          { _id: new ObjectId(taxId) },
+          {
+            $set: {
+              "married.federalIncomeTaxRatesBrackets": newIncomeRanges.map((range, index) => ({
+                incomeRange: range,
+                taxRate: newTaxRates[index],
+              }))
+            }
+          }
+        )
+        .then(result => {
+          console.log('All income ranges and tax rates updated successfully:', result);
+        })
+        .catch(err => {
+          console.error('Error updating income ranges and tax rates:', err);
+        });
 
-    // Insert parsed data into MongoDB collection
-    await stateTaxes.insertOne(data);
+    } else {
+      console.log("Target link not found. Please check the selector.");
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("An error occurred while scraping data.");
+  }
+});
+
+app.post("/auth/google", async (req, res) => {
+  // mongoose.connection.on("connected", () => console.log("MongoDB is connected ✅"));
+  // mongoose.connection.on("error", (err) => console.error("MongoDB connection error ❌:", err));
+  const { googleId, email, guest} = req.body;
+  console.log("Received data:", { googleId, email, guest });
+  try {
+    let user = await User.findOne({ $or: [{ googleId }, { email }] });
+
+    console.log(user);
+
+    if (!user) {
+      user = new User({ googleId, email, guest, lastLogin: Date.now()});
+      console.log(user);
+      await user.save();
+      console.log("user saved!")
+    }
+    else
+    {
+      user.lastLogin = Date.now();
+      await user.save();
     }
 
-    console.log("Data inserted successfully!");
+    // Generate JWT token
+    console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
-    // Close the connection
-    await client.close();
+    const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    res.json({ user, token });
   } catch (err) {
-    console.error("Error:", err.stack);
+    console.log(err.message);
+    res.status(500).json({ message: err, error: err });
   }
-}
+});
+
+// Save scraped data to MongoDB
+//   await Data.insertMany(scrapedData);
+
+//   res.send('Scraping and saving data completed!');
+// } catch (error) {
+//   console.error(error);
+//   res.status(500).send('An error occurred while scraping data.');
+
+// const fs = require('fs');
+// const yaml = require('js-yaml');
+// const { MongoClient } = require('mongodb');
+
+// async function run() {
+//   try {
+//     // Connect to MongoDB
+//     const client = new MongoClient(url);
+//     await client.connect();
+//     console.log("Connected to MongoDB server");
+
+//     const db = client.db(dbName);
+//     const collection = db.collection('your_collection');
+
+//     // Load and parse the YAML file
+//     const stateTaxes = fs.readFileSync('state-taxes.yaml', 'utf8');
+//     const data = yaml.load(stateTaxes);
+
+//     // Insert parsed data into MongoDB collection
+//     await stateTaxes.insertOne(data);
+//     }
+
+//     console.log("Data inserted successfully!");
+
+//     // Close the connection
+//     await client.close();
+//   } catch (err) {
+//     console.error("Error:", err.stack);
+//   }
+// }
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
-
