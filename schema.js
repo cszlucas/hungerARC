@@ -67,7 +67,8 @@ const taxSchema = new mongoose.Schema({
 const Tax = mongoose.model('Tax', taxSchema);
 module.exports = Tax;
 
-// Example: Creating a new document based on the schema
+
+// // Example: Creating a new document based on the schema
 // const newTaxData = new Tax({
 //   year: 2025,
 //   single: {
