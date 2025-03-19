@@ -33,6 +33,18 @@ export const textFieldStyles = {
   },
 };
 
+export const multiLineTextFieldStyles = {
+  // maxWidth: '300px',
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'grey.300',
+    border: 'none',
+    '& fieldset': { display: 'none' },
+    '&:hover fieldset': { display: 'none' },
+    '&.Mui-focused fieldset': { display: 'none' },
+  },
+};
+
+
 export const numFieldStyles = {
   maxWidth: '140px',
   height: '40px',
@@ -72,4 +84,5 @@ export const backContinueContainerStyles = {
   justifyContent: 'flex-end',
   gap: 2,
   marginTop: 4,
+  marginBottom: 4,
 };

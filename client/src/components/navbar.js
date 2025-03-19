@@ -117,7 +117,7 @@ export default function NavBar({ currentPage }) {
     <>
       <AppBar position="static">
         <Toolbar>
-          <Typography variant="h5" sx={{ flexGrow: 1 }}>
+          <Typography variant="h5" sx={{ flexGrow: 1, marginTop: 2, marginBottom: 2 }}>
             Hunger <span style={{ color: "#00825B" }}>Finance</span>
           </Typography>
           <IconButton edge="end" color="inherit" onClick={toggleDrawer(true)}>

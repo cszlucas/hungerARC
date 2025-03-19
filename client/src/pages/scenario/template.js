@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, ToggleButton, ToggleButtonGroup, MenuItem } from '@mui/material';
-import theme from '../../components/theme';
-import Navbar from '../../components/navbar';
-import PageHeader from '../../components/pageHeader';
+import theme from '../../../components/theme';
+import Navbar from '../../../components/navbar';
+import PageHeader from '../../../components/pageHeader';
 import {
   stackStyles,
   titleStyles,
@@ -12,11 +12,10 @@ import {
   backContinueContainerStyles,
   buttonStyles,
   rowBoxStyles,
-} from '../../components/styles';  // Import your modular styles
+} from '../../../components/styles';  // Import your modular styles
 
-
-const TemplateFunc = () => {
-  const [toogleType, setToogleType] = useState('Toggle A');
+const EventSeries = () => {
+  const [toggleType, setToggleType] = useState('Toggle A');
   const [value, setValue] = useState('');
 
   const handleToggleChange = (event, newToggleType) => {
@@ -60,7 +59,7 @@ const TemplateFunc = () => {
             </Typography>
 
             <ToggleButtonGroup
-              value={inflationType}
+              value={toggleType}
               exclusive
               onChange={handleToggleChange}
               aria-label="toggles"
@@ -79,7 +78,7 @@ const TemplateFunc = () => {
           </Box>
 
           {/* Inflation Value (Conditional) */}
-          {inflationType === 'none' && (
+          {toggleType === 'Toggle A' && (
             <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
               <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
                 Temp Value
@@ -88,8 +87,8 @@ const TemplateFunc = () => {
               <TextField
                 type="number"
                 variant="outlined"
-                value={inflationValue}
-                onChange={handleInflationValueChange}
+                value={value}
+                onChange={handleValueChange}
                 sx={numFieldStyles}
               />
             </Box>
@@ -111,4 +110,4 @@ const TemplateFunc = () => {
   );
 };
 
-export default TemplateFunc;
+export default EventSeries;
