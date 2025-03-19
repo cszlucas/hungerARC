@@ -6,8 +6,23 @@ const Tax = require("./schema.js");
 const RMD = require("./rmd-schema.js");
 const { ObjectId } = require("mongoose").Types;
 const taxId = "67d8912a816a92a8fcb6dd55";
+
 const rmdId = "67da256d6fc3c7abbf1d675d";
+
+const cors = require("cors");
+const jwt = require("jsonwebtoken");
+const User = require("./models/user.js");
+const dotenv = require("dotenv");
+const path = require("path");
+
+// Manually load the .env file
+dotenv.config({ path: path.resolve(__dirname, "process.env") });
+
+console.log("Loaded JWT_SECRET:", process.env.JWT_SECRET);
+
 const app = express();
+app.use(cors());
+app.use(express.json());
 const PORT = 8080;
 
 // Connect to MongoDB
@@ -206,6 +221,43 @@ app.get("/incomeMarried", async (req, res) => {
   }
 });
 
+app.post("/auth/google", async (req, res) => {
+  // mongoose.connection.on("connected", () => console.log("MongoDB is connected ✅"));
+  // mongoose.connection.on("error", (err) => console.error("MongoDB connection error ❌:", err));
+  const { googleId, email, guest} = req.body;
+  console.log("Received data:", { googleId, email, guest });
+  try {
+    let user = await User.findOne({ $or: [{ googleId }, { email }] });
+
+    console.log(user);
+
+    if (!user) {
+      user = new User({ googleId, email, guest, lastLogin: Date.now()});
+      console.log(user);
+      await user.save();
+      console.log("user saved!")
+    }
+    else
+    {
+      user.lastLogin = Date.now();
+      await user.save();
+    }
+
+    // Generate JWT token
+    console.log("JWT_SECRET:", process.env.JWT_SECRET);
+
+    const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    res.json({ user, token });
+  } catch (err) {
+    console.log(err.message);
+    res.status(500).json({ message: err, error: err });
+  }
+});
+
+
 app.get("/capitalGains", async (req, res) => {
   try {
     const response = await axios.get("https://www.irs.gov/taxtopics/tc409");
@@ -280,6 +332,7 @@ app.get("/capitalGains", async (req, res) => {
     res.status(500).send("An error occurred while scraping data.");
   }
 });
+
 
 app.get("/rmd", async (req, res) => {
   try {
