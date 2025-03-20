@@ -1,0 +1,119 @@
+states:
+  - name: New York
+    year: 2024
+    single:
+      - stateIncomeTaxRatesBrackets:
+          - incomeRange: [0, 8500]
+            taxRate: 4
+          - incomeRange: [8500, 11700]
+            taxRate: 4.5
+          - incomeRange: [11700, 13900]
+            taxRate: 5.25
+          - incomeRange: [13900, 80650]
+            taxRate: 5.5
+          - incomeRange: [80650, 215400]
+            taxRate: 6
+          - incomeRange: [215400, 1077550]
+            taxRate: 6.85
+          - incomeRange: [1077550, 5000000]
+            taxRate: 9.65
+          - incomeRange: [5000000, 25000000]
+            taxRate: 10.3
+          - incomeRange: [25000000, null]
+            taxRate: 10.9
+      - standardDeduction: 3100
+    married:
+      - stateIncomeTaxRatesBrackets:
+          - incomeRange: [0, 17150]
+            taxRate: 4
+          - incomeRange: [17150, 23600]
+            taxRate: 4.5
+          - incomeRange: [23600, 27900]
+            taxRate: 5.25
+          - incomeRange: [27900, 161550]
+            taxRate: 5.5
+          - incomeRange: [161550, 323200]
+            taxRate: 6
+          - incomeRange: [323200, 2155350]
+            taxRate: 6.85
+          - incomeRange: [2155350, 5000000]
+            taxRate: 9.65
+          - incomeRange: [5000000, 25000000]
+            taxRate: 10.3
+          - incomeRange: [25000000, null]
+            taxRate: 10.9
+      - standardDeduction: 16050
+  - name: New Jersey
+    year: 2024
+    single:
+      - stateIncomeTaxRatesBrackets:
+          - incomeRange: [0, 20000]
+            taxRate: 1.4
+          - incomeRange: [20000, 35000]
+            taxRate: 1.75
+          - incomeRange: [35000, 40000]
+            taxRate: 3.5
+          - incomeRange: [40000, 75000]
+            taxRate: 5.525
+          - incomeRange: [75000, 500000]
+            taxRate: 6.37
+          - incomeRange: [500000, 1000000]
+            taxRate: 8.97
+          - incomeRange: [1000000, null]
+            taxRate: 10.75
+      - standardDeduction: 1000
+    married:
+      - stateIncomeTaxRatesBrackets:
+          - incomeRange: [0, 20000]
+            taxRate: 1.4
+          - incomeRange: [20000, 50000]
+            taxRate: 1.75
+          - incomeRange: [50000, 70000]
+            taxRate: 2.45
+          - incomeRange: [70000, 80000]
+            taxRate: 3.5
+          - incomeRange: [80000, 150000]
+            taxRate: 5.525
+          - incomeRange: [150000, 500000]
+            taxRate: 6.37
+          - incomeRange: [500000, 1000000]
+            taxRate: 8.97
+          - incomeRange: [1000000, null]
+            taxRate: 10.75
+      - standardDeduction: 2000
+  - name: Connecticut
+    year: 2024
+    single:
+      - stateIncomeTaxRatesBrackets:
+          - incomeRange: [0, 10000]
+            taxRate: 2
+          - incomeRange: [10000, 50000]
+            taxRate: 4.5
+          - incomeRange: [50000, 100000]
+            taxRate: 5.5
+          - incomeRange: [100000, 200000]
+            taxRate: 6
+          - incomeRange: [200000, 250000]
+            taxRate: 6.5
+          - incomeRange: [250000, 500000]
+            taxRate: 6.9
+          - incomeRange: [500000, null]
+            taxRate: 6.99
+      - standardDeduction: 0
+    married:
+      - stateIncomeTaxRatesBrackets:
+          - incomeRange: [0, 20000]
+            taxRate: 2
+          - incomeRange: [20000, 100000]
+            taxRate: 4.5
+          - incomeRange: [100000, 200000]
+            taxRate: 5.5
+          - incomeRange: [200000, 400000]
+            taxRate: 6
+          - incomeRange: [400000, 500000]
+            taxRate: 6.5
+          - incomeRange: [500000, 1000000]
+            taxRate: 6.9
+          - incomeRange: [1000000, null]
+            taxRate: 6.99
+      - standardDeduction: 0
