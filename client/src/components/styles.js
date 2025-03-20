@@ -21,7 +21,7 @@ export const rowBoxStyles = {
 };
 
 export const textFieldStyles = {
-  maxWidth: '300px',
+  minWidth: '200px',
   height: '40px',
   '& .MuiOutlinedInput-root': {
     height: '40px',
@@ -34,7 +34,7 @@ export const textFieldStyles = {
 };
 
 export const multiLineTextFieldStyles = {
-  // maxWidth: '300px',
+  minWidth: '200px',
   '& .MuiOutlinedInput-root': {
     backgroundColor: 'grey.300',
     border: 'none',

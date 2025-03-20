@@ -70,7 +70,7 @@ const EventSeries = () => {
         {/* Stack for title and save button */}
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={stackStyles}>
           <Typography variant="h2" component="h1" sx={titleStyles}>
-            Your Title Starts Here
+            Event Series
           </Typography>
           <Button variant="contained" color="secondary" sx={buttonStyles}>
             Save
@@ -79,10 +79,6 @@ const EventSeries = () => {
 
         <PageHeader />
 
-        {/* Row 3 - Inflation Assumptions */}
-        <Typography variant="h6" sx={{ fontWeight: 'bold', marginTop: 4, marginBottom: 2 }}>
-          Subtitle Text Here
-        </Typography>
 
         <Box sx={rowBoxStyles}>
           {/* First Box with Inputs */}
