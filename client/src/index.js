@@ -9,7 +9,6 @@ import ScenarioList from './pages/scenario/scenarioList';
 import Basics from './pages/scenario/basics';
 import InvestmentLists from './pages/scenario/invesments/investmentLists';
 import EventSeries from './pages/scenario/events/eventSeries';
-import Investment from './pages/scenario/invesments/investment';
 import InvestmentType from './pages/scenario/invesments/investmentType';
 import Income from './pages/scenario/events/income';
 import Expense from './pages/scenario/events/expense';
@@ -48,7 +47,6 @@ const router = createBrowserRouter([
       { path: "basics", element: <Basics /> },
       { path: "investment_lists", element: <InvestmentLists /> },
       { path: "event_series", element: <EventSeries /> },
-      { path: "investment", element: <Investment /> },
       { path: "investment_type", element: <InvestmentType /> },
       { path: "income", element: <Income /> },
       { path: "expense", element: <Expense /> },

@@ -1,18 +1,19 @@
 import React, { useState } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, InputAdornment, Box, List, MenuItem, ListItem, ListItemText, IconButton, Backdrop, Modal, Fade, TextField } from '@mui/material';
+import {
+  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, 
+  InputAdornment, Box, List, MenuItem, ListItem, ListItemText, 
+  IconButton, Backdrop, Modal, Fade, TextField
+} from '@mui/material';
 import theme from '../../../components/theme';
 import Navbar from '../../../components/navbar';
 import PageHeader from '../../../components/pageHeader';
 import {
-  stackStyles,
-  titleStyles,
-  buttonStyles,
-  rowBoxStyles,
-  backContinueContainerStyles,
-  textFieldStyles,
+  stackStyles, titleStyles, buttonStyles, rowBoxStyles, 
+  backContinueContainerStyles, textFieldStyles
 } from '../../../components/styles';
 
 import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';  
 
 const InvestmentLists = () => {
   const [open, setOpen] = useState(false);
@@ -51,6 +52,11 @@ const InvestmentLists = () => {
     }
   };
 
+  const handleDeleteInvestment = (index) => {
+    const updatedInvestments = investments.filter((_, i) => i !== index);
+    setInvestments(updatedInvestments);
+  };
+
   const InvestList = ({ list, taxType }) => {
     const filteredInvestments = list.filter(item => item.taxType === taxType);
 
@@ -68,12 +74,21 @@ const InvestmentLists = () => {
               primary={<span style={{ fontWeight: 'bold' }}>{item.investmentTypeName}</span>}
               secondary={`Value: ${item.value}`}
             />
+            
             <IconButton
               edge="end"
               aria-label="edit"
               onClick={() => alert(`Edit ${item.investmentTypeName}`)}
             >
               <EditIcon />
+            </IconButton>
+
+            <IconButton
+              edge="end"
+              aria-label="delete"
+              onClick={() => handleDeleteInvestment(investments.indexOf(item))}  // Delete the selected row
+            >
+              <DeleteIcon />
             </IconButton>
           </ListItem>
         ))}
@@ -139,7 +154,7 @@ const InvestmentLists = () => {
         <Backdrop open={open} onClick={handleClose} sx={{ zIndex: 1300 }}>
           <Fade in={open}>
             <Box
-              onClick={(e) => e.stopPropagation()}  // Prevent closing when clicking inside the box
+              onClick={(e) => e.stopPropagation()}  
               sx={{
                 backgroundColor: 'white',
                 boxShadow: 24,
@@ -158,18 +173,23 @@ const InvestmentLists = () => {
                 <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
                   Investment Name
                 </Typography>
-                <TextField
-                  select
-                  name="investmentTypeName"
-                  value={newInvestment.investmentTypeName}
-                  onChange={handleChange}
-                  sx={textFieldStyles}
-                  fullWidth
-                >
-                  <MenuItem value="JAWS">JAWS</MenuItem>
-                  <MenuItem value="Roth IRA">Roth IRA</MenuItem>
-                  <MenuItem value="Hunger Finance">Hunger Finance</MenuItem>
-                </TextField>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 4 }}>
+                  <TextField
+                    select
+                    name="investmentTypeName"
+                    value={newInvestment.investmentTypeName}
+                    onChange={handleChange}
+                    sx={textFieldStyles}
+                    fullWidth
+                  >
+                    <MenuItem value="JAWS">JAWS</MenuItem>
+                    <MenuItem value="Roth IRA">Roth IRA</MenuItem>
+                    <MenuItem value="Hunger Finance">Hunger Finance</MenuItem>
+                  </TextField>
+                  <Button variant="contained" color="primary" onClick={handleClose} sx={{textTransform: 'none', minWidth: 150}}>
+                    Add Custom Type
+                  </Button>
+                </Box>
               </Box>
 
               <Box sx={rowBoxStyles}>
@@ -196,12 +216,12 @@ const InvestmentLists = () => {
                   </Typography>
                   <TextField
                     type="number"
-                    name="value"  // <-- Missing name attribute needed for `handleChange`
+                    name="value"
                     value={newInvestment.value}
                     onChange={handleChange}
                     sx={textFieldStyles}
                     fullWidth
-                    InputProps={{  // <-- Use InputProps instead of slotProps
+                    InputProps={{  
                       startAdornment: <InputAdornment position="start">$</InputAdornment>,
                     }}
                   />
@@ -213,7 +233,7 @@ const InvestmentLists = () => {
                   Cancel
                 </Button>
                 <Button variant="contained" color="secondary" onClick={handleAddInvestment} sx={{textTransform: 'none'}}>
-                  Add Investment
+                  Save
                 </Button>
               </Box>
             </Box>

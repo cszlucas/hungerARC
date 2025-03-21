@@ -1,6 +1,10 @@
 import React, { useState } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, List, ListItem, ListItemText, IconButton } from '@mui/material';
+import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, List, ListItem, ListItemText, IconButton, Backdrop, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import PaymentsIcon from '@mui/icons-material/Payments';
+import SellIcon from '@mui/icons-material/Sell';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import BalanceIcon from '@mui/icons-material/Balance';
 import theme from '../../../components/theme';
 import Navbar from '../../../components/navbar';
 import PageHeader from '../../../components/pageHeader';
@@ -23,7 +27,8 @@ const EventSeries = () => {
   const [description, setDescription] = useState('');
   const [startYear, setStartYear] = useState('');
   const [endYear, setEndYear] = useState('');
-  
+  const [openBackdrop, setOpenBackdrop] = useState(false);
+
   // Example event series
   const eventSeries = [
     { 'Event A1': 'Income' },
@@ -58,7 +63,16 @@ const EventSeries = () => {
   };
 
   const handleAddEvent = () => {
-    alert('Add Event functionality here');
+    setOpenBackdrop(true);
+  };
+
+  const handleCloseBackdrop = () => {
+    setOpenBackdrop(false);
+  };
+
+  const handleSelectEventType = (type) => {
+    alert(`Selected Event: ${type}`);
+    setOpenBackdrop(false);
   };
 
   return (
@@ -78,7 +92,6 @@ const EventSeries = () => {
         </Stack>
 
         <PageHeader />
-
 
         <Box sx={rowBoxStyles}>
           {/* First Box with Inputs */}
@@ -137,12 +150,11 @@ const EventSeries = () => {
           {/* Empty Box */}
           <Box sx={{ flex: 1 }}>
             {/* List of Event Series */}
-            
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <Typography variant="h6" sx={{ fontWeight: 'bold', marginTop: 4, marginBottom: 2 }}>
                 List of Event Series
               </Typography>
-              <Button variant="contained" color="primary" onClick={handleAddEvent} sx={{textTransform: 'none'}}>
+              <Button variant="contained" color="primary" onClick={handleAddEvent} sx={{ textTransform: 'none' }}>
                 Add
               </Button>
             </Stack>
@@ -174,8 +186,6 @@ const EventSeries = () => {
           </Box>
         </Box>
 
-        
-
         {/* Back and Continue buttons */}
         <Box sx={backContinueContainerStyles}>
           <Button variant="contained" color="primary" sx={buttonStyles}>
@@ -185,6 +195,44 @@ const EventSeries = () => {
             Continue
           </Button>
         </Box>
+
+        {/* Backdrop with Buttons for Event Type Selection */}
+        <Backdrop open={openBackdrop} onClick={handleCloseBackdrop} sx={{ zIndex: 1200, color: '#fff' }}>
+          <Dialog open={openBackdrop} onClose={handleCloseBackdrop} >
+            <DialogTitle>
+              <Typography variant="h5" sx={{ fontWeight: 'bold', marginTop: 2, marginBottom: 1, minWidth: 400 }}>
+                Select a category
+              </Typography>
+            </DialogTitle>
+            <DialogContent>
+              <Stack direction="row" spacing={3} sx={{ justifyContent: 'center' }}>
+                <Button variant="contained" onClick={() => handleSelectEventType('Income')} 
+                  sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 200, marginBottom: 1 }}>
+                  <PaymentsIcon sx={{ fontSize: 60, marginBottom: 1 }} />
+                  Income
+                </Button>
+                <Button variant="contained" onClick={() => handleSelectEventType('Expense')} 
+                  sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 200, marginBottom: 1 }}>
+                  <SellIcon sx={{ fontSize: 60, marginBottom: 1 }} />
+                  Expense
+                </Button>
+              </Stack>
+              <Stack direction="row" spacing={3} sx={{ justifyContent: 'center', mt: 2 }}>
+                <Button variant="contained" onClick={() => handleSelectEventType('Invest')} 
+                  sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 200, marginBottom: 1 }}>
+                  <AccountBalanceIcon sx={{ fontSize: 60, marginBottom: 1 }} />
+                  Invest
+                </Button>
+                <Button variant="contained" onClick={() => handleSelectEventType('Rebalance')} 
+                  sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 200, marginBottom: 1 }}>
+                  <BalanceIcon sx={{ fontSize: 60, marginBottom: 1 }} />
+                  Rebalance
+                </Button>
+              </Stack>
+            </DialogContent>
+          </Dialog>
+        </Backdrop>
+
       </Container>
     </ThemeProvider>
   );

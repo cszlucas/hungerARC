@@ -26,16 +26,16 @@ export default function PageHeader() {
 
         {/* Investments */}
         <Typography
-          color={isActive(["invest", "investment_type", "investment"]) ? "primary" : "textPrimary"}
-          fontWeight={isActive(["invest", "investment_type", "investment"]) ? "bold" : "normal"}
+          color={isActive(["investment_type", "investment_lists"]) ? "primary" : "textPrimary"}
+          fontWeight={isActive(["investment_type", "investment_lists"]) ? "bold" : "normal"}
         >
           Investments
         </Typography>
 
         {/* Event Series */}
         <Typography
-          color={isActive(["eventSeries", "expense", "income", "rebalance"]) ? "primary" : "textPrimary"}
-          fontWeight={isActive(["eventSeries", "expense", "income", "rebalance"]) ? "bold" : "normal"}
+          color={isActive(["event_series", "invest", "expense", "income", "rebalance"]) ? "primary" : "textPrimary"}
+          fontWeight={isActive(["event_series", "invest", "expense", "income", "rebalance"]) ? "bold" : "normal"}
         >
           Event Series
         </Typography>
