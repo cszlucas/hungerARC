@@ -4,9 +4,9 @@ const cheerio = require("cheerio");
 const mongoose = require("mongoose");
 const Tax = require("./models/tax.js");
 const RMD = require("./models/rmd-schema.js");
-const { IncomeEvent } = require('./models/incomeEvent');
-const { scenario } = require('./models/Scenario');
-const { InvestmentType } = require('./models/InvestmentType');
+const { Events } = require("./models/eventSeries.js");
+const { scenario } = require("./models/scenario.js");
+const { InvestmentType } = require("./models/investmentType.js");
 const { ObjectId } = require("mongoose").Types;
 const taxId = "67d8912a816a92a8fcb6dd55";
 
@@ -31,8 +31,7 @@ const PORT = 8080;
 // Connect to MongoDB
 mongoose.connect("mongodb://localhost:27017/hungerarc", { useNewUrlParser: true, useUnifiedTopology: true });
 
-
-app.post('/investmentType', async (req, res) => {
+app.post("/investmentType", async (req, res) => {
   const { name, description, annualReturn, expenseRatio, annualIncome, taxability } = req.body;
 
   try {
@@ -43,81 +42,124 @@ app.post('/investmentType', async (req, res) => {
         type: annualReturn.type,
         fixed: annualReturn.fixed,
         mean: annualReturn.mean,
-        stdDev: annualReturn.stdDev
+        stdDev: annualReturn.stdDev,
       },
       expenseRatio,
       annualIncome: {
         type: annualIncome.type,
         fixed: annualIncome.fixed,
         mean: annualIncome.mean,
-        stdDev: annualIncome.stdDev
+        stdDev: annualIncome.stdDev,
       },
-      taxability
+      taxability,
     });
 
     const savedInvestmentType = await newInvestmentType.save();
-    res.status(201).json(savedInvestmentType); 
+    res.status(201).json(savedInvestmentType);
   } catch (err) {
-    console.error('Error saving InvestmentType:', err);
-    res.status(500).json({ error: 'Error saving InvestmentType' });
+    console.error("Error saving InvestmentType:", err);
+    res.status(500).json({ error: "Error saving InvestmentType" });
   }
 });
 
-
-app.post('/basicInfo', async (req, res) => {
+app.post("/basicInfo", async (req, res) => {
   try {
-    const { name, filingStatus, financialGoal, inflationAssumption, birthYearUser, lifeExpectancy, stateResident} = req.body
+    const { name, filingStatus, financialGoal, inflationAssumption, birthYearUser, lifeExpectancy, stateResident } = req.body;
 
     const newBasicInfo = new scenario({
       name,
       filingStatus,
       financialGoal,
-      inflationAssumption:{
+      inflationAssumption: {
         type: inflationAssumption.inflationAssumptionType,
         fixedRate: inflationAssumption.fixedRate,
         mean: inflationAssumption.mean,
         stdDev: inflationAssumption.stdDev,
         min: inflationAssumption.min,
-        max: inflationAssumption.max
+        max: inflationAssumption.max,
       },
       birthYearUser,
       lifeExpectancy: {
         type: lifeExpectancy.lifeExpectancyType,
-        fixedAge: lifeExpectancy.fixedAge, 
-        mean: lifeExpectancy.mean, 
-        stdDev: lifeExpectancy.stdDev
+        fixedAge: lifeExpectancy.fixedAge,
+        mean: lifeExpectancy.mean,
+        stdDev: lifeExpectancy.stdDev,
       },
-      stateResident
+      stateResident,
     });
 
     const savedBasicInfo = await newBasicInfo.save();
 
     res.status(201).json(savedBasicInfo);
   } catch (err) {
-    console.error('Error creating basic info:', err);
-    res.status(500).json({ error: 'Failed to create basic info' });
+    console.error("Error creating basic info:", err);
+    res.status(500).json({ error: "Failed to create basic info" });
   }
 });
 
-
-app.post('/income-event', async (req, res) => {
+app.post("/incomeEvent", async (req, res) => {
   try {
     const { initialAmount, annualChange, userPercentage, inflationAdjustment, isSocialSecurity } = req.body;
 
-    const newIncomeEvent = new IncomeEvent({
+    const newIncomeEvent = new Events.IncomeEvent({
       initialAmount,
-      annualChange,
+      annualChange: {
+        type: annualChange.type,
+        amount: annualChange.amount,
+      },
       userPercentage,
       inflationAdjustment,
-      isSocialSecurity
+      isSocialSecurity,
     });
 
     const savedIncomeEvent = await newIncomeEvent.save();
 
     res.status(201).json(savedIncomeEvent);
   } catch (err) {
-    console.error('Error creating IncomeEvent:', err);
-    res.status(500).json({ error: 'Failed to create IncomeEvent' });
+    console.error("Error creating IncomeEvent:", err);
+    res.status(500).json({ error: "Failed to create IncomeEvent" });
+  }
+});
+
+app.post("/expenseEvent", async (req, res) => {
+  try {
+    const { initialAmount, annualChange, userPercentage, inflationAdjustment, isDiscretionary } = req.body;
+
+    const newExpenseEvent = new Events.ExpenseEvent({
+      initialAmount,
+      annualChange: {
+        type: annualChange.type,
+        amount: annualChange.amount,
+      },
+      userPercentage,
+      inflationAdjustment,
+      isDiscretionary,
+    });
+
+    const savedExpenseEvent = await newExpenseEvent.save();
+
+    res.status(201).json(savedExpenseEvent);
+  } catch (err) {
+    console.error("Error creating ExpenseEvent:", err);
+    res.status(500).json({ error: "Failed to create ExpenseEvent" });
+  }
+});
+
+app.get('/tax', async (req, res) => {
+  try {
+    const tax = await taxes.find();
+    res.status(200).json(tax);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to retrieve tax data' }); 
+  }
+});
+
+app.get('/scenario', async (req, res) => {
+  try {
+    const tax = await scenario.find();
+    res.status(200).json(tax);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to retrieve scenario data' }); 
   }
 });
 
