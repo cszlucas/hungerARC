@@ -5,43 +5,61 @@ states:
       - stateIncomeTaxRatesBrackets:
           - incomeRange: [0, 8500]
             taxRate: 4
+            change: 0
           - incomeRange: [8500, 11700]
             taxRate: 4.5
+            change: 340
           - incomeRange: [11700, 13900]
             taxRate: 5.25
+            change: 484
           - incomeRange: [13900, 80650]
             taxRate: 5.5
+            change: 600
           - incomeRange: [80650, 215400]
             taxRate: 6
+            change: 4271
           - incomeRange: [215400, 1077550]
             taxRate: 6.85
+            change: 12356
           - incomeRange: [1077550, 5000000]
             taxRate: 9.65
+            change: 71413
           - incomeRange: [5000000, 25000000]
             taxRate: 10.3
+            change: 449929
           - incomeRange: [25000000, null]
             taxRate: 10.9
-      - standardDeduction: 3100
+            change: 2509929
+      - standardDeduction: 8000
     married:
       - stateIncomeTaxRatesBrackets:
           - incomeRange: [0, 17150]
             taxRate: 4
+            change: 0
           - incomeRange: [17150, 23600]
             taxRate: 4.5
+            change: 686
           - incomeRange: [23600, 27900]
             taxRate: 5.25
+            change: 976
           - incomeRange: [27900, 161550]
             taxRate: 5.5
+            change: 1202
           - incomeRange: [161550, 323200]
             taxRate: 6
+            change: 8553
           - incomeRange: [323200, 2155350]
             taxRate: 6.85
+            change: 18252
           - incomeRange: [2155350, 5000000]
             taxRate: 9.65
+            change: 143754
           - incomeRange: [5000000, 25000000]
             taxRate: 10.3
+            change: 418263
           - incomeRange: [25000000, null]
             taxRate: 10.9
+            change: 2478263
       - standardDeduction: 16050
   - name: New Jersey
     year: 2024
@@ -49,37 +67,52 @@ states:
       - stateIncomeTaxRatesBrackets:
           - incomeRange: [0, 20000]
             taxRate: 1.4
+            change: 0
           - incomeRange: [20000, 35000]
             taxRate: 1.75
+            change: 70
           - incomeRange: [35000, 40000]
             taxRate: 3.5
+            change: 682.50
           - incomeRange: [40000, 75000]
             taxRate: 5.525
+            change: 1492.50
           - incomeRange: [75000, 500000]
             taxRate: 6.37
+            change: 2126.25
           - incomeRange: [500000, 1000000]
             taxRate: 8.97
+            change: 15126.25
           - incomeRange: [1000000, null]
             taxRate: 10.75
+            change: 32926.25
       - standardDeduction: 1000
     married:
       - stateIncomeTaxRatesBrackets:
           - incomeRange: [0, 20000]
             taxRate: 1.4
+            change: 0
           - incomeRange: [20000, 50000]
             taxRate: 1.75
+            change: 70
           - incomeRange: [50000, 70000]
             taxRate: 2.45
+            change: 420
           - incomeRange: [70000, 80000]
             taxRate: 3.5
+            change: 1154.50
           - incomeRange: [80000, 150000]
             taxRate: 5.525
+            change: 2775
           - incomeRange: [150000, 500000]
             taxRate: 6.37
+            change: 4042.50
           - incomeRange: [500000, 1000000]
             taxRate: 8.97
+            change: 17042.50
           - incomeRange: [1000000, null]
             taxRate: 10.75
+            change: 34842.50
       - standardDeduction: 2000
   - name: Connecticut
     year: 2024
@@ -87,33 +120,47 @@ states:
       - stateIncomeTaxRatesBrackets:
           - incomeRange: [0, 10000]
             taxRate: 2
+            change: 0
           - incomeRange: [10000, 50000]
             taxRate: 4.5
+            change: 200
           - incomeRange: [50000, 100000]
             taxRate: 5.5
+            change: 2000
           - incomeRange: [100000, 200000]
             taxRate: 6
+            change: 4750
           - incomeRange: [200000, 250000]
             taxRate: 6.5
+            change: 10750
           - incomeRange: [250000, 500000]
             taxRate: 6.9
+            change: 14000
           - incomeRange: [500000, null]
             taxRate: 6.99
+            change: 31250
       - standardDeduction: 0
     married:
       - stateIncomeTaxRatesBrackets:
           - incomeRange: [0, 20000]
             taxRate: 2
+            change: 0
           - incomeRange: [20000, 100000]
             taxRate: 4.5
+            change: 400
           - incomeRange: [100000, 200000]
             taxRate: 5.5
+            change: 4000
           - incomeRange: [200000, 400000]
             taxRate: 6
+            change: 9500
           - incomeRange: [400000, 500000]
             taxRate: 6.5
+            change: 21500
           - incomeRange: [500000, 1000000]
             taxRate: 6.9
+            change: 28000
           - incomeRange: [1000000, null]
             taxRate: 6.99
+            change: 62500
       - standardDeduction: 0
