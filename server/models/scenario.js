@@ -17,7 +17,6 @@ var scenarioSchema = new Schema({
     stdDev: { type: Number },
   },
   setOfInvestments: [{ type: Schema.Types.ObjectId, ref: "Investment" }],
-  setOfInvestmentTypes: [{ type: Schema.Types.ObjectId, ref: "InvestmentType" }],
   incomeEventSeries: [{ type: Schema.Types.ObjectId, ref: "IncomeEvent" }],
   expenseEventSeries: [{ type: Schema.Types.ObjectId, ref: "ExpenseEvent" }],
   investEventSeries: [{ type: Schema.Types.ObjectId, ref: "InvestEvent" }],
@@ -38,10 +37,10 @@ var scenarioSchema = new Schema({
   irsLimits: {
     initialAfterTax: { type: Number, required: true },
   },
-  spendingStrategy: { type: Schema.Types.ObjectId, ref: "ExpenseEvent" },
-  expenseWithdrawalStrategy: { type: Schema.Types.ObjectId, ref: "Investment" },
-  rothConversionStrategy: { type: Schema.Types.ObjectId, ref: "Investment" },
-  rmdStrategy: { type: Schema.Types.ObjectId, ref: "Investment" },
+  spendingStrategy: [{ type: Schema.Types.ObjectId, ref: "ExpenseEvent" }],
+  expenseWithdrawalStrategy: [{ type: Schema.Types.ObjectId, ref: "Investment" }],
+  rothConversionStrategy: [{ type: Schema.Types.ObjectId, ref: "Investment" }],
+  rmdStrategy: [{ type: Schema.Types.ObjectId, ref: "Investment" }],
   optimizerSettings: {
     enabled: { type: Boolean, required: true },
     startYear: { type: Number },

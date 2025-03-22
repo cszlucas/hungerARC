@@ -2,7 +2,6 @@ var mongoose = require("mongoose");
 var Schema = mongoose.Schema;
 
 var BaseEventSchema = new Schema({
-  _scenario: { type: Schema.Types.ObjectId, ref: "Scenario", required: true },
   eventSeriesName: { type: String, required: true },
   eventSeriesDescription: { type: String },
   startYear: {
@@ -83,8 +82,10 @@ var RebalanceEventSchema = new Schema({
 });
 
 module.exports = {
+  BaseEventSeries: mongoose.model("BaseEventSeries", BaseEventSchema),
   IncomeEvent: mongoose.model("IncomeEvent", IncomeEventSchema),
   ExpenseEvent: mongoose.model("ExpenseEvent", ExpenseEventSchema),
   InvestEvent: mongoose.model("InvestEvent", InvestEventSchema),
   RebalanceEvent: mongoose.model("RebalanceEvent", RebalanceEventSchema),
+  AnnualChange: mongoose.model("AnnualChange", AnnualChange)
 };
