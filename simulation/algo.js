@@ -133,9 +133,22 @@ class DataStore {
     }
   }
 
+  async fetchStateTax() {
+    try {
+      const response = await axios.get("http://localhost:8080/statetax/67de2cef01d40c92a3901b83");
+      this.statetax = response.data;
+    } catch (error) {
+      console.error("Error fetching state tax", error);
+    }
+  }
+
   // Method for accessing the data
   getTaxData() {
     return this.tax;
+  }
+
+  getStateTax(){
+    return this.statetax;
   }
 
   getScenario() {
@@ -143,7 +156,7 @@ class DataStore {
   }
 }
 
-function runSimulation(scenario, tax) {
+function runSimulation(scenario, tax, statetax) {
   console.log(scenario);
   console.log(tax)
   // previous year
@@ -156,7 +169,7 @@ function runSimulation(scenario, tax) {
   if (filingStatus == 'single') {
     fedIncomeTaxBracket = tax.single.federalIncomeTaxRatesBrackets;
     fedDeduction = tax.single.standardDeductions;
-    if (yaml.contains(state)) {
+    if (statetax) {
       stateIncomeTaxBracket = yaml.tax.single.stateIncomeTaxRatesBrackets;
       stateDeduction = yaml.tax.single.standardDeduction;
     }
@@ -223,11 +236,12 @@ function runSimulation(scenario, tax) {
 
 async function main() {
   const dataStore = new DataStore();
-  await Promise.all([dataStore.fetchTax(), dataStore.fetchScenario()]);
+  await Promise.all([dataStore.fetchTax(), dataStore.fetchScenario(), dataStore.fetchStateTax()]);
 
   const tax = dataStore.getTaxData();
   const scenario = dataStore.getScenario();
-  runSimulation(scenario, tax);
+  const statetax = dataStore.getStateTax();
+  runSimulation(scenario, tax, statetax);
 }
 
 // Call the main function to execute everything

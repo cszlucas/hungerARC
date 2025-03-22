@@ -3,6 +3,7 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const mongoose = require("mongoose");
 const Tax = require("./models/tax.js");
+const StateTax = require("./importStateYaml.js");
 const RMD = require("./models/rmd-schema.js");
 const { Events } = require("./models/eventSeries.js");
 const Scenario = require("./models/scenario.js");
@@ -159,11 +160,11 @@ app.get("/tax", async (req, res) => {
 
 app.get("/statetax", async (req, res) => {
   try {
-    const tax = await Tax.findOne();
-    if (!tax) {
+    const stateTax = await StateTax.find();
+    if (!stateTax) {
       return res.status(404).json({ message: "State tax data not found" });
     }
-    res.status(200).json(tax);
+    res.status(200).json(stateTax);
   } catch (err) {
     res.status(500).json({ error: "Failed to retrieve state tax data", message: err.message });
   }
