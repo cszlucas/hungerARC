@@ -8,6 +8,7 @@ const RMD = require("./models/rmd-schema.js");
 const { Events } = require("./models/eventSeries.js");
 const Scenario = require("./models/scenario.js");
 const { InvestmentType } = require("./models/investmentType.js");
+const Investment  = require("./models/investment.js");
 const { ObjectId } = require("mongoose").Types;
 const taxId = "67d8912a816a92a8fcb6dd55";
 
@@ -31,6 +32,17 @@ const PORT = 8080;
 
 // Connect to MongoDB
 mongoose.connect("mongodb://localhost:27017/hungerarc", { useNewUrlParser: true, useUnifiedTopology: true });
+
+app.post("/scenarioInvestments", async(req,res) => {
+  try {
+    const { investmentIds } = req.body;
+    const objectIds = investmentIds.map(id => new ObjectId(id));
+    const investments = await Investment.find({ _id: { $in: objectIds } });
+    res.status(200).json(investments);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to retrieve investments", message: err.message });
+  }
+})
 
 app.post("/investmentType", async (req, res) => {
   const { name, description, annualReturn, expenseRatio, annualIncome, taxability } = req.body;
@@ -158,12 +170,23 @@ app.get("/tax", async (req, res) => {
   }
 });
 
-app.get("/statetax", async (req, res) => {
+// app.get("/statetax/:id", async (req, res) => {
+//   const stateTaxId = new ObjectId(req.params.id);
+//   try {
+//     const stateTax = await StateTax.findOne({ _id: stateTaxId });
+//     if (!stateTax) {
+//       return res.status(404).json({ message: "State tax data not found" });
+//     }
+//     res.status(200).json(stateTax);
+//   } catch (err) {
+//     res.status(500).json({ error: "Failed to retrieve state tax data", message: err.message });
+//   }
+// });
+
+app.get("/statetax/:state", async (req, res) => {
+  const stateName = req.params.state;
   try {
-    const stateTax = await StateTax.find();
-    if (!stateTax) {
-      return res.status(404).json({ message: "State tax data not found" });
-    }
+    const stateTax = await StateTax.findOne({ state: stateName });
     res.status(200).json(stateTax);
   } catch (err) {
     res.status(500).json({ error: "Failed to retrieve state tax data", message: err.message });
