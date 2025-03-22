@@ -30,6 +30,7 @@ const stateTaxSchema=new mongoose.Schema({
 });
 
 const StateTax=mongoose.model("StateTax",stateTaxSchema);
+module.exports = StateTax;
 
 const parseYaml= async (filePath)=>{
     try{
