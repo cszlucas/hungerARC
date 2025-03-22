@@ -13,7 +13,8 @@ import {
 } from '../../../components/styles';
 
 import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';  
+import DeleteIcon from '@mui/icons-material/Delete'; 
+import CustomDropdown from "../../../components/customDropDown"; 
 
 const InvestmentLists = () => {
   const [open, setOpen] = useState(false);
