@@ -1,18 +1,19 @@
 const express = require("express");
 const router = express.Router();
-const authentication = require("./controllers/authentication.js");
+const user = require("./controllers/user.js");
 const events = require("./controllers/events.js");
 const investments = require("./controllers/investments.js");
 const scenario = require("./controllers/scenario.js");
 const tax = require("./controllers/tax.js");
 const webscraping = require("./controllers/webscraping.js");
 
-// authentication
-router.post("/auth/google", authentication.auth);
+// user
+router.get("/user/:id/scenarios", user.scenarios);
+router.post("/auth/google", user.auth);
 
 // events
 router.post("/incomeEvent", events.incomeEvent);
-router.post("/updateIncome", events.updateIncome);
+router.post("/updateIncome/:id", events.updateIncome);
 router.post("/expenseEvent", events.expenseEvent);
 router.post("/updateExpense", events.updateExpense);
 

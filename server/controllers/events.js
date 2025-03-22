@@ -1,13 +1,16 @@
 //Events are: income, expense, investStrategy, expenseStrategy
-const { Events } = require("../models/eventSeries.js");
+const { BaseEventSeries, IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent, AnnualChange } = require("../models/eventSeries.js");
 
 //INCOME EVENTS
 exports.incomeEvent = async (req, res) => {
   try {
-    const { initialAmount, annualChange, userPercentage, inflationAdjustment, isSocialSecurity, baseEventSeries } = req.body;
+    const { eventSeriesName, description, startYear, duration, initialAmount, annualChange, userPercentage, inflationAdjustment, isSocialSecurity, baseEventSeries } = req.body;
 
-    const newIncomeEvent = new Events.IncomeEvent({
-      baseEventSeries,
+    const newIncomeEvent = new IncomeEvent({
+      eventSeriesName,
+      description,
+      startYear,
+      duration,
       initialAmount,
       annualChange: {
         type: annualChange.type,
@@ -32,11 +35,11 @@ exports.updateIncome = async (req, res) => {
   const updateData = req.body; // Data to update (from the request body)
 
   try {
-    // Update the document by ID
+    //Update the document by ID
     if (updateData) {
-      const result = await Events.IncomeEvent.updateOne({ _id: mongoose.Types.ObjectId(id) }, { $set: updateData });
+      const result = await IncomeEvent.updateOne({ _id: mongoose.Types.ObjectId(id) }, { $set: updateData });
     } else if (updateData.annualChange) {
-      const result = await Events.AnnualChange.updateOne({ _id: mongoose.Types.ObjectId(id) }, { $set: updateData.AnnualChange });
+      const result = await AnnualChange.updateOne({ _id: mongoose.Types.ObjectId(id) }, { $set: updateData.AnnualChange });
     }
 
     if (result.nModified === 0) {
@@ -47,16 +50,20 @@ exports.updateIncome = async (req, res) => {
     // If the update is successful, return a 200 response with the result
     return res.status(200).json({ message: "Document updated successfully", result });
   } catch (err) {
-    res.status(500).json({ error: "Error updating" });
+    res.status(500).json({ error: "Error updating", message: err });
   }
 };
 
 //EXPENSE EVENTS
 exports.expenseEvent = async (req, res) => {
   try {
-    const { initialAmount, annualChange, userPercentage, inflationAdjustment, isDiscretionary } = req.body;
+    const { eventSeriesName, description, startYear, duration, initialAmount, annualChange, userPercentage, inflationAdjustment, isDiscretionary } = req.body;
 
-    const newExpenseEvent = new Events.ExpenseEvent({
+    const newExpenseEvent = new ExpenseEvent({
+      eventSeriesName,
+      description,
+      startYear,
+      duration,
       initialAmount,
       annualChange: {
         type: annualChange.type,
@@ -83,9 +90,9 @@ exports.updateExpense = async (req, res) => {
   try {
     // Update the document by ID
     if (updateData) {
-      const result = await Events.ExpenseEvent.updateOne({ _id: mongoose.Types.ObjectId(id) }, { $set: updateData });
+      const result = await ExpenseEvent.updateOne({ _id: mongoose.Types.ObjectId(id) }, { $set: updateData });
     } else if (updateData.annualChange) {
-      const result = await Events.AnnualChange.updateOne({ _id: mongoose.Types.ObjectId(id) }, { $set: updateData.AnnualChange });
+      const result = await AnnualChange.updateOne({ _id: mongoose.Types.ObjectId(id) }, { $set: updateData.AnnualChange });
     }
 
     if (result.nModified === 0) {
