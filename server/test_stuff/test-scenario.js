@@ -84,13 +84,23 @@ async function createScenario() {
     console.log("Investment 2 saved ");
 
     const annChange = new AnnualChange({
-      type: "fixed",  
-      amount: 5000,  
+      type: "fixed",
+      amount: 5000,
     });
 
     const annualChange = await annChange.save();
 
     const incomeEventData = new IncomeEvent({
+      eventSeriesName: "income event series",
+      description: "First event series why.",
+      startYear: {
+        type: "year",
+        year: 2022,
+      },
+      duration: {
+        type: "fixedAmt",
+        value: 3,
+      },
       eventName: "Salary",
       eventDate: new Date("2025-01-01"),
       initialAmount: 50000,
@@ -101,6 +111,16 @@ async function createScenario() {
     });
 
     const expenseEventData = new ExpenseEvent({
+      eventSeriesName: "Expense event series",
+      description: "First event series why.",
+      startYear: {
+        type: "year",
+        year: 2021,
+      },
+      duration: {
+        type: "fixedAmt",
+        value: 5,
+      },
       eventName: "Rent",
       eventDate: new Date("2025-01-01"),
       initialAmount: 1200,
@@ -146,22 +166,6 @@ async function createScenario() {
     });
 
     const testScenario = await test_scenario.save();
-
-    const eventSeries = new BaseEventSeries({
-      _scenario_id: testScenario.id,
-      eventSeriesName: "First event series",
-      description: "First event series why.",
-      startYear: {
-        type: "year",
-        year: 2022,
-      },
-      duration: {
-        type: "fixedAmt",
-        value: 3,
-      },
-    });
-
-    await eventSeries.save();
   } catch (err) {
     console.error("Error ", err);
   }

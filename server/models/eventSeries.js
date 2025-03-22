@@ -2,7 +2,6 @@ var mongoose = require("mongoose");
 var Schema = mongoose.Schema;
 
 var BaseEventSchema = new Schema({
-  _scenario_id: { type: Schema.Types.ObjectId, ref: "Scenario", required: true },
   eventSeriesName: { type: String, required: true },
   eventSeriesDescription: { type: String },
   startYear: {
@@ -46,7 +45,7 @@ var AnnualChange = new Schema({
   
 
 var IncomeEventSchema = new Schema({
-  //...BaseEventSchema.obj,
+  ...BaseEventSchema.obj,
   initialAmount: { type: Number, required: true },
   annualChange: { type: AnnualChange },
   userPercentage: { type: Number },
@@ -56,7 +55,7 @@ var IncomeEventSchema = new Schema({
 });
 
 var ExpenseEventSchema = new Schema({
-//   ...BaseEventSchema.obj,
+  ...BaseEventSchema.obj,
   initialAmount: { type: Number, required: true },
   annualChange: { type: AnnualChange },
   userPercentage: { type: Number },
