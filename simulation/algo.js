@@ -115,10 +115,17 @@ class DataStore {
     this.scenario = null;
   }
 
+  async init() {
+    await this.fetchTax();
+    // await this.fetchScenario();
+    console.log("DataStore initialized");
+  }
+
   async fetchTax() {
     try {
       const response = await axios.get("http://localhost:8080/tax");
       this.taxData = response.data;
+      console.log("fetch tax");
     } catch (error) {
       console.error("Error fetching tax:", error);
     }
@@ -135,7 +142,7 @@ class DataStore {
 
   // Method for accessing the data
   getTaxData() {
-    return this.tax;
+    return this.taxData;
   }
 
   getScenario() {
@@ -145,9 +152,15 @@ class DataStore {
 
 // Usage:
 const dataStore = new DataStore();
-const tax = dataStore.getTaxData();
-dataStore.getScenario();
-runSimulation(this.scenario, tax);
+dataStore.init().then(()=>{
+  console.log("midd");
+  const tax = dataStore.getTaxData();
+  console.log(tax);
+  // dataStore.getScenario();
+  // runSimulation(this.scenario, tax);
+})
+
+
 
 
 function runSimulation(scenario, tax) {
