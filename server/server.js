@@ -5,7 +5,7 @@ const mongoose = require("mongoose");
 const Tax = require("./models/tax.js");
 const RMD = require("./models/rmd-schema.js");
 const { Events } = require("./models/eventSeries.js");
-const { scenario } = require("./models/scenario.js");
+const Scenario = require("./models/scenario.js");
 const { InvestmentType } = require("./models/investmentType.js");
 const { ObjectId } = require("mongoose").Types;
 const taxId = "67d8912a816a92a8fcb6dd55";
@@ -66,7 +66,7 @@ app.post("/basicInfo", async (req, res) => {
   try {
     const { name, filingStatus, financialGoal, inflationAssumption, birthYearUser, lifeExpectancy, stateResident } = req.body;
 
-    const newBasicInfo = new scenario({
+    const newBasicInfo = new Scenario({
       name,
       filingStatus,
       financialGoal,
@@ -145,21 +145,40 @@ app.post("/expenseEvent", async (req, res) => {
   }
 });
 
-app.get('/tax', async (req, res) => {
+app.get("/tax", async (req, res) => {
   try {
-    const tax = await taxes.find();
+    const tax = await Tax.findOne();
+    if (!tax) {
+      return res.status(404).json({ message: "Tax data not found" });
+    }
     res.status(200).json(tax);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to retrieve tax data' }); 
+    res.status(500).json({ error: "Failed to retrieve tax data", message: err.message });
   }
 });
 
-app.get('/scenario', async (req, res) => {
+app.get("/statetax", async (req, res) => {
   try {
-    const tax = await scenario.find();
+    const tax = await Tax.findOne();
+    if (!tax) {
+      return res.status(404).json({ message: "State tax data not found" });
+    }
     res.status(200).json(tax);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to retrieve scenario data' }); 
+    res.status(500).json({ error: "Failed to retrieve state tax data", message: err.message });
+  }
+});
+
+app.get("/scenario/:id", async (req, res) => {
+  const scenarioId = new ObjectId(req.params.id);
+  try {
+    const scenario = await Scenario.findOne({ _id: scenarioId });
+    if (!scenario) {
+      return res.status(404).json({ message: "Scenario data not found" });
+    }
+    res.status(200).json(scenario);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to retrieve scenario data", message: err.message });
   }
 });
 
