@@ -3,10 +3,26 @@ import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, 
 import theme from '../../../components/theme';
 import Navbar from '../../../components/navbar';
 import PageHeader from '../../../components/pageHeader';
+import {
+    stackStyles,
+    titleStyles,
+    textFieldStyles,
+    numFieldStyles,
+    multiLineTextFieldStyles,
+    toggleButtonGroupStyles,
+    backContinueContainerStyles,
+    buttonStyles,
+    rowBoxStyles,
+} from '../../../components/styles';
+import CustomDropdown from "../../../components/customDropDown";
+import CustomInput from "../../../components/customInputBox";
+import CustomToggle from "../../../components/customToggle";
 
 const InvestmentType = () => {
-    const [returnAmountType, setReturnAmountType] = useState('fixed');
-    const [incomeAmountType, setIncomeAmountType] = useState('fixed');
+    const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
+    const [returnAmountType, setReturnAmountType] = useState('Fixed');
+    const [incomeAmountType, setIncomeAmountType] = useState('Fixed');
     const [returnDistributionType, setReturnDistributionType] = useState('None');
     const [incomeDistributionType, setIncomeDistributionType] = useState('None');
     const [returnDistributionValue, setReturnDistributionValue] = useState('');
@@ -34,323 +50,178 @@ const InvestmentType = () => {
                         Save
                     </Button>
                 </Stack>
+
                 <PageHeader />
 
-                <Box sx={{ display: 'flex', gap: 2 }}>
-    
-                    {/* Name Field */}
-                    <Box sx={{ flex: 1, maxWidth: '250px' }}> 
-                        <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                            Name
-                        </Typography>
-                        <TextField
-                            variant="outlined"
-                            fullWidth
-                            placeholder=""
-                            sx={{
-                                '& .MuiOutlinedInput-root': {
-                                    backgroundColor: theme.palette.grey[300], // Gray background
-                                    border: 'none', 
-                                    height: '35px',
-                                    '& fieldset': { display: 'none' }, 
-                                    '&:hover fieldset': { display: 'none' }, 
-                                    '&.Mui-focused fieldset': { display: 'none' },
-                                }
-                            }}
+                <Box sx={rowBoxStyles}>
+                    {/* First Box with Inputs */}
+                    <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                        <CustomInput 
+                            title="Name" 
+                            value={name} 
+                            setValue={setName} 
                         />
+
+                        <CustomInput 
+                            title="Description (Optional)" 
+                            type="multiline" 
+                            value={description} 
+                            setValue={setDescription} 
+                        />
+                        
+                        <Stack direction="row" spacing={2} sx={{ marginTop: 2 }}>
+                            <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
+                            <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
+                                Expense Ratio
+                            </Typography>
+                            <TextField
+                                variant="outlined"
+                                type="number"
+                                inputProps={{
+                                    step: "any", // Allows decimal values
+                                    min: "0", // Prevents negative numbers (optional)
+                                }}
+                                sx={numFieldStyles}
+                            />
+                            </Box>
+                            <CustomDropdown
+                                label="Taxability"
+                                value={taxability}
+                                setValue={setTaxability}
+                                menuItems={["Taxable", "Tax-Deferred", "Tax-Free"]}
+                                textFieldStyles={textFieldStyles}
+                            />
+                        </Stack>
                     </Box>
 
-                    {/* Description Field */}
-                    <Box sx={{ flex: 1, maxWidth: '350px' }}> 
-                        <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                            Description
-                        </Typography>
-                        <TextField
-                            variant="outlined"
-                            fullWidth
-                            multiline
-                            placeholder=""
-                            minRows={1} 
-                            sx={{
-                                '& .MuiOutlinedInput-root': {
-                                    backgroundColor: theme.palette.grey[300], // Gray background
-                                    border: 'none',
-                                    height: '35px',
-                                    '& fieldset': { display: 'none' }, 
-                                    '&:hover fieldset': { display: 'none' }, 
-                                    '&.Mui-focused fieldset': { display: 'none' },
-                                }
-                            }}
-                        />
-                    </Box>
-                </Box>
 
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 4 }}>
-                    <Box sx={{ display: 'flex', gap: 4 }}>
-                        {/* Expected Annual Return */}
+                    {/* Expected Annual Return */}
+                    <Box sx={{ flex: 1 }}>
+                        <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>Expected Annual Return:</Typography>
                         <Box sx={{ flex: 1, minWidth: '270px', marginTop: 1 }}>
-                            <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>Expected Annual Return:</Typography>
-
                             {/* Amount Toggle */}
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginTop: 2 }}>
-                                <Typography>Amount</Typography>
-                                <ToggleButtonGroup
-                                    value={returnAmountType}
-                                    exclusive
-                                    onChange={handleToggleChange(setReturnAmountType)}
-                                    sx={{
-                                        height: '40px',
-                                        '& .MuiToggleButton-root': {
-                                            backgroundColor: theme.palette.grey[400],
-                                            color: 'black',
-                                            height: '40px',
-                                            textTransform: 'none',
-                                            '&:hover': { backgroundColor: theme.palette.grey[500] },
-                                            '&.Mui-selected': {
-                                                backgroundColor: theme.palette.secondary.main,
-                                                color: theme.palette.secondary.contrastText,
-                                                '&:hover': { backgroundColor: theme.palette.secondary.dark }
-                                            }
-                                        }
-                                    }}
-                                >
-                                    <ToggleButton value="fixed">Fixed</ToggleButton>
-                                    <ToggleButton value="percentage">Percentage</ToggleButton>
-                                </ToggleButtonGroup>
-                            </Box>
-
+                            <CustomToggle
+                                title="Amount"
+                                values={['Fixed', 'Percentage']}
+                                sideView={true}
+                                width={100}
+                                value={returnAmountType}
+                                setValue={setReturnAmountType}
+                            />
                             {/* Distribution Toggle */}
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginTop: 3 }}>
-                                <Typography>Distribution</Typography>
-                                <ToggleButtonGroup
-                                    value={returnDistributionType}
-                                    exclusive
-                                    onChange={handleToggleChange(setReturnDistributionType)}
-                                    sx={{
-                                        height: '40px',
-                                        '& .MuiToggleButton-root': {
-                                            backgroundColor: theme.palette.grey[400],
-                                            color: 'black',
-                                            height: '40px',
-                                            textTransform: 'none',
-                                            '&:hover': { backgroundColor: theme.palette.grey[500] },
-                                            '&.Mui-selected': {
-                                                backgroundColor: theme.palette.secondary.main,
-                                                color: theme.palette.secondary.contrastText,
-                                                '&:hover': { backgroundColor: theme.palette.secondary.dark }
-                                            }
-                                        }
-                                    }}
-                                >
-                                    <ToggleButton value="None">None</ToggleButton>
-                                    <ToggleButton value="Normal">Normal</ToggleButton>
-                                </ToggleButtonGroup>
-                            </Box>
-
+                            <CustomToggle
+                                title="Distribution"
+                                values={['None', 'Normal']}
+                                sideView={true}
+                                width={100}
+                                value={returnDistributionType}
+                                setValue={setReturnDistributionType}
+                            />
                             {/* Conditional Inputs */}
                             {returnDistributionType === "None" && (
-                                <TextField fullWidth label="Value" variant="outlined" sx={{ marginTop: 2,  maxWidth: '150px'}} value={returnDistributionValue} onChange={(e) => setReturnDistributionValue(e.target.value)} />
+                             <CustomInput 
+                                title="Value" 
+                                type="number"
+                                adornment={ returnAmountType == 'Fixed' ? "$" : "%"}
+                                value={returnDistributionValue} 
+                                setValue={setReturnDistributionValue} 
+                            />
                             )}
                             {returnDistributionType === "Normal" && (
                                 <Box sx={{ display: 'flex', gap: 2, marginTop: 2 }}>
-                                    <TextField fullWidth label="Mean" 
-                                    variant="outlined" value={returnMean}
-                                    sx={{ 
-                                      maxWidth: '150px'  // Only reducing width
-                                    }}  
-                                    onChange={(e) => setReturnMean(e.target.value)} />
-                                    <TextField fullWidth label="Variance" 
-                                    variant="outlined" value={returnVariance} 
-                                    sx={{ 
-                                      maxWidth: '150px'  // Only reducing width
-                                    }} 
-                                    onChange={(e) => setReturnVariance(e.target.value)} />
+                                    <CustomInput 
+                                        title="Mean" 
+                                        type="number" 
+                                        adornment={ returnAmountType == 'Fixed' ? "$" : "%"}
+                                        value={returnMean} 
+                                        setValue={setReturnMean} 
+                                    />
+                                    <CustomInput 
+                                        title="Variance" 
+                                        type="number" 
+                                        adornment={ returnAmountType == 'Fixed' ? "$" : "%"}
+                                        value={returnVariance} 
+                                        setValue={setReturnVariance} 
+                                    />
                                 </Box>
                             )}
                         </Box>
+                    </Box>
 
-                        {/* Expected Annual Income */}
-                        <Box sx={{ flex: 1, minWidth: '270px', marginTop:1 }}>
-                            <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>Expected Annual Income:</Typography>
-
+                    {/* Expected Annual Income */}
+                    <Box sx={{ flex: 1 }}>
+                        <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>Expected Annual Income:</Typography>
+                        <Box sx={{ flex: 1, minWidth: '270px', marginTop: 1 }}>
                             {/* Amount Toggle */}
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginTop: 2 }}>
-                                <Typography>Amount</Typography>
-                                <ToggleButtonGroup
-                                    value={incomeAmountType}
-                                    exclusive
-                                    onChange={handleToggleChange(setIncomeAmountType)}
-                                    sx={{
-                                        height: '40px',
-                                        '& .MuiToggleButton-root': {
-                                            backgroundColor: theme.palette.grey[400],
-                                            color: 'black',
-                                            height: '40px',
-                                            textTransform: 'none',
-                                            '&:hover': { backgroundColor: theme.palette.grey[500] },
-                                            '&.Mui-selected': {
-                                                backgroundColor: theme.palette.secondary.main,
-                                                color: theme.palette.secondary.contrastText,
-                                                '&:hover': { backgroundColor: theme.palette.secondary.dark }
-                                            }
-                                        }
-                                    }}
-                                >
-                                    <ToggleButton value="fixed">Fixed</ToggleButton>
-                                    <ToggleButton value="percentage">Percentage</ToggleButton>
-                                </ToggleButtonGroup>
-                            </Box>
-
+                            <CustomToggle
+                                title="Amount"
+                                values={['Fixed', 'Percentage']}
+                                sideView={true}
+                                width={100}
+                                value={incomeAmountType}
+                                setValue={setIncomeAmountType}
+                            />
                             {/* Distribution Toggle */}
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginTop: 3 }}>
-                                <Typography>Distribution</Typography>
-                                <ToggleButtonGroup
-                                    value={incomeDistributionType}
-                                    exclusive
-                                    onChange={handleToggleChange(setIncomeDistributionType)}
-                                    sx={{
-                                        height: '40px',
-                                        '& .MuiToggleButton-root': {
-                                            backgroundColor: theme.palette.grey[400],
-                                            color: 'black',
-                                            height: '40px',
-                                            textTransform: 'none',
-                                            '&:hover': { backgroundColor: theme.palette.grey[500] },
-                                            '&.Mui-selected': {
-                                                backgroundColor: theme.palette.secondary.main,
-                                                color: theme.palette.secondary.contrastText,
-                                                '&:hover': { backgroundColor: theme.palette.secondary.dark }
-                                            }
-                                        }
-                                    }}
-                                >
-                                    <ToggleButton value="None">None</ToggleButton>
-                                    <ToggleButton value="Normal">Normal</ToggleButton>
-                                </ToggleButtonGroup>
-                            </Box>
-
+                            <CustomToggle
+                                title="Distribution"
+                                values={['None', 'Normal']}
+                                sideView={true}
+                                width={100}
+                                value={incomeDistributionType}
+                                setValue={setIncomeDistributionType}
+                            />
                             {/* Conditional Inputs */}
                             {incomeDistributionType === "None" && (
-                                <TextField fullWidth label="Value" 
-                                variant="outlined" 
-                                sx={{ marginTop: 2, maxHeight: '35px',  maxWidth: '150px'}} value={incomeDistributionValue} onChange={(e) => setIncomeDistributionValue(e.target.value)} />
+                            <CustomInput 
+                                title="Value" 
+                                type="number"
+                                adornment={ incomeAmountType == 'Fixed' ? "$" : "%"}
+                                value={returnDistributionValue} 
+                                setValue={setReturnDistributionValue} 
+                            />
                             )}
                             {incomeDistributionType === "Normal" && (
                                 <Box sx={{ display: 'flex', gap: 2, marginTop: 2 }}>
-                                    <TextField fullWidth label="Mean" 
-                                    variant="outlined"
-                                    sx={{ 
-                                      maxWidth: '150px'  // Only reducing width
-                                    }} 
-                                    value={incomeMean} onChange={(e) => setIncomeMean(e.target.value)} />
-                                    <TextField fullWidth label="Variance" 
-                                    variant="outlined" 
-                                    sx={{ 
-                                      maxWidth: '150px'  // Only reducing width
-                                    }}
-                                    value={incomeVariance} onChange={(e) => setIncomeVariance(e.target.value)} />
+                                    <CustomInput 
+                                        title="Mean" 
+                                        type="number"
+                                        adornment={ incomeAmountType == 'Fixed' ? "$" : "%"} 
+                                        value={returnMean} 
+                                        setValue={setReturnMean} 
+                                    />
+                                    <CustomInput 
+                                        title="Variance" 
+                                        type="number"
+                                        adornment={ incomeAmountType == 'Fixed' ? "$" : "%"}
+                                        value={returnVariance} 
+                                        setValue={setReturnVariance} 
+                                    />
                                 </Box>
                             )}
                         </Box>
                     </Box>
+                </Box>
+            
+                <Box sx = {{ display: "flex", justifyContent: "flex-end", marginTop: 1 }}>
+                    <Button 
+                        variant="contained" 
+                        color="primary"
+                        sx={{ fontSize: '1.1rem', textTransform: 'none' }}
+                    >
+                        Add
+                    </Button>
+                </Box>
 
                     
-
-
-
-                    
-                <Box sx={{ display: 'flex', gap: 2 }}>
-    
-                {/* Name Field */}
-                    <Box sx={{ flex: 1, maxWidth: '125px' }}> 
-                        <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                            Expense Ratio
-                        </Typography>
-                        <TextField
-                            variant="outlined"
-                            fullWidth
-                            placeholder=""
-                            sx={{
-                                '& .MuiOutlinedInput-root': {
-                                    backgroundColor: theme.palette.grey[300], // Gray background
-                                    border: 'none', 
-                                    height: '35px',
-                                    '& fieldset': { display: 'none' }, 
-                                    '&:hover fieldset': { display: 'none' }, 
-                                    '&.Mui-focused fieldset': { display: 'none' },
-                                }
-                            }}
-                        />
-                    </Box>
-
-                {/* Description Field */}
-                      <Box sx={{ flex: 1, maxWidth: '125px' }}> 
-                          <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                              Taxability
-                          </Typography>
-                          <Select
-                              value={taxability}
-                              onChange={(e) => handleToggleChange(setTaxability)}
-                              displayEmpty
-                              fullWidth
-                              sx={{
-                                  backgroundColor: theme.palette.grey[300], // Gray background
-                                  border: 'none',
-                                  height: '35px',
-                                  '& .MuiOutlinedInput-notchedOutline': { display: 'none' }, // Remove border
-                                  '&:hover .MuiOutlinedInput-notchedOutline': { display: 'none' }, // Remove hover border
-                                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { display: 'none' },
-                              }}>
-                              <MenuItem value="" disabled>Select</MenuItem>
-                              <MenuItem value="Taxable">Taxable</MenuItem>
-                              <MenuItem value="Tax-Deferred">Tax-Deferred</MenuItem>
-                              <MenuItem value="Tax-Free">Tax-Free</MenuItem>
-                          </Select>
-                      </Box>
-
-            </Box>
-                    
-            {/* Box to align buttons */}
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                justifyContent: 'space-between',  // Ensures spacing between left and right buttons
-                gap: 2, 
-                marginTop: 4 
-              }}
-            >
-              {/* Left-Side Button */}
-              <Button 
-                variant="contained" 
-                color="secondary"
-                sx={{ fontSize: '1.1rem', textTransform: 'none' }}
-              >
-                Add
-              </Button>
-
-              {/* Right-Side Buttons (Back & Continue) */}
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <Button 
-                  variant="contained" 
-                  color="primary"
-                  sx={{ fontSize: '1.1rem', textTransform: 'none' }}
-                >
-                  Back
-                </Button>
-
-                <Button 
-                  variant="contained" 
-                  color="success"
-                  sx={{ fontSize: '1.1rem', textTransform: 'none' }}
-                >
-                  Continue
-                </Button>
-              </Box>
-            </Box>
-
-                    
-
-              </Box>
+                {/* Back and Continue buttons */}
+                <Box sx={backContinueContainerStyles}>
+                    <Button variant="contained" color="primary" sx={buttonStyles}>
+                        Back
+                    </Button>
+                    <Button variant="contained" color="success" sx={buttonStyles}>
+                        Continue
+                    </Button>
+                </Box>
             </Container>
         </ThemeProvider>
     );

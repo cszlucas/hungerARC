@@ -9,4 +9,5 @@ var userSchema=new Schema({
     lastLogin: {type: Date, default: Date.now}
 });
 
-module.exports=mongoose.model('User', userSchema);
+const User =mongoose.model('User', userSchema);
+module.exports = User;
