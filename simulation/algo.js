@@ -118,7 +118,7 @@ class DataStore {
   async fetchTax() {
     try {
       const response = await axios.get("http://localhost:8080/tax");
-      this.taxData = response.data;
+      this.tax = response.data;
     } catch (error) {
       console.error("Error fetching tax:", error);
     }
@@ -126,10 +126,19 @@ class DataStore {
 
   async fetchScenario() {
     try {
-      const response = await axios.get("http://localhost:8080/scenario");
-      console.log(response.data);
+      const response = await axios.get("http://localhost:8080/scenario/67de2cef01d40c92a3901b83");
+      this.scenario = response.data;
     } catch (error) {
       console.error("Error fetching scenario", error);
+    }
+  }
+
+  async fetchStateTax() {
+    try {
+      const response = await axios.get("http://localhost:8080/statetax/67de2cef01d40c92a3901b83");
+      this.statetax = response.data;
+    } catch (error) {
+      console.error("Error fetching state tax", error);
     }
   }
 
@@ -138,30 +147,29 @@ class DataStore {
     return this.tax;
   }
 
+  getStateTax(){
+    return this.statetax;
+  }
+
   getScenario() {
     return this.scenario;
   }
 }
 
-// Usage:
-const dataStore = new DataStore();
-const tax = dataStore.getTaxData();
-dataStore.getScenario();
-runSimulation(this.scenario, tax);
-
-
-function runSimulation(scenario, tax) {
+function runSimulation(scenario, tax, statetax) {
+  console.log(scenario);
+  console.log(tax)
   // previous year
-  let annualLimitRetirement = database.annualLimitRetirement;
+  //   let annualLimitRetirement = database.annualLimitRetirement; ??
   let filingStatus = scenario.filingStatus;
-  let state = scenario.stateResidence;
+  let state = scenario.stateResident;
   // perhaps set the state to a default value instead?
   let fedIncomeTaxBracket, stateIncomeTaxBracket, fedDeduction, stateDeduction;
   // previous year's tax
-  if (filingStatus == "single") {
+  if (filingStatus == 'single') {
     fedIncomeTaxBracket = tax.single.federalIncomeTaxRatesBrackets;
     fedDeduction = tax.single.standardDeductions;
-    if (yaml.contains(state)) {
+    if (statetax) {
       stateIncomeTaxBracket = yaml.tax.single.stateIncomeTaxRatesBrackets;
       stateDeduction = yaml.tax.single.standardDeduction;
     }
@@ -225,3 +233,16 @@ function runSimulation(scenario, tax) {
     rebalance(scenario, curYearGains);
   }
 }
+
+async function main() {
+  const dataStore = new DataStore();
+  await Promise.all([dataStore.fetchTax(), dataStore.fetchScenario(), dataStore.fetchStateTax()]);
+
+  const tax = dataStore.getTaxData();
+  const scenario = dataStore.getScenario();
+  const statetax = dataStore.getStateTax();
+  runSimulation(scenario, tax, statetax);
+}
+
+// Call the main function to execute everything
+main();
