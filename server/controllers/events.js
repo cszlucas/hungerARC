@@ -4,9 +4,10 @@ const { Events } = require("../models/eventSeries.js");
 //INCOME EVENTS
 exports.incomeEvent = async (req, res) => {
   try {
-    const { initialAmount, annualChange, userPercentage, inflationAdjustment, isSocialSecurity } = req.body;
+    const { initialAmount, annualChange, userPercentage, inflationAdjustment, isSocialSecurity, baseEventSeries } = req.body;
 
     const newIncomeEvent = new Events.IncomeEvent({
+      baseEventSeries,
       initialAmount,
       annualChange: {
         type: annualChange.type,
@@ -23,6 +24,30 @@ exports.incomeEvent = async (req, res) => {
   } catch (err) {
     console.error("Error creating IncomeEvent:", err);
     res.status(500).json({ error: "Failed to create IncomeEvent" });
+  }
+};
+
+exports.updateIncome = async (req, res) => {
+  const { id } = req.params;
+  const updateData = req.body; // Data to update (from the request body)
+
+  try {
+    // Update the document by ID
+    if (updateData) {
+      const result = await Events.IncomeEvent.updateOne({ _id: mongoose.Types.ObjectId(id) }, { $set: updateData });
+    } else if (updateData.annualChange) {
+      const result = await Events.AnnualChange.updateOne({ _id: mongoose.Types.ObjectId(id) }, { $set: updateData.AnnualChange });
+    }
+
+    if (result.nModified === 0) {
+      // If no documents were modified, return a 404 response
+      return res.status(404).json({ message: "No document found to update" });
+    }
+
+    // If the update is successful, return a 200 response with the result
+    return res.status(200).json({ message: "Document updated successfully", result });
+  } catch (err) {
+    res.status(500).json({ error: "Error updating" });
   }
 };
 
@@ -48,5 +73,29 @@ exports.expenseEvent = async (req, res) => {
   } catch (err) {
     console.error("Error creating ExpenseEvent:", err);
     res.status(500).json({ error: "Failed to create ExpenseEvent" });
+  }
+};
+
+exports.updateExpense = async (req, res) => {
+  const { id } = req.params;
+  const updateData = req.body; // Data to update (from the request body)
+
+  try {
+    // Update the document by ID
+    if (updateData) {
+      const result = await Events.ExpenseEvent.updateOne({ _id: mongoose.Types.ObjectId(id) }, { $set: updateData });
+    } else if (updateData.annualChange) {
+      const result = await Events.AnnualChange.updateOne({ _id: mongoose.Types.ObjectId(id) }, { $set: updateData.AnnualChange });
+    }
+
+    if (result.nModified === 0) {
+      // If no documents were modified, return a 404 response
+      return res.status(404).json({ message: "No document found to update" });
+    }
+
+    // If the update is successful, return a 200 response with the result
+    return res.status(200).json({ message: "Document updated successfully", result });
+  } catch (err) {
+    res.status(500).json({ error: "Error updating" });
   }
 };

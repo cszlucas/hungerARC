@@ -12,14 +12,18 @@ router.post("/auth/google", authentication.auth);
 
 // events
 router.post("/incomeEvent", events.incomeEvent);
+router.post("/updateIncome", events.updateIncome);
 router.post("/expenseEvent", events.expenseEvent);
+router.post("/updateExpense", events.updateExpense);
 
 // investments
-router.post("/investmentType", investments.investmentType);
+router.post("/investment", investments.investment);
+router.post("/updateInvestment", investments.updateInvestment);
 
 // scenario
 router.get("/scenario/:id", scenario.scenario);
 router.post("/basicInfo", scenario.basicInfo);
+router.post("/scenario/:id", scenario.scenario);
 
 //tax
 router.get("/tax", tax.tax);

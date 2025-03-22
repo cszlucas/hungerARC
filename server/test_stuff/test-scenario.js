@@ -91,11 +91,11 @@ async function createScenario() {
     const annualChange = await annChange.save();
 
     const incomeEventData = new IncomeEvent({
-      eventSeriesName: "income event series",
-      description: "First event series why.",
+      eventSeriesName: "income2020-2023",
+      description: "Income event series from 2020-2025.",
       startYear: {
         type: "year",
-        year: 2022,
+        year: 2020,
       },
       duration: {
         type: "fixedAmt",
@@ -110,16 +110,36 @@ async function createScenario() {
       isSocialSecurity: false,
     });
 
-    const expenseEventData = new ExpenseEvent({
-      eventSeriesName: "Expense event series",
-      description: "First event series why.",
+    const incomeEventData2 = new IncomeEvent({
+      eventSeriesName: "income2023-2025",
+      description: "Income event series from 2023-2025.",
       startYear: {
         type: "year",
-        year: 2021,
+        year: 2023,
       },
       duration: {
         type: "fixedAmt",
-        value: 5,
+        value: 8,
+      },
+      eventName: "Salary",
+      eventDate: new Date("2025-01-01"),
+      initialAmount: 50000,
+      annualChange: annualChange,
+      userPercentage: 0.15,
+      inflationAdjustment: true,
+      isSocialSecurity: false,
+    });
+
+    const expenseEventData = new ExpenseEvent({
+      eventSeriesName: "Expense 2023-2025",
+      description: "Expense event series from 2023-2025.",
+      startYear: {
+        type: "year",
+        year: 2023,
+      },
+      duration: {
+        type: "fixedAmt",
+        value: 4,
       },
       eventName: "Rent",
       eventDate: new Date("2025-01-01"),
@@ -131,7 +151,76 @@ async function createScenario() {
     });
 
     const incomeEvent = await incomeEventData.save();
+    const incomeEvent2 = await incomeEventData2.save();
     const expenseEvent = await expenseEventData.save();
+
+    const investStrat1 = new InvestEvent({
+      eventSeriesName: "Invest 2020-2023",
+      description: "Invest event series from 2020-2023.",
+      startYear: {
+        type: "year",
+        year: 2020,
+      },
+      duration: {
+        type: "fixedAmt",
+        value: 1,
+      },
+      type: "fixed",
+      fixedPercentages: {
+        [investment1._id]: 30,
+        [investment2._id]: 70,
+      },
+      maxCash: 100,
+    });
+
+    const investStrat2 = new InvestEvent({
+      eventSeriesName: "Invest 2023-2025",
+      description: "Invest event series from 2023-2025.",
+      startYear: {
+        type: "year",
+        year: 2023,
+      },
+      duration: {
+        type: "fixedAmt",
+        value: 4,
+      },
+      type: "glidePath",
+      initialPercentages: {
+        [investment1._id]: 60,
+        [investment2._id]: 40,
+      },
+      finalPercentages: {
+        [investment1._id]: 30,
+        [investment2._id]: 70,
+      },
+      maxCash: 300,
+    });
+
+    const rebalanceEventSeries = new RebalanceEvent({
+      eventSeriesName: "Rebalance 2023-2025",
+      description: "Rebalance event series 2023-2025",
+      startYear: {
+        type: "year",
+        year: 2023,
+      },
+      duration: {
+        type: "fixedAmt",
+        value: 2,
+      },
+      type: "glidePath",
+      initialPercentages: {
+        [investment1._id]: 60,
+        [investment2._id]: 40,
+      },
+      finalPercentages: {
+        [investment1._id]: 30,
+        [investment2._id]: 70,
+      },
+    });
+
+    const investStr1 = await investStrat1.save();
+    const investStr2 = await investStrat2.save();
+    const rebalance = await rebalanceEventSeries.save();
 
     const test_scenario = new Scenario({
       name: "My first scenario.",
@@ -142,9 +231,10 @@ async function createScenario() {
         fixedAge: 80,
       },
       setOfInvestments: [investment1._id, investment2._id],
-      incomeEventSeries: [incomeEvent._id],
+      incomeEventSeries: [incomeEvent._id, incomeEvent2._id],
       expenseEventSeries: [expenseEvent._id],
-      investEventSeries: [investment2._id, investment1._id],
+      investEventSeries: [investStr1, investStr2],
+      rebalanceEventSeries: [rebalance],
       inflationAssumption: {
         type: "fixed",
         fixedRate: 10, // Fixed inflation rate
