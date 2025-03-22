@@ -14,6 +14,10 @@ import {
   rowBoxStyles,
 } from '../../components/styles';
 
+import CustomInput from '../../components/customInputBox';
+import CustomToggle from '../../components/customToggle';
+import CustomDropdown from '../../components/customDropDown';
+
 const states = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware",
   "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky",
@@ -25,73 +29,30 @@ const states = [
 ];
 
 const Basics = () => {
-  const [person, setPerson] = useState('myself');
+  const [name, setName] = useState('');
+  const [person, setPerson] = useState('Myself');
   const [financialGoal, setFinancialGoal] = useState('');
-  const [inflationType, setInflationType] = useState('none');
-  const [inflationValue, setInflationValue] = useState('');
+
   const [residence, setResidence] = useState('');
+  
   const [birthYear, setBirthYear] = useState('');
   const [lifeExpectancy, setLifeExpectancy] = useState('');
   const [spouseBirthYear, setSpouseBirthYear] = useState('');
   const [spouseLifeExpectancy, setSpouseLifeExpectancy] = useState('');
-  const [yourSampleAge, setYourSampleAge] = useState('custom');
-  const [spouseSampleAge, setSpouseSampleAge] = useState('custom');
+  const [yourSampleAge, setYourSampleAge] = useState('Custom');
+  const [spouseSampleAge, setSpouseSampleAge] = useState('Custom');
   const [yourMean, setYourMean] = useState('');
   const [yourStdDev, setYourStdDev] = useState('');
   const [spouseMean, setSpouseMean] = useState('');
   const [spouseStdDev, setSpouseStdDev] = useState('');
 
-  const handlePersonChange = (event, newPerson) => {
-    if (newPerson !== null) {
-      setPerson(newPerson);
-    }
-  };
+  const [inflationType, setInflationType] = useState('None');
+  const [inflationValue, setInflationValue] = useState('');
+  const [inflationMean, setInflationMean] = useState('');
+  const [inflationStdDev, setInflationStdDev] = useState('');
+  const [inflationMin, setInflationMin] = useState('');
+  const [inflationMax, setInflationMax] = useState('');
 
-  const handleGoalChange = (event) => {
-    setFinancialGoal(event.target.value);
-  };
-
-  const handleInflationChange = (event, newInflationType) => {
-    if (newInflationType !== null) {
-      setInflationType(newInflationType);
-    }
-  };
-
-  const handleInflationValueChange = (event) => {
-    setInflationValue(event.target.value);
-  };
-
-  const handleResidenceChange = (event) => {
-    setResidence(event.target.value);
-  };
-
-  const handleBirthYearChange = (event) => {
-    setBirthYear(event.target.value);
-  };
-
-  const handleLifeExpectancyChange = (event) => {
-    setLifeExpectancy(event.target.value);
-  };
-
-  const handleSpouseBirthYearChange = (event) => {
-    setSpouseBirthYear(event.target.value);
-  };
-
-  const handleSpouseLifeExpectancyChange = (event) => {
-    setSpouseLifeExpectancy(event.target.value);
-  };
-
-  const handleYourSampleAgeChange = (event, newValue) => {
-    if (newValue !== null) {
-      setYourSampleAge(newValue);
-    }
-  };
-
-  const handleSpouseSampleAgeChange = (event, newValue) => {
-    if (newValue !== null) {
-      setSpouseSampleAge(newValue);
-    }
-  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -113,229 +74,137 @@ const Basics = () => {
 
         {/* Row 1 */}
         <Box sx={rowBoxStyles}>
-          <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-            <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-              Name of Scenario
-            </Typography>
-            <TextField variant="outlined" sx={textFieldStyles} />
-          </Box>
-
-          <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-            <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-              Financial Goal
-            </Typography>
-            <TextField
+          <CustomInput 
+              title="Name of Scenarios"
+              type="normal"
+              value={name}
+              setValue={setName}
+          />
+          <CustomInput 
+              title="Financial Goal"
               type="number"
-              variant="outlined"
               value={financialGoal}
-              onChange={handleGoalChange}
-              sx={numFieldStyles}
-            />
-          </Box>
+              setValue={setFinancialGoal}
+          />
 
-          <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-            <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-              State Residence
-            </Typography>
-            <TextField
-              select
-              variant="outlined"
-              value={residence}
-              onChange={handleResidenceChange}
-              sx={textFieldStyles}
-            >
-              {states.map((state) => (
-                <MenuItem key={state} value={state}>
-                  {state}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Box>
+          <CustomDropdown
+            label="State Residence"
+            value= {residence}
+            menuItems={states}
+            setValue={setResidence}
+            textFieldStyles={textFieldStyles}
+          />
 
-          <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-            <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-              Is the scenario for yourself or with your spouse?
-            </Typography>
-            <ToggleButtonGroup
+          <CustomToggle
+              title="Is the scenario for yourself or with your spouse?"
+              values={['Myself', 'With Spouse']}
+              sideView={false}
+              width={100}
               value={person}
-              exclusive
-              onChange={handlePersonChange}
-              aria-label="scenario target"
-              sx={toggleButtonGroupStyles}
-            >
-              <ToggleButton value="myself" aria-label="myself">
-                Myself
-              </ToggleButton>
-              <ToggleButton value="spouse" aria-label="with spouse">
-                With Spouse
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
+              setValue={setPerson}
+          />
         </Box>
 
         {/* Row 2 */}
         <Box sx={rowBoxStyles}>
-          <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-            <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-              Your Birth Year
-            </Typography>
-            <TextField
+          <CustomInput 
+              title="Your Birth Year"
               type="number"
-              variant="outlined"
               value={birthYear}
-              onChange={handleBirthYearChange}
-              sx={numFieldStyles}
-            />
-          </Box>
+              setValue={setBirthYear}
+          />
 
           {/* Toggle for Life Expectancy or Sample Age */}
-          <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-            <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-              Your Age Type
-            </Typography>
-            <ToggleButtonGroup
+          <CustomToggle
+              title="your age type"
+              values={['Custom', 'Sample Age']}
+              sideView={false}
+              width={100}
               value={yourSampleAge}
-              exclusive
-              onChange={handleYourSampleAgeChange}
-              aria-label="your age type"
-              sx={toggleButtonGroupStyles}
-            >
-              <ToggleButton value="custom" aria-label="custom">
-                Custom
-              </ToggleButton>
-              <ToggleButton value="sample" aria-label="sample">
-                Sample Age
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
+              setValue={setYourSampleAge}
+          />
 
           {/* Custom or Sample Age */}
-          {yourSampleAge === 'custom' && (
-            <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-              <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                Your Life Expectancy
-              </Typography>
-              <TextField
+          {yourSampleAge === 'Custom' && (
+            <CustomInput 
+                title="Your Life Expectancy"
                 type="number"
-                variant="outlined"
+                adornment=""
                 value={lifeExpectancy}
-                onChange={handleLifeExpectancyChange}
-                sx={numFieldStyles}
-              />
-            </Box>
+                setValue={setLifeExpectancy}
+            />
           )}
 
-          {yourSampleAge === 'sample' && (
+          {yourSampleAge === 'Sample Age' && (
             <>
-              <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-                <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                  Your Mean
-                </Typography>
-                <TextField
-                  type="number"
-                  variant="outlined"
-                  value={yourMean}
-                  onChange={(e) => setYourMean(e.target.value)}
-                  sx={numFieldStyles}
-                />
-              </Box>
+              <CustomInput 
+                title="Mean"
+                type="number"
+                adornment=""
+                value={yourMean}
+                setValue={setYourMean}
+             />
 
-              <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-                <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                  Your Standard Deviation
-                </Typography>
-                <TextField
-                  type="number"
-                  variant="outlined"
-                  value={yourStdDev}
-                  onChange={(e) => setYourStdDev(e.target.value)}
-                  sx={numFieldStyles}
-                />
-              </Box>
+              <CustomInput 
+                title="Standard Deviation"
+                type="number"
+                adornment=""
+                value={yourStdDev}
+                setValue={setYourStdDev}
+             />
             </>
           )}
         </Box>
 
         {/* Row 3 - Spouse's birth year / life expectancy */}
-        {person === 'spouse' && (
+        {person === 'With Spouse' && (
           <Box sx={rowBoxStyles}>
-            <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-              <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                Spouse's Birth Year
-              </Typography>
-              <TextField
+            <CustomInput 
+                title="Spouse's Birth Year"
                 type="number"
-                variant="outlined"
+                adornment=""
                 value={spouseBirthYear}
-                onChange={handleSpouseBirthYearChange}
-                sx={numFieldStyles}
-              />
-            </Box>
+                setValue={setSpouseBirthYear}
+            />
 
             {/* Spouse Toggle for Life Expectancy or Sample Age */}
-            <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-              <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                Spouse's Age Type
-              </Typography>
-              <ToggleButtonGroup
+            <CustomToggle
+                title="your age type"
+                values={['Custom', 'Sample Age']}
+                sideView={false}
+                width={100}
                 value={spouseSampleAge}
-                exclusive
-                onChange={handleSpouseSampleAgeChange}
-                aria-label="spouse age type"
-                sx={toggleButtonGroupStyles}
-              >
-                <ToggleButton value="custom" aria-label="custom">
-                  Custom
-                </ToggleButton>
-                <ToggleButton value="sample" aria-label="sample">
-                  Sample Age
-                </ToggleButton>
-              </ToggleButtonGroup>
-            </Box>
+                setValue={setSpouseSampleAge}
+            />
 
             {/* Custom or Sample Age */}
-            {spouseSampleAge === 'custom' && (
-              <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-                <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                  Spouse's Life Expectancy
-                </Typography>
-                <TextField
+            {spouseSampleAge === 'Custom' && (
+              <CustomInput 
+                  title="Spouse's Life Expectancy"
                   type="number"
-                  variant="outlined"
+                  adornment=""
                   value={spouseLifeExpectancy}
-                  onChange={handleSpouseLifeExpectancyChange}
-                  sx={numFieldStyles}
-                />
-              </Box>
+                  setValue={setSpouseLifeExpectancy}
+              />
             )}
 
-            {spouseSampleAge === 'sample' && (
+            {spouseSampleAge === 'Sample Age' && (
               <>
-                <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-                  <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                    Spouse's Mean
-                  </Typography>
-                  <TextField
+                <CustomInput 
+                    title="Mean"
                     type="number"
-                    variant="outlined"
+                    adornment=""
                     value={spouseMean}
-                    onChange={(e) => setSpouseMean(e.target.value)}
-                    sx={numFieldStyles}
-                  />
-                </Box>
+                    setValue={setSpouseMean}
+                />
 
-                <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-                  <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                    Spouse's Standard Deviation
-                  </Typography>
-                  <TextField
+                <CustomInput 
+                    title="Standard Deviation"
                     type="number"
-                    variant="outlined"
+                    adornment=""
                     value={spouseStdDev}
-                    onChange={(e) => setSpouseStdDev(e.target.value)}
-                    sx={numFieldStyles}
-                  />
-                </Box>
+                    setValue={setSpouseStdDev}
+                />
               </>
             )}
           </Box>
@@ -347,43 +216,60 @@ const Basics = () => {
         </Typography>
 
         <Box sx={rowBoxStyles}>
-          <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-            <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-              Distribution Type
-            </Typography>
-            <ToggleButtonGroup
+          <CustomToggle
+              title="Distribution"
+              values={['None', 'Uniform', 'Normal']}
+              sideView={false}
+              width={100}
               value={inflationType}
-              exclusive
-              onChange={handleInflationChange}
-              aria-label="inflation distribution"
-              sx={toggleButtonGroupStyles}
-            >
-              <ToggleButton value="none" aria-label="none">
-                None
-              </ToggleButton>
-              <ToggleButton value="uniform" aria-label="uniform">
-                Uniform
-              </ToggleButton>
-              <ToggleButton value="normal" aria-label="normal">
-                Normal
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
+              setValue={setInflationType}
+          />
 
           {/* Inflation Value (Conditional) */}
-          {inflationType === 'none' && (
-            <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-              <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                Inflation Value
-              </Typography>
-              <TextField
+          {inflationType === 'None' && (
+            <CustomInput 
+                title="Value"
                 type="number"
-                variant="outlined"
+                adornment="%"
                 value={inflationValue}
-                onChange={handleInflationValueChange}
-                sx={numFieldStyles}
+                setValue={setInflationValue}
+            />
+          )}
+          {inflationType === 'Uniform' && (
+            <>
+              <CustomInput 
+                  title="Min"
+                  type="number"
+                  adornment="%"
+                  value={inflationMin}
+                  setValue={setInflationMin}
               />
-            </Box>
+              <CustomInput 
+                  title="Max"
+                  type="number"
+                  adornment="%"
+                  value={inflationMax}
+                  setValue={setInflationMax}
+              />
+            </>
+          )}
+          {inflationType === 'Normal' && (
+            <>
+              <CustomInput 
+                  title="Mean"
+                  type="number"
+                  adornment="%"
+                  value={inflationMean}
+                  setValue={setInflationMean}
+              />
+              <CustomInput 
+                  title="Standard Deviation"
+                  type="number"
+                  adornment="%"
+                  value={inflationStdDev}
+                  setValue={setInflationStdDev}
+              />
+            </>
           )}
         </Box>
 

@@ -1,10 +1,12 @@
 export const stackStyles = {
   marginTop: 6,
   marginBottom: 2,
+  flexWrap: 'wrap',
 };
 
 export const titleStyles = {
   fontWeight: 'bold',
+  mb: 2
 };
 
 export const buttonStyles = {
@@ -22,7 +24,7 @@ export const rowBoxStyles = {
 
 export const textFieldStyles = {
   minWidth: '200px',
-  height: '40px',
+  minheight: '40px',
   '& .MuiOutlinedInput-root': {
     height: '40px',
     backgroundColor: 'grey.300',
@@ -46,7 +48,7 @@ export const multiLineTextFieldStyles = {
 
 
 export const numFieldStyles = {
-  maxWidth: '140px',
+  maxWidth: '150px',
   height: '40px',
   '& .MuiOutlinedInput-root': {
     height: '40px',

@@ -11,18 +11,14 @@ import PageHeader from '../../../components/pageHeader';
 import {
   stackStyles,
   titleStyles,
-  textFieldStyles,
-  numFieldStyles,
-  multiLineTextFieldStyles,
-  toggleButtonGroupStyles,
   backContinueContainerStyles,
   buttonStyles,
   rowBoxStyles,
 } from '../../../components/styles';
 
+import CustomInput from "../../../components/customInputBox";
+
 const EventSeries = () => {
-  const [toggleType, setToggleType] = useState('Toggle A');
-  const [value, setValue] = useState('');
   const [eventName, setEventName] = useState('');
   const [description, setDescription] = useState('');
   const [startYear, setStartYear] = useState('');
@@ -35,32 +31,6 @@ const EventSeries = () => {
     { 'Event B2': 'Expense' },
     { 'Event C3': 'Invest' },
   ];
-
-  const handleToggleChange = (event, newToggleType) => {
-    if (newToggleType !== null) {
-      setToggleType(newToggleType);
-    }
-  };
-
-  const handleValueChange = (event) => {
-    setValue(event.target.value);
-  };
-
-  const handleEventNameChange = (event) => {
-    setEventName(event.target.value);
-  };
-
-  const handleDescriptionChange = (event) => {
-    setDescription(event.target.value);
-  };
-
-  const handleStartYearChange = (event) => {
-    setStartYear(event.target.value);
-  };
-
-  const handleEndYearChange = (event) => {
-    setEndYear(event.target.value);
-  };
 
   const handleAddEvent = () => {
     setOpenBackdrop(true);
@@ -95,59 +65,39 @@ const EventSeries = () => {
 
         <Box sx={rowBoxStyles}>
           {/* First Box with Inputs */}
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-              Event name
-            </Typography>
-            <TextField
-              variant="outlined"
-              value={eventName}
-              onChange={handleEventNameChange}
-              sx={textFieldStyles}
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            <CustomInput 
+              title="Event name" 
+              value={eventName} 
+              setValue={setEventName} 
             />
 
-            <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium', marginTop: 2 }}>
-              Description (Optional)
-            </Typography>
-            <TextField
-              variant="outlined"
-              multiline
-              value={description}
-              onChange={handleDescriptionChange}
-              sx={multiLineTextFieldStyles}
-              rows={4}
+            <CustomInput 
+              title="Description (Optional)" 
+              type="multiline" 
+              value={description} 
+              setValue={setDescription} 
             />
 
             <Stack direction="row" spacing={2} sx={{ marginTop: 2 }}>
-              <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-                <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                  Start Year
-                </Typography>
-                <TextField
-                  variant="outlined"
-                  type="number"
-                  value={startYear}
-                  onChange={handleStartYearChange}
-                  sx={numFieldStyles}
-                />
-              </Box>
+              <CustomInput 
+                title="Start Year" 
+                type="numbered" 
+                value={startYear} 
+                setValue={setStartYear} 
+              />
 
-              <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-                <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                  End Year
-                </Typography>
-                <TextField
-                  variant="outlined"
-                  type="number"
-                  value={endYear}
-                  onChange={handleEndYearChange}
-                  sx={numFieldStyles}
-                />
-              </Box>
+              <CustomInput
+                title="End Year" 
+                type="numbered" 
+                value={endYear} 
+                setValue={setEndYear} 
+              />
             </Stack>
           </Box>
 
-          {/* Empty Box */}
+
+          {/* List Box */}
           <Box sx={{ flex: 1 }}>
             {/* List of Event Series */}
             <Stack direction="row" alignItems="center" justifyContent="space-between">
