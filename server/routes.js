@@ -24,6 +24,7 @@ router.get("/scenario/:id/incomeEvent", events.getAllIncomeEventsByScenario);
 router.get("/scenario/:id/expenseEvent", events.getAllExpenseEventsByScenario);
 
 // investments
+router.get("/investmentType/:id", investments.investmentType);
 router.post("/investmentType", investments.investmentType);
 router.post("/investment", investments.investment);
 router.post("/updateInvestment/:id", investments.updateInvestment);
