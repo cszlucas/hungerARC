@@ -15,16 +15,20 @@ import {
 } from '../../components/styles';  // Import your modular styles
 import CustomInput from '../../components/customInputBox';
 import { Close as CloseIcon } from '@mui/icons-material';
+import { useNavigate } from "react-router-dom";
 
 const EventSeries = () => {
   const [isRothOptimized, setIsRothOptimized] = useState(false); // State for Switch
   const [startYear, setStartYear] = useState('');
   const [endYear, setEndYear] = useState('');
+  
   const [numSimulations, setNumSimulations] = useState('1');
   const [openBackdrop, setOpenBackdrop] = useState(false); // State to control backdrop visibility
   const [emails, setEmails] = useState([]); // Store the email addresses
   const [permission, setPermission] = useState([]);
 
+  const navigate = useNavigate();
+  
   const handleSwitchChange = (event) => {
     setIsRothOptimized(event.target.checked); // Update state when switch is toggled
   };
@@ -163,7 +167,9 @@ const EventSeries = () => {
 
         {/* Back and Continue buttons */}
         <Box sx={backContinueContainerStyles}>
-          <Button variant="contained" color="primary" sx={buttonStyles}>
+          <Button variant="contained" color="primary" sx={buttonStyles}
+            onClick={() => navigate("/scenario/strategies")}
+          >
             Back
           </Button>
           <Button variant="contained" color="secondary" sx={buttonStyles}>

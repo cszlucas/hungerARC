@@ -8,7 +8,7 @@ export default function PageHeader() {
   const pathSegments = location.pathname.split("/");
 
   // Ensure we have at least three segments: ["", "scenarios", "{id}", "pageName"]
-  const pageName = pathSegments.length >= 4 ? pathSegments[3] : "";
+  const pageName = pathSegments.length >= 3 ? pathSegments[2] : "";
 
   // Helper function to check active route
   const isActive = (pages) => pages.includes(pageName);
@@ -34,8 +34,8 @@ export default function PageHeader() {
 
         {/* Event Series */}
         <Typography
-          color={isActive(["event_series", "invest", "expense", "income", "rebalance"]) ? "primary" : "textPrimary"}
-          fontWeight={isActive(["event_series", "invest", "expense", "income", "rebalance"]) ? "bold" : "normal"}
+          color={isActive(["event_series", "invest", "expense", "income", "rebalance", "strategies"]) ? "primary" : "textPrimary"}
+          fontWeight={isActive(["event_series", "invest", "expense", "income", "rebalance", "strategies"]) ? "bold" : "normal"}
         >
           Event Series
         </Typography>

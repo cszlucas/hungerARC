@@ -14,7 +14,9 @@ import {
 
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete'; 
-import CustomDropdown from "../../../components/customDropDown"; 
+import CustomDropdown from "../../../components/customDropDown";
+
+import { useNavigate } from "react-router-dom";
 
 const InvestmentLists = () => {
   const [open, setOpen] = useState(false);
@@ -23,7 +25,8 @@ const InvestmentLists = () => {
     taxType: '',
     value: '',
   });
-
+  const navigate = useNavigate();
+  
   const [investments, setInvestments] = useState([
     { investmentTypeName: 'Apple', taxType: 'tax', value: '$50000' },
     { investmentTypeName: 'Microsoft', taxType: 'tax', value: '$70000' },
@@ -76,13 +79,13 @@ const InvestmentLists = () => {
               secondary={`Value: ${item.value}`}
             />
             
-            <IconButton
+            {/* <IconButton
               edge="end"
               aria-label="edit"
               onClick={() => alert(`Edit ${item.investmentTypeName}`)}
             >
               <EditIcon />
-            </IconButton>
+            </IconButton> */}
 
             <IconButton
               edge="end"
@@ -143,11 +146,13 @@ const InvestmentLists = () => {
         </Box>
 
         <Box sx={backContinueContainerStyles}>
-          <Button variant="contained" color="primary" sx={buttonStyles}>
-            Back
+          <Button variant="contained" color="primary" sx={buttonStyles} 
+            onClick={() => navigate("/scenario/basics")}>
+              Back
           </Button>
-          <Button variant="contained" color="success" sx={buttonStyles}>
-            Continue
+          <Button variant="contained" color="success" sx={buttonStyles} 
+            onClick={() => navigate("/scenario/event_series")}>
+              Continue
           </Button>
         </Box>
 
@@ -187,7 +192,7 @@ const InvestmentLists = () => {
                     <MenuItem value="Roth IRA">Roth IRA</MenuItem>
                     <MenuItem value="Hunger Finance">Hunger Finance</MenuItem>
                   </TextField>
-                  <Button variant="contained" color="primary" onClick={handleClose} sx={{textTransform: 'none', minWidth: 150}}>
+                  <Button variant="contained" color="primary" onClick={() => navigate("/scenario/investment_type")} sx={{textTransform: 'none', minWidth: 150}}>
                     Add Custom Type
                   </Button>
                 </Box>
