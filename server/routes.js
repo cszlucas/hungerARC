@@ -22,6 +22,8 @@ router.post("/investStrategy", events.investStrategy);
 router.post("/updateInvestStrategy/:id", events.updateInvestStrategy);
 router.post("/rebalanceStrategy", events.rebalanceStrategy);
 router.post("/updateRebalanceStrategy/:id", events.updateRebalanceStrategy);
+router.get("/scenario/:id/incomeEvent", events.getAllIncomeEventsByScenario);
+router.get("/scenario/:id/expenseEvent", events.getAllExpenseEventsByScenario);
 
 // investments
 router.get("/investmentType/:id", investments.investmentType);
@@ -30,6 +32,7 @@ router.post("/investmentType", investments.investmentType);
 router.post("/investment", investments.investment);
 router.post("/updateInvestment/:id", investments.updateInvestment);
 router.post("/updateInvestmentType/:id", investments.updateInvestmentType);
+router.get("/scenario/:id/investments", investments.getAllInvestmentsByScenario);
 
 // scenario
 router.get("/scenario/:id", scenario.scenario);

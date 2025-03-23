@@ -1,7 +1,7 @@
 const InvestmentType = require("../models/investmentType.js");
 const Investment = require("../models/investment.js");
-const Scenario = require("../models/scenario.js");
 const { ObjectId } = require("mongoose").Types;
+const Scenario = require("../models/scenario.js");
 
 exports.investmentType = async (req, res) => {
   const { name, description, annualReturn, expenseRatio, annualIncome, taxability } = req.body;
@@ -99,17 +99,16 @@ exports.updateInvestment = async (req, res) => {
   }
 };
 
-exports.investmentType = async (req, res) => {
-  const scenarioId = new ObjectId(req.params.id);
-  try {
-    const investType = await Scenario.findOne({ _id: scenarioId }).populate("setOfInvestmentTypes");
-
-    if (!investType) {
-      return res.status(404).json({ message: "strategy data not found" });
-    }
-    res.status(200).json(investType);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to retrieve investType data", message: err.message });
+// getAllInvestments based on scenarioId
+exports.getAllInvestmentsByScenario = async (req, res) => {
+  const { id } = req.params;
+  try{
+    const scenario = await Scenario.findOne({ _id: id });
+    const investmentIds = scenario.setOfInvestments;
+    const investments = await Investment.find({ _id: { $in: investmentIds } });
+    res.status(200).json(investments);
+  }catch(err){
+    res.status(500).json({ error: "Failed to get all investments by scenario" });
   }
 };
 
@@ -126,3 +125,8 @@ exports.getInvestment = async (req, res) => {
     res.status(500).json({ error: "Failed to retrieve Investment data", message: err.message });
   }
 };
+
+
+}
+
+
