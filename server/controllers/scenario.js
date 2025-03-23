@@ -1,5 +1,7 @@
+const mongoose = require("mongoose"); 
 const Scenario = require("../models/scenario.js");
-const { ObjectId } = require("mongoose").Types;
+const Investment = require("../models/investment.js");
+const { ObjectId } = mongoose.Types;
 
 exports.scenario = async (req, res) => {
   const scenarioId = new ObjectId(req.params.id);
@@ -49,13 +51,25 @@ exports.basicInfo = async (req, res) => {
   }
 };
 
-exports.scenario = async (req, res) => {
+exports.updateScenario = async (req, res) => {
   const { id } = req.params;
   const updateData = req.body;
   try {
-    await Scenario.updateOne({ _id: mongoose.Types.ObjectId(id) }, { $set: updateData });
+    const result = await Scenario.updateOne({ _id: new ObjectId(id) }, { $set: updateData });
+    return res.status(200).json({ message: "Scenario updated successfully" });
   } catch (err) {
     console.error("Error adding to scenario:", err);
     res.status(500).json({ error: "Failed to add to scenario" });
+  }
+};
+
+exports.scenarioInvestments = async(req,res) => {
+  try {
+    const { investmentIds } = req.body;
+    const objectIds = investmentIds.map(id => new ObjectId(id));
+    const investments = await Investment.find({ _id: { $in: objectIds } });
+    res.status(200).json(investments);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to retrieve investments", message: err.message });
   }
 };
