@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 
 const ScenarioList = () => {
     // window.location.reload();
-    const [selectedScenario, setSelectedScenario] = useState(null); // Track selected scenario
+    const [ selectedScenario, setSelectedScenario] = useState(null); // Track selected scenario
     const { scenarioData, setEditMode } = useContext(AppContext);
 
     const navigate = useNavigate();
@@ -43,8 +43,8 @@ const ScenarioList = () => {
                   variant="contained"
                   sx={{ marginTop: 0, marginBottom: 6, textTransform: "none" }}
                   onClick={() => { 
-                    setEditMode('new')
-                    navigate("/scenario/basics")
+                    setEditMode('new');
+                    navigate("/scenario/basics");
                 }}
               >
                 New Scenario
@@ -91,7 +91,7 @@ const ScenarioList = () => {
                                       edge="end" 
                                       aria-label="edit" 
                                       onClick={() => {
-                                        setEditMode(plan._id)
+                                        setEditMode(plan.id)
                                         navigate("/scenario/basics")
                                       }} // Handle edit button click
                                   >

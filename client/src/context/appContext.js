@@ -131,13 +131,13 @@ function transformScenario(input) {
       lifeExpectancy: input.lifeExpectancy?.fixedAge || '',
       spouseBirthYear: '', // Not present in input
       spouseLifeExpectancy: '', // Not present in input
-      yourSampleAge: 'Custom',
-      spouseSampleAge: 'Custom',
+      yourSampleAge: 'fixed',
+      spouseSampleAge: 'fixed',
       yourMean: '',
       yourStdDev: '',
       spouseMean: '',
       spouseStdDev: '',
-      inflationType: input.inflationAssumption?.type || 'None',
+      inflationType: input.inflationAssumption?.type || 'none',
       inflationValue: input.inflationAssumption?.fixedRate || '',
       inflationMean: '',
       inflationStdDev: '',
@@ -178,31 +178,21 @@ export const getInitialState = async (user) => {
           console.log("Using cached scenarios from localStorage:", storedScenarios);
           return storedScenarios; // Return cached scenarios if available
       }
-
       // Retrieve user ID from localStorage
-      // const user = JSON.parse(localStorage.getItem("user"));
-      //console.log("hello from the other side: " + user);
       const userId = user._id;
-      // console.log(user + "yo yo yo "+ userId);
-
       if (!userId) {
           console.error("User ID not found in localStorage.");
           return []; // Return an empty list if no user ID
       }
 
       console.log("Fetching scenarios for user:", userId);
-
       // Fetch scenarios from the backend
       const response = await axios.get(`http://localhost:8080/user/${userId}/scenarios`); // Adjust API route
 
       if (response.data) {
           console.log("Scenarios fetched from backend:", response.data);
-          
-          // Transform each scenario
-          const transformedScenarios = response.data.map(transformScenario);
-          // Cache in localStorage
-          localStorage.setItem("scenarioData", JSON.stringify(transformedScenarios));
-
+          const transformedScenarios = response.data.map(transformScenario); // Transform each scenario
+          localStorage.setItem("scenarioData", JSON.stringify(transformedScenarios)); // Cache in localStorage
           return transformedScenarios;
       }
 
@@ -220,7 +210,7 @@ const readStateFromLS = (key_value) => {
 
 const retrieveScenarioData = async (scenarioId, dataType) => {
   try {
-      const validTypes = ["investments", "income", "expenses", "invest", "rebalance", "investmentType"];
+      const validTypes = ["investments", "incomeEvent", "expenseEvent", "invest", "rebalance", "investmentType"];
       
       if (!validTypes.includes(dataType)) {
           console.error(`Invalid data type: ${dataType}`);
@@ -242,7 +232,7 @@ const capitalizeFirstLetter = (string) => string.charAt(0).toUpperCase() + strin
 
 // Context Provider Component
 export const AppProvider = ({ children }) => {
-  const [scenarioData, setScenarioData] = useState([]);
+  const [scenarioData, setScenarioData] = useState(readStateFromLS('scenarioData'));
   const [editMode, setEditMode] = useState(readStateFromLS('edit'));
   const [currScenario, setCurrScenario] = useState(readStateFromLS('currentScenario'));
   const { user } = useContext(AuthContext);
@@ -264,18 +254,28 @@ export const AppProvider = ({ children }) => {
     };
     if (user) { fetchData(); }
   }, [user]);  // Trigger a refetch when user changes
-
-
   
   useEffect(() => {
-    const getScenarioById = (id) => { scenarioData.find(scenario => scenario.id === id); }
+    const getScenarioById = (id) => {
+      for (let i = 0; i < scenarioData.length; i++) {
+          console.log(scenarioData[i].id);
+          console.log(scenarioData[i]);
+          if (scenarioData[i].id == id) {
+              return scenarioData[i]; // Return the found scenario
+          }
+      }
+      console.log('I am going to change data to null');
+      return null; // Return null if not found
+    };
+    
     // Load user data from localStorage
+    console.log(scenarioData);
     localStorage.setItem("edit", JSON.stringify(editMode));
     if (editMode != 'new' && editMode != null) {
       setCurrScenario(getScenarioById(editMode));
       setCurrInvestments(retrieveScenarioData(editMode, "investments"));
-      setCurrIncome(retrieveScenarioData(editMode, "income"));
-      setCurrExpense(retrieveScenarioData(editMode, "expense"));
+      setCurrIncome(retrieveScenarioData(editMode, "incomeEvent"));
+      setCurrExpense(retrieveScenarioData(editMode, "expenseEvent"));
       setCurrInvest(retrieveScenarioData(editMode, "invest"));
       setCurrRebalance(retrieveScenarioData(editMode, "rebalance"));
       setCurrInvestmentTypes(retrieveScenarioData(editMode, "investmentType"));

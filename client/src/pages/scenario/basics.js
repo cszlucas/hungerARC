@@ -36,13 +36,13 @@ const Basics = () => {
     lifeExpectancy: '',
     spouseBirthYear: '',
     spouseLifeExpectancy: '',
-    yourSampleAge: 'Custom',
-    spouseSampleAge: 'Custom',
+    yourSampleAge: 'fixed',
+    spouseSampleAge: 'fixed',
     yourMean: '',
     yourStdDev: '',
     spouseMean: '',
     spouseStdDev: '',
-    inflationType: 'None',
+    inflationType: 'fixed',
     inflationValue: '',
     inflationMean: '',
     inflationStdDev: '',
@@ -151,14 +151,14 @@ const Basics = () => {
 
           <CustomToggle
             title="Your age type"
-            values={['Custom', 'Sample Age']}
+            values={['fixed', 'normal']}
             sideView={false}
             width={100}
             value={formValues.yourSampleAge}
             setValue={(value) => handleInputChange("yourSampleAge", value)}
           />
 
-          {formValues.yourSampleAge === 'Custom' ? (
+          {formValues.yourSampleAge === 'fixed' ? (
             <CustomInput
               title="Your Life Expectancy"
               type="number"
@@ -195,14 +195,14 @@ const Basics = () => {
 
             <CustomToggle
               title="Spouse age type"
-              values={['Custom', 'Sample Age']}
+              values={['fixed', 'normal']}
               sideView={false}
               width={100}
               value={formValues.spouseSampleAge}
               setValue={(value) => handleInputChange("spouseSampleAge", value)}
             />
 
-            {formValues.spouseSampleAge === 'Custom' ? (
+            {formValues.spouseSampleAge === 'fixed' ? (
               <CustomInput
                 title="Spouse's Life Expectancy"
                 type="number"
@@ -236,7 +236,7 @@ const Basics = () => {
         <Box sx={rowBoxStyles}>
           <CustomToggle
               title="Distribution"
-              values={['None', 'Uniform', 'Normal']}
+              values={['fixed', 'uniform', 'normal']}
               sideView={false}
               width={100}
               value={formValues.inflationType}
@@ -244,7 +244,7 @@ const Basics = () => {
           />
 
           {/* Inflation Value (Conditional) */}
-          {formValues.inflationType === 'None' && (
+          {formValues.inflationType === 'fixed' && (
             <CustomInput 
                 title="Value"
                 type="number"
@@ -253,7 +253,7 @@ const Basics = () => {
                 setValue={(value) => handleInputChange("inflationValue", value)}
             />
           )}
-          {formValues.inflationType === 'Uniform' && (
+          {formValues.inflationType === 'uniform' && (
             <>
               <CustomInput 
                   title="Min"
@@ -271,7 +271,7 @@ const Basics = () => {
               />
             </>
           )}
-          {formValues.inflationType === 'Normal' && (
+          {formValues.inflationType === 'normal' && (
             <>
               <CustomInput 
                   title="Mean"
