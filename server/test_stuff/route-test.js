@@ -2,6 +2,7 @@ const axios = require("axios");
 const { BaseEventSeries, IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent, AnnualChange } = require("../models/eventSeries.js");
 const InvestmentType = require("../models/investmentType.js");
 const Investment = require("../models/investment.js");
+const { ObjectId } = require("mongoose");
 
 async function Income() {
   try {
@@ -146,25 +147,54 @@ async function Investments() {
 
     //const inv = await axios.post("http://localhost:8080/investment", invest1);
 
-    //UPDATE
-
-    const investmentType2 = new InvestmentType({
-      name: "Bond Fund",
-      description: "idk.",
+    const investmentType22 = new InvestmentType({
+      name: "Equity Fund",
+      description: "A high-risk investment focusing on stocks.",
       annualReturn: {
         type: "normalPercent",
         mean: 0.05,
         stdDev: 0.1,
       },
-      expenseRatio: 0.01,
+      expenseRatio: 0.02,
       annualIncome: {
         type: "fixedPercent",
         fixed: 5,
-        mean: 10,
+        mean: 0.04,
         stdDev: 0.05,
       },
-      taxability: "tax-deferred",
+      taxability: "taxable",
     });
+
+    // const type2 = await axios.post("http://localhost:8080/investmentType", investmentType22);
+
+    // Now create and save the Investment
+    const invest2 = new Investment({
+      investmentType: type2.data._id,
+      value: 50,
+      accountTaxStatus: "non-tax",
+    });
+
+    // const inv2 = await axios.post("http://localhost:8080/investment", invest2);
+
+    //UPDATE
+
+    // const investmentType2 = new InvestmentType({
+    //   name: "Bond Fund",
+    //   description: "idk.",
+    //   annualReturn: {
+    //     type: "normalPercent",
+    //     mean: 0.05,
+    //     stdDev: 0.1,
+    //   },
+    //   expenseRatio: 0.01,
+    //   annualIncome: {
+    //     type: "fixedPercent",
+    //     fixed: 5,
+    //     mean: 10,
+    //     stdDev: 0.05,
+    //   },
+    //   taxability: "tax-deferred",
+    // });
 
     // const update = await axios.post("http://localhost:8080/updateInvestmentType/67df68e520abee9d9188b03a", investmentType2);
 
@@ -189,7 +219,72 @@ async function Users() {
   }
 }
 
+async function InvestStrat() {
+  try {
+    const investStrat1 = new InvestEvent({
+      eventSeriesName: "Invest 2020-2023",
+      description: "Invest event series from 2020-2023.",
+      startYear: {
+        type: "year",
+        year: 2020,
+      },
+      duration: {
+        type: "fixedAmt",
+        value: 1,
+      },
+      type: "fixed",
+      fixedPercentages: {
+        ["67df68e520abee9d9188b03a"]: 30,
+        ["67df7a358d16d4c00df75a72"]: 70,
+      },
+      maxCash: 100,
+    });
+
+    // const strat1 = await axios.post("http://localhost:8080/investStrategy", investStrat1);
+
+    const strategy = await axios.get("http://localhost:8080/investStrategy/67df7b20e2d1899f44c74079");
+    console.log(strategy.data);
+  } catch (error) {
+    console.error("Error updating:", error);
+  }
+}
+
+async function RebalanceStrat() {
+  try {
+    const reb = new RebalanceEvent({
+      eventSeriesName: "Rebalance 2023-2025",
+      description: "Rebalance event series 2023-2025",
+      startYear: {
+        type: "year",
+        year: 2023,
+      },
+      duration: {
+        type: "fixedAmt",
+        value: 2,
+      },
+      type: "glidePath",
+      initialPercentages: {
+        ["67df68e520abee9d9188b03a"]: 60,
+        ["67df7a358d16d4c00df75a72"]: 40,
+      },
+      finalPercentages: {
+        ["67df68e520abee9d9188b03a"]: 30,
+        ["67df7a358d16d4c00df75a72"]: 70,
+      },
+    });
+
+    // const strategy = await axios.post("http://localhost:8080/rebalanceStrategy", reb);
+
+    const getStrategy = await axios.get("http://localhost:8080/rebalanceStrategy/67df7ff9bbddccb6af92219e");
+    console.log(getStrategy.data);
+  } catch (error) {
+    console.error("Error updating:", error);
+  }
+}
+
 //Income();
 //Expense();
 //Investments();
 //Users();
+//InvestStrat();
+RebalanceStrat();
