@@ -1,16 +1,19 @@
 const axios = require("axios");
 
+function calculateNormalDist(std,mean){
+  const u = 1 - Math.random();
+  const v = Math.random();
+  const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+  return z * std + mean;
+}
+
 function findInflation(inflationAssumption) {
-  if (inflationAssumption.fixedPercentage)
-    // in decimal form already
-    return inflationAssumption.fixedPercentage.fixedValue;
-  else if (inflationAssumption.uniform) return Math.random() * (inflationAssumption.uniform.max - inflationAssumption.uniform.min) + inflationAssumption.uniform.min;
-  // normal distribution
+  if (inflationAssumption.type=="fixed")
+    return inflationAssumption.fixedRate;
+  else if (inflationAssumption.type=="uniform") 
+    return Math.random() * (inflationAssumption.max - inflationAssumption.min) + inflationAssumption.min;
   else {
-    const u = 1 - Math.random();
-    const v = Math.random();
-    const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-    return z * inflationAssumption.normal.mean.std + inflationAssumption.normal.mean;
+    return calculateNormalDist(inflationAssumption.std, inflationAssumption.mean);
   }
 }
 
@@ -23,17 +26,19 @@ function updateFedIncomeTaxBracket(fedIncomeTaxBracket, inflationRate) {
 
 function updateStateIncomeTaxBracket(stateIncomeTaxBracket, inflationRate) {
   stateIncomeTaxBracket.forEach((bracket) => {
-    bracket.incomeRange[0] *= 1 + inflationRate;
-    bracket.incomeRange[1] *= 1 + inflationRate;
+    bracket.incomeRange[0] *= (1 + inflationRate);
+    bracket.incomeRange[1] *= (1 + inflationRate);
   });
 }
 
 function updateFedDeduction(fedDeduction, inflationRate) {
   fedDeduction *= 1 + inflationRate;
+  return fedDeduction;
 }
 
 function updateStateDeduction(stateDeduction, inflationRate) {
   stateDeduction *= 1 + inflationRate;
+  return stateDeduction;
 }
 
 function findUpperFedTaxBracket(curYearFedTaxableIncome, fedIncomeTaxBracket) {
@@ -113,12 +118,13 @@ class DataStore {
   constructor() {
     this.taxData = null;
     this.scenario = null;
+    this.investment = null;
   }
 
   async fetchTax() {
     try {
       const response = await axios.get("http://localhost:8080/tax");
-      this.tax = response.data;
+      this.taxData = response.data;
     } catch (error) {
       console.error("Error fetching tax:", error);
     }
@@ -126,17 +132,31 @@ class DataStore {
 
   async fetchScenario() {
     try {
-      const response = await axios.get("http://localhost:8080/scenario/67de2cef01d40c92a3901b83");
+      // const response = await axios.get("http://localhost:8080/scenario");
+      const response = await axios.get("http://localhost:8080/scenario/67de2f12ce02db09e1db6dba");
+      // const response = await axios.get("http://localhost:8080/scenario/67de2cef01d40c92a3901b83");
       this.scenario = response.data;
     } catch (error) {
       console.error("Error fetching scenario", error);
     }
   }
 
-  async fetchStateTax() {
+  async fetchStateTax(stateName) {
     try {
-      const response = await axios.get("http://localhost:8080/statetax/67de2cef01d40c92a3901b83");
+      // const response = await axios.get("http://localhost:8080/statetax");
+      const response = await axios.get(`http://localhost:8080/statetax/${stateName}`);
       this.statetax = response.data;
+    } catch (error) {
+      console.error("Error fetching state tax", error);
+    }
+  }
+
+  async fetchScenarioInvestment(investmentId) {
+    try {
+      const response = await axios.post("http://localhost:8080/scenarioInvestments", {
+        investmentIds: investmentId,
+      });
+      this.investment = response.data;
     } catch (error) {
       console.error("Error fetching state tax", error);
     }
@@ -144,7 +164,7 @@ class DataStore {
 
   // Method for accessing the data
   getTaxData() {
-    return this.tax;
+    return this.taxData;
   }
 
   getStateTax(){
@@ -154,94 +174,130 @@ class DataStore {
   getScenario() {
     return this.scenario;
   }
+  
+  getInvestment() {
+    return this.investment;
+  }
 }
 
-function runSimulation(scenario, tax, statetax) {
-  console.log(scenario);
-  console.log(tax)
+function runSimulation(scenario, tax, statetax, prevYear, lifeExpectancyUser, investment) {
+  // console.log(scenario);
+  
   // previous year
-  //   let annualLimitRetirement = database.annualLimitRetirement; ??
+  let irsLimit = scenario.irsLimits.initialAfterTax;
   let filingStatus = scenario.filingStatus;
   let state = scenario.stateResident;
-  // perhaps set the state to a default value instead?
   let fedIncomeTaxBracket, stateIncomeTaxBracket, fedDeduction, stateDeduction;
   // previous year's tax
   if (filingStatus == 'single') {
     fedIncomeTaxBracket = tax.single.federalIncomeTaxRatesBrackets;
     fedDeduction = tax.single.standardDeductions;
     if (statetax) {
-      stateIncomeTaxBracket = yaml.tax.single.stateIncomeTaxRatesBrackets;
-      stateDeduction = yaml.tax.single.standardDeduction;
+      stateIncomeTaxBracket = statetax.taxDetails[prevYear].single.stateIncomeTaxRatesBrackets;
+      stateDeduction = statetax.taxDetails[prevYear].single.standardDeduction;
     }
   } else {
     fedIncomeTaxBracket = tax.marriedFilingJointly.federalIncomeTaxRatesBrackets;
     fedDeduction = tax.marriedFilingJointly.standardDeduction;
-    if (yaml.contains(state)) {
-      stateIncomeTaxBracket = yaml.tax.marriedFilingJointly.stateIncomeTaxRatesBrackets;
-      stateDeduction = yaml.tax.marriedFilingJointly.standardDeduction;
+    if (statetax) {
+      stateIncomeTaxBracket = statetax.taxDetails[prevYear].single.stateIncomeTaxRatesBrackets;
+      stateDeduction = statetax.taxDetails[prevYear].single.standardDeduction;
     }
   }
-
   let currentYear = new Date().getFullYear();
-  let incomeEvents = scenario.incomeEvents;
-  let userEndYear = scenario.birthYearUser + scenario.lifeExpectancyUser;
-  let investments = db.investments.query({ scenario_id: scenario.id });
-  //save initial value and purchase price of investments
-  for (let investment in investments) {
-    investment.purchasePrice = investment.value;
+  let incomeEvents = scenario.incomeEventSeries;
+  let userEndYear = scenario.birthYearUser + lifeExpectancyUser;
+  // //save initial value and purchase price of investments
+  for (let invest of investment) {
+    invest.purchasePrice = invest.value;
   }
 
-  for (let year = currentYear; year <= userEndYear; year++) {
+  for (let year = currentYear; year <= 2027; year++) {
+    // for (let year = currentYear; year <= userEndYear; year++) {
     // PRELIMINARIES
     // can differ each year if sampled from distribution
-    inflationRate = findInflation(scenario.inflationAssumption);
-    // if(year!=currentYear){
+    inflationRate = findInflation(scenario.inflationAssumption)*0.01;
     federalIncomeTax = updateFedIncomeTaxBracket(fedIncomeTaxBracket, inflationRate);
 
     fedDeduction = updateFedDeduction(fedDeduction, inflationRate);
-    if (stateDeduction) {
-      stateDeduction = updateStateDeduction(stateDeduction, inflationRate);
-      stateIncomeTax = updateStateIncomeTaxBracket(stateIncomeTaxBracket, inflationRate);
+
+    if (statetax) {
+      updateStateIncomeTaxBracket(stateIncomeTaxBracket, inflationRate);
     }
-    // retirement account limits
-    annualLimitRetirement *= 1 + inflationRate;
+    // retirement account limit - after tax
+    irsLimit *= (1 + inflationRate);
 
     // RUN INCOME EVENTS
-    let curYearIncome = 0;
-    let curYearSS = 0;
-    let curYearEarlyWithdrawals = 0;
-    let curYearGains = 0;
-    let cashInvestment = scenario.investments.cashInvestment;
-    ({ curYearIncome, curYearSS, cashInvestment } = updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment));
+    // let curYearIncome = 0;
+    // let curYearSS = 0;
+    // let curYearEarlyWithdrawals = 0;
+    // let curYearGains = 0;
+    // let cashInvestment = scenario.investments.cashInvestment;
+    // ({ curYearIncome, curYearSS, cashInvestment } = updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment));
+    // console.log('curYearIncome :>> ', curYearIncome);
+    // console.log('curYearSS :>> ', curYearSS);
+    // console.log('cashInvestment :>> ', cashInvestment);
 
-    // PERFORM RMD FOR PREVIOUS YEAR
-    performRMDs(scenario, RMDStrategyInvestOrder, currYearIncome, currYear);
-    // UPDATE INVESTMENT VALUES
+  //   // PERFORM RMD FOR PREVIOUS YEAR
+  //   performRMDs(scenario, RMDStrategyInvestOrder, currYearIncome, currYear);
+  //   // UPDATE INVESTMENT VALUES
 
-    // RUN ROTH CONVERSION IF ENABLED
-    if (scenario.optimizerSettings && year >= scenario.optimizerSettings.startYear && year <= scenario.optimizerSettings.endYear) {
-      rothConversion(scenario, year, curYearIncome, curYearSS, fedIncomeTaxBracket);
-    }
+  //   // RUN ROTH CONVERSION IF ENABLED
+  //   if (scenario.optimizerSettings && year >= scenario.optimizerSettings.startYear && year <= scenario.optimizerSettings.endYear) {
+  //     rothConversion(scenario, year, curYearIncome, curYearSS, fedIncomeTaxBracket);
+  //   }
 
-    // PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
-    payNonDiscretionaryExpenses(scenario, cashInvestment, currYearIncome, currYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, ssRange);
-    // PAY DISCRETIONARY EXPENSES
-    payDiscretionaryExpenses(scenario, cashInvestment);
-    // RUN INVEST EVENT
-    runInvestStrategy(scenario, cashInvestment, IRSLimits);
-    // RUN REBALANCE EVENT
-    rebalance(scenario, curYearGains);
+  //   // PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
+  //   payNonDiscretionaryExpenses(scenario, cashInvestment, currYearIncome, currYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, ssRange);
+  //   // PAY DISCRETIONARY EXPENSES
+  //   payDiscretionaryExpenses(scenario, cashInvestment);
+  //   // RUN INVEST EVENT
+  //   runInvestStrategy(scenario, cashInvestment, IRSLimits);
+  //   // RUN REBALANCE EVENT
+  //   rebalance(scenario, curYearGains);
+
+      prevYear+=1;
   }
 }
 
+function calculateLifeExpectancy(scenario){
+  let lifeExpectancyUser, lifeExpectancySpouse;
+  if(scenario.lifeExpectancy.type=="fixed"){
+    lifeExpectancyUser=scenario.lifeExpectancy.fixedAge;
+   } else{
+    lifeExpectancyUser=calculateNormalDist(scenario.lifeExpectancy.stdDev,scenario.lifeExpectancy.mean);
+    // lifeExpectancyUser=distributions.Normal(scenario.lifeExpectancy.mean,scenario.lifeExpectancy.stdDev);
+   }
+   if(scenario.filingStatus!="single"){
+    // fix schema
+    if(scenario.spouseLifeExpectancy.type=="fixed"){
+      lifeExpectancySpouse=scenario.spouselifeExpectancy.fixedAge;
+     } else{
+      lifeExpectancyUser=calculateNormalDist(scenario.spouseLifeExpectancy.stdDev,scenario.spouseLifeExpectancy.mean);
+     }
+   }
+   return { lifeExpectancyUser, lifeExpectancySpouse };
+}
+
 async function main() {
+  // not sure how to get a value using this, not needed
+  var distributions = require('distributions');
+
   const dataStore = new DataStore();
-  await Promise.all([dataStore.fetchTax(), dataStore.fetchScenario(), dataStore.fetchStateTax()]);
+  await Promise.all([dataStore.fetchTax(), dataStore.fetchScenario()]);
 
   const tax = dataStore.getTaxData();
   const scenario = dataStore.getScenario();
+  await Promise.all([dataStore.fetchStateTax(scenario.stateResident)]);
   const statetax = dataStore.getStateTax();
-  runSimulation(scenario, tax, statetax);
+  await Promise.all([dataStore.fetchScenarioInvestment(scenario.setOfInvestments)]);
+
+  const investment = dataStore.getInvestment();
+  const prevYear = (new Date().getFullYear()-1).toString();
+
+  //calculate life expectancy
+  const {lifeExpectancyUser, lifeExpectancySpouse} = calculateLifeExpectancy(scenario);
+  runSimulation(scenario, tax, statetax, prevYear, lifeExpectancyUser, investment);
 }
 
 // Call the main function to execute everything

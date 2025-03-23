@@ -39,6 +39,7 @@ export const multiLineTextFieldStyles = {
   minWidth: '200px',
   '& .MuiOutlinedInput-root': {
     backgroundColor: 'grey.300',
+    minheight: '40px',
     border: 'none',
     '& fieldset': { display: 'none' },
     '&:hover fieldset': { display: 'none' },
@@ -48,7 +49,7 @@ export const multiLineTextFieldStyles = {
 
 
 export const numFieldStyles = {
-  maxWidth: '150px',
+  maxWidth: '170px',
   height: '40px',
   '& .MuiOutlinedInput-root': {
     height: '40px',
@@ -62,7 +63,7 @@ export const numFieldStyles = {
 
 export const toggleButtonGroupStyles = {
   maxWidth: '250px',
-  height: '40px',
+  minHeight: '40px',
   '& .MuiToggleButton-root': {
     backgroundColor: 'grey.400',
     color: 'black',

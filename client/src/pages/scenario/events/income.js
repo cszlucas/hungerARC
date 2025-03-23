@@ -11,8 +11,13 @@ import {
 
 import CustomInput from '../../../components/customInputBox';
 import CustomToggle from '../../../components/customToggle';
+import { useNavigate } from "react-router-dom";
 
 const Income = () => {
+    const [eventName, setEventName] = useState('');
+    const [description, setDescription] = useState('');
+    const [startYear, setStartYear] = useState('');
+    const [endYear, setEndYear] = useState('');
     const [expectedChangeType, setExpectedChangeType] = useState('Fixed');
     const [distributionType, setDistributionType] = useState('None');
     const [incomeType, setIncomeType] = useState('Wage');
@@ -21,6 +26,8 @@ const Income = () => {
     const [changeVariance, setChangeVariance] = useState('');
     const [changeMin, setChangeMin] = useState('');
     const [changeMax, setChangeMax] = useState('');
+
+    const navigate = useNavigate();
 
     return (
         <ThemeProvider theme={theme}>
@@ -40,6 +47,37 @@ const Income = () => {
 
                 <Box sx={rowBoxStyles}>
                     {/* First Column */}
+                    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", width: 250 }}>
+                        <CustomInput 
+                        title="Event name" 
+                        value={eventName} 
+                        setValue={setEventName} 
+                        />
+
+                        <CustomInput 
+                        title="Description (Optional)" 
+                        type="multiline" 
+                        value={description} 
+                        setValue={setDescription} 
+                        />
+
+                        <Stack direction="row" spacing={2}>
+                            <CustomInput 
+                                title="Start Year" 
+                                type="number" 
+                                value={startYear} 
+                                setValue={setStartYear} 
+                            />
+
+                            <CustomInput
+                                title="End Year" 
+                                type="number" 
+                                value={endYear} 
+                                setValue={setEndYear} 
+                            />
+                        </Stack>
+                    </Box>
+                    {/* Second Column */}
                     <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', width: 300 }}>
                         <CustomInput 
                             title="Initial Income Amount"
@@ -82,8 +120,7 @@ const Income = () => {
                             setValue={(v) => {setIncomeType(v)}}
                         />
                     </Box>
-
-                    {/* Second Column */}
+                    {/* Third Column */}
                     <Box sx={{ flex: 1 }}>
                         <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'bold' }}>Expected Annual Change:</Typography>
 
@@ -156,7 +193,9 @@ const Income = () => {
                 </Box>
 
                 <Box sx={backContinueContainerStyles}>
-                    <Button variant="contained" color="primary" sx={buttonStyles}>
+                    <Button variant="contained" color="primary" sx={buttonStyles}
+                        onClick={() => navigate("/scenario/event_series")}
+                    >
                         Back
                     </Button>
                     <Button variant="contained" color="success" sx={buttonStyles}>

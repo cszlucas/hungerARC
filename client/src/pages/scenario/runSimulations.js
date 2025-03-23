@@ -15,19 +15,16 @@ import {
 } from '../../components/styles';  // Import your modular styles
 import CustomInput from '../../components/customInputBox';
 import { Close as CloseIcon } from '@mui/icons-material';
+import { useNavigate } from "react-router-dom";
 
 const EventSeries = () => {
-  const [isRothOptimized, setIsRothOptimized] = useState(false); // State for Switch
-  const [startYear, setStartYear] = useState('');
-  const [endYear, setEndYear] = useState('');
   const [numSimulations, setNumSimulations] = useState('1');
   const [openBackdrop, setOpenBackdrop] = useState(false); // State to control backdrop visibility
   const [emails, setEmails] = useState([]); // Store the email addresses
   const [permission, setPermission] = useState([]);
 
-  const handleSwitchChange = (event) => {
-    setIsRothOptimized(event.target.checked); // Update state when switch is toggled
-  };
+  const navigate = useNavigate();
+  
 
   const handleShareClick = () => {
     setOpenBackdrop(true); // Show backdrop when the "Share" button is clicked
@@ -109,46 +106,6 @@ const EventSeries = () => {
         {/* Stack for title and save button */}
         <Box sx={rowBoxStyles}>
           <Box>
-            <Stack direction="row" alignItems="center" sx={{mb: 2, width: 350}}>
-              <Typography
-                variant="h6"
-                sx={{ 
-                  fontWeight: 'bold', 
-                  color: isRothOptimized ? 'secondary.main' : 'inherit', // Conditionally change color
-                  mr: 1,
-                }}
-              >
-                Roth Conversion Optimizer
-              </Typography>
-
-              <Switch
-                checked={isRothOptimized}
-                onChange={handleSwitchChange}
-                name="rothOptimizerSwitch"
-                color="secondary" // Set color of switch when toggled
-              />
-            </Stack>
-            {isRothOptimized === true && (
-              <Stack direction="row" alignItems="center">
-                <CustomInput 
-                    title="Start Year"
-                    type="number"
-                    adornment=""
-                    value={startYear}
-                    setValue={setStartYear}
-                />
-
-                <CustomInput 
-                    title="End Year"
-                    type="number"
-                    adornment=""
-                    value={endYear}
-                    setValue={setEndYear}
-                />
-              </Stack>
-            )}
-          </Box>
-          <Box>
             <Typography variant="h5" sx={{fontWeight: 'bold', mb: 3}}>
               Simulation
             </Typography>
@@ -163,7 +120,9 @@ const EventSeries = () => {
 
         {/* Back and Continue buttons */}
         <Box sx={backContinueContainerStyles}>
-          <Button variant="contained" color="primary" sx={buttonStyles}>
+          <Button variant="contained" color="primary" sx={buttonStyles}
+            onClick={() => navigate("/scenario/strategies")}
+          >
             Back
           </Button>
           <Button variant="contained" color="secondary" sx={buttonStyles}>

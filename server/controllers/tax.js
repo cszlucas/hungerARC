@@ -16,8 +16,9 @@ exports.tax = async (req, res) => {
 
 //STATE TAX
 exports.statetax = async (req, res) => {
+  const stateName = req.params.state;
   try {
-    const stateTax = await StateTax.find();
+    const stateTax = await StateTax.findOne({ state: stateName });
     if (!stateTax) {
       return res.status(404).json({ message: "State tax data not found" });
     }

@@ -8,12 +8,13 @@ const CustomInput = ({
     adornment = "none", 
     value, 
     setValue, 
-    width = "auto"
+    width = "auto",
+    inputProps = {}
 }) => {
     
     const handleChange = (event, newValue) => {
         if (newValue !== null) {
-            setValue(newValue);
+            setValue(event.target.value);
         }
     };
 
@@ -49,10 +50,10 @@ const CustomInput = ({
                 sx={{ ...getFieldStyles(), ...{width: width}}}
                 value={value}
                 onChange={handleChange}
-                InputProps={{ 
+                InputProps={{...{ 
                     startAdornment: adornment !== "none" && adornment !== "%" ? getAdornment() : null,
                     endAdornment: adornment === "%" ? getAdornment() : null
-                }}
+                }, ...{inputProps}}}
             />
         </Box>
     );

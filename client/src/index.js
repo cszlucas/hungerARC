@@ -15,32 +15,21 @@ import Expense from './pages/scenario/events/expense';
 import Invest from './pages/scenario/events/invest';
 import Rebalance from './pages/scenario/events/rebalance';
 import RunSimulations from './pages/scenario/runSimulations';
+import Strategies from './pages/scenario/strategies';
 
 import reportWebVitals from './reportWebVitals';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider } from './context/authContext';
 import { AppProvider } from './context/appContext';
 
 const router = createBrowserRouter([
+  { path: "/", element: <Homepage />, },
+  { path: "/login", element: <Login />, },
+  { path: "/profile", element: <Profile />, },
+  { path: "/scenarios", element: <ScenarioList />, },
   {
-    path: "/",
-    element: <Homepage />,
-  },
-  {
-    path: "/login",
-    element: <Login />,
-  },
-  {
-    path: "/profile",
-    element: <Profile />,
-  },
-  {
-    path: "/scenarios",
-    element: <ScenarioList />,
-  },
-  {
-    path: "/scenarios/:id",
+    path: "/scenario/",
     element: <Scenarios />, // ✅ Make Scenarios the parent component
     children: [
       { index: true, element: <Basics /> }, // ✅ Defaults to Basics if no subpath
@@ -52,6 +41,7 @@ const router = createBrowserRouter([
       { path: "expense", element: <Expense /> },
       { path: "invest", element: <Invest /> },
       { path: "rebalance", element: <Rebalance /> },
+      { path: "strategies", element: <Strategies/>},
       { path: "run_simulations", element: <RunSimulations /> },
     ],
   },
