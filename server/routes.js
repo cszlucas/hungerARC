@@ -30,11 +30,13 @@ router.post("/updateInvestmentType/:id", investments.updateInvestmentType);
 // scenario
 router.get("/scenario/:id", scenario.scenario);
 router.post("/basicInfo", scenario.basicInfo);
-router.post("/scenario/:id", scenario.scenario);
+router.post("/scenario/:id", scenario.updateScenario);
+router.post("/scenarioInvestments", scenario.scenarioInvestments);
+
 
 //tax
 router.get("/tax", tax.tax);
-router.get("/statetax", tax.statetax);
+router.get("/statetax/:state", tax.statetax);
 
 //webscraping
 router.get("/standardDeductions", webscraping.standardDeductions);
