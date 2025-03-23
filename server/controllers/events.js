@@ -1,13 +1,17 @@
 //Events are: income, expense, investStrategy, expenseStrategy
-const { Events } = require("../models/eventSeries.js");
+const { BaseEventSeries, IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent, AnnualChange } = require("../models/eventSeries.js");
+const { ObjectId } = require("mongoose").Types;
 
 //INCOME EVENTS
 exports.incomeEvent = async (req, res) => {
   try {
-    const { initialAmount, annualChange, userPercentage, inflationAdjustment, isSocialSecurity, baseEventSeries } = req.body;
+    const { eventSeriesName, description, startYear, duration, initialAmount, annualChange, userPercentage, inflationAdjustment, isSocialSecurity, baseEventSeries } = req.body;
 
-    const newIncomeEvent = new Events.IncomeEvent({
-      baseEventSeries,
+    const newIncomeEvent = new IncomeEvent({
+      eventSeriesName,
+      description,
+      startYear,
+      duration,
       initialAmount,
       annualChange: {
         type: annualChange.type,
@@ -30,33 +34,41 @@ exports.incomeEvent = async (req, res) => {
 exports.updateIncome = async (req, res) => {
   const { id } = req.params;
   const updateData = req.body; // Data to update (from the request body)
+  const incomeId = new ObjectId(req.params.id);
+  let result;
 
   try {
-    // Update the document by ID
+    //Update the document by ID
+    delete updateData._id;
+
     if (updateData) {
-      const result = await Events.IncomeEvent.updateOne({ _id: mongoose.Types.ObjectId(id) }, { $set: updateData });
-    } else if (updateData.annualChange) {
-      const result = await Events.AnnualChange.updateOne({ _id: mongoose.Types.ObjectId(id) }, { $set: updateData.AnnualChange });
+      result = await IncomeEvent.findOneAndUpdate(
+        { _id: incomeId }, // Find document by ID
+        { $set: updateData }, // Update fields
+        { new: true }
+      );
     }
 
-    if (result.nModified === 0) {
-      // If no documents were modified, return a 404 response
+    if (result) {
+      return res.status(200).json({ message: "Document updated successfully", result });
+    } else {
       return res.status(404).json({ message: "No document found to update" });
     }
-
-    // If the update is successful, return a 200 response with the result
-    return res.status(200).json({ message: "Document updated successfully", result });
   } catch (err) {
-    res.status(500).json({ error: "Error updating" });
+    res.status(500).json({ error: "Error updating income", message: err.message });
   }
 };
 
 //EXPENSE EVENTS
 exports.expenseEvent = async (req, res) => {
   try {
-    const { initialAmount, annualChange, userPercentage, inflationAdjustment, isDiscretionary } = req.body;
+    const { eventSeriesName, description, startYear, duration, initialAmount, annualChange, userPercentage, inflationAdjustment, isDiscretionary } = req.body;
 
-    const newExpenseEvent = new Events.ExpenseEvent({
+    const newExpenseEvent = new ExpenseEvent({
+      eventSeriesName,
+      description,
+      startYear,
+      duration,
       initialAmount,
       annualChange: {
         type: annualChange.type,
@@ -71,31 +83,29 @@ exports.expenseEvent = async (req, res) => {
 
     res.status(201).json(savedExpenseEvent);
   } catch (err) {
-    console.error("Error creating ExpenseEvent:", err);
-    res.status(500).json({ error: "Failed to create ExpenseEvent" });
+    res.status(500).json({ error: "Failed to create ExpenseEvent", message: err.message });
   }
 };
 
 exports.updateExpense = async (req, res) => {
   const { id } = req.params;
   const updateData = req.body; // Data to update (from the request body)
+  const expenseId = new ObjectId(req.params.id);
+  let result;
+  delete updateData._id;
 
   try {
     // Update the document by ID
     if (updateData) {
-      const result = await Events.ExpenseEvent.updateOne({ _id: mongoose.Types.ObjectId(id) }, { $set: updateData });
-    } else if (updateData.annualChange) {
-      const result = await Events.AnnualChange.updateOne({ _id: mongoose.Types.ObjectId(id) }, { $set: updateData.AnnualChange });
+      result = await ExpenseEvent.findOneAndUpdate({ _id: expenseId }, { $set: updateData }, { new: true });
     }
 
-    if (result.nModified === 0) {
-      // If no documents were modified, return a 404 response
+    if (!result) {
       return res.status(404).json({ message: "No document found to update" });
     }
 
-    // If the update is successful, return a 200 response with the result
     return res.status(200).json({ message: "Document updated successfully", result });
   } catch (err) {
-    res.status(500).json({ error: "Error updating" });
+    res.status(500).json({ error: "Error updating expense", message: err.message });
   }
 };

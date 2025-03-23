@@ -34,3 +34,21 @@ exports.auth = async (req, res) => {
     res.status(500).json({ message: err, error: err });
   }
 };
+
+exports.scenarios = async (req, res) => {
+  const { id } = req.params; // Get user ID from route parameters
+
+  try {
+    // Find the user by ID and populate the scenarios array
+    const user = await User.findById(id).populate('scenarios');
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' }); // Handle if no user is found
+    }
+
+    res.status(200).json(user.scenarios); // Send back the populated scenarios
+  } catch (error) {
+    console.error('Error fetching user scenarios:', error.message);
+    res.status(500).json({ error: 'Server error while fetching scenarios' }); // Handle server errors
+  }
+};
