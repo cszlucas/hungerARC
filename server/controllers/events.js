@@ -1,6 +1,7 @@
 //Events are: income, expense, investStrategy, expenseStrategy
 const { BaseEventSeries, IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent, AnnualChange } = require("../models/eventSeries.js");
 const { ObjectId } = require("mongoose").Types;
+const Scenario = require("../models/scenario.js");
 
 //INCOME EVENTS
 exports.incomeEvent = async (req, res) => {
@@ -58,6 +59,21 @@ exports.updateIncome = async (req, res) => {
     res.status(500).json({ error: "Error updating income", message: err.message });
   }
 };
+
+//getAllIncomeEvents based on scenarioId
+exports.getAllIncomeEventsByScenario = async(req, res)=>{
+   const { id } = req.params;
+    try{
+      const scenario = await Scenario.findOne({ _id: id });
+      const incomeEventId = scenario.incomeEventSeries;
+      const incomeEvent = await IncomeEvent.find({ _id: { $in: incomeEventId } });
+      res.status(200).json(incomeEvent);
+  } catch(err){
+    res.status(500).json({ error: "Error getting all income events by scenario" });
+  }
+}
+
+
 
 //EXPENSE EVENTS
 exports.expenseEvent = async (req, res) => {
@@ -186,3 +202,15 @@ exports.rebalanceStrategy = async (req, res) => {
     res.status(500).json({ error: "Failed to retrieve strategy data", message: err.message });
   }
 };
+
+exports.getAllExpenseEventsByScenario = async(req, res)=>{
+  const { id } = req.params;
+   try{
+     const scenario = await Scenario.findOne({ _id: id });
+     const expenseEventId = scenario.expenseEventSeries;
+     const expenseEvent = await ExpenseEvent.find({ _id: { $in: expenseEventId } });
+     res.status(200).json(expenseEvent);
+ } catch(err){
+   res.status(500).json({ error: "Error getting all income events by scenario" });
+ }
+}
