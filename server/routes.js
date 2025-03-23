@@ -12,17 +12,20 @@ router.get("/user/:id/scenarios", user.scenarios);
 router.post("/auth/google", user.auth);
 
 // events
-router.get("/investStrategy/:id", events.investStrategy);
-router.get("/rebalanceStrategy/:id", events.rebalanceStrategy);
+router.get("/getInvestStrategy/:id", events.getInvestStrategy);
+router.get("/getRebalanceStrategy/:id", events.getRebalanceStrategy);
 router.post("/incomeEvent", events.incomeEvent);
 router.post("/updateIncome/:id", events.updateIncome);
 router.post("/expenseEvent", events.expenseEvent);
 router.post("/updateExpense/:id", events.updateExpense);
 router.post("/investStrategy", events.investStrategy);
+router.post("/updateInvestStrategy/:id", events.updateInvestStrategy);
 router.post("/rebalanceStrategy", events.rebalanceStrategy);
+router.post("/updateRebalanceStrategy/:id", events.updateRebalanceStrategy);
 
 // investments
 router.get("/investmentType/:id", investments.investmentType);
+router.get("/getInvestment/:id", investments.getInvestment);
 router.post("/investmentType", investments.investmentType);
 router.post("/investment", investments.investment);
 router.post("/updateInvestment/:id", investments.updateInvestment);

@@ -144,6 +144,8 @@ async function Investments() {
     //   value: 100,
     //   accountTaxStatus: "pre-tax",
     // });
+    // const inv = await axios.get("http://localhost:8080/getInvestment/67df68e520abee9d9188b03e");
+    // console.log(inv.data);
 
     //const inv = await axios.post("http://localhost:8080/investment", invest1);
 
@@ -168,11 +170,11 @@ async function Investments() {
     // const type2 = await axios.post("http://localhost:8080/investmentType", investmentType22);
 
     // Now create and save the Investment
-    const invest2 = new Investment({
-      investmentType: type2.data._id,
-      value: 50,
-      accountTaxStatus: "non-tax",
-    });
+    // const invest2 = new Investment({
+    //   investmentType: type2.data._id,
+    //   value: 50,
+    //   accountTaxStatus: "non-tax",
+    // });
 
     // const inv2 = await axios.post("http://localhost:8080/investment", invest2);
 
@@ -221,7 +223,7 @@ async function Users() {
 
 async function InvestStrat() {
   try {
-    const investStrat1 = new InvestEvent({
+    const strategy1 = new InvestEvent({
       eventSeriesName: "Invest 2020-2023",
       description: "Invest event series from 2020-2023.",
       startYear: {
@@ -234,16 +236,38 @@ async function InvestStrat() {
       },
       type: "fixed",
       fixedPercentages: {
-        ["67df68e520abee9d9188b03a"]: 30,
+        ["67df68e520abee9d9188b03e"]: 30,
         ["67df7a358d16d4c00df75a72"]: 70,
+      },
+      maxCash: 20,
+    });
+
+    // const savedStrategy1 = await axios.post("http://localhost:8080/investStrategy", strategy1);
+  
+
+    const investStrategyUpdate = new InvestEvent({
+      eventSeriesName: "Invest Updated",
+      description: "Invest Updated from 2020-2023.",
+      startYear: {
+        type: "year",
+        year: 2020,
+      },
+      duration: {
+        type: "fixedAmt",
+        value: 1,
+      },
+      type: "fixed",
+      fixedPercentages: {
+        ["67df68e520abee9d9188b03a"]: 50,
+        ["67df7a358d16d4c00df75a72"]: 50,
       },
       maxCash: 100,
     });
 
-    // const strat1 = await axios.post("http://localhost:8080/investStrategy", investStrat1);
+    // const stratUpdate = await axios.post("http://localhost:8080/updateInvestStrategy/67e0231960ef0d6621b94d5e", investStrategyUpdate);
 
-    const strategy = await axios.get("http://localhost:8080/investStrategy/67df7b20e2d1899f44c74079");
-    console.log(strategy.data);
+    // const strategy = await axios.get("http://localhost:8080/getInvestStrategy/67e0231960ef0d6621b94d5e");
+    // console.log(strategy.data);
   } catch (error) {
     console.error("Error updating:", error);
   }
@@ -275,8 +299,32 @@ async function RebalanceStrat() {
 
     // const strategy = await axios.post("http://localhost:8080/rebalanceStrategy", reb);
 
-    const getStrategy = await axios.get("http://localhost:8080/rebalanceStrategy/67df7ff9bbddccb6af92219e");
-    console.log(getStrategy.data);
+    const rebUpdate = new RebalanceEvent({
+      eventSeriesName: "Rebalance update",
+      description: "Rebalance update 2023-2025",
+      startYear: {
+        type: "year",
+        year: 2023,
+      },
+      duration: {
+        type: "fixedAmt",
+        value: 2,
+      },
+      type: "glidePath",
+      initialPercentages: {
+        ["67df68e520abee9d9188b03a"]: 60,
+        ["67df7a358d16d4c00df75a72"]: 40,
+      },
+      finalPercentages: {
+        ["67df68e520abee9d9188b03a"]: 30,
+        ["67df7a358d16d4c00df75a72"]: 70,
+      },
+    });
+
+    // const strategy = await axios.post("http://localhost:8080/updateRebalanceStrategy/67e0256ecfc4989ce1dcf568", rebUpdate);
+
+    // const getStrategy = await axios.get("http://localhost:8080/getRebalanceStrategy/67e0256ecfc4989ce1dcf568");
+    // console.log(getStrategy.data);
   } catch (error) {
     console.error("Error updating:", error);
   }
@@ -287,4 +335,4 @@ async function RebalanceStrat() {
 //Investments();
 //Users();
 //InvestStrat();
-RebalanceStrat();
+//RebalanceStrat();

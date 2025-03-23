@@ -112,3 +112,17 @@ exports.investmentType = async (req, res) => {
     res.status(500).json({ error: "Failed to retrieve investType data", message: err.message });
   }
 };
+
+exports.getInvestment = async (req, res) => {
+  const investId = new ObjectId(req.params.id);
+  try {
+    const investType = await Investment.findOne({ _id: investId });
+
+    if (!investType) {
+      return res.status(404).json({ message: "Investment data not found" });
+    }
+    res.status(200).json(investType);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to retrieve Investment data", message: err.message });
+  }
+};

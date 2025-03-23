@@ -113,7 +113,6 @@ exports.updateExpense = async (req, res) => {
 // INVEST STRATEGY EVENTS
 exports.investStrategy = async (req, res) => {
   const { eventSeriesName, description, startYear, duration, type, fixedPercentages, initialPercentages, finalPercentages, maxCash } = req.body;
-  console.log("here");
   try {
 
     const investEvent = new InvestEvent({
@@ -136,7 +135,7 @@ exports.investStrategy = async (req, res) => {
   }
 };
 
-exports.investStrategy = async (req, res) => {
+exports.getInvestStrategy = async (req, res) => {
   const strategyId = new ObjectId(req.params.id);
   try {
     const strategy = await InvestEvent.findOne({ _id: strategyId });
@@ -149,10 +148,31 @@ exports.investStrategy = async (req, res) => {
   }
 };
 
+exports.updateInvestStrategy = async (req, res) => {
+  const strategyId = new ObjectId(req.params.id);
+  const updateData = req.body; // Data to update (from the request body)
+  let result;
+  delete updateData._id;
+  try {
+  if (updateData) {
+        result = await InvestEvent.findOneAndUpdate({ _id: strategyId }, { $set: updateData }, { new: true });
+      }
+  
+      if (!result) {
+        return res.status(404).json({ message: "No document found to update" });
+      }
+  
+      return res.status(200).json({ message: "Document updated successfully", result });
+  
+  }catch (err) {
+    res.status(500).json({ error: "Failed to retrieve strategy data", message: err.message });
+  }
+};
+
 // REBALANCE STRATEGY 
 exports.rebalanceStrategy = async (req, res) => {
   const { eventSeriesName, description, startYear, duration, type, fixedPercentages, initialPercentages, finalPercentages} = req.body;
-  console.log("here");
+ 
   try {
 
     const rebalanceEvent = new RebalanceEvent({
@@ -174,7 +194,7 @@ exports.rebalanceStrategy = async (req, res) => {
   }
 };
 
-exports.rebalanceStrategy = async (req, res) => {
+exports.getRebalanceStrategy = async (req, res) => {
   const strategyId = new ObjectId(req.params.id);
   try {
     const strategy = await RebalanceEvent.findOne({ _id: strategyId });
@@ -184,5 +204,26 @@ exports.rebalanceStrategy = async (req, res) => {
     res.status(200).json(strategy);
   } catch (err) {
     res.status(500).json({ error: "Failed to retrieve strategy data", message: err.message });
+  }
+};
+
+exports.updateRebalanceStrategy = async (req, res) => {
+  const strategyId = new ObjectId(req.params.id);
+  const updateData = req.body; // Data to update (from the request body)
+  let result;
+  delete updateData._id;
+  try {
+  if (updateData) {
+        result = await RebalanceEvent.findOneAndUpdate({ _id: strategyId }, { $set: updateData }, { new: true });
+      }
+  
+      if (!result) {
+        return res.status(404).json({ message: "No document found to update" });
+      }
+  
+      return res.status(200).json({ message: "Document updated successfully", result });
+  
+  }catch (err) {
+    res.status(500).json({ error: "Failed to retrieve Rebalance strategy data", message: err.message });
   }
 };
