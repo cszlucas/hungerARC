@@ -1,4 +1,4 @@
-const mongoose = require("mongoose"); 
+const mongoose = require("mongoose");
 const Scenario = require("../models/scenario.js");
 const Investment = require("../models/investment.js");
 const { ObjectId } = mongoose.Types;
@@ -63,15 +63,13 @@ exports.updateScenario = async (req, res) => {
   }
 };
 
-
-exports.scenarioInvestments = async(req,res) => {
+exports.scenarioInvestments = async (req, res) => {
   try {
     const { investmentIds } = req.body;
-    const objectIds = investmentIds.map(id => new ObjectId(id));
+    const objectIds = investmentIds.map((id) => new ObjectId(id));
     const investments = await Investment.find({ _id: { $in: objectIds } });
     res.status(200).json(investments);
   } catch (err) {
     res.status(500).json({ error: "Failed to retrieve investments", message: err.message });
   }
 };
-

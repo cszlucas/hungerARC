@@ -81,11 +81,11 @@ async function Expense(dynamicId) {
 
     const update = await axios.post("http://localhost:8080/updateExpense/${dynamicId}", expenseEventData2);
   } catch (error) {
-    console.error("Error fetching income:", error);
+    console.error("Error fetching expense:", error);
   }
 }
 
-async function Investments() {
+async function Investments(dynamicId) {
   try {
     const investmentType1 = new InvestmentType({
       name: "Bond Fund",
@@ -102,79 +102,68 @@ async function Investments() {
         mean: 0.04,
         stdDev: 0.05,
       },
-      taxability: "tax-deferred",
+      taxability: "pre-tax",
     });
 
-    //const type = await axios.post("http://localhost:8080/investmentType", investmentType1);
+    const responseType = await axios.post("http://localhost:8080/investmentType", investmentType1);
 
-    // const invest1 = new Investment({
-    //   investmentType: type.data._id,
-    //   value: 100,
-    //   accountTaxStatus: "pre-tax",
-    // });
-
-    //const inv = await axios.post("http://localhost:8080/investment", invest1);
-
-    const investmentType22 = new InvestmentType({
-      name: "Equity Fund",
-      description: "A high-risk investment focusing on stocks.",
-      annualReturn: {
-        type: "normalPercent",
-        mean: 0.05,
-        stdDev: 0.1,
-      },
-      expenseRatio: 0.02,
-      annualIncome: {
-        type: "fixedPercent",
-        fixed: 5,
-        mean: 0.04,
-        stdDev: 0.05,
-      },
-      taxability: "taxable",
+    const invest1 = new Investment({
+      investmentType:  responseType.data._id,
+      value: 100,
+      accountTaxStatus: "pre-tax",
     });
 
-    // const type2 = await axios.post("http://localhost:8080/investmentType", investmentType22);
+    const responseInvestment = await axios.post("http://localhost:8080/investment", invest1);
 
-    // Now create and save the Investment
-    const invest2 = new Investment({
-      investmentType: type2.data._id,
-      value: 50,
-      accountTaxStatus: "non-tax",
-    });
-
-    // const inv2 = await axios.post("http://localhost:8080/investment", invest2);
-
-    //UPDATE
-
-    // const investmentType2 = new InvestmentType({
-    //   name: "Bond Fund",
-    //   description: "idk.",
+    // const investmentType22 = new InvestmentType({
+    //   name: "Equity Fund",
+    //   description: "A high-risk investment focusing on stocks.",
     //   annualReturn: {
     //     type: "normalPercent",
     //     mean: 0.05,
     //     stdDev: 0.1,
     //   },
-    //   expenseRatio: 0.01,
+    //   expenseRatio: 0.02,
     //   annualIncome: {
     //     type: "fixedPercent",
     //     fixed: 5,
-    //     mean: 10,
+    //     mean: 0.04,
     //     stdDev: 0.05,
     //   },
-    //   taxability: "tax-deferred",
+    //   taxability: "taxable",
     // });
 
-    // const update = await axios.post("http://localhost:8080/updateInvestmentType/67df68e520abee9d9188b03a", investmentType2);
+    // const type2 = await axios.post("http://localhost:8080/investmentType", investmentType22);
 
+    // Now create and save the Investment
     // const invest2 = new Investment({
-    //   investmentType: update.data._id, // Reference the saved InvestmentType by ObjectId
-    //   value: 10,
+    //   investmentType: type2.data._id,
+    //   value: 50,
     //   accountTaxStatus: "non-tax",
     // });
 
-    // const updateInvest = await axios.post("http://localhost:8080/updateInvestment/67df68e520abee9d9188b03e", invest2);
+    // const inv2 = await axios.post("http://localhost:8080/investment", invest2);
+
+    //UPDATE
+
+    const investmentType2 = new InvestmentType({
+      ...responseType.data,
+      name: "Horse Fund",
+      taxability: "non-tax",
+    });
+
+    const update = await axios.post(`http://localhost:8080/updateInvestmentType/${dynamicId}`, investmentType2);
+
+    const invest2 = new Investment({
+      ...responseInvestment.data,
+      value: 10,
+      accountTaxStatus: "non-tax",
+    });
+
+    const updateInvest = await axios.post(`http://localhost:8080/updateInvestment/${dynamicId}`, invest2);
+
   } catch (error) {
-    console.error("Error updating:", error);
+    console.error("Error updating Investments", error);
   }
 }
 
@@ -187,9 +176,9 @@ async function Users() {
   }
 }
 
-async function investStrategy() {
+async function InvestStrategy(dynamicId) {
   try {
-    const investStrat1 = new InvestEvent({
+    const investStrategy1 = new InvestEvent({
       eventSeriesName: "Invest 2020-2023",
       description: "Invest event series from 2020-2023.",
       startYear: {
@@ -208,27 +197,27 @@ async function investStrategy() {
       maxCash: 100,
     });
 
-    const strat1 = await axios.post("http://localhost:8080/investStrategy", investStrat1);
+    const response = await axios.post("http://localhost:8080/investStrategy", investStrategy1);
 
-    const updateInvestStrat1 = new ExpenseEvent({
+    const updateInvestStrategy1 = new InvestEvent({
       ...response.data,
       eventSeriesName: "updated invest strategy",
       maxCash: 500,
     });
 
-    const update = await axios.post("http://localhost:8080/updateExpense/${dynamicId}", updateInvestStrat1);
+    const update = await axios.post(`http://localhost:8080/updateInvestStrategy/${dynamicId}`, updateInvestStrategy1);
 
     // const strategy = await axios.get("http://localhost:8080/investStrategy/67df7b20e2d1899f44c74079");
     // console.log(strategy.data);
   } catch (error) {
-    console.error("Error updating:", error);
+    console.error("Error invest strategy:", error);
   }
 }
 
-async function RebalanceStrat() {
+async function RebalanceStrategy(dynamicId) {
   try {
     const reb = new RebalanceEvent({
-      eventSeriesName: "Rebalance 2023-2025",
+      eventSeriesName: "Rebalance 2023",
       description: "Rebalance event series 2023-2025",
       startYear: {
         type: "year",
@@ -249,12 +238,23 @@ async function RebalanceStrat() {
       },
     });
 
-    // const strategy = await axios.post("http://localhost:8080/rebalanceStrategy", reb);
+    const response = await axios.post("http://localhost:8080/rebalanceStrategy", reb);
 
-    const getStrategy = await axios.get("http://localhost:8080/rebalanceStrategy/67df7ff9bbddccb6af92219e");
-    console.log(getStrategy.data);
+    const updateRebalanceStrategy = new RebalanceEvent({
+      ...response.data,
+      eventSeriesName: "Rebalance Updated",
+        startYear: {
+          type: "year",
+          year: 2025,
+        },
+    });
+
+    const update = await axios.post(`http://localhost:8080/updateRebalanceStrategy/${dynamicId}`, updateRebalanceStrategy);
+
+    // const getStrategy = await axios.get("http://localhost:8080/rebalanceStrategy/67df7ff9bbddccb6af92219e");
+    // console.log(getStrategy.data);
   } catch (error) {
-    console.error("Error updating:", error);
+    console.error("Error updating RebalanceStrategy:", error);
   }
 }
 
@@ -277,8 +277,8 @@ async function Scenario() {
 //Expense();
 //Investments();
 //Users();
-//InvestStrat();
+//InvestStrategy();
 //RebalanceStrat();
 //Scenario();
 
-module.exports = { Income, Expense };
+module.exports = { Income, Expense, InvestStrategy, RebalanceStrategy, Investments };
