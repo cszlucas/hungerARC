@@ -8,6 +8,9 @@ import { useNavigate } from "react-router-dom";
 
 const ScenarioList = () => {
     const [selectedScenario, setSelectedScenario] = useState(null); // Track selected scenario
+    
+    const { editMode, setEditMode } = useContext(AppContext);
+
     const scenarios = {
         'Plan 1': { 'date': new Date(2025, 2, 20)},
         'Plan 2': { 'date': new Date(2025, 2, 19)},
@@ -46,7 +49,10 @@ const ScenarioList = () => {
               <Button 
                   variant="contained"
                   sx={{ marginTop: 0, marginBottom: 6, textTransform: "none" }}
-                  onClick={() => navigate("/scenario/basics")}
+                  onClick={() => { 
+                    setEditMode('new')
+                    navigate("/scenario/basics")
+                }}
               >
                 New Scenario
               </Button>

@@ -122,6 +122,7 @@ const defaultInfo = {
 function transformScenario(input) {
   return {
       // Scenario basic Info
+      id: input.id,
       name: input.name || '',
       person: 'Myself',
       financialGoal: input.financialGoal || '',
@@ -169,61 +170,90 @@ function transformScenario(input) {
 // routes for getting user scenario event series and if empty send an object for that event series back
 
 // Function to retrieve initial scenarios from localStorage or fetch from backend
-const getInitialState = () => {
+const getInitialState = async () => {
   try {
-    // Check if scenario data already exists in localStorage
-    const storedScenarios = JSON.parse(localStorage.getItem("scenarioData"));
-    if (storedScenarios) {
-      console.log("Using cached scenarios from localStorage:", storedScenarios);
-      return storedScenarios; // Return cached scenarios if available
-    }
-
-    // Retrieve user ID from localStorage
-    const user = JSON.parse(localStorage.getItem("user"));
-    const userId = user?._id;
-
-    if (!userId) {
-      console.error("User ID not found in localStorage.");
-      return []; // Return an empty list if no user ID
-    }
-
-    console.log("Fetching scenarios for user:", userId);
-
-    // Fetch scenarios from the backend synchronously (IIFE + promise handling)
-    (async () => {
-      try {
-        const response = await axios.get(`http://localhost:8080/user/${userId}/scenarios`); // Adjusted API route
-
-        if (response.data) {
-          console.log("Scenarios fetched from backend:", response.data);
-          localStorage.setItem("scenarioData", JSON.stringify(response.data)); // Cache in localStorage
-        }
-      } catch (error) {
-        console.error("Error fetching scenarios from backend:", error);
+      // Check if scenario data already exists in localStorage
+      const storedScenarios = JSON.parse(localStorage.getItem("scenarioData"));
+      if (storedScenarios) {
+          console.log("Using cached scenarios from localStorage:", storedScenarios);
+          return storedScenarios; // Return cached scenarios if available
       }
-    })();
 
-    return []; // Temporarily return an empty list until fetch completes
+      // Retrieve user ID from localStorage
+      const user = JSON.parse(localStorage.getItem("user"));
+      const userId = user?._id;
+
+      if (!userId) {
+          console.error("User ID not found in localStorage.");
+          return []; // Return an empty list if no user ID
+      }
+
+      console.log("Fetching scenarios for user:", userId);
+
+      // Fetch scenarios from the backend
+      const response = await axios.get(`http://localhost:8080/user/${userId}/scenarios`); // Adjust API route
+
+      if (response.data) {
+          console.log("Scenarios fetched from backend:", response.data);
+          
+          // Transform each scenario
+          const transformedScenarios = response.data.map(transformScenario);
+
+          // Cache in localStorage
+          localStorage.setItem("scenarioData", JSON.stringify(transformedScenarios));
+
+          return transformedScenarios;
+      }
+
+      return []; // Return empty if no data
   } catch (error) {
-    console.error("Error retrieving scenarios:", error);
-    return []; // Return empty list if an error occurs
+      console.error("Error fetching scenarios:", error);
+      return []; // Return empty if an error occurs
   }
 };
 
-const getInitialEditState = () => {
-  const storedEditMode = localStorage.getItem("editMode");
-  return storedEditMode ? JSON.parse(storedEditMode) : null;
+const readStateFromLS = (key_value) => {
+  const storedState = localStorage.getItem(key_value);
+  return storedState ? JSON.parse(storedState) : null;
 }
 
+const retrieveScenarioData = async (scenarioId, dataType) => {
+  try {
+      const validTypes = ["investments", "income", "expenses", "invest", "rebalance", "investmentType"];
+      
+      if (!validTypes.includes(dataType)) {
+          console.error(`Invalid data type: ${dataType}`);
+          return;
+      }
+
+      const response = await axios.get(`http://localhost:8080/scenario/${scenarioId}/${dataType}`);
+
+      const data = response.data || [];
+      localStorage.setItem(`current${capitalizeFirstLetter(dataType)}`, JSON.stringify(data));
+
+      console.log(`Data for ${dataType} stored in localStorage.`);
+  } catch (error) {
+      console.error(`Error retrieving ${dataType}:`, error);
+  }
+};
+
+// Helper function to capitalize the first letter of the data type
+const capitalizeFirstLetter = (string) => string.charAt(0).toUpperCase() + string.slice(1);
 
 // Context Provider Component
 export const AppProvider = ({ children }) => {
   const [scenarioData, setScenarioData] = useState(getInitialState);
-  const [editMode, setEditMode] = useState(getInitialEditState);
-  // const [editMode, setEditMode] = useState(1);
-  const [basicInfo, setBasicInfo] = useState(null);
-  // const [loading, setLoading] = useState(false); // To track API request
-  //edit mode (set scenario id)
+  const [editMode, setEditMode] = useState(readStateFromLS('edit'));
+  const [currScenario, setCurrScenario] = useState(readStateFromLS('currentScenario'));
+
+  //all stuff:
+  const [currInvestments, setCurrInvestments] = useState(readStateFromLS('currentInvestments'));
+  const [currIncome, setCurrIncome] = useState(readStateFromLS('currentIncome'));  // incomeEvents[],    // income event series
+  const [currExpense, setCurrExpense] = useState(readStateFromLS('currentExpense'));   // expenseEvents[],   // expense event series
+  const [currInvest, setCurrInvest] = useState(readStateFromLS('currentInvest'));  // investEvents[],    // invest event series
+  const [currRebalance, setCurrRebalance] = useState(readStateFromLS('currentRebalance'));   // rebalanceEvents[], // rebalance event series
+  const [currInvestmentTypes, setCurrInvestmentTypes] = useState(readStateFromLS('currentInvestmentType'));
+
   console.log(transformScenario(initialState[0]));
   //PUT THIS SOMEWHERE FOR EDITING:
   // const { setEditMode } = useContext(AppContext);
@@ -231,51 +261,42 @@ export const AppProvider = ({ children }) => {
   // const startEditing = (scenarioId) => {
   //     setEditMode({ scenarioId });
   // };
+  
 
+  const getScenarioById = (id) => {
+    scenarioData.find(scenario => scenario.id === id);
+  }
+  
   useEffect(() => {
     // Load user data from localStorage
     localStorage.setItem("edit", JSON.stringify(editMode));
+    if (editMode != 'new' && editMode != null) {
+      setCurrScenario(getScenarioById(editMode));
+      setCurrInvestments(retrieveScenarioData(editMode, "investments"));
+      setCurrIncome(retrieveScenarioData(editMode, "income"));
+      setCurrExpense(retrieveScenarioData(editMode, "expense"));
+      setCurrInvest(retrieveScenarioData(editMode, "invest"));
+      setCurrRebalance(retrieveScenarioData(editMode, "rebalance"));
+      setCurrInvestmentTypes(retrieveScenarioData(editMode, "investmentType"));
+    }
+    
   }, [editMode]);
-
-
-
-  // (basic info based on editMode)
-  // useEffect(() => {
-  //   if (editMode && editMode.scenarioId) {
-  //       const timeout = setTimeout(() => {
-  //           setBasicInfo(defaultBasicInfo);
-  //           localStorage.setItem("basics", JSON.stringify(defaultBasicInfo)); // Save defaults in localStorage
-  //       }, 5000);
-
-  //       axios.get(`/api/scenarios/basics/${editMode.scenarioId}`)
-  //           .then(response => {
-  //               if (response.data && Object.keys(response.data).length > 0) {
-  //                   setBasicInfo(response.data);
-  //                   localStorage.setItem("basics", JSON.stringify(response.data)); // Store in localStorage
-  //               } else {
-  //                   setBasicInfo(defaultBasicInfo);
-  //                   localStorage.setItem("basics", JSON.stringify(defaultBasicInfo)); // Store defaults in localStorage
-  //               }
-  //           })
-  //           .catch(() => {
-  //               setBasicInfo(defaultBasicInfo);
-  //               localStorage.setItem("basics", JSON.stringify(defaultBasicInfo)); // Store defaults in localStorage
-  //           })
-  //           .finally(() => {
-  //               clearTimeout(timeout);
-  //           });
-  //   } else {
-  //       console.log("editMode is null");
-  //       setBasicInfo(defaultBasicInfo);
-  //       localStorage.setItem("basics", JSON.stringify(defaultBasicInfo)); // Reset in localStorage
-  //   }
-  // }, [editMode]);
 
   console.log("Current scenarios:", scenarioData);
 
   return (
-    <AppContext.Provider value={{ editMode, setEditMode, basicInfo, setBasicInfo, scenarioData, setScenarioData}}>
-      {children}
+    <AppContext.Provider value={{ 
+      scenarioData, setScenarioData, 
+      editMode, setEditMode,
+      currScenario, setCurrScenario,
+      currInvestments, setCurrInvestments, 
+      currIncome, setCurrIncome,
+      currExpense, setCurrExpense,
+      currInvest, setCurrInvest,
+      currRebalance, setCurrRebalance,
+      currInvestmentTypes, setCurrInvestmentTypes
+    }}>
+        {children}
     </AppContext.Provider>
   );
 };

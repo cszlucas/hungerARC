@@ -31,8 +31,8 @@ const states = [
 //assume scenarioId is in AppContext
 
 const Basics = () => {
-  const { basicInfo, setBasicInfo } = useContext(AppContext);
-  const [formValues, setFormValues] = useState(basicInfo);
+  const { currScenario, setCurrScenario } = useContext(AppContext);
+  const [formValues, setFormValues] = useState(currScenario);
   console.log("basicsState: " + basicInfo);
   console.log("basics form:" + formValues);
 
