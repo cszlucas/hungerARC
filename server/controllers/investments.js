@@ -1,5 +1,6 @@
 const InvestmentType = require("../models/investmentType.js");
 const Investment = require("../models/investment.js");
+const Scenario = require("../models/scenario.js");
 const { ObjectId } = require("mongoose").Types;
 
 exports.investmentType = async (req, res) => {
@@ -95,5 +96,19 @@ exports.updateInvestment = async (req, res) => {
   } catch (err) {
     console.error("Error updating Investment:", err);
     res.status(500).json({ error: "Error updating Investment" });
+  }
+};
+
+exports.investmentType = async (req, res) => {
+  const scenarioId = new ObjectId(req.params.id);
+  try {
+    const investType = await Scenario.findOne({ _id: scenarioId }).populate("setOfInvestmentTypes");
+
+    if (!investType) {
+      return res.status(404).json({ message: "strategy data not found" });
+    }
+    res.status(200).json(investType);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to retrieve investType data", message: err.message });
   }
 };
