@@ -15,11 +15,13 @@ router.post("/auth/google", user.auth);
 router.post("/incomeEvent", events.incomeEvent);
 router.post("/updateIncome/:id", events.updateIncome);
 router.post("/expenseEvent", events.expenseEvent);
-router.post("/updateExpense", events.updateExpense);
+router.post("/updateExpense/:id", events.updateExpense);
 
 // investments
+router.post("/investmentType", investments.investmentType);
 router.post("/investment", investments.investment);
-router.post("/updateInvestment", investments.updateInvestment);
+router.post("/updateInvestment/:id", investments.updateInvestment);
+router.post("/updateInvestmentType/:id", investments.updateInvestmentType);
 
 // scenario
 router.get("/scenario/:id", scenario.scenario);
