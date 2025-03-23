@@ -78,10 +78,10 @@ const initialState = [
 const defaultInfo = {
   // Scenario basic Info
   name: '',
-  person: 'Myself', //needs to be changed to filingStatus (single, married)
+  person: 'Myself', 
   financialGoal: '',
-  residence: '',  // change to stateResident
-  birthYear: '', // change to birthYearUser
+  residence: '',  
+  birthYear: '', 
   lifeExpectancy: '', 
   spouseBirthYear: '',
   spouseLifeExpectancy: '',
@@ -92,7 +92,7 @@ const defaultInfo = {
   spouseMean: '',
   spouseStdDev: '',
   inflationType: 'None',
-  inflationValue: '', // change to inflationFixed
+  inflationValue: '', 
   inflationMean: '', 
   inflationStdDev: '',
   inflationMin: '',
@@ -118,6 +118,52 @@ const defaultInfo = {
   startYear: '',
   endYear: ''
 };
+
+function transformScenario(input) {
+  return {
+      // Scenario basic Info
+      name: input.name || '',
+      person: 'Myself',
+      financialGoal: input.financialGoal || '',
+      residence: input.stateResident || '',
+      birthYear: input.birthYearUser || '',
+      lifeExpectancy: input.lifeExpectancy?.fixedAge || '',
+      spouseBirthYear: '', // Not present in input
+      spouseLifeExpectancy: '', // Not present in input
+      yourSampleAge: 'Custom',
+      spouseSampleAge: 'Custom',
+      yourMean: '',
+      yourStdDev: '',
+      spouseMean: '',
+      spouseStdDev: '',
+      inflationType: input.inflationAssumption?.type || 'None',
+      inflationValue: input.inflationAssumption?.fixedRate || '',
+      inflationMean: '',
+      inflationStdDev: '',
+      inflationMin: '',
+      inflationMax: '',
+
+      // Investment lists
+      investments: input.setOfInvestments || [],
+
+      // Event Series
+      incomeEvents: input.incomeEventSeries || [],
+      expenseEvents: input.expenseEventSeries || [],
+      investEvents: input.investEventSeries || [],
+      rebalanceEvents: input.rebalanceEventSeries || [],
+
+      // Strategies
+      spendingStrategy: input.spendingStrategy || [],
+      expenseWithdrawalStrategy: input.expenseWithdrawalStrategy || [],
+      rothConversionStrategy: input.rothConversionStrategy || [],
+      rmdStrategy: input.rmdStrategy || [],
+
+      // Roth conversion optimizer
+      isRothOptimizer: input.optimizerSettings?.enabled || false,
+      startYear: input.optimizerSettings?.startYear || '',
+      endYear: input.optimizerSettings?.endYear || ''
+  };
+}
 
 // routes for getting user scenario ids 
 // routes for getting user scenario event series and if empty send an object for that event series back
@@ -178,7 +224,7 @@ export const AppProvider = ({ children }) => {
   const [basicInfo, setBasicInfo] = useState(null);
   // const [loading, setLoading] = useState(false); // To track API request
   //edit mode (set scenario id)
-
+  console.log(transformScenario(initialState[0]));
   //PUT THIS SOMEWHERE FOR EDITING:
   // const { setEditMode } = useContext(AppContext);
 
