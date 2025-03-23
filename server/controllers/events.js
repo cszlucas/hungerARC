@@ -109,3 +109,80 @@ exports.updateExpense = async (req, res) => {
     res.status(500).json({ error: "Error updating expense", message: err.message });
   }
 };
+
+// INVEST STRATEGY EVENTS
+exports.investStrategy = async (req, res) => {
+  const { eventSeriesName, description, startYear, duration, type, fixedPercentages, initialPercentages, finalPercentages, maxCash } = req.body;
+  console.log("here");
+  try {
+
+    const investEvent = new InvestEvent({
+      eventSeriesName,
+      description,
+      startYear,
+      duration,
+      type,
+      fixedPercentages,
+      initialPercentages,
+      finalPercentages,
+      maxCash,
+    });
+
+    const savedInvestEvent = await investEvent.save();
+
+    res.status(201).json(savedInvestEvent);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create investEvent", message: err.message });
+  }
+};
+
+exports.investStrategy = async (req, res) => {
+  const strategyId = new ObjectId(req.params.id);
+  try {
+    const strategy = await InvestEvent.findOne({ _id: strategyId });
+    if (!strategy) {
+      return res.status(404).json({ message: "strategy data not found" });
+    }
+    res.status(200).json(strategy);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to retrieve strategy data", message: err.message });
+  }
+};
+
+// REBALANCE STRATEGY 
+exports.rebalanceStrategy = async (req, res) => {
+  const { eventSeriesName, description, startYear, duration, type, fixedPercentages, initialPercentages, finalPercentages} = req.body;
+  console.log("here");
+  try {
+
+    const rebalanceEvent = new RebalanceEvent({
+      eventSeriesName,
+      description,
+      startYear,
+      duration,
+      type,
+      fixedPercentages,
+      initialPercentages,
+      finalPercentages,
+    });
+
+    const savedRebalanceEvent = await rebalanceEvent.save();
+
+    res.status(201).json(savedRebalanceEvent);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create rebalanceEvent", message: err.message });
+  }
+};
+
+exports.rebalanceStrategy = async (req, res) => {
+  const strategyId = new ObjectId(req.params.id);
+  try {
+    const strategy = await RebalanceEvent.findOne({ _id: strategyId });
+    if (!strategy) {
+      return res.status(404).json({ message: "strategy data not found" });
+    }
+    res.status(200).json(strategy);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to retrieve strategy data", message: err.message });
+  }
+};
