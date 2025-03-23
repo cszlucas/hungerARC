@@ -14,9 +14,11 @@ import {
   backContinueContainerStyles,
   buttonStyles,
   rowBoxStyles,
+  multiLineTextFieldStyles,
 } from '../../../components/styles';
 
 import CustomInput from "../../../components/customInputBox";
+import { useNavigate } from "react-router-dom";
 
 const EventSeries = () => {
   const [eventName, setEventName] = useState('');
@@ -24,6 +26,7 @@ const EventSeries = () => {
   const [startYear, setStartYear] = useState('');
   const [endYear, setEndYear] = useState('');
   const [openBackdrop, setOpenBackdrop] = useState(false);
+  const navigate = useNavigate();
 
   // Example event series
   const eventSeries = [
@@ -64,42 +67,9 @@ const EventSeries = () => {
         <PageHeader />
 
         <Box sx={rowBoxStyles}>
-          {/* First Box with Inputs */}
-          <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <CustomInput 
-              title="Event name" 
-              value={eventName} 
-              setValue={setEventName} 
-            />
-
-            <CustomInput 
-              title="Description (Optional)" 
-              type="multiline" 
-              value={description} 
-              setValue={setDescription} 
-            />
-
-            <Stack direction="row" spacing={2} sx={{ marginTop: 2 }}>
-              <CustomInput 
-                title="Start Year" 
-                type="numbered" 
-                value={startYear} 
-                setValue={setStartYear} 
-              />
-
-              <CustomInput
-                title="End Year" 
-                type="numbered" 
-                value={endYear} 
-                setValue={setEndYear} 
-              />
-            </Stack>
-          </Box>
-
-
-          {/* List Box */}
+          {/* List of Event Series */}
           <Box sx={{ flex: 1 }}>
-            {/* List of Event Series */}
+            
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <Typography variant="h6" sx={{ fontWeight: 'bold', marginTop: 4, marginBottom: 2 }}>
                 List of Event Series
@@ -138,10 +108,14 @@ const EventSeries = () => {
 
         {/* Back and Continue buttons */}
         <Box sx={backContinueContainerStyles}>
-          <Button variant="contained" color="primary" sx={buttonStyles}>
+          <Button variant="contained" color="primary" sx={buttonStyles}
+            onClick={() => navigate("/scenario/investment_lists")}
+          >
             Back
           </Button>
-          <Button variant="contained" color="success" sx={buttonStyles}>
+          <Button variant="contained" color="success" sx={buttonStyles}
+            onClick={() => navigate("/scenario/strategies")}
+          >
             Continue
           </Button>
         </Box>
@@ -156,24 +130,24 @@ const EventSeries = () => {
             </DialogTitle>
             <DialogContent>
               <Stack direction="row" spacing={3} sx={{ justifyContent: 'center' }}>
-                <Button variant="contained" onClick={() => handleSelectEventType('Income')} 
+                <Button variant="contained" onClick={() => navigate("/scenario/income")} 
                   sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 200, marginBottom: 1 }}>
                   <PaymentsIcon sx={{ fontSize: 60, marginBottom: 1 }} />
                   Income
                 </Button>
-                <Button variant="contained" onClick={() => handleSelectEventType('Expense')} 
+                <Button variant="contained" onClick={() => navigate("/scenario/expense")}
                   sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 200, marginBottom: 1 }}>
                   <SellIcon sx={{ fontSize: 60, marginBottom: 1 }} />
                   Expense
                 </Button>
               </Stack>
               <Stack direction="row" spacing={3} sx={{ justifyContent: 'center', mt: 2 }}>
-                <Button variant="contained" onClick={() => handleSelectEventType('Invest')} 
+                <Button variant="contained" onClick={() => navigate("/scenario/invest")}
                   sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 200, marginBottom: 1 }}>
                   <AccountBalanceIcon sx={{ fontSize: 60, marginBottom: 1 }} />
                   Invest
                 </Button>
-                <Button variant="contained" onClick={() => handleSelectEventType('Rebalance')} 
+                <Button variant="contained" onClick={() => navigate("/scenario/rebalance")}
                   sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 200, marginBottom: 1 }}>
                   <BalanceIcon sx={{ fontSize: 60, marginBottom: 1 }} />
                   Rebalance

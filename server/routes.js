@@ -1,26 +1,33 @@
 const express = require("express");
 const router = express.Router();
-const authentication = require("./controllers/authentication.js");
+const user = require("./controllers/user.js");
 const events = require("./controllers/events.js");
 const investments = require("./controllers/investments.js");
 const scenario = require("./controllers/scenario.js");
 const tax = require("./controllers/tax.js");
 const webscraping = require("./controllers/webscraping.js");
 
-// authentication
-router.post("/auth/google", authentication.auth);
+// user
+router.get("/user/:id/scenarios", user.scenarios);
+router.post("/auth/google", user.auth);
 
 // events
+router.get("/investStrategy/:id", events.investStrategy);
+router.get("/rebalanceStrategy/:id", events.rebalanceStrategy);
 router.post("/incomeEvent", events.incomeEvent);
-router.post("/updateIncome", events.updateIncome);
+router.post("/updateIncome/:id", events.updateIncome);
 router.post("/expenseEvent", events.expenseEvent);
-router.post("/updateExpense", events.updateExpense)
+router.post("/updateExpense/:id", events.updateExpense);
+router.post("/investStrategy", events.investStrategy);
+router.post("/rebalanceStrategy", events.rebalanceStrategy);
 router.get("/scenario/:id/incomeEvent", events.getAllIncomeEventsByScenario);
 router.get("/scenario/:id/expenseEvent", events.getAllExpenseEventsByScenario);
 
 // investments
+router.post("/investmentType", investments.investmentType);
 router.post("/investment", investments.investment);
-router.post("/updateInvestment", investments.updateInvestment);
+router.post("/updateInvestment/:id", investments.updateInvestment);
+router.post("/updateInvestmentType/:id", investments.updateInvestmentType);
 router.get("/scenario/:id/investments", investments.getAllInvestmentsByScenario);
 
 // scenario

@@ -63,6 +63,7 @@ exports.updateScenario = async (req, res) => {
   }
 };
 
+
 exports.scenarioInvestments = async(req,res) => {
   try {
     const { investmentIds } = req.body;
@@ -73,3 +74,4 @@ exports.scenarioInvestments = async(req,res) => {
     res.status(500).json({ error: "Failed to retrieve investments", message: err.message });
   }
 };
+
