@@ -14,11 +14,14 @@ router.post("/auth/google", authentication.auth);
 router.post("/incomeEvent", events.incomeEvent);
 router.post("/updateIncome", events.updateIncome);
 router.post("/expenseEvent", events.expenseEvent);
-router.post("/updateExpense", events.updateExpense);
+router.post("/updateExpense", events.updateExpense)
+router.get("/scenario/:id/incomeEvent", events.getAllIncomeEventsByScenario);
+router.get("/scenario/:id/expenseEvent", events.getAllExpenseEventsByScenario);
 
 // investments
 router.post("/investment", investments.investment);
 router.post("/updateInvestment", investments.updateInvestment);
+router.get("/scenario/:id/investments", investments.getAllInvestmentsByScenario);
 
 // scenario
 router.get("/scenario/:id", scenario.scenario);
