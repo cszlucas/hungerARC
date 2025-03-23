@@ -245,6 +245,30 @@ exports.updateRebalanceStrategy = async (req, res) => {
   }
 };
 
+exports.getAllRebalanceEventsByScenario = async(req, res)=>{
+  const { id } = req.params;
+   try{
+     const scenario = await Scenario.findOne({ _id: id });
+     const rebalanceEventId = scenario.rebalanceEventSeries;
+     const rebalanceEvent = await RebalanceEvent.find({ _id: { $in: rebalanceEventId } });
+     res.status(200).json(rebalanceEvent);
+ } catch(err){
+   res.status(500).json({ error: "Error getting all rebalance events by scenario" });
+ }
+}
+
+exports.getAllInvestEventsByScenario = async(req, res)=>{
+  const { id } = req.params;
+   try{
+     const scenario = await Scenario.findOne({ _id: id });
+     const investEventId = scenario.investEventSeries;
+     const investEvent = await InvestEvent.find({ _id: { $in: investEventId } });
+     res.status(200).json(investEvent);
+ } catch(err){
+   res.status(500).json({ error: "Error getting all invest events by scenario" });
+ }
+}
+
 exports.getAllExpenseEventsByScenario = async(req, res)=>{
   const { id } = req.params;
    try{
@@ -253,7 +277,7 @@ exports.getAllExpenseEventsByScenario = async(req, res)=>{
      const expenseEvent = await ExpenseEvent.find({ _id: { $in: expenseEventId } });
      res.status(200).json(expenseEvent);
  } catch(err){
-   res.status(500).json({ error: "Error getting all income events by scenario" });
+   res.status(500).json({ error: "Error getting all expense events by scenario" });
  }
 }
 
