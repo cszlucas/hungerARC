@@ -182,7 +182,6 @@ class DataStore {
 
 function runSimulation(scenario, tax, statetax, prevYear, lifeExpectancyUser, investment) {
   // console.log(scenario);
-  // console.log(tax);
   
   // previous year
   let irsLimit = scenario.irsLimits.initialAfterTax;
@@ -205,7 +204,6 @@ function runSimulation(scenario, tax, statetax, prevYear, lifeExpectancyUser, in
       stateDeduction = statetax.taxDetails[prevYear].single.standardDeduction;
     }
   }
-    
   let currentYear = new Date().getFullYear();
   let incomeEvents = scenario.incomeEventSeries;
   let userEndYear = scenario.birthYearUser + lifeExpectancyUser;
@@ -219,8 +217,8 @@ function runSimulation(scenario, tax, statetax, prevYear, lifeExpectancyUser, in
     // PRELIMINARIES
     // can differ each year if sampled from distribution
     inflationRate = findInflation(scenario.inflationAssumption)*0.01;
-    // console.log('inflationRate :>> ', inflationRate);
     federalIncomeTax = updateFedIncomeTaxBracket(fedIncomeTaxBracket, inflationRate);
+
     fedDeduction = updateFedDeduction(fedDeduction, inflationRate);
 
     if (statetax) {
@@ -292,7 +290,6 @@ async function main() {
   const scenario = dataStore.getScenario();
   await Promise.all([dataStore.fetchStateTax(scenario.stateResident)]);
   const statetax = dataStore.getStateTax();
-
   await Promise.all([dataStore.fetchScenarioInvestment(scenario.setOfInvestments)]);
 
   const investment = dataStore.getInvestment();
@@ -300,7 +297,7 @@ async function main() {
 
   //calculate life expectancy
   const {lifeExpectancyUser, lifeExpectancySpouse} = calculateLifeExpectancy(scenario);
-   runSimulation(scenario, tax, statetax, prevYear, lifeExpectancyUser, investment);
+  runSimulation(scenario, tax, statetax, prevYear, lifeExpectancyUser, investment);
 }
 
 // Call the main function to execute everything
