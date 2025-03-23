@@ -19,7 +19,7 @@ exports.scenario = async (req, res) => {
 exports.basicInfo = async (req, res) => {
   try {
     const { name, filingStatus, financialGoal, inflationAssumption, birthYearUser, lifeExpectancy, stateResident } = req.body;
-
+    console.log("why");
     const newBasicInfo = new Scenario({
       name,
       filingStatus,
