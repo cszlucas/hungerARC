@@ -20,7 +20,7 @@ import Strategies from './pages/scenario/strategies';
 import reportWebVitals from './reportWebVitals';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider } from './context/authContext';
 import { AppProvider } from './context/appContext';
 
 const router = createBrowserRouter([

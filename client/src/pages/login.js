@@ -1,12 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import { Container, Typography, Card, CardContent, Avatar, Button, Box, Stack } from "@mui/material";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import { AuthContext } from "../context/authContext";
 
 const GoogleAuth = () => {
-    const [user, setUser] = useState(null);
+    const {user, setUser} = useContext(AuthContext);
+    // const [user, setUser] = useState(null);
     const navigate = useNavigate(); // Use navigate for redirection
 
     const handleSuccess = async (credentialResponse) => {
@@ -25,13 +27,29 @@ const GoogleAuth = () => {
             body: JSON.stringify(userData),
         });
 
-        const data = await res.json();
+        let data = await res.json();
         console.log("Server Response:", data);
-        setUser(userData);
 
+        let jsonResponse = 
+        {
+            "_id": "67df2ec125693e5e54c14377",
+            "googleId": "103151424804713196609",
+            "email": "william.p.lee@stonybrook.edu",
+            "guest": false,
+            "scenarios": [
+                "67df396953a415566df67af2"
+            ],
+            "lastLogin": "2025-03-23T20:36:41.130Z",
+            "__v": 0
+        };
+
+        data = typeof jsonResponse === "string" ? JSON.parse(jsonResponse) : jsonResponse;
+        setUser(data);
+        
         // Store token in localStorage
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
+        // localStorage.setItem("token", data.token);
+        // localStorage.setItem("user", JSON.stringify(data.user));
+        // setScenarioData(getInitialState);
 
         // ✅ Redirect to homepage
         navigate("/");
@@ -47,8 +65,8 @@ const GoogleAuth = () => {
 
         setUser(guestUser);
 
-        localStorage.setItem("user", JSON.stringify(guestUser));
-        console.log(localStorage.getItem("user"));
+        // localStorage.setItem("user", JSON.stringify(guestUser));
+        // console.log(localStorage.getItem("user"));
         navigate("/"); // Redirect guest users to homepage
     };
 

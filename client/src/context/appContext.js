@@ -1,9 +1,9 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { useContext, createContext, useState, useEffect } from "react";
 import axios from "axios"; // Ensure axios is installed
+import { AuthContext } from "./authContext";
 
 // Create Context
 export const AppContext = createContext();
-
 
 const initialState = [
   {
@@ -122,7 +122,7 @@ const defaultInfo = {
 function transformScenario(input) {
   return {
       // Scenario basic Info
-      id: input.id,
+      id: input._id,
       name: input.name || '',
       person: 'Myself',
       financialGoal: input.financialGoal || '',
@@ -170,7 +170,7 @@ function transformScenario(input) {
 // routes for getting user scenario event series and if empty send an object for that event series back
 
 // Function to retrieve initial scenarios from localStorage or fetch from backend
-const getInitialState = async () => {
+export const getInitialState = async (user) => {
   try {
       // Check if scenario data already exists in localStorage
       const storedScenarios = JSON.parse(localStorage.getItem("scenarioData"));
@@ -180,8 +180,10 @@ const getInitialState = async () => {
       }
 
       // Retrieve user ID from localStorage
-      const user = JSON.parse(localStorage.getItem("user"));
-      const userId = user?._id;
+      // const user = JSON.parse(localStorage.getItem("user"));
+      //console.log("hello from the other side: " + user);
+      const userId = user._id;
+      // console.log(user + "yo yo yo "+ userId);
 
       if (!userId) {
           console.error("User ID not found in localStorage.");
@@ -198,7 +200,6 @@ const getInitialState = async () => {
           
           // Transform each scenario
           const transformedScenarios = response.data.map(transformScenario);
-
           // Cache in localStorage
           localStorage.setItem("scenarioData", JSON.stringify(transformedScenarios));
 
@@ -227,7 +228,6 @@ const retrieveScenarioData = async (scenarioId, dataType) => {
       }
 
       const response = await axios.get(`http://localhost:8080/scenario/${scenarioId}/${dataType}`);
-
       const data = response.data || [];
       localStorage.setItem(`current${capitalizeFirstLetter(dataType)}`, JSON.stringify(data));
 
@@ -242,9 +242,10 @@ const capitalizeFirstLetter = (string) => string.charAt(0).toUpperCase() + strin
 
 // Context Provider Component
 export const AppProvider = ({ children }) => {
-  const [scenarioData, setScenarioData] = useState(getInitialState);
+  const [scenarioData, setScenarioData] = useState([]);
   const [editMode, setEditMode] = useState(readStateFromLS('edit'));
   const [currScenario, setCurrScenario] = useState(readStateFromLS('currentScenario'));
+  const { user } = useContext(AuthContext);
 
   //all stuff:
   const [currInvestments, setCurrInvestments] = useState(readStateFromLS('currentInvestments'));
@@ -254,20 +255,20 @@ export const AppProvider = ({ children }) => {
   const [currRebalance, setCurrRebalance] = useState(readStateFromLS('currentRebalance'));   // rebalanceEvents[], // rebalance event series
   const [currInvestmentTypes, setCurrInvestmentTypes] = useState(readStateFromLS('currentInvestmentType'));
 
-  console.log(transformScenario(initialState[0]));
-  //PUT THIS SOMEWHERE FOR EDITING:
-  // const { setEditMode } = useContext(AppContext);
-
-  // const startEditing = (scenarioId) => {
-  //     setEditMode({ scenarioId });
-  // };
-  
-
-  const getScenarioById = (id) => {
-    scenarioData.find(scenario => scenario.id === id);
-  }
+  // console.log(transformScenario(initialState[0]));
   
   useEffect(() => {
+    const fetchData = async () => {
+      const data = await getInitialState(user);  // Await the resolved data
+      setScenarioData(data);  // Set the resolved data, not the Promise
+    };
+    if (user) { fetchData(); }
+  }, [user]);  // Trigger a refetch when user changes
+
+
+  
+  useEffect(() => {
+    const getScenarioById = (id) => { scenarioData.find(scenario => scenario.id === id); }
     // Load user data from localStorage
     localStorage.setItem("edit", JSON.stringify(editMode));
     if (editMode != 'new' && editMode != null) {
@@ -278,9 +279,13 @@ export const AppProvider = ({ children }) => {
       setCurrInvest(retrieveScenarioData(editMode, "invest"));
       setCurrRebalance(retrieveScenarioData(editMode, "rebalance"));
       setCurrInvestmentTypes(retrieveScenarioData(editMode, "investmentType"));
-    }
-    
+    } 
   }, [editMode]);
+
+  useEffect(() => {
+    // Load user data from localStorage
+    localStorage.setItem("currentScenario", JSON.stringify(currScenario));
+  }, [currScenario]);
 
   console.log("Current scenarios:", scenarioData);
 

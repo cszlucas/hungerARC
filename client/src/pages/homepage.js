@@ -4,7 +4,7 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import theme from '../components/theme';
 import Navbar from '../components/navbar';
 import { Container } from '@mui/material';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../context/authContext';
 
 function extractPrefix(email) {
     let match = email.match(/^[a-zA-Z0-9]+/);
