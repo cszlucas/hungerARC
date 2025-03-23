@@ -112,6 +112,18 @@ exports.getAllInvestmentsByScenario = async (req, res) => {
   }
 };
 
+exports.getInvestmentTypeByScenario = async (req, res) => {
+  const { id } = req.params;
+  try{
+    const scenario = await Scenario.findOne({ _id: id });
+    const investmentTypeIds = scenario.setOfInvestmentTypes;
+    const investmentTypes = await InvestmentType.find({ _id: { $in: investmentTypeIds } });
+    res.status(200).json(investmentTypes);
+  }catch(err){
+    res.status(500).json({ error: "Failed to get all investments type by scenario" });
+  }
+};
+
 exports.getInvestment = async (req, res) => {
   const investId = new ObjectId(req.params.id);
   try {
@@ -125,5 +137,4 @@ exports.getInvestment = async (req, res) => {
     res.status(500).json({ error: "Failed to retrieve Investment data", message: err.message });
   }
 };
-
 
