@@ -1,9 +1,9 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { useContext, createContext, useState, useEffect } from "react";
 import axios from "axios"; // Ensure axios is installed
+import { AuthContext } from "./authContext";
 
 // Create Context
 export const AppContext = createContext();
-
 
 const initialState = [
   {
@@ -122,7 +122,7 @@ const defaultInfo = {
 function transformScenario(input) {
   return {
       // Scenario basic Info
-      id: input.id,
+      id: input._id,
       name: input.name || '',
       person: 'Myself',
       financialGoal: input.financialGoal || '',
@@ -131,13 +131,13 @@ function transformScenario(input) {
       lifeExpectancy: input.lifeExpectancy?.fixedAge || '',
       spouseBirthYear: '', // Not present in input
       spouseLifeExpectancy: '', // Not present in input
-      yourSampleAge: 'Custom',
-      spouseSampleAge: 'Custom',
+      yourSampleAge: 'fixed',
+      spouseSampleAge: 'fixed',
       yourMean: '',
       yourStdDev: '',
       spouseMean: '',
       spouseStdDev: '',
-      inflationType: input.inflationAssumption?.type || 'None',
+      inflationType: input.inflationAssumption?.type || 'none',
       inflationValue: input.inflationAssumption?.fixedRate || '',
       inflationMean: '',
       inflationStdDev: '',
@@ -170,7 +170,7 @@ function transformScenario(input) {
 // routes for getting user scenario event series and if empty send an object for that event series back
 
 // Function to retrieve initial scenarios from localStorage or fetch from backend
-const getInitialState = async () => {
+export const getInitialState = async (user) => {
   try {
       // Check if scenario data already exists in localStorage
       const storedScenarios = JSON.parse(localStorage.getItem("scenarioData"));
@@ -178,30 +178,21 @@ const getInitialState = async () => {
           console.log("Using cached scenarios from localStorage:", storedScenarios);
           return storedScenarios; // Return cached scenarios if available
       }
-
       // Retrieve user ID from localStorage
-      const user = JSON.parse(localStorage.getItem("user"));
-      const userId = user?._id;
-
+      const userId = user._id;
       if (!userId) {
           console.error("User ID not found in localStorage.");
           return []; // Return an empty list if no user ID
       }
 
       console.log("Fetching scenarios for user:", userId);
-
       // Fetch scenarios from the backend
       const response = await axios.get(`http://localhost:8080/user/${userId}/scenarios`); // Adjust API route
 
       if (response.data) {
           console.log("Scenarios fetched from backend:", response.data);
-          
-          // Transform each scenario
-          const transformedScenarios = response.data.map(transformScenario);
-
-          // Cache in localStorage
-          localStorage.setItem("scenarioData", JSON.stringify(transformedScenarios));
-
+          const transformedScenarios = response.data.map(transformScenario); // Transform each scenario
+          localStorage.setItem("scenarioData", JSON.stringify(transformedScenarios)); // Cache in localStorage
           return transformedScenarios;
       }
 
@@ -219,7 +210,7 @@ const readStateFromLS = (key_value) => {
 
 const retrieveScenarioData = async (scenarioId, dataType) => {
   try {
-      const validTypes = ["investments", "income", "expenses", "invest", "rebalance", "investmentType"];
+      const validTypes = ["investments", "incomeEvent", "expenseEvent", "invest", "rebalance", "investmentType"];
       
       if (!validTypes.includes(dataType)) {
           console.error(`Invalid data type: ${dataType}`);
@@ -227,7 +218,6 @@ const retrieveScenarioData = async (scenarioId, dataType) => {
       }
 
       const response = await axios.get(`http://localhost:8080/scenario/${scenarioId}/${dataType}`);
-
       const data = response.data || [];
       localStorage.setItem(`current${capitalizeFirstLetter(dataType)}`, JSON.stringify(data));
 
@@ -242,9 +232,10 @@ const capitalizeFirstLetter = (string) => string.charAt(0).toUpperCase() + strin
 
 // Context Provider Component
 export const AppProvider = ({ children }) => {
-  const [scenarioData, setScenarioData] = useState(getInitialState);
+  const [scenarioData, setScenarioData] = useState(readStateFromLS('scenarioData'));
   const [editMode, setEditMode] = useState(readStateFromLS('edit'));
   const [currScenario, setCurrScenario] = useState(readStateFromLS('currentScenario'));
+  const { user } = useContext(AuthContext);
 
   //all stuff:
   const [currInvestments, setCurrInvestments] = useState(readStateFromLS('currentInvestments'));
@@ -254,33 +245,47 @@ export const AppProvider = ({ children }) => {
   const [currRebalance, setCurrRebalance] = useState(readStateFromLS('currentRebalance'));   // rebalanceEvents[], // rebalance event series
   const [currInvestmentTypes, setCurrInvestmentTypes] = useState(readStateFromLS('currentInvestmentType'));
 
-  console.log(transformScenario(initialState[0]));
-  //PUT THIS SOMEWHERE FOR EDITING:
-  // const { setEditMode } = useContext(AppContext);
-
-  // const startEditing = (scenarioId) => {
-  //     setEditMode({ scenarioId });
-  // };
-  
-
-  const getScenarioById = (id) => {
-    scenarioData.find(scenario => scenario.id === id);
-  }
+  // console.log(transformScenario(initialState[0]));
   
   useEffect(() => {
+    const fetchData = async () => {
+      const data = await getInitialState(user);  // Await the resolved data
+      setScenarioData(data);  // Set the resolved data, not the Promise
+    };
+    if (user) { fetchData(); }
+  }, [user]);  // Trigger a refetch when user changes
+  
+  useEffect(() => {
+    const getScenarioById = (id) => {
+      for (let i = 0; i < scenarioData.length; i++) {
+          console.log(scenarioData[i].id);
+          console.log(scenarioData[i]);
+          if (scenarioData[i].id == id) {
+              return scenarioData[i]; // Return the found scenario
+          }
+      }
+      console.log('I am going to change data to null');
+      return null; // Return null if not found
+    };
+    
     // Load user data from localStorage
+    console.log(scenarioData);
     localStorage.setItem("edit", JSON.stringify(editMode));
     if (editMode != 'new' && editMode != null) {
       setCurrScenario(getScenarioById(editMode));
       setCurrInvestments(retrieveScenarioData(editMode, "investments"));
-      setCurrIncome(retrieveScenarioData(editMode, "income"));
-      setCurrExpense(retrieveScenarioData(editMode, "expense"));
+      setCurrIncome(retrieveScenarioData(editMode, "incomeEvent"));
+      setCurrExpense(retrieveScenarioData(editMode, "expenseEvent"));
       setCurrInvest(retrieveScenarioData(editMode, "invest"));
       setCurrRebalance(retrieveScenarioData(editMode, "rebalance"));
       setCurrInvestmentTypes(retrieveScenarioData(editMode, "investmentType"));
-    }
-    
+    } 
   }, [editMode]);
+
+  useEffect(() => {
+    // Load user data from localStorage
+    localStorage.setItem("currentScenario", JSON.stringify(currScenario));
+  }, [currScenario]);
 
   console.log("Current scenarios:", scenarioData);
 

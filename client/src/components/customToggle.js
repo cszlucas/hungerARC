@@ -7,6 +7,11 @@ const CustomToggle = ({ title, values, sideView, width, value, setValue }) => {
         setValue(event.target.value);
     };
 
+    const capitalizeFirstLetter = (str) => {
+        if (!str) return '';  // Handle empty or null strings
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    };
+
     return (<>
         
             {sideView ? (
@@ -23,7 +28,7 @@ const CustomToggle = ({ title, values, sideView, width, value, setValue }) => {
                         >
                             {values.map((val) => (
                                 <ToggleButton key={val} value={val}>
-                                    {val}
+                                    {capitalizeFirstLetter(val)}
                                 </ToggleButton>
                             ))}
                         </ToggleButtonGroup>
@@ -43,7 +48,7 @@ const CustomToggle = ({ title, values, sideView, width, value, setValue }) => {
                         >
                         {values.map((val) => (
                             <ToggleButton key={val} value={val}>
-                                {val}
+                                {capitalizeFirstLetter(val)}
                             </ToggleButton>
                         ))}
                         </ToggleButtonGroup>

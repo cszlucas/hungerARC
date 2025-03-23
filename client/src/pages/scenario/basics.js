@@ -1,15 +1,12 @@
 import React, { useState, useContext } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Backdrop, Fade, Paper } from '@mui/material';
+import {
+  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Backdrop, Fade, Paper
+} from '@mui/material';
 import theme from '../../components/theme';
 import Navbar from '../../components/navbar';
 import PageHeader from '../../components/pageHeader';
 import {
-  stackStyles,
-  titleStyles,
-  textFieldStyles,
-  backContinueContainerStyles,
-  buttonStyles,
-  rowBoxStyles,
+  stackStyles, titleStyles, textFieldStyles, backContinueContainerStyles, buttonStyles, rowBoxStyles,
 } from '../../components/styles';
 
 import CustomInput from '../../components/customInputBox';
@@ -28,51 +25,39 @@ const states = [
   "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
 ];
 
-//assume scenarioId is in AppContext
-
 const Basics = () => {
   const { currScenario, setCurrScenario } = useContext(AppContext);
-  const [formValues, setFormValues] = useState(currScenario);
-  console.log("basicsState: " + basicInfo);
-  console.log("basics form:" + formValues);
-
-  const handleInputChange = (field, value) => {
-    setBasicInfo(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleUpdate = () => {
-    setBasicInfo(formValues);
-  };
-
-  const [name, setName] = useState('');
-  const [person, setPerson] = useState('Myself');
-  const [financialGoal, setFinancialGoal] = useState('');
-
-  const [residence, setResidence] = useState('');
-  
-  const [birthYear, setBirthYear] = useState('');
-  const [lifeExpectancy, setLifeExpectancy] = useState('');
-  const [spouseBirthYear, setSpouseBirthYear] = useState('');
-  const [spouseLifeExpectancy, setSpouseLifeExpectancy] = useState('');
-  const [yourSampleAge, setYourSampleAge] = useState('Custom');
-  
-  const [spouseSampleAge, setSpouseSampleAge] = useState('Custom');
-  const [yourMean, setYourMean] = useState('');
-  const [yourStdDev, setYourStdDev] = useState('');
-  const [spouseMean, setSpouseMean] = useState('');
-  const [spouseStdDev, setSpouseStdDev] = useState('');
-
-  const [inflationType, setInflationType] = useState('None');
-  const [inflationValue, setInflationValue] = useState('');
-  const [inflationMean, setInflationMean] = useState('');
-  const [inflationStdDev, setInflationStdDev] = useState('');
-  const [inflationMin, setInflationMin] = useState('');
-  const [inflationMax, setInflationMax] = useState('');
+  const [formValues, setFormValues] = useState(currScenario || {
+    name: '',
+    person: 'Myself',
+    financialGoal: '',
+    residence: '',
+    birthYear: '',
+    lifeExpectancy: '',
+    spouseBirthYear: '',
+    spouseLifeExpectancy: '',
+    yourSampleAge: 'fixed',
+    spouseSampleAge: 'fixed',
+    yourMean: '',
+    yourStdDev: '',
+    spouseMean: '',
+    spouseStdDev: '',
+    inflationType: 'fixed',
+    inflationValue: '',
+    inflationMean: '',
+    inflationStdDev: '',
+    inflationMin: '',
+    inflationMax: ''
+  });
 
   const [showBackdrop, setShowBackdrop] = useState(false);
   const [errorBackdrop, setErrorBackdrop] = useState(false);
-
   const navigate = useNavigate();
+
+  // Unified handle input change function
+  const handleInputChange = (field, value) => {
+    setFormValues((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleBackClick = () => {
     setShowBackdrop(true);
@@ -83,13 +68,13 @@ const Basics = () => {
   };
 
   const handleConfirm = () => {
-    if (!name.trim()) {
-      // Show error backdrop if name field is empty
+    if (!formValues.name.trim()) {
       setShowBackdrop(false);
-      setErrorBackdrop(true);  // Keep it open until manually closed
+      setErrorBackdrop(true);
     } else {
+      setCurrScenario(formValues);  // Save formValues before navigating
       setShowBackdrop(false);
-      navigate("/scenarios")
+      navigate("/scenarios");
     }
   };
 
@@ -108,7 +93,12 @@ const Basics = () => {
           <Typography variant="h2" component="h1" sx={titleStyles}>
             Your Scenario Starts Here
           </Typography>
-          <Button variant="contained" color="secondary" sx={buttonStyles}>
+          <Button 
+            variant="contained" 
+            color="secondary" 
+            sx={buttonStyles}
+            onClick={handleConfirm}
+          >
             Save
           </Button>
         </Stack>
@@ -117,143 +107,127 @@ const Basics = () => {
 
         {/* Row 1 */}
         <Box sx={rowBoxStyles}>
-          <CustomInput 
-              title="Name of Scenarios"
-              type="normal"
-              value={name}
-              setValue={setName}
+          <CustomInput
+            title="Name of Scenario"
+            type="normal"
+            value={formValues.name}
+            setValue={(value) => handleInputChange("name", value)}
           />
-          <CustomInput 
-              title="Financial Goal"
-              type="number"
-              value={financialGoal}
-              setValue={setFinancialGoal}
-              inputProps={{min: 0}}
+
+          <CustomInput
+            title="Financial Goal"
+            type="number"
+            value={formValues.financialGoal}
+            setValue={(value) => handleInputChange("financialGoal", value)}
+            inputProps={{ min: 0 }}
           />
 
           <CustomDropdown
             label="State Residence"
-            value= {residence}
+            value={formValues.residence}
             menuItems={states}
-            setValue={setResidence}
+            setValue={(value) => handleInputChange("residence", value)}
             textFieldStyles={textFieldStyles}
           />
 
           <CustomToggle
-              title="Is the scenario for yourself or with your spouse?"
-              values={['Myself', 'With Spouse']}
-              sideView={false}
-              width={100}
-              value={person}
-              setValue={setPerson}
+            title="Is the scenario for yourself or with your spouse?"
+            values={['Myself', 'With Spouse']}
+            sideView={false}
+            width={100}
+            value={formValues.person}
+            setValue={(value) => handleInputChange("person", value)}
           />
         </Box>
 
         {/* Row 2 */}
         <Box sx={rowBoxStyles}>
-          <CustomInput 
-              title="Your Birth Year"
-              type="number"
-              value={birthYear}
-              setValue={setBirthYear}
+          <CustomInput
+            title="Your Birth Year"
+            type="number"
+            value={formValues.birthYear}
+            setValue={(value) => handleInputChange("birthYear", value)}
           />
 
-          {/* Toggle for Life Expectancy or Sample Age */}
           <CustomToggle
-              title="Your age type"
-              values={['Custom', 'Sample Age']}
-              sideView={false}
-              width={100}
-              value={yourSampleAge}
-              setValue={setYourSampleAge}
+            title="Your age type"
+            values={['fixed', 'normal']}
+            sideView={false}
+            width={100}
+            value={formValues.yourSampleAge}
+            setValue={(value) => handleInputChange("yourSampleAge", value)}
           />
 
-          {/* Custom or Sample Age */}
-          {yourSampleAge === 'Custom' && (
-            <CustomInput 
-                title="Your Life Expectancy"
-                type="number"
-                adornment=""
-                value={lifeExpectancy}
-                setValue={setLifeExpectancy}
+          {formValues.yourSampleAge === 'fixed' ? (
+            <CustomInput
+              title="Your Life Expectancy"
+              type="number"
+              value={formValues.lifeExpectancy}
+              setValue={(value) => handleInputChange("lifeExpectancy", value)}
             />
-          )}
-
-          {yourSampleAge === 'Sample Age' && (
+          ) : (
             <>
-              <CustomInput 
+              <CustomInput
                 title="Mean"
                 type="number"
-                adornment=""
-                value={yourMean}
-                setValue={setYourMean}
-             />
-
-              <CustomInput 
+                value={formValues.yourMean}
+                setValue={(value) => handleInputChange("yourMean", value)}
+              />
+              <CustomInput
                 title="Standard Deviation"
                 type="number"
-                adornment=""
-                value={yourStdDev}
-                setValue={setYourStdDev}
-             />
+                value={formValues.yourStdDev}
+                setValue={(value) => handleInputChange("yourStdDev", value)}
+              />
             </>
           )}
         </Box>
 
-        {/* Row 3 - Spouse's birth year / life expectancy */}
-        {person === 'With Spouse' && (
+        {/* Spouse Row */}
+        {formValues.person === 'With Spouse' && (
           <Box sx={rowBoxStyles}>
-            <CustomInput 
-                title="Spouse's Birth Year"
-                type="number"
-                adornment=""
-                value={spouseBirthYear}
-                setValue={setSpouseBirthYear}
+            <CustomInput
+              title="Spouse's Birth Year"
+              type="number"
+              value={formValues.spouseBirthYear}
+              setValue={(value) => handleInputChange("spouseBirthYear", value)}
             />
 
-            {/* Spouse Toggle for Life Expectancy or Sample Age */}
             <CustomToggle
-                title="Your age type"
-                values={['Custom', 'Sample Age']}
-                sideView={false}
-                width={100}
-                value={spouseSampleAge}
-                setValue={setSpouseSampleAge}
+              title="Spouse age type"
+              values={['fixed', 'normal']}
+              sideView={false}
+              width={100}
+              value={formValues.spouseSampleAge}
+              setValue={(value) => handleInputChange("spouseSampleAge", value)}
             />
 
-            {/* Custom or Sample Age */}
-            {spouseSampleAge === 'Custom' && (
-              <CustomInput 
-                  title="Spouse's Life Expectancy"
-                  type="number"
-                  adornment=""
-                  value={spouseLifeExpectancy}
-                  setValue={setSpouseLifeExpectancy}
+            {formValues.spouseSampleAge === 'fixed' ? (
+              <CustomInput
+                title="Spouse's Life Expectancy"
+                type="number"
+                value={formValues.spouseLifeExpectancy}
+                setValue={(value) => handleInputChange("spouseLifeExpectancy", value)}
               />
-            )}
-
-            {spouseSampleAge === 'Sample Age' && (
+            ) : (
               <>
-                <CustomInput 
-                    title="Mean"
-                    type="number"
-                    adornment=""
-                    value={spouseMean}
-                    setValue={setSpouseMean}
+                <CustomInput
+                  title="Mean"
+                  type="number"
+                  value={formValues.spouseMean}
+                  setValue={(value) => handleInputChange("spouseMean", value)}
                 />
-
-                <CustomInput 
-                    title="Standard Deviation"
-                    type="number"
-                    adornment=""
-                    value={spouseStdDev}
-                    setValue={setSpouseStdDev}
+                <CustomInput
+                  title="Standard Deviation"
+                  type="number"
+                  value={formValues.spouseStdDev}
+                  setValue={(value) => handleInputChange("spouseStdDev", value)}
                 />
               </>
             )}
           </Box>
         )}
-
+        
         {/* Row 4 - Inflation Assumptions */}
         <Typography variant="h6" sx={{ fontWeight: 'bold', marginTop: 4, marginBottom: 2 }}>
           Inflation Assumptions
@@ -262,56 +236,56 @@ const Basics = () => {
         <Box sx={rowBoxStyles}>
           <CustomToggle
               title="Distribution"
-              values={['None', 'Uniform', 'Normal']}
+              values={['fixed', 'uniform', 'normal']}
               sideView={false}
               width={100}
-              value={inflationType}
-              setValue={setInflationType}
+              value={formValues.inflationType}
+              setValue={(value) => handleInputChange("inflationType", value)}
           />
 
           {/* Inflation Value (Conditional) */}
-          {inflationType === 'None' && (
+          {formValues.inflationType === 'fixed' && (
             <CustomInput 
                 title="Value"
                 type="number"
                 adornment="%"
-                value={inflationValue}
-                setValue={setInflationValue}
+                value={formValues.inflationValue}
+                setValue={(value) => handleInputChange("inflationValue", value)}
             />
           )}
-          {inflationType === 'Uniform' && (
+          {formValues.inflationType === 'uniform' && (
             <>
               <CustomInput 
                   title="Min"
                   type="number"
                   adornment="%"
-                  value={inflationMin}
-                  setValue={setInflationMin}
+                  value={formValues.inflationMin}
+                  setValue={(value) => handleInputChange("inflationMin", value)}
               />
               <CustomInput 
                   title="Max"
                   type="number"
                   adornment="%"
-                  value={inflationMax}
-                  setValue={setInflationMax}
+                  value={formValues.inflationMax}
+                  setValue={(value) => handleInputChange("inflationMax", value)}
               />
             </>
           )}
-          {inflationType === 'Normal' && (
+          {formValues.inflationType === 'normal' && (
             <>
               <CustomInput 
                   title="Mean"
                   type="number"
                   adornment="%"
-                  value={inflationMean}
-                  setValue={setInflationMean}
+                  value={formValues.inflationMean}
+                  setValue={(value) => handleInputChange("inflationMean", value)}
               />
               <CustomInput 
                   title="Standard Deviation"
                   type="number"
                   adornment="%"
-                  value={inflationStdDev}
-                  setValue={setInflationStdDev}
+                  value={formValues.inflationStdDev}
+                  setValue={(value) => handleInputChange("inflationStdDev", value)}
               />
             </>
           )}
@@ -319,18 +293,21 @@ const Basics = () => {
 
         {/* Back and Continue buttons */}
         <Box sx={backContinueContainerStyles}>
-          <Button variant="contained" color="primary" sx={buttonStyles}  
-            onClick={handleBackClick}>
-              Back
+          <Button variant="contained" color="primary" sx={buttonStyles} onClick={handleBackClick}>
+            Back
           </Button>
           <Button variant="contained" color="success" sx={buttonStyles} 
-            onClick={() => navigate("/scenario/investment_lists")}>
-              Continue
+            onClick={() => {
+              setCurrScenario(formValues);
+              navigate("/scenario/investment_lists")
+            }}
+          >
+            Continue
           </Button>
         </Box>
-
-        {/* Backdrop and Fade for confirmation */}
-        <Backdrop 
+        
+                {/* Backdrop and Fade for confirmation */}
+                <Backdrop 
           open={showBackdrop} 
           onClick={handleClose} 
           sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}

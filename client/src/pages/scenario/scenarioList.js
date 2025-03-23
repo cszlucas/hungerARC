@@ -7,18 +7,11 @@ import Navbar from '../../components/navbar';
 import { useNavigate } from "react-router-dom";
 
 const ScenarioList = () => {
-    const [selectedScenario, setSelectedScenario] = useState(null); // Track selected scenario
-    
-    const { editMode, setEditMode } = useContext(AppContext);
-
-    const scenarios = {
-        'Plan 1': { 'date': new Date(2025, 2, 20)},
-        'Plan 2': { 'date': new Date(2025, 2, 19)},
-        'Plan 3': { 'date': new Date(2025, 2, 18)},
-    }
+    // window.location.reload();
+    const [ selectedScenario, setSelectedScenario] = useState(null); // Track selected scenario
+    const { scenarioData, setEditMode } = useContext(AppContext);
 
     const navigate = useNavigate();
-
     const handleSelectScenario = (scenarioKey) => {
         setSelectedScenario(scenarioKey); // Update the selected scenario
     };
@@ -50,8 +43,8 @@ const ScenarioList = () => {
                   variant="contained"
                   sx={{ marginTop: 0, marginBottom: 6, textTransform: "none" }}
                   onClick={() => { 
-                    setEditMode('new')
-                    navigate("/scenario/basics")
+                    setEditMode('new');
+                    navigate("/scenario/basics");
                 }}
               >
                 New Scenario
@@ -79,25 +72,28 @@ const ScenarioList = () => {
                   {/* Left Box for List */}
                   <Box sx={{ width: '45%' }}>
                       <List>
-                          {Object.entries(scenarios).map(([key, value], index) => (
+                          {scenarioData != null && scenarioData.map((plan, index) => (
                               <ListItem 
-                                  key={key} 
+                                  key={plan.name} 
                                   sx={{
-                                      backgroundColor: selectedScenario === key ? '#A2E7D2' : (index % 2 === 0 ? '#BBBBBB' : '#D9D9D9'), // Highlight selected item
+                                      backgroundColor: selectedScenario === plan.name ? '#A2E7D2' : (index % 2 === 0 ? '#BBBBBB' : '#D9D9D9'), // Highlight selected item
                                       '&:hover': {
-                                          backgroundColor: selectedScenario !== key ? '#B0B0B0' : '#A2E7D2', // Hover effect
+                                          backgroundColor: selectedScenario !== plan.name ? '#B0B0B0' : '#A2E7D2', // Hover effect
                                       },
                                   }}
-                                  onClick={() => handleSelectScenario(key)} // Set the selected scenario
+                                  onClick={() => handleSelectScenario(plan.name)} // Set the selected scenario
                               >
                                   <ListItemText
-                                      primary={<span style={{ fontWeight: 'bold' }}>{key}</span>} // Bold primary text
-                                      secondary={`Date: ${value.date.toDateString()}`} // Display the formatted date
+                                      primary={<span style={{ fontWeight: 'bold' }}>{plan.name}</span>} // Bold primary text
+                                      secondary={`Goal: $${plan.financialGoal}`} // Display the formatted date
                                   />
                                   <IconButton 
                                       edge="end" 
                                       aria-label="edit" 
-                                      onClick={() => alert(`Edit ${key}`)} // Handle edit button click
+                                      onClick={() => {
+                                        setEditMode(plan.id)
+                                        navigate("/scenario/basics")
+                                      }} // Handle edit button click
                                   >
                                       <EditIcon />
                                   </IconButton>

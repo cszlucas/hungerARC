@@ -29,11 +29,7 @@ const InvestmentType = () => {
     const [returnDistributionValue, setReturnDistributionValue] = useState('');
     const [returnMean, setReturnMean] = useState('');
     const [returnVariance, setReturnVariance] = useState('');
-    const [incomeDistributionValue, setIncomeDistributionValue] = useState('');
-    const [incomeMean, setIncomeMean] = useState('');
-    const [incomeVariance, setIncomeVariance] = useState('');
     const [taxability, setTaxability] = useState('');
-
     const navigate = useNavigate();
 
     const handleToggleChange = (setter) => (event, newValue) => {

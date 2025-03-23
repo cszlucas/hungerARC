@@ -137,3 +137,4 @@ exports.getInvestment = async (req, res) => {
     res.status(500).json({ error: "Failed to retrieve Investment data", message: err.message });
   }
 };
+
