@@ -18,7 +18,7 @@ import CustomDropdown from "../../../components/customDropDown";
 import CustomInput from "../../../components/customInputBox";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-
+import { useNavigate } from "react-router-dom";
 
 const investmentsData = [
     { investmentTypeName: "Apple", taxType: "Taxable", percent: "0" },
@@ -67,13 +67,19 @@ const InvestList = ({ list, handleMoveInvestment }) => {
 
 
 const Rebalance = () => {
+    const [eventName, setEventName] = useState('');
+    const [description, setDescription] = useState('');
+    const [startYear, setStartYear] = useState('');
+    const [endYear, setEndYear] = useState('');
+
     const [selectedTaxType, setSelectedTaxType] = useState("");
     const [selectedInvestment, setSelectedInvestment] = useState("");
   
     const [taxableInvestments, setTaxableInvestments] = useState([]);
     const [taxDeferredInvestments, setTaxDeferredInvestments] = useState([]);
     const [taxFreeInvestments, setTaxFreeInvestments] = useState([]);
-  
+
+    const navigate = useNavigate();
     const filteredInvestments = investmentsData.filter((investment) => investment.taxType === selectedTaxType);
   
     const handleAddInvestment = () => {
@@ -136,6 +142,35 @@ const Rebalance = () => {
       {/* Left Column - Tax Category & Investment Dropdowns */}
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
         {/* Tax Category Dropdown */}
+        <CustomInput 
+          title="Event name" 
+          value={eventName} 
+          setValue={setEventName} 
+        />
+
+        <CustomInput 
+          title="Description (Optional)" 
+          type="multiline" 
+          value={description} 
+          setValue={setDescription} 
+        />
+
+        <Stack direction="row" spacing={2}>
+            <CustomInput 
+              title="Start Year" 
+              type="number" 
+              value={startYear} 
+              setValue={setStartYear} 
+            />
+
+            <CustomInput
+              title="End Year" 
+              type="number" 
+              value={endYear} 
+              setValue={setEndYear} 
+            />
+        </Stack>
+        
         <Box sx={{ display: "inline-flex", flexDirection: "column", width: "auto" }}>
           <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium" }}>
             Tax Category
@@ -221,7 +256,9 @@ const Rebalance = () => {
 
           {/* Back and Continue buttons */}
           <Box sx={backContinueContainerStyles}>
-            <Button variant="contained" color="primary" sx={buttonStyles}>
+            <Button variant="contained" color="primary" sx={buttonStyles}
+              onClick={() => navigate("/scenario/event_series")}
+            >
               Back
             </Button>
   

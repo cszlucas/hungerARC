@@ -41,7 +41,8 @@ const GoogleAuth = () => {
         const guestUser = {
             googleId: null,
             email: "Guest@hungerArc.com", // No profile image for guest users
-            guest: true
+            guest: true,
+            scenarios: []
         };
 
         setUser(guestUser);

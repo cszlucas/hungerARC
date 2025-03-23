@@ -17,6 +17,7 @@ import {
 import CustomDropdown from "../../../components/customDropDown";
 import CustomInput from "../../../components/customInputBox";
 import CustomToggle from "../../../components/customToggle";
+import { useNavigate } from "react-router-dom";
 
 const InvestmentType = () => {
     const [name, setName] = useState('');
@@ -32,6 +33,8 @@ const InvestmentType = () => {
     const [incomeMean, setIncomeMean] = useState('');
     const [incomeVariance, setIncomeVariance] = useState('');
     const [taxability, setTaxability] = useState('');
+
+    const navigate = useNavigate();
 
     const handleToggleChange = (setter) => (event, newValue) => {
         if (newValue !== null) setter(newValue);
@@ -201,25 +204,18 @@ const InvestmentType = () => {
                         </Box>
                     </Box>
                 </Box>
-            
-                <Box sx = {{ display: "flex", justifyContent: "flex-end", marginTop: 1 }}>
-                    <Button 
-                        variant="contained" 
-                        color="primary"
-                        sx={{ fontSize: '1.1rem', textTransform: 'none' }}
-                    >
-                        Add
-                    </Button>
-                </Box>
-
                     
                 {/* Back and Continue buttons */}
                 <Box sx={backContinueContainerStyles}>
-                    <Button variant="contained" color="primary" sx={buttonStyles}>
-                        Back
+                    <Button variant="contained" color="primary" sx={buttonStyles}
+                        onClick={() => navigate("/scenario/investment_lists")}
+                    >
+                        Cancel
                     </Button>
-                    <Button variant="contained" color="success" sx={buttonStyles}>
-                        Continue
+                    <Button variant="contained" color="success" sx={buttonStyles}
+                        onClick={() => navigate("/scenario/investment_lists")}
+                    >
+                        Add
                     </Button>
                 </Box>
             </Container>

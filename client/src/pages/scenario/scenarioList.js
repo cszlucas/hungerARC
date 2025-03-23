@@ -1,9 +1,10 @@
 import React, { useState, useContext } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, List, ListItem, ListItemText, IconButton, Box, Button } from '@mui/material';
+import { ThemeProvider, CssBaseline, Container, Link, Typography, List, ListItem, ListItemText, IconButton, Box, Button } from '@mui/material';
 import { AppContext } from '../../context/appContext';
 import EditIcon from '@mui/icons-material/Edit';
 import theme from '../../components/theme';
 import Navbar from '../../components/navbar';
+import { useNavigate } from "react-router-dom";
 
 const ScenarioList = () => {
     const [selectedScenario, setSelectedScenario] = useState(null); // Track selected scenario
@@ -12,6 +13,8 @@ const ScenarioList = () => {
         'Plan 2': { 'date': new Date(2025, 2, 19)},
         'Plan 3': { 'date': new Date(2025, 2, 18)},
     }
+
+    const navigate = useNavigate();
 
     const handleSelectScenario = (scenarioKey) => {
         setSelectedScenario(scenarioKey); // Update the selected scenario
@@ -43,6 +46,7 @@ const ScenarioList = () => {
               <Button 
                   variant="contained"
                   sx={{ marginTop: 0, marginBottom: 6, textTransform: "none" }}
+                  onClick={() => navigate("/scenario/basics")}
               >
                 New Scenario
               </Button>
@@ -59,7 +63,7 @@ const ScenarioList = () => {
                       variant="contained" 
                       color="secondary" // Uses the theme's secondary color
                       sx={{ textTransform: "none" }}
-                  >
+                    >
                       Share
                   </Button>
               </Box>

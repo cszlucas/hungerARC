@@ -11,17 +11,25 @@ import {
 
 import CustomInput from '../../../components/customInputBox';
 import CustomToggle from '../../../components/customToggle';
+import { useNavigate } from "react-router-dom";
 
 const Income = () => {
+    const [eventName, setEventName] = useState('');
+    const [description, setDescription] = useState('');
+    const [startYear, setStartYear] = useState('');
+    const [endYear, setEndYear] = useState('');
     const [expectedChangeType, setExpectedChangeType] = useState('Fixed');
     const [distributionType, setDistributionType] = useState('None');
-    const [expenseType, setExpenseType] = useState('Wage');
     const [changeValue, setChangeValue] = useState('');
     const [changeMean, setChangeMean] = useState('');
     const [changeVariance, setChangeVariance] = useState('');
     const [changeMin, setChangeMin] = useState('');
     const [changeMax, setChangeMax] = useState('');
+    const [inflationAdjustment, setInflationAdjustment] = useState(false);
+    const [discretionary, setDiscretionary] = useState(false);
 
+    const navigate = useNavigate();
+    
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
@@ -40,6 +48,37 @@ const Income = () => {
 
                 <Box sx={rowBoxStyles}>
                     {/* First Column */}
+                    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", width: 250 }}>
+                        <CustomInput 
+                        title="Event name" 
+                        value={eventName} 
+                        setValue={setEventName} 
+                        />
+
+                        <CustomInput 
+                        title="Description (Optional)" 
+                        type="multiline" 
+                        value={description} 
+                        setValue={setDescription} 
+                        />
+
+                        <Stack direction="row" spacing={2}>
+                            <CustomInput 
+                                title="Start Year" 
+                                type="number" 
+                                value={startYear} 
+                                setValue={setStartYear} 
+                            />
+
+                            <CustomInput
+                                title="End Year" 
+                                type="number" 
+                                value={endYear} 
+                                setValue={setEndYear} 
+                            />
+                        </Stack>
+                    </Box>
+                    {/* Second Column */}
                     <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', width: 300 }}>
                         <CustomInput 
                             title="Initial Expense Amount"
@@ -70,18 +109,17 @@ const Income = () => {
                             <Typography variant="body1" sx={{ fontWeight: 'medium', width: 150 }}>
                                 Inflation Adjustment
                             </Typography>
-                            <Checkbox />
+                            <Checkbox checked={inflationAdjustment} onChange={() => setInflationAdjustment(!inflationAdjustment)}/>
                         </Stack>
 
                         <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1 }}>
                             <Typography variant="body1" sx={{ fontWeight: 'medium', width: 150 }}>
                                Discretionary
                             </Typography>
-                            <Checkbox />
+                            <Checkbox checked={discretionary} onChange={() => setDiscretionary(!discretionary)}/>
                         </Stack>
                     </Box>
-
-                    {/* Second Column */}
+                    {/* Third Column */}
                     <Box sx={{ flex: 1 }}>
                         <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'bold' }}>Expected Annual Change:</Typography>
 
@@ -154,7 +192,9 @@ const Income = () => {
                 </Box>
 
                 <Box sx={backContinueContainerStyles}>
-                    <Button variant="contained" color="primary" sx={buttonStyles}>
+                    <Button variant="contained" color="primary" sx={buttonStyles}
+                        onClick={() => navigate("/scenario/event_series")}
+                    >
                         Back
                     </Button>
                     <Button variant="contained" color="success" sx={buttonStyles}>

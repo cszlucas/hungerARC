@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, ToggleButton, ToggleButtonGroup, MenuItem } from '@mui/material';
+import React, { useState, useContext } from "react";
+import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Backdrop, Fade, Paper } from '@mui/material';
 import theme from '../../components/theme';
 import Navbar from '../../components/navbar';
 import PageHeader from '../../components/pageHeader';
@@ -7,8 +7,6 @@ import {
   stackStyles,
   titleStyles,
   textFieldStyles,
-  numFieldStyles,
-  toggleButtonGroupStyles,
   backContinueContainerStyles,
   buttonStyles,
   rowBoxStyles,
@@ -17,6 +15,8 @@ import {
 import CustomInput from '../../components/customInputBox';
 import CustomToggle from '../../components/customToggle';
 import CustomDropdown from '../../components/customDropDown';
+import { useNavigate } from "react-router-dom";
+import { AppContext } from "../../context/appContext";
 
 const states = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware",
@@ -28,7 +28,22 @@ const states = [
   "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
 ];
 
+//assume scenarioId is in AppContext
+
 const Basics = () => {
+  const { basicInfo, setBasicInfo } = useContext(AppContext);
+  const [formValues, setFormValues] = useState(basicInfo);
+  console.log("basicsState: " + basicInfo);
+  console.log("basics form:" + formValues);
+
+  const handleInputChange = (field, value) => {
+    setBasicInfo(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleUpdate = () => {
+    setBasicInfo(formValues);
+  };
+
   const [name, setName] = useState('');
   const [person, setPerson] = useState('Myself');
   const [financialGoal, setFinancialGoal] = useState('');
@@ -40,6 +55,7 @@ const Basics = () => {
   const [spouseBirthYear, setSpouseBirthYear] = useState('');
   const [spouseLifeExpectancy, setSpouseLifeExpectancy] = useState('');
   const [yourSampleAge, setYourSampleAge] = useState('Custom');
+  
   const [spouseSampleAge, setSpouseSampleAge] = useState('Custom');
   const [yourMean, setYourMean] = useState('');
   const [yourStdDev, setYourStdDev] = useState('');
@@ -53,6 +69,33 @@ const Basics = () => {
   const [inflationMin, setInflationMin] = useState('');
   const [inflationMax, setInflationMax] = useState('');
 
+  const [showBackdrop, setShowBackdrop] = useState(false);
+  const [errorBackdrop, setErrorBackdrop] = useState(false);
+
+  const navigate = useNavigate();
+
+  const handleBackClick = () => {
+    setShowBackdrop(true);
+  };
+
+  const handleClose = () => {
+    setShowBackdrop(false);
+  };
+
+  const handleConfirm = () => {
+    if (!name.trim()) {
+      // Show error backdrop if name field is empty
+      setShowBackdrop(false);
+      setErrorBackdrop(true);  // Keep it open until manually closed
+    } else {
+      setShowBackdrop(false);
+      navigate("/scenarios")
+    }
+  };
+
+  const handleErrorClose = () => {
+    setErrorBackdrop(false);
+  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -85,6 +128,7 @@ const Basics = () => {
               type="number"
               value={financialGoal}
               setValue={setFinancialGoal}
+              inputProps={{min: 0}}
           />
 
           <CustomDropdown
@@ -116,7 +160,7 @@ const Basics = () => {
 
           {/* Toggle for Life Expectancy or Sample Age */}
           <CustomToggle
-              title="your age type"
+              title="Your age type"
               values={['Custom', 'Sample Age']}
               sideView={false}
               width={100}
@@ -169,7 +213,7 @@ const Basics = () => {
 
             {/* Spouse Toggle for Life Expectancy or Sample Age */}
             <CustomToggle
-                title="your age type"
+                title="Your age type"
                 values={['Custom', 'Sample Age']}
                 sideView={false}
                 width={100}
@@ -275,13 +319,82 @@ const Basics = () => {
 
         {/* Back and Continue buttons */}
         <Box sx={backContinueContainerStyles}>
-          <Button variant="contained" color="primary" sx={buttonStyles}>
-            Back
+          <Button variant="contained" color="primary" sx={buttonStyles}  
+            onClick={handleBackClick}>
+              Back
           </Button>
-          <Button variant="contained" color="success" sx={buttonStyles}>
-            Continue
+          <Button variant="contained" color="success" sx={buttonStyles} 
+            onClick={() => navigate("/scenario/investment_lists")}>
+              Continue
           </Button>
         </Box>
+
+        {/* Backdrop and Fade for confirmation */}
+        <Backdrop 
+          open={showBackdrop} 
+          onClick={handleClose} 
+          sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        >
+          <Fade in={showBackdrop}>
+            <Paper 
+              elevation={3} 
+              sx={{
+                padding: 4,
+                width: '400px',
+                backgroundColor: 'white',
+                borderRadius: 2,
+                textAlign: 'center'
+              }}
+            >
+              <Typography variant="h5" sx={{fontWeight: 'bold'}} gutterBottom>
+                Do you want to save your changes?
+              </Typography>
+
+              <Stack direction="row" spacing={2} justifyContent="center" mt={2}>
+                <Button 
+                  variant="contained" 
+                  color="error"
+                  sx={buttonStyles}
+                  onClick={handleClose}
+                >
+                  No
+                </Button>
+                <Button 
+                  variant="contained" 
+                  color="secondary"
+                  sx={buttonStyles} 
+                  onClick={handleConfirm}
+                >
+                  Yes
+                </Button>
+              </Stack>
+            </Paper>
+          </Fade>
+        </Backdrop>
+
+        {/* Separate Backdrop for error message */}
+        <Backdrop 
+          open={errorBackdrop}
+          onClick={handleErrorClose} 
+          sx={{ zIndex: (theme) => theme.zIndex.drawer + 2 }}
+        >
+          <Fade in={errorBackdrop}>
+            <Paper 
+              elevation={4} 
+              sx={{
+                padding: 4,
+                width: '350px',
+                backgroundColor: 'white',
+                borderRadius: 2,
+                textAlign: 'center'
+              }}
+            >
+              <Typography variant="h5" color="error" sx={{fontWeight: 'bold'}}>
+                Please enter a scenario name before saving.
+              </Typography>
+            </Paper>
+          </Fade>
+        </Backdrop>
       </Container>
     </ThemeProvider>
   );
