@@ -22,6 +22,7 @@ router.post("/investStrategy", events.investStrategy);
 router.post("/rebalanceStrategy", events.rebalanceStrategy);
 
 // investments
+router.get("/investmentType/:id", investments.investmentType);
 router.post("/investmentType", investments.investmentType);
 router.post("/investment", investments.investment);
 router.post("/updateInvestment/:id", investments.updateInvestment);

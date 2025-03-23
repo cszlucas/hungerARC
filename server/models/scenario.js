@@ -2,7 +2,7 @@ var mongoose = require("mongoose");
 var Schema = mongoose.Schema;
 
 var scenarioSchema = new Schema({
-  name: { type: String},
+  name: { type: String },
   filingStatus: { type: String },
   birthYearUser: { type: Number },
   lifeExpectancy: {
@@ -15,6 +15,7 @@ var scenarioSchema = new Schema({
     mean: { type: Number },
     stdDev: { type: Number },
   },
+  setOfInvestmentTypes: [{ type: Schema.Types.ObjectId, ref: "InvestmentType" }],
   setOfInvestments: [{ type: Schema.Types.ObjectId, ref: "Investment" }],
   incomeEventSeries: [{ type: Schema.Types.ObjectId, ref: "IncomeEvent" }],
   expenseEventSeries: [{ type: Schema.Types.ObjectId, ref: "ExpenseEvent" }],
@@ -25,7 +26,7 @@ var scenarioSchema = new Schema({
       type: String,
       // percentage
       enum: ["fixed", "normal", "uniform"],
-      },
+    },
     fixedRate: { type: Number },
     mean: { type: Number },
     stdDev: { type: Number },
