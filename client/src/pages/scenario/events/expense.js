@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { ThemeProvider, CssBaseline, Container, Button, Stack, Box, Checkbox, Typography } from '@mui/material';
 import theme from '../../../components/theme';
 import Navbar from '../../../components/navbar';
@@ -12,8 +12,28 @@ import {
 import CustomInput from '../../../components/customInputBox';
 import CustomToggle from '../../../components/customToggle';
 import { useNavigate } from "react-router-dom";
+import { AppContext } from "../../../context/appContext";
 
-const Income = () => {
+const Expense = () => {
+    const {currExpense, setCurrExpense} = useContext(AppContext);
+    const {eventEditMode, setEventEditMode} = useContext(AppContext);
+
+    console.log("in expenses");
+    console.log(currExpense);
+    console.log(eventEditMode);
+
+    const getExpenseById = (id) => {
+        for (let i = 0; i < currExpense.length; i++) {
+            if (currExpense[i].id == id) {
+                return currExpense[i]; // Return the found scenario
+            }
+        }
+        return null; // Return null if not found
+      };
+
+    let indieExpense = getExpenseById(eventEditMode[1]);
+
+
     const [eventName, setEventName] = useState('');
     const [description, setDescription] = useState('');
     const [startYear, setStartYear] = useState('');
@@ -206,4 +226,4 @@ const Income = () => {
     );
 };
 
-export default Income;
+export default Expense;

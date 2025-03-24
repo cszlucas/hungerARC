@@ -27,31 +27,34 @@ const EventSeries = () => {
   const {currExpense, setCurrExpense} = useContext(AppContext);
   const {currInvest, setCurrInvest} = useContext(AppContext);
   const {currRebalance, setCurrRebalance} = useContext(AppContext);
+  const {eventEditMode, setEventEditMode} = useContext(AppContext);
 
-    // 🔹 Ensure all states are arrays before merging, and add an event type label
-  let safeCurrIncome = Array.isArray(currIncome) 
-    ? currIncome.map(event => ({ ...event, type: "Income" }))  // 🔹 Added `.map()` to add "type"
-    : [];
+  let safeCurrIncome = Array.isArray(currIncome) ? currIncome : [];
+  let safeCurrExpense = Array.isArray(currExpense) ? currExpense : [];
+  let safeCurrInvest = Array.isArray(currInvest) ? currInvest : [];
+  let safeCurrRebalance = Array.isArray(currRebalance) ? currRebalance : [];
   
-  let safeCurrExpense = Array.isArray(currExpense) 
+  // 🔹 Ensure all states are arrays before merging, and add an event type label
+  safeCurrIncome = Array.isArray(currIncome) 
+  ? currIncome.map(event => ({ ...event, type: "Income" }))  // 🔹 Added `.map()` to add "type"
+    : [];
+  console.log("safety: " );
+  console.log(safeCurrIncome);
+  safeCurrExpense = Array.isArray(currExpense) 
     ? currExpense.map(event => ({ ...event, type: "Expense" }))  // 🔹 Added `.map()` to add "type"
     : [];
   
-  let safeCurrInvest = Array.isArray(currInvest) 
+  safeCurrInvest = Array.isArray(currInvest) 
     ? currInvest.map(event => ({ ...event, type: "Invest" }))  // 🔹 Added `.map()` to add "type"
     : [];
   
-  let safeCurrRebalance = Array.isArray(currRebalance) 
+  safeCurrRebalance = Array.isArray(currRebalance) 
     ? currRebalance.map(event => ({ ...event, type: "Rebalance" }))  // 🔹 Added `.map()` to add "type"
     : [];
   // console.log(currIncome);
   // console.log(currExpense);
   // console.log(currInvest);
   // console.log(currRebalance);
-  safeCurrIncome = Array.isArray(currIncome) ? currIncome : [];
-  safeCurrExpense = Array.isArray(currExpense) ? currExpense : [];
-  safeCurrInvest = Array.isArray(currInvest) ? currInvest : [];
-  safeCurrRebalance = Array.isArray(currRebalance) ? currRebalance : [];
 
   const currEventSeries = [...safeCurrIncome, ...safeCurrExpense, ...safeCurrInvest, ...safeCurrRebalance];
 
@@ -60,11 +63,6 @@ const EventSeries = () => {
   const navigate = useNavigate();
 
   // Example event series
-  const eventSeries = [
-    { 'Event A1': 'Income' },
-    { 'Event B2': 'Expense' },
-    { 'Event C3': 'Invest' },
-  ];
 
   const handleAddEvent = () => {
     setOpenBackdrop(true);
@@ -77,6 +75,32 @@ const EventSeries = () => {
   const handleSelectEventType = (type) => {
     alert(`Selected Event: ${type}`);
     setOpenBackdrop(false);
+  };
+
+  const handleEditEvent = (event) => {
+    setEventEditMode({ type: event.type, id: event._id}); // 🔹 Store the event ID in context
+  
+    // 🔹 Determine the correct route based on event type
+    let route = "";
+    switch (event.type) {
+      case "Income":
+        route = "/scenario/income";
+        break;
+      case "Expense":
+        route = "/scenario/expense";
+        break;
+      case "Invest":
+        route = "/scenario/invest";
+        break;
+      case "Rebalance":
+        route = "/scenario/rebalance";
+        break;
+      default:
+        console.error("Unknown event type:", event.type);
+        return;
+    }
+  
+    navigate(route); // 🔹 Navigate to the correct page
   };
 
   return (
@@ -127,7 +151,7 @@ const EventSeries = () => {
                       primary={<span style={{ fontWeight: 'bold' }}>{event.eventSeriesName}</span>} 
                       secondary={event.type} 
                     />
-                    <IconButton edge="end" aria-label="edit" onClick={() => alert(`Edit ${event.type}`)}>
+                    <IconButton edge="end" aria-label="edit" onClick={() => handleEditEvent(event)}>
                       <EditIcon />
                     </IconButton>
                   </ListItem>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { ThemeProvider, CssBaseline, Container, Button, Stack, Box, Checkbox, Typography } from '@mui/material';
 import theme from '../../../components/theme';
 import Navbar from '../../../components/navbar';
@@ -12,8 +12,40 @@ import {
 import CustomInput from '../../../components/customInputBox';
 import CustomToggle from '../../../components/customToggle';
 import { useNavigate } from "react-router-dom";
+import { AppContext } from "../../../context/appContext";
 
 const Income = () => {
+    const {currIncome, setCurrIncome} = useContext(AppContext);
+    const {eventEditMode, setEventEditMode} = useContext(AppContext);
+
+    const getIncomeById = (id) => {
+        for (let i = 0; i < currIncome.length; i++) {
+            if (currIncome[i].id == id) {
+                return currIncome[i]; // Return the found scenario
+            }
+        }
+        return null; // Return null if not found
+      };
+
+    let indieIncome = getIncomeById(eventEditMode[1]);
+    // console.log(indieIncome);
+
+    // console.log(eventEditMode);
+    // console.log(currIncome);
+
+    // scenario has list of income 
+    const [formValues, setFormValues] = useState(indieIncome ||  {
+        event: '',
+        description: '',
+        startYear: '',
+        endYear: '',
+        expectedChangeType: '',
+        distributionType: '',
+        incomeType: '',
+        changeValue: '',
+        
+    });
+    
     const [eventName, setEventName] = useState('');
     const [description, setDescription] = useState('');
     const [startYear, setStartYear] = useState('');

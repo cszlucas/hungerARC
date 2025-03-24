@@ -91,7 +91,7 @@ const ScenarioList = () => {
                                       edge="end" 
                                       aria-label="edit" 
                                       onClick={() => {
-                                        setEditMode(plan.id)
+                                        setEditMode(plan._id)
                                         navigate("/scenario/basics")
                                       }} // Handle edit button click
                                   >

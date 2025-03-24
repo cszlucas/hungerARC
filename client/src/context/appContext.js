@@ -193,9 +193,11 @@ export const getInitialState = async (user) => {
 
       if (response.data) {
           console.log("Scenarios fetched from backend:", response.data);
-          const transformedScenarios = response.data.map(transformScenario); // Transform each scenario
-          localStorage.setItem("scenarioData", JSON.stringify(transformedScenarios)); // Cache in localStorage
-          return transformedScenarios;
+          // const transformedScenarios = response.data.map(transformScenario); // Transform each scenario
+          // localStorage.setItem("scenarioData", JSON.stringify(transformedScenarios)); // Cache in localStorage
+          // return transformedScenarios;
+          localStorage.setItem("scenarioData", JSON.stringify(response.data));
+          return response.data;
       }
 
       return []; // Return empty if no data
@@ -237,7 +239,14 @@ const capitalizeFirstLetter = (string) => string.charAt(0).toUpperCase() + strin
 export const AppProvider = ({ children }) => {
   const [scenarioData, setScenarioData] = useState(readStateFromLS('scenarioData'));
   const [editMode, setEditMode] = useState(readStateFromLS('edit'));
+  const [eventEditMode, setEventEditMode] = useState(readStateFromLS('editEvent')); // this will contain a tuple ex: (income, {some random id})
+  
+  //individual events
   const [currScenario, setCurrScenario] = useState(readStateFromLS('currentScenario'));
+  // const [indieInvest, setIndieInvest] = useState(readStateFromLS('indieInvest'));
+  // const [indieIncome, setIndieIncome] = useState(readStateFromLS('indieIncome'));
+  // const [indieExpense, setIndieExpense] = useState(readStateFromLS('indieExpense'));
+  // const [indieRebalance, setIndieRebalance] = useState(readStateFromLS('indieRebalance'));
   const { user } = useContext(AuthContext);
 
   //all stuff:
@@ -295,6 +304,47 @@ export const AppProvider = ({ children }) => {
     loadScenarioData();
 }, [editMode]);
 
+
+  const getScenarioById = (id) => {
+    for (let i = 0; i < scenarioData.length; i++) {
+        if (scenarioData[i].id == id) {
+            return scenarioData[i]; // Return the found scenario
+        }
+    }
+    return null; // Return null if not found
+  };
+
+  // useEffect(() => {
+  //   if (eventEditMode[0] !== "new")
+  //   {
+  //     switch (eventEditMode[0]) {
+  //       case "Income":
+  //         console.log("Handling TYPE_A", eventEditMode[1]);
+  //         // Perform actions for TYPE_A
+  //         break;
+    
+  //       case "Expense":
+  //         console.log("Handling TYPE_B", eventEditMode[1]);
+  //         // Perform actions for TYPE_B
+  //         break;
+    
+  //       case "Invest":
+  //         console.log("Handling TYPE_C", eventEditMode[1]);
+  //         // Perform actions for TYPE_C
+  //         break;
+
+  //       case "Rebalance":
+  //         console.log("Handling TYPE_C", eventEditMode[1]);
+  //         // Perform actions for TYPE_C
+  //         break;
+    
+  //       default:
+  //         console.log("Unknown event type", eventEditMode[0]);
+  //         break;
+  //     }
+  //   }
+  // }, [eventEditMode[0], eventEditMode[1]]);
+
   useEffect(() => {
     // Load user data from localStorage
     localStorage.setItem("currentScenario", JSON.stringify(currScenario));
@@ -306,6 +356,7 @@ export const AppProvider = ({ children }) => {
     <AppContext.Provider value={{ 
       scenarioData, setScenarioData, 
       editMode, setEditMode,
+      eventEditMode, setEventEditMode,
       currScenario, setCurrScenario,
       currInvestments, setCurrInvestments, 
       currIncome, setCurrIncome,

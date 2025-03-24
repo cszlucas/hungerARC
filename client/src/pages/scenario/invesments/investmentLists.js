@@ -34,17 +34,6 @@ const InvestmentLists = () => {
     value: '',
   });
   const navigate = useNavigate();
-  
-  // const [investments, setInvestments] = useState([
-  //   { investmentTypeName: 'Apple', accountTaxStatus: 'non-tax', value: '$50000' },
-  //   { investmentTypeName: 'Microsoft', accountTaxStatus: 'non-tax', value: '$70000' },
-  //   { investmentTypeName: 'Amazon', accountTaxStatus: 'non-tax', value: '$60000' },
-  //   { investmentTypeName: 'IRA', accountTaxStatus: 'pre-tax', value: '$50000' },
-  //   { investmentTypeName: '401k', accountTaxStatus: 'pre-tax', value: '$70000' },
-  //   { investmentTypeName: 'Roth 401k', accountTaxStatus: 'after-tax', value: '$60000' },
-  //   { investmentTypeName: 'Roth 403k', accountTaxStatus: 'after-tax', value: '$80000' },
-  // ]);
-  // console.log(investments);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -66,8 +55,6 @@ const InvestmentLists = () => {
   };
 
   const handleDeleteInvestment = (index) => {
-    // const updatedInvestments = investments.filter((_, i) => i !== index);
-    // setInvestments(updatedInvestments);
     setCurrInvestments((prev) => prev.filter((_, i) => i !== index));
   };
 
@@ -194,14 +181,14 @@ const InvestmentLists = () => {
                   <TextField
                     select
                     name="investmentTypeName"
-                    value={newInvestment.investmentTypeName}
+                    value={newInvestment.investmentTypeName || ''}
                     onChange={handleChange}
                     sx={textFieldStyles}
                     fullWidth
                   >
-                    <MenuItem value="JAWS">JAWS</MenuItem>
-                    <MenuItem value="Roth IRA">Roth IRA</MenuItem>
-                    <MenuItem value="Hunger Finance">Hunger Finance</MenuItem>
+                    {currInvestmentTypes.map((it) => (
+                      <MenuItem value={it.id}>{it.name}</MenuItem>
+                    ))}
                   </TextField>
                   <Button variant="contained" color="primary" onClick={() => navigate("/scenario/investment_type")} sx={{textTransform: 'none', minWidth: 150}}>
                     Add Custom Type
@@ -217,7 +204,7 @@ const InvestmentLists = () => {
                   <TextField
                     select
                     name="accountTaxStatus"
-                    value={newInvestment.accountTaxStatus}
+                    value={newInvestment.accountTaxStatus || ''}
                     onChange={handleChange}
                     sx={textFieldStyles}
                     fullWidth

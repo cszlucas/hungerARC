@@ -1,4 +1,5 @@
 import React, { useState, useContext } from "react";
+import axios from 'axios';
 import {
   ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Backdrop, Fade, Paper
 } from '@mui/material';
@@ -27,28 +28,28 @@ const states = [
 
 const Basics = () => {
   const { currScenario, setCurrScenario } = useContext(AppContext);
+  const {editMode, setEditMode} = useContext(AppContext);
   // console.log(currScenario);
   const [formValues, setFormValues] = useState(currScenario || {
     name: '',
-    person: 'Myself',
+    filingStatus: 'Myself',
     financialGoal: '',
-    residence: '',
-    birthYear: '',
-    lifeExpectancy: '',
-    spouseBirthYear: '',
-    spouseLifeExpectancy: '',
-    yourSampleAge: 'fixed',
-    spouseSampleAge: 'fixed',
-    yourMean: '',
-    yourStdDev: '',
-    spouseMean: '',
-    spouseStdDev: '',
-    inflationType: 'fixed',
-    inflationValue: '',
-    inflationMean: '',
-    inflationStdDev: '',
-    inflationMin: '',
-    inflationMax: ''
+    inflationAssumption: {
+      type:'',
+      fixedRate: '',
+      mean: '',
+      stdDev: '',
+      min: '',
+      max: '',
+    },
+    birthYearUser: '',
+    lifeExpectancy: {
+      type: '',
+      fixedAge: '',
+      mean: '',
+      stdDev: '',
+    },
+    stateResident: '',
   });
 
   const [showBackdrop, setShowBackdrop] = useState(false);
@@ -60,14 +61,13 @@ const Basics = () => {
     setFormValues((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Error handling for leaving through Back button
   const handleBackClick = () => {
     setShowBackdrop(true);
   };
-
   const handleClose = () => {
     setShowBackdrop(false);
   };
-
   const handleConfirm = () => {
     if (!formValues.name.trim()) {
       setShowBackdrop(false);
@@ -78,11 +78,36 @@ const Basics = () => {
       navigate("/scenarios");
     }
   };
-
   const handleErrorClose = () => {
     setErrorBackdrop(false);
   };
 
+  const handleSave = async () => {
+    setShowBackdrop(true); // Show loading backdrop
+
+    try {
+      let response;
+      // console.log(this.editMode);
+      // if (editMode){
+        response = await axios.post('http://localhost:8080/basicInfo', formValues);
+        console.log('Data successfully saved:', response.data);
+        setEditMode(response.data);
+        alert('Data successfully saved!');
+      // } else{
+      //   response = await axios.post(`http://localhost:8080/updateScenario/${editMode}`, formValues);
+      //   console.log('Data successfully updated:', response.data);
+      //   alert('Data successfully updated!');
+      // }
+      setShowBackdrop(false);
+    } catch (error) {
+      console.error('Error saving data:', error);
+      setShowBackdrop(false);
+      setErrorBackdrop(true); 
+      alert('Failed to save data!');
+    }
+  };
+
+  
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -98,7 +123,7 @@ const Basics = () => {
             variant="contained" 
             color="secondary" 
             sx={buttonStyles}
-            onClick={handleConfirm}
+            onClick={handleSave}
           >
             Save
           </Button>
@@ -125,9 +150,9 @@ const Basics = () => {
 
           <CustomDropdown
             label="State Residence"
-            value={formValues.residence}
+            value={formValues.stateResident}
             menuItems={states}
-            setValue={(value) => handleInputChange("residence", value)}
+            setValue={(value) => handleInputChange("stateResident", value)}
             textFieldStyles={textFieldStyles}
           />
 
@@ -136,8 +161,8 @@ const Basics = () => {
             values={['Myself', 'With Spouse']}
             sideView={false}
             width={100}
-            value={formValues.person}
-            setValue={(value) => handleInputChange("person", value)}
+            value={formValues.filingStatus}
+            setValue={(value) => handleInputChange("filingStatus", value)}
           />
         </Box>
 
@@ -146,8 +171,8 @@ const Basics = () => {
           <CustomInput
             title="Your Birth Year"
             type="number"
-            value={formValues.birthYear}
-            setValue={(value) => handleInputChange("birthYear", value)}
+            value={formValues.birthYearUser}
+            setValue={(value) => handleInputChange("birthYearUser", value)}
           />
 
           <CustomToggle
@@ -163,22 +188,22 @@ const Basics = () => {
             <CustomInput
               title="Your Life Expectancy"
               type="number"
-              value={formValues.lifeExpectancy}
-              setValue={(value) => handleInputChange("lifeExpectancy", value)}
+              value={formValues.lifeExpectancy.fixedAge}
+              setValue={(value) => handleInputChange("lifeExpectancy.fixedAge", value)}
             />
           ) : (
             <>
               <CustomInput
                 title="Mean"
                 type="number"
-                value={formValues.yourMean}
-                setValue={(value) => handleInputChange("yourMean", value)}
+                value={formValues.lifeExpectancy.mean}
+                setValue={(value) => handleInputChange("lifeExpectancy.mean", value)}
               />
               <CustomInput
                 title="Standard Deviation"
                 type="number"
-                value={formValues.yourStdDev}
-                setValue={(value) => handleInputChange("yourStdDev", value)}
+                value={formValues.lifeExpectancy.stdDev}
+                setValue={(value) => handleInputChange("lifeExpectancy.stdDev", value)}
               />
             </>
           )}
@@ -240,8 +265,8 @@ const Basics = () => {
               values={['fixed', 'uniform', 'normal']}
               sideView={false}
               width={100}
-              value={formValues.inflationType}
-              setValue={(value) => handleInputChange("inflationType", value)}
+              value={formValues.inflationAssumption.type}
+              setValue={(value) => handleInputChange("inflationAssumption.type", value)}
           />
 
           {/* Inflation Value (Conditional) */}
@@ -250,8 +275,8 @@ const Basics = () => {
                 title="Value"
                 type="number"
                 adornment="%"
-                value={formValues.inflationValue}
-                setValue={(value) => handleInputChange("inflationValue", value)}
+                value={formValues.inflationAssumption.fixedRate}
+                setValue={(value) => handleInputChange("inflationAssumption.fixedRate", value)}
             />
           )}
           {formValues.inflationType === 'uniform' && (
@@ -260,15 +285,15 @@ const Basics = () => {
                   title="Min"
                   type="number"
                   adornment="%"
-                  value={formValues.inflationMin}
-                  setValue={(value) => handleInputChange("inflationMin", value)}
+                  value={formValues.inflationAssumption.min}
+                  setValue={(value) => handleInputChange("inflationAssumption.min", value)}
               />
               <CustomInput 
                   title="Max"
                   type="number"
                   adornment="%"
-                  value={formValues.inflationMax}
-                  setValue={(value) => handleInputChange("inflationMax", value)}
+                  value={formValues.inflationAssumption.max}
+                  setValue={(value) => handleInputChange("inflationAssumption.max", value)}
               />
             </>
           )}
@@ -278,15 +303,15 @@ const Basics = () => {
                   title="Mean"
                   type="number"
                   adornment="%"
-                  value={formValues.inflationMean}
-                  setValue={(value) => handleInputChange("inflationMean", value)}
+                  value={formValues.inflationAssumption.mean}
+                  setValue={(value) => handleInputChange("inflationAssumption.mean", value)}
               />
               <CustomInput 
                   title="Standard Deviation"
                   type="number"
                   adornment="%"
-                  value={formValues.inflationStdDev}
-                  setValue={(value) => handleInputChange("inflationStdDev", value)}
+                  value={formValues.inflationAssumption.stdDev}
+                  setValue={(value) => handleInputChange("inflationAssumption.stdDev", value)}
               />
             </>
           )}
