@@ -2,7 +2,7 @@ var mongoose=require('mongoose');
 var Schema=mongoose.Schema;
 
 var InvestmentSchema=new Schema({
-    investmentType: { type: Schema.Types.ObjectId, ref: 'InvestmentType', required: true},
+    investmentType: { type: Schema.Types.ObjectId, ref: 'InvestmentType'},
     value: {type: Number, required: true},
     accountTaxStatus: {type: String, required: true},
 });

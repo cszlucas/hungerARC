@@ -40,6 +40,7 @@ const InvestmentLists = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    console.log(`Field: ${name}, New Value: ${value}`);
     setNewInvestment((prev) => ({
       ...prev,
       [name]: value,
@@ -175,7 +176,7 @@ const InvestmentLists = () => {
               
               <Box>
                 <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                  Investment Name
+                  Investment Type
                 </Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 4 }}>
                   <TextField
@@ -186,8 +187,9 @@ const InvestmentLists = () => {
                     sx={textFieldStyles}
                     fullWidth
                   >
+                    <MenuItem value="Real Estate">Real Estate</MenuItem>
                     {currInvestmentTypes.map((it) => (
-                      <MenuItem value={it.id}>{it.name}</MenuItem>
+                      <MenuItem value={it._id}>{it.name}</MenuItem>
                     ))}
                   </TextField>
                   <Button variant="contained" color="primary" onClick={() => navigate("/scenario/investment_type")} sx={{textTransform: 'none', minWidth: 150}}>

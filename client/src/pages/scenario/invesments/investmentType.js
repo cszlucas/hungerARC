@@ -1,3 +1,4 @@
+import axios from 'axios';
 import React, { useState, useContext } from "react";
 import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, ToggleButton, ToggleButtonGroup, Select, MenuItem } from '@mui/material';
 import theme from '../../../components/theme';
@@ -17,7 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
 
 const InvestmentType = () => {
-    const {currInvestmentTypes, setCurrInvestmentTypes} = useContext(AppContext);
+    const {currInvestments, setCurrInvestments, currInvestmentTypes, setCurrInvestmentTypes} = useContext(AppContext);
     const { eventEditMode } = useContext(AppContext);
 
     const getInvestmentTypeById = (id) => {
@@ -85,6 +86,76 @@ const InvestmentType = () => {
         setFormValues((prev) => ({ ...prev, [field]: value }));
     };
 
+    const handleSave = async () => {
+
+
+        const validKeys = [
+            'name',
+            'description',
+            'expenseRatio',
+            'taxability',
+        ];
+          
+          // Hardcoded values for certain keys
+          const hardcodedValues = {
+            annualReturn: {
+              type: "normalPercent",
+              mean: 0.05,
+              stdDev: 0.1,
+            },
+            annualIncome: {
+              type: "fixedPercent",
+              fixed: 5,
+              mean: 0.04,
+              stdDev: 0.05,
+            },
+          };
+
+        const filteredFormValues = Object.keys(formValues)
+        .filter((key) => validKeys.includes(key))  // Only keep keys that are in the validKeys array
+        .reduce((obj, key) => {
+        obj[key] = formValues[key]; // Construct a new object with only valid keys
+        return obj;
+        }, {});
+
+        const finalFormValues = {
+            ...filteredFormValues,
+            ...hardcodedValues,  // Merge the hardcoded values for `annualReturn` and `annualIncome`
+          };
+  
+        try {
+          let response;
+          console.log("here", finalFormValues);
+          //console.log("editMode: ", eventEditMode);
+          //console.log(formValues._id);
+          //if (eventEditMode == "new"){
+            response = await axios.post(`http://localhost:8080/investmentType`, finalFormValues);
+            let id = response.data._id;
+    
+            handleInputChange("_id", id);
+            //setCurrScenario(formValues);
+            //setScenarioData((prev)=> [...prev, formValues]);
+            
+            console.log('Data successfully saved:', response.data);
+        //     setEditMode(id);
+        //   } else {
+        //     let response = await axios.post(`http://localhost:8080/updateScenario/${editMode}`, formValues);
+            
+        //     setScenarioData((prev) => {
+        //       let newList = prev.filter((item)=> item._id !== editMode)
+        //       return [...newList, formValues]
+        //     });
+        //     console.log('Data successfully updated:', response.data);
+        //   }
+    
+          alert('Save data');
+        } catch (error) {
+          console.error('Error saving data:', error);
+          //setErrorBackdrop(true); 
+          alert('Failed to save data!');
+        }
+      };
+
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
@@ -92,11 +163,12 @@ const InvestmentType = () => {
             <Container>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ marginTop: 6, marginBottom: 2 }}>
                     <Typography variant="h2" component="h1" sx={{ fontWeight: 'bold' }}>
-                        Investment Type
+                        Investment Types
                     </Typography>
-                    <Button variant="contained" color="secondary" sx={{ fontSize: '1.25rem', textTransform: 'none' }}>
+                    {/* <Button variant="contained" color="secondary" sx={{ fontSize: '1.25rem', textTransform: 'none' }}
+                    onClick={handleSave}>
                         Save
-                    </Button>
+                    </Button> */}
                 </Stack>
 
                 <PageHeader />
@@ -126,18 +198,18 @@ const InvestmentType = () => {
                                 variant="outlined"
                                 type="number"
                                 inputProps={{
-                                    step: "any", // Allows decimal values
-                                    min: "0", // Prevents negative numbers (optional)
+                                 step: "any", // Allows decimal values
+                                 min: "0", // Prevents negative numbers (optional)
                                 }}
-                                value={formValues.expenseRatio}
-                                onChange={(value) => handleInputChange("expenseRatio", value)}
+                                value={formValues.expenseRatio || ''}  // Ensure the value is a string or number
+                                onChange={(event) => handleInputChange("expenseRatio", event.target.value)}  // Get the value from the event
                                 sx={numFieldStyles}
                             />
                             </Box>
                             <CustomDropdown
                                 label="Taxability"
                                 value={formValues.taxability}
-                                setValue={(value) => handleInputChange("expenseRatio", value)}
+                                setValue={(value) => handleInputChange("taxability", value)}
                                 menuItems={["Taxable", "Tax-Deferred", "Tax-Free"]}
                                 textFieldStyles={textFieldStyles}
                             />
@@ -259,8 +331,13 @@ const InvestmentType = () => {
                     >
                         Cancel
                     </Button>
-                    <Button variant="contained" color="success" sx={buttonStyles}
-                        onClick={() => navigate("/scenario/investment_lists")}
+                    <Button variant="contained"
+                     color="success"
+                     sx={buttonStyles}
+                     onClick={() => {
+                    handleSave();
+                    navigate("/scenario/investment_lists");
+                    }}
                     >
                         Add
                     </Button>

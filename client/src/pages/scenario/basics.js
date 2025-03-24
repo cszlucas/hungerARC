@@ -81,10 +81,11 @@ const Basics = () => {
       };
     });
   };
-  
+
   // Error handling for leaving through Back button
   const handleBackClick = () => {
-    setShowBackdrop(true);
+    setShowBackdrop(false);
+    navigate("/scenarios");
   };
   const handleClose = () => {
     setShowBackdrop(false);
@@ -114,13 +115,14 @@ const Basics = () => {
         let id = response.data._id;
 
         handleInputChange("_id", id);
+        setCurrScenario(formValues);
         setScenarioData((prev)=> [...prev, formValues]);
         
         console.log('Data successfully saved:', response.data);
         setEditMode(id);
       } else {
         let response = await axios.post(`http://localhost:8080/updateScenario/${editMode}`, formValues);
-
+        setCurrScenario(formValues);
         setScenarioData((prev) => {
           let newList = prev.filter((item)=> item._id !== editMode)
           return [...newList, formValues]

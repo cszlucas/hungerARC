@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import {
   ThemeProvider, CssBaseline, Container, Typography, Button, Stack, 
   InputAdornment, Box, List, MenuItem, ListItem, ListItemText, 
@@ -16,9 +16,11 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete'; 
 import CustomDropdown from "../../../components/customDropDown"; 
 import CustomInput from "../../../components/customInputBox";
+import CustomToggle from "../../../components/customToggle";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { useNavigate } from "react-router-dom";
+import { AppContext } from "../../../context/appContext";
 
 const investmentsData = [
     { investmentTypeName: "Apple", taxType: "Taxable", percent: "0" },
@@ -67,6 +69,24 @@ const InvestList = ({ list, handleMoveInvestment }) => {
 
 
 const Rebalance = () => {
+    const {currRebalance, setCurrRebalance} = useContext(AppContext);
+    const {eventEditMode, setEventEditMode} = useContext(AppContext);
+
+    console.log(currRebalance);
+    console.log(eventEditMode);
+
+    const getRebalanceById = (id) => {
+      for (let i = 0; i < currRebalance.length; i++) {
+          if (currRebalance[i].id == id) {
+              return currRebalance[i]; // Return the found scenario
+          }
+      }
+      return null; // Return null if not found
+    };
+
+    console.log(getRebalanceById(eventEditMode[1]));
+
+
     const [eventName, setEventName] = useState('');
     const [description, setDescription] = useState('');
     const [startYear, setStartYear] = useState('');
@@ -78,6 +98,15 @@ const Rebalance = () => {
     const [taxableInvestments, setTaxableInvestments] = useState([]);
     const [taxDeferredInvestments, setTaxDeferredInvestments] = useState([]);
     const [taxFreeInvestments, setTaxFreeInvestments] = useState([]);
+
+    const [duration, setDuration] = useState('Fixed');
+    const [durationValue, setDurationValue] = useState('');
+    const [durationMin, setDurationMin] = useState('');
+    const [durationMax, setDurationMax] = useState('');
+    const [durationMean, setDurationMean] = useState('');
+    const [durationVariance, setDurationVariance] = useState('');
+
+
 
     const navigate = useNavigate();
     const filteredInvestments = investmentsData.filter((investment) => investment.taxType === selectedTaxType);
@@ -155,21 +184,78 @@ const Rebalance = () => {
           setValue={setDescription} 
         />
 
-        <Stack direction="row" spacing={2}>
-            <CustomInput 
-              title="Start Year" 
-              type="number" 
-              value={startYear} 
-              setValue={setStartYear} 
-            />
+        <Stack direction="column" spacing={2}>
+                <CustomInput 
+                    title="Start Year" 
+                    type="number" 
+                    value={startYear} 
+                    setValue={setStartYear} 
+                />
 
-            <CustomInput
-              title="End Year" 
-              type="number" 
-              value={endYear} 
-              setValue={setEndYear} 
-            />
-        </Stack>
+                <Stack spacing={2}>
+                    {/* Toggle on Top */}
+                    <CustomToggle
+                        title="Duration"
+                        values={['Fixed', 'Normal', 'Uniform']}
+                        sideView={false}
+                        width={100}
+                        value={duration}
+                        setValue={setDuration}
+                    />
+
+                    {/* Input Fields Below in Columns */}
+                    <Stack direction="row" spacing={4} alignItems="start">
+                        {duration === "Fixed" && (
+                            <CustomInput 
+                                title="Value"
+                                type="number"
+                                adornment={''}
+                                value={durationValue}
+                                setValue={setDurationValue}
+                            />
+                        )}
+
+                        {duration === "Normal" && (
+                            <Stack direction="row" spacing={4} alignItems="start">
+                                <CustomInput 
+                                    title="Mean"
+                                    type="number"
+                                    adornment={''}
+                                    value={durationMean}
+                                    setValue={setDurationMean}
+                                />
+                                <CustomInput 
+                                    title="Variance"
+                                    type="number"
+                                    adornment={''}
+                                    value={durationVariance}
+                                    setValue={setDurationVariance}
+                                />
+                            </Stack>
+                        )}
+
+                        {duration === "Uniform" && (
+                            <Stack direction="row" spacing={4} alignItems="start">
+                                <CustomInput 
+                                    title="Min"
+                                    type="number"
+                                    adornment={''}
+                                    value={durationMin}
+                                    setValue={setDurationMin}
+                                />
+                                <CustomInput 
+                                    title="Max"
+                                    type="number"
+                                    adornment={''}
+                                    value={durationMax}
+                                    setValue={setDurationMax}
+                                />
+                            </Stack>
+                        )}
+                    </Stack>
+                </Stack>
+
+            </Stack>
         
         <Box sx={{ display: "inline-flex", flexDirection: "column", width: "auto" }}>
           <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium" }}>

@@ -58,7 +58,7 @@ const EventSeries = () => {
 
   const currEventSeries = [...safeCurrIncome, ...safeCurrExpense, ...safeCurrInvest, ...safeCurrRebalance];
 
-  console.log(currEventSeries);
+  // console.log(currEventSeries);
 
   const navigate = useNavigate();
 

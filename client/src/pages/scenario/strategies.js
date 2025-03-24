@@ -1,39 +1,46 @@
-import React, { useState } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, Box, Grid, Paper, List, ListItem, ListItemText, IconButton, Button, Stack, Switch, FormControlLabel } from "@mui/material";
+import React, { useState, useContext, useMemo } from "react";
+import { ThemeProvider, CssBaseline, Container, Typography, Box, Grid, List, ListItem, ListItemText, IconButton, Button, Stack, Switch } from "@mui/material";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import DeleteIcon from "@mui/icons-material/Delete";
 import theme from "../../components/theme";
 import Navbar from "../../components/navbar";
 import PageHeader from "../../components/pageHeader";
-
-import {
-    stackStyles,
-    titleStyles,
-    textFieldStyles,
-    numFieldStyles,
-    toggleButtonGroupStyles,
-    backContinueContainerStyles,
-    buttonStyles,
-    rowBoxStyles,
-} from '../../components/styles';
-
+import CustomInput from "../../components/customInputBox";
+import { AppContext } from "../../context/appContext";
 import { useNavigate } from "react-router-dom";
-import CustomInput from "../../components/customInputBox";  // Ensure you import the CustomInput component
 
-const StrategyList = ({ title, list, setList }) => {
+// StrategyList Component
+const StrategyList = ({ title, list, setList, fieldName, setScenario, setScenarioData, currScenario, editMode }) => {
   const handleMove = (index, direction) => {
     const newList = [...list];
     const newIndex = index + direction;
     if (newIndex >= 0 && newIndex < newList.length) {
       [newList[index], newList[newIndex]] = [newList[newIndex], newList[index]];
       setList(newList);
+
+      // Update `currScenario` with the new order
+      setScenario(prev => ({
+        ...prev,
+        [fieldName]: newList.map(item => item.id), // Update only the specific field in currScenario
+      }));
+      
+      // setScenarioData((prev) => {
+      //   let newList = prev.filter((item)=> item._id !== editMode)
+      //   return [...newList, currScenario]
+      // });
     }
   };
 
   const handleRemove = (index) => {
     const newList = list.filter((_, i) => i !== index);
     setList(newList);
+
+    // Update `currScenario` with the removed item
+    setScenario(prev => ({
+      ...prev,
+      [fieldName]: newList.map(item => item.id),
+    }));
   };
 
   return (
@@ -50,9 +57,7 @@ const StrategyList = ({ title, list, setList }) => {
               "&:hover": { backgroundColor: "#B0B0B0" },
             }}
           >
-            <ListItemText
-              primary={<span style={{ fontWeight: "bold" }}>{item.name}</span>}
-            />
+            <ListItemText primary={<span style={{ fontWeight: "bold" }}>{item.name}</span>} />
 
             {index > 0 && (
               <IconButton onClick={() => handleMove(index, -1)}>
@@ -66,9 +71,9 @@ const StrategyList = ({ title, list, setList }) => {
               </IconButton>
             )}
 
-            <IconButton onClick={() => handleRemove(index)}>
+            {/* <IconButton onClick={() => handleRemove(index)}>
               <DeleteIcon />
-            </IconButton>
+            </IconButton> */}
           </ListItem>
         ))}
       </List>
@@ -78,50 +83,85 @@ const StrategyList = ({ title, list, setList }) => {
 
 const Strategies = () => {
   const navigate = useNavigate();
-
-  // State for switch and input values
+  const { currScenario, setCurrScenario, scenarioData, setScenarioData, currInvestments, currExpense, currInvestmentTypes, editMode } = useContext(AppContext);
   const [isRothOptimized, setIsRothOptimized] = useState(false);
-  const [startYear, setStartYear] = useState('');
-  const [endYear, setEndYear] = useState('');
+  const [startYear, setStartYear] = useState("");
+  const [endYear, setEndYear] = useState("");
 
-  const [spendingStrategy, setSpendingStrategy] = useState([
-    { id: 1, name: "Conservative Spending" },
-    { id: 2, name: "Moderate Spending" },
-    { id: 3, name: "Aggressive Spending" }
-  ]);
+  console.log("currExpense:", currExpense);
+  console.log("currInvestments:", currInvestments);
+  console.log("currInvestmentTypes:", currInvestmentTypes);
 
-  const [expenseWithdrawalStrategy, setExpenseWithdrawalStrategy] = useState([
-    { id: 1, name: "Proportional Withdrawal" },
-    { id: 2, name: "Fixed Percentage Withdrawal" },
-    { id: 3, name: "Bucket Strategy" }
-  ]);
+  /**
+   * Matches `spendingStrategy` IDs with names from `currExpense`
+   */
+  const spendingStrategy = useMemo(() => {
+    if (!Array.isArray(currExpense)) {
+      console.warn("currExpense is not an array:", currExpense);
+      return [];
+    }
 
-  const [rothConversionStrategy, setRothConversionStrategy] = useState([
-    { id: 1, name: "Annual Conversion" },
-    { id: 2, name: "Tax-Bracket Based Conversion" },
-    { id: 3, name: "Lump-Sum Conversion" }
-  ]);
+    return (currScenario.spendingStrategy ?? []).map(id => {
+      let matchedExpense = null;
+      
+      // Manual for loop to find the matching expense
+      for (let i = 0; i < currExpense.length; i++) {
+        if (String(currExpense[i]._id) === String(id)) {
+          matchedExpense = currExpense[i];
+          break; // Stop searching once we find a match
+        }
+      }
 
-  const [rmdStrategy, setRmdStrategy] = useState([
-    { id: 1, name: "Standard IRS Schedule" },
-    { id: 2, name: "Qualified Longevity Annuity Contract (QLAC)" },
-    { id: 3, name: "Charitable RMDs" }
-  ]);
+      return { id, name: matchedExpense ? matchedExpense.eventSeriesName : "Unknown Expense Strategy" };
+    });
+  }, [currScenario.spendingStrategy, currExpense]);
+
+  /**
+   * Matches all other strategies with Investment names
+   */
+  const mapInvestmentsToNames = (strategyList) => {
+    return strategyList.map(id => {
+      let matchedInvestment = null;
+      
+      // Find the matching investment
+      for (let i = 0; i < currInvestments.length; i++) {
+        if (String(currInvestments[i]._id) === String(id)) {
+          matchedInvestment = currInvestments[i];
+          break;
+        }
+      }
+
+      if (!matchedInvestment) return { id, name: "Unknown Investment Strategy" };
+
+      let matchedInvestmentType = null;
+
+      // Find the investment type name
+      for (let j = 0; j < currInvestmentTypes.length; j++) {
+        if (String(currInvestmentTypes[j]._id) === String(matchedInvestment.investmentType)) {
+          matchedInvestmentType = currInvestmentTypes[j];
+          break;
+        }
+      }
+
+      return { id, name: matchedInvestmentType ? matchedInvestmentType.name : "Unknown Investment Type" };
+    });
+  };
+
+  const expenseWithdrawalStrategy = useMemo(() => mapInvestmentsToNames(currScenario.expenseWithdrawalStrategy), [currScenario.expenseWithdrawalStrategy, currInvestments, currInvestmentTypes]);
+  const rothConversionStrategy = useMemo(() => mapInvestmentsToNames(currScenario.rothConversionStrategy), [currScenario.rothConversionStrategy, currInvestments, currInvestmentTypes]);
+  const rmdStrategy = useMemo(() => mapInvestmentsToNames(currScenario.rmdStrategy), [currScenario.rmdStrategy, currInvestments, currInvestmentTypes]);
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Navbar currentPage={''} />
+      <Navbar currentPage={""} />
       <Container>
-
         {/* Title and Save Button */}
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={stackStyles}>
-          <Typography variant="h2" component="h1" sx={titleStyles}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Typography variant="h2" component="h1">
             Strategies
           </Typography>
-          <Button variant="contained" color="secondary" sx={buttonStyles}>
-            Save
-          </Button>
+          <Button variant="contained" color="secondary">Save</Button>
         </Stack>
 
         <PageHeader />
@@ -131,71 +171,30 @@ const Strategies = () => {
             
             {/* Row 1 */}
             <Grid item xs={12} md={6}>
-              <StrategyList title="Spending Strategy:" list={spendingStrategy} setList={setSpendingStrategy} />
+              <StrategyList title="Spending Strategy:" list={spendingStrategy} setList={() => {}} fieldName="spendingStrategy" setScenario={setCurrScenario} setScenarioData={setScenarioData} currScenario = {currScenario} editMode = {editMode} />
             </Grid>
             <Grid item xs={12} md={6}>
-              <StrategyList title="Expense Withdrawal Strategy:" list={expenseWithdrawalStrategy} setList={setExpenseWithdrawalStrategy} />
+              <StrategyList title="Expense Withdrawal Strategy:" list={expenseWithdrawalStrategy} setList={() => {}} fieldName="expenseWithdrawalStrategy" setScenario={setCurrScenario} setScenarioData={setScenarioData} currScenario = {currScenario} editMode = {editMode} />
             </Grid>
 
             {/* Row 2 */}
             <Grid item xs={12} md={6}>
-              {/* Roth Strategy with Switch */}
-              <Stack direction="row" alignItems="center" sx={{ marginBottom: 2 }}>
-                <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                  Roth Conversion Strategy:
-                </Typography>
-                    <Switch
-                      checked={isRothOptimized}
-                      onChange={() => setIsRothOptimized(!isRothOptimized)}
-                      color="secondary"
-                    />
-              </Stack>
-
-              {/* Render additional inputs if Switch is on */}
-              {isRothOptimized && (
-                <>
-                  <StrategyList list={rothConversionStrategy} setList={setRothConversionStrategy} />
-                  <Stack direction="row" alignItems="center" spacing={2} sx={{ mt: 1, marginBottom: 2 }}>
-                    <CustomInput
-                      title="RCO Start Year"
-                      type="number"
-                      adornment=""
-                      sideV
-                      value={startYear}
-                      setValue={setStartYear}
-                    />
-                    <CustomInput
-                      title="RCO End Year"
-                      type="number"
-                      adornment=""
-                      value={endYear}
-                      setValue={setEndYear}
-                    />
-                  </Stack>
-                  
-                </>
-              )}
-
-              
+              <StrategyList title="Roth Conversion Strategy:" list={rothConversionStrategy} setList={() => {}} fieldName="rothConversionStrategy" setScenario={setCurrScenario} setScenarioData={setScenarioData} currScenario={currScenario} editMode = {editMode} />
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <StrategyList title="RMD Strategy:" list={rmdStrategy} setList={setRmdStrategy} />
+              <StrategyList title="RMD Strategy:" list={rmdStrategy} setList={() => {}} fieldName="rmdStrategy" setScenario={setCurrScenario} setScenarioData={setScenarioData} currScenario={currScenario} editMode={editMode}/>
             </Grid>
           </Grid>
         </Box>
 
         {/* Back and Continue Buttons */}
-        <Box sx={backContinueContainerStyles}>
-          <Button variant="contained" color="primary" sx={buttonStyles}
-            onClick={() => navigate("/scenario/event_series")}
-          >
+        <Box>
+          <Button variant="contained" color="primary" onClick={() => navigate("/scenario/event_series")}>
             Back
           </Button>
 
-          <Button variant="contained" color="success" sx={buttonStyles}
-            onClick={() => navigate("/scenario/run_simulations")}
-          >
+          <Button variant="contained" color="success" onClick={() => navigate("/scenario/run_simulations")}>
             Continue
           </Button>
         </Box>
@@ -205,3 +204,5 @@ const Strategies = () => {
 };
 
 export default Strategies;
+
+
