@@ -18,6 +18,7 @@ import CustomDropdown from "../../../components/customDropDown";
 
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
+const axios = require("axios");
 
 const InvestmentLists = () => {
   const {currInvestments, setCurrInvestments} = useContext(AppContext);
@@ -29,8 +30,8 @@ const InvestmentLists = () => {
 
   const [open, setOpen] = useState(false);
   const [newInvestment, setNewInvestment] = useState({
-    investmentTypeName: '',
-    taxType: '',
+    investmentType: '',
+    accountTaxStatus: '',
     value: '',
   });
   const navigate = useNavigate();
@@ -47,10 +48,14 @@ const InvestmentLists = () => {
     }));
   };
 
-  const handleAddInvestment = () => {
+  const handleAddInvestment = async() => {
     if (newInvestment.investmentType && newInvestment.accountTaxStatus && newInvestment.value) {
-      setCurrInvestments((prev) => [...prev, newInvestment]);
-      setNewInvestment({investmentType: '', accountTaxStatus: '', value: '' });
+      const investType = await axios.get(`http:localhost:8080/investmentType/${newInvestment.investmentType}`);
+      const combinedInvestment = {
+        ...investType.data,
+        ...newInvestment
+      };
+      setCurrInvestments((prev) => [...prev, combinedInvestment]);
       handleClose();
     }
   };
@@ -59,8 +64,9 @@ const InvestmentLists = () => {
     setCurrInvestments((prev) => prev.filter((_, i) => i !== index));
   };
 
+
   const getInvestmentTypeName = (investmentTypeId) => {
-    console.log("the id ", investmentTypeId);
+    //console.log("the id ", investmentTypeId);
     for (let i = 0; i < currInvestmentTypes.length; i++) {
       // console.log("the name", currInvestmentTypes[i].name);
         if (currInvestmentTypes[i]._id === investmentTypeId) {
@@ -71,8 +77,8 @@ const InvestmentLists = () => {
     return "Unknown Type"; // Default if not found
 };
 
-  const InvestList = ({ list, taxType }) => {
-    const filteredInvestments = list.filter(item => item.accountTaxStatus === taxType);
+  const InvestList = ({ list, accountTaxStatus }) => {
+    const filteredInvestments = list.filter(item => item.accountTaxStatus === accountTaxStatus);
 
     return (
       <List>
@@ -133,17 +139,17 @@ const InvestmentLists = () => {
         <Box sx={rowBoxStyles}>
           <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Taxable</Typography>
-            <InvestList list={currInvestments} taxType="non-tax" />
+            <InvestList list={currInvestments} accountTaxStatus="non-tax" />
           </Box>
 
           <Box sx={{ flex: 1 }}>
             <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Tax-Deferred</Typography>
-            <InvestList list={currInvestments} taxType="pre-tax" />
+            <InvestList list={currInvestments} accountTaxStatus="pre-tax" />
           </Box>
 
           <Box sx={{ flex: 1 }}>
             <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Tax-Free</Typography>
-            <InvestList list={currInvestments} taxType="after-tax" />
+            <InvestList list={currInvestments} accountTaxStatus="after-tax" />
           </Box>
         </Box>
 
@@ -184,8 +190,8 @@ const InvestmentLists = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 4 }}>
                   <TextField
                     select
-                    name="investmentTypeName"
-                    value={newInvestment.investmentTypeName || ''}
+                    name="investmentType"
+                    value={currInvestmentTypes}
                     onChange={handleChange}
                     sx={textFieldStyles}
                     fullWidth
@@ -226,7 +232,7 @@ const InvestmentLists = () => {
                   <TextField
                     type="number"
                     name="value"
-                    value={newInvestment.value}
+                    value={newInvestment.value || ''}
                     onChange={handleChange}
                     sx={textFieldStyles}
                     fullWidth
