@@ -41,6 +41,7 @@ async function Income(dynamicId) {
 
     const update = await axios.post("http://localhost:8080/updateIncome/${dynamicId}", incomeEventData2);
     console.log(update.data);
+
   } catch (error) {
     console.error("Error fetching income:", error);
   }
@@ -115,6 +116,24 @@ async function Investments(dynamicId) {
 
     const responseInvestment = await axios.post("http://localhost:8080/investment", invest1);
 
+    //UPDATE
+
+    const investmentType2 = new InvestmentType({
+      ...responseType.data,
+      name: "Horse Fund",
+      taxability: "non-tax",
+    });
+
+    const update = await axios.post(`http://localhost:8080/updateInvestmentType/${dynamicId}`, investmentType2);
+
+    const invest2 = new Investment({
+      ...responseInvestment.data,
+      value: 10,
+      accountTaxStatus: "non-tax",
+    });
+
+    const updateInvest = await axios.post(`http://localhost:8080/updateInvestment/${dynamicId}`, invest2);
+
     // const investmentType22 = new InvestmentType({
     //   name: "Equity Fund",
     //   description: "A high-risk investment focusing on stocks.",
@@ -144,23 +163,6 @@ async function Investments(dynamicId) {
 
     // const inv2 = await axios.post("http://localhost:8080/investment", invest2);
 
-    //UPDATE
-
-    const investmentType2 = new InvestmentType({
-      ...responseType.data,
-      name: "Horse Fund",
-      taxability: "non-tax",
-    });
-
-    const update = await axios.post(`http://localhost:8080/updateInvestmentType/${dynamicId}`, investmentType2);
-
-    const invest2 = new Investment({
-      ...responseInvestment.data,
-      value: 10,
-      accountTaxStatus: "non-tax",
-    });
-
-    const updateInvest = await axios.post(`http://localhost:8080/updateInvestment/${dynamicId}`, invest2);
 
   } catch (error) {
     console.error("Error updating Investments", error);
@@ -266,8 +268,8 @@ async function Scenario() {
       ...scenario.data, // Copy all original properties
       name: "My fourth scenario", // Modify the attribute
     };
-    // const updateScenario = await axios.post("http://localhost:8080/updateScenario/67df22db4996aba7bb6e8d73", modifiedScenario);
-    // console.log(updateScenario.data);
+    const updateScenario = await axios.post("http://localhost:8080/updateScenario/67df22db4996aba7bb6e8d73", modifiedScenario);
+    console.log(updateScenario.data);
   } catch (error) {
     console.error("Error updating:", error);
   }
@@ -281,4 +283,4 @@ async function Scenario() {
 //RebalanceStrat();
 //Scenario();
 
-module.exports = { Income, Expense, InvestStrategy, RebalanceStrategy, Investments };
+module.exports = { Income, Expense, InvestStrategy, RebalanceStrategy, Investments, Scenario };
