@@ -9,6 +9,11 @@ import PageHeader from "../../components/pageHeader";
 import CustomInput from "../../components/customInputBox";
 import { AppContext } from "../../context/appContext";
 import { useNavigate } from "react-router-dom";
+import {
+  backContinueContainerStyles,
+  buttonStyles,
+  rowBoxStyles,
+} from '../../components/styles';
 import axios from 'axios';
 
 const StrategyList = ({ title, list, setList, fieldName, setScenario, setScenarioData, currScenario, editMode }) => {
@@ -186,7 +191,19 @@ const Strategies = () => {
               <StrategyList title="RMD Strategy:" list={rmdStrategy} setList={() => {}} fieldName="rmdStrategy" setScenario={setCurrScenario} />
             </Grid>
           </Grid>
-        </Box>
+        </Box> 
+          <Box sx={backContinueContainerStyles}>
+                  <Button variant="contained" color="primary" sx={buttonStyles}
+                      onClick={() => navigate("/scenario/event_series")}
+                  >
+                      Back
+                  </Button>
+                  <Button variant="contained" color="success" sx={buttonStyles}
+                    onClick={() => navigate("/scenario/run_simulations")}
+                  >
+                      Continue
+                  </Button>
+            </Box>
       </Container>
     </ThemeProvider>
   );
