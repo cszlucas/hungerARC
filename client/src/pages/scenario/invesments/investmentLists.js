@@ -30,7 +30,9 @@ import CustomDropdown from "../../../components/customDropDown";
 
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
+
 const mongoose = require('mongoose');
+
 
 const InvestmentLists = () => {
   const { currInvestments, setCurrInvestments } = useContext(AppContext);
@@ -59,6 +61,7 @@ const InvestmentLists = () => {
       [name]: value,
     }));
   };
+
 
   const transformInvestmentData = (investment) => {
     console.log("Valid? ", mongoose.Types.ObjectId.isValid(investment.investmentTypeName));
@@ -91,8 +94,9 @@ const InvestmentLists = () => {
     setCurrInvestments((prev) => prev.filter((_, i) => i !== index));
   };
 
+
   const getInvestmentTypeName = (investmentTypeId) => {
-    console.log("the id ", investmentTypeId);
+    //console.log("the id ", investmentTypeId);
     for (let i = 0; i < currInvestmentTypes.length; i++) {
       console.log("the match", currInvestmentTypes[i]._id.toString(), investmentTypeId.toString());
       if (currInvestmentTypes[i]._id.toString() === investmentTypeId.toString()) {
@@ -103,8 +107,10 @@ const InvestmentLists = () => {
     return "Unknown Type"; // Default if not found
   };
 
+
   const InvestList = ({ list, taxType }) => {
     const filteredInvestments = list.filter((item) => item.accountTaxStatus === taxType);
+
 
     return (
       <List>
@@ -239,7 +245,7 @@ const InvestmentLists = () => {
                   <TextField
                     type="number"
                     name="value"
-                    value={newInvestment.value}
+                    value={newInvestment.value || ''}
                     onChange={handleChange}
                     sx={textFieldStyles}
                     fullWidth
