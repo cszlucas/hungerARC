@@ -27,12 +27,13 @@ const states = [
 ];
 
 const Basics = () => {
-  const { currScenario, setCurrScenario } = useContext(AppContext);
+  const { currScenario, setCurrScenario, scenarioData, setScenarioData } = useContext(AppContext);
   const {editMode, setEditMode} = useContext(AppContext);
   // console.log(currScenario);
   const [formValues, setFormValues] = useState(currScenario || {
+    _id: '',
     name: '',
-    filingStatus: 'Myself',
+    filingStatus: 'single',
     financialGoal: '',
     inflationAssumption: {
       type:'',
@@ -58,9 +59,29 @@ const Basics = () => {
 
   // Unified handle input change function
   const handleInputChange = (field, value) => {
-    setFormValues((prev) => ({ ...prev, [field]: value }));
+    const fieldParts = field.split('.'); // Split the field into parts (e.g., "lifeExpectancy.mean")
+  
+    setFormValues((prev) => {
+      // Update the nested object
+      if (fieldParts.length === 2) {
+        const [parent, child] = fieldParts; // 'lifeExpectancy' and 'mean'
+        return {
+          ...prev,
+          [parent]: { // Spread the parent object (lifeExpectancy)
+            ...prev[parent],
+            [child]: value, // Update the child property (mean)
+          },
+        };
+      }
+  
+      // For top-level fields (no dot notation)
+      return {
+        ...prev,
+        [field]: value,
+      };
+    });
   };
-
+  
   // Error handling for leaving through Back button
   const handleBackClick = () => {
     setShowBackdrop(true);
@@ -68,6 +89,7 @@ const Basics = () => {
   const handleClose = () => {
     setShowBackdrop(false);
   };
+
   const handleConfirm = () => {
     if (!formValues.name.trim()) {
       setShowBackdrop(false);
@@ -83,24 +105,32 @@ const Basics = () => {
   };
 
   const handleSave = async () => {
-    setShowBackdrop(true); // Show loading backdrop
-
     try {
       let response;
-      if (!editMode){
-        response = await axios.post('http://localhost:8080/basicInfo', formValues);
+      console.log("editMode: ", editMode);
+      console.log(formValues._id);
+      if (editMode == "new"){
+        let response = await axios.post('http://localhost:8080/basicInfo', formValues);
+        let id = response.data._id;
+
+        handleInputChange("_id", id);
+        setScenarioData((prev)=> [...prev, formValues]);
+        
         console.log('Data successfully saved:', response.data);
-        setEditMode(response.data._id);
-        alert('Data successfully saved!');
-      } else{
-        response = await axios.post(`http://localhost:8080/updateScenario/${editMode}`, formValues);
+        setEditMode(id);
+      } else {
+        let response = await axios.post(`http://localhost:8080/updateScenario/${editMode}`, formValues);
+
+        setScenarioData((prev) => {
+          let newList = prev.filter((item)=> item._id !== editMode)
+          return [...newList, formValues]
+        });
         console.log('Data successfully updated:', response.data);
-        alert('Data successfully updated!');
       }
-      setShowBackdrop(false);
+
+      alert('Save data');
     } catch (error) {
       console.error('Error saving data:', error);
-      setShowBackdrop(false);
       setErrorBackdrop(true); 
       alert('Failed to save data!');
     }
@@ -157,7 +187,7 @@ const Basics = () => {
 
           <CustomToggle
             title="Is the scenario for yourself or with your spouse?"
-            values={['Myself', 'With Spouse']}
+            values={['single', 'married']}
             sideView={false}
             width={100}
             value={formValues.filingStatus}
@@ -179,11 +209,11 @@ const Basics = () => {
             values={['fixed', 'normal']}
             sideView={false}
             width={100}
-            value={formValues.yourSampleAge}
-            setValue={(value) => handleInputChange("yourSampleAge", value)}
+            value={formValues.lifeExpectancy.type}
+            setValue={(value) => handleInputChange("lifeExpectancy.type", value)}
           />
 
-          {formValues.yourSampleAge === 'fixed' ? (
+          {formValues.lifeExpectancy.type === 'fixed' ? (
             <CustomInput
               title="Your Life Expectancy"
               type="number"
@@ -209,7 +239,7 @@ const Basics = () => {
         </Box>
 
         {/* Spouse Row */}
-        {formValues.person === 'With Spouse' && (
+        {formValues.filingStatus === 'married' && (
           <Box sx={rowBoxStyles}>
             <CustomInput
               title="Spouse's Birth Year"
@@ -269,7 +299,7 @@ const Basics = () => {
           />
 
           {/* Inflation Value (Conditional) */}
-          {formValues.inflationType === 'fixed' && (
+          {formValues.inflationAssumption.type === 'fixed' && (
             <CustomInput 
                 title="Value"
                 type="number"
@@ -278,7 +308,7 @@ const Basics = () => {
                 setValue={(value) => handleInputChange("inflationAssumption.fixedRate", value)}
             />
           )}
-          {formValues.inflationType === 'uniform' && (
+          {formValues.inflationAssumption.type === 'uniform' && (
             <>
               <CustomInput 
                   title="Min"
@@ -296,7 +326,7 @@ const Basics = () => {
               />
             </>
           )}
-          {formValues.inflationType === 'normal' && (
+          {formValues.inflationAssumption.type === 'normal' && (
             <>
               <CustomInput 
                   title="Mean"
@@ -331,8 +361,8 @@ const Basics = () => {
           </Button>
         </Box>
         
-                {/* Backdrop and Fade for confirmation */}
-                <Backdrop 
+        {/* Backdrop and Fade for confirmation */}
+        <Backdrop 
           open={showBackdrop} 
           onClick={handleClose} 
           sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}

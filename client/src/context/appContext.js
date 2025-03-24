@@ -270,7 +270,7 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     const getScenarioById = (id) => {
         for (let i = 0; i < scenarioData.length; i++) {
-            if (scenarioData[i].id == id) {
+            if (scenarioData[i]._id == id) {
                 return scenarioData[i]; // Return the found scenario
             }
         }
@@ -349,6 +349,11 @@ export const AppProvider = ({ children }) => {
     // Load user data from localStorage
     localStorage.setItem("currentScenario", JSON.stringify(currScenario));
   }, [currScenario]);
+
+  useEffect(() => {
+    // Load user data from localStorage
+    localStorage.setItem("scenarioData", JSON.stringify(scenarioData));
+  }, [scenarioData]);
 
   console.log("Current scenarios:", scenarioData);
 
