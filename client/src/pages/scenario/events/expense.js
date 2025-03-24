@@ -33,13 +33,19 @@ const Expense = () => {
 
     let indieExpense = getExpenseById(eventEditMode.id);
 
+    // const [formValues, setFormValues] = useState(indieExpense || {
+
+    // });
+
+    // console.log(formValues);
+
     // console.log(indieExpense);
 
 
     const [eventName, setEventName] = useState('');
     const [description, setDescription] = useState('');
     const [startYear, setStartYear] = useState('');
-    const [endYear, setEndYear] = useState('');
+    // const [endYear, setEndYear] = useState('');
     const [expectedChangeType, setExpectedChangeType] = useState('Fixed');
     const [distributionType, setDistributionType] = useState('None');
     const [changeValue, setChangeValue] = useState('');
