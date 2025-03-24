@@ -30,21 +30,23 @@ const GoogleAuth = () => {
         let data = await res.json();
         console.log("Server Response:", data);
 
-        let jsonResponse = 
-        {
-            "_id": "67df2ec125693e5e54c14377",
-            "googleId": "103151424804713196609",
-            "email": "william.p.lee@stonybrook.edu",
-            "guest": false,
-            "scenarios": [
-                "67df396953a415566df67af2"
-            ],
-            "lastLogin": "2025-03-23T20:36:41.130Z",
-            "__v": 0
-        };
-
-        data = typeof jsonResponse === "string" ? JSON.parse(jsonResponse) : jsonResponse;
-        setUser(data);
+        if (data && typeof data === "object" && !Array.isArray(data)) {
+            console.log("Valid JSON response received.");
+    
+            // Transform the response to match the expected format
+            let formattedData = {
+                _id: data.user._id || "",
+                googleId: data.user.googleId || "",
+                email: data.user.email || "",
+                guest: data.user.guest ?? false, // Ensures boolean type
+                scenarios: Array.isArray(data.user.scenarios) ? data.user.scenarios : [], // Ensures array type
+                lastLogin: data.user.lastLogin || new Date().toISOString(), // Defaults to current time if missing
+                __v: data.user.__v ?? 0 // Ensures numeric type
+            };
+    
+            console.log("Formatted Data:", formattedData);
+            setUser(formattedData);
+        }
         
         // Store token in localStorage
         // localStorage.setItem("token", data.token);

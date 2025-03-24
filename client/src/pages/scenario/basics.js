@@ -27,6 +27,7 @@ const states = [
 
 const Basics = () => {
   const { currScenario, setCurrScenario } = useContext(AppContext);
+  // console.log(currScenario);
   const [formValues, setFormValues] = useState(currScenario || {
     name: '',
     person: 'Myself',

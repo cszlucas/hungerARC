@@ -100,6 +100,7 @@ const defaultInfo = {
 
   // investment lists
   investments: [],
+  investmentTypes: [],
 
   // Event Series
   incomeEvents: [],    // income event series
@@ -146,6 +147,7 @@ function transformScenario(input) {
 
       // Investment lists
       investments: input.setOfInvestments || [],
+      investmentTypes: input.investmentTypes || [],
 
       // Event Series
       incomeEvents: input.incomeEventSeries || [],
@@ -222,6 +224,7 @@ const retrieveScenarioData = async (scenarioId, dataType) => {
       localStorage.setItem(`current${capitalizeFirstLetter(dataType)}`, JSON.stringify(data));
 
       console.log(`Data for ${dataType} stored in localStorage.`);
+      return data;
   } catch (error) {
       console.error(`Error retrieving ${dataType}:`, error);
   }
@@ -257,30 +260,40 @@ export const AppProvider = ({ children }) => {
   
   useEffect(() => {
     const getScenarioById = (id) => {
-      for (let i = 0; i < scenarioData.length; i++) {
-          console.log(scenarioData[i].id);
-          console.log(scenarioData[i]);
-          if (scenarioData[i].id == id) {
-              return scenarioData[i]; // Return the found scenario
-          }
-      }
-      console.log('I am going to change data to null');
-      return null; // Return null if not found
+        for (let i = 0; i < scenarioData.length; i++) {
+            if (scenarioData[i].id == id) {
+                return scenarioData[i]; // Return the found scenario
+            }
+        }
+        return null; // Return null if not found
     };
-    
-    // Load user data from localStorage
-    console.log(scenarioData);
-    localStorage.setItem("edit", JSON.stringify(editMode));
-    if (editMode != 'new' && editMode != null) {
-      setCurrScenario(getScenarioById(editMode));
-      setCurrInvestments(retrieveScenarioData(editMode, "investments"));
-      setCurrIncome(retrieveScenarioData(editMode, "incomeEvent"));
-      setCurrExpense(retrieveScenarioData(editMode, "expenseEvent"));
-      setCurrInvest(retrieveScenarioData(editMode, "invest"));
-      setCurrRebalance(retrieveScenarioData(editMode, "rebalance"));
-      setCurrInvestmentTypes(retrieveScenarioData(editMode, "investmentType"));
-    } 
-  }, [editMode]);
+
+    const loadScenarioData = async () => {
+        console.log(scenarioData);
+        localStorage.setItem("edit", JSON.stringify(editMode));
+
+        if (editMode !== "new" && editMode !== null) {
+            setCurrScenario(getScenarioById(editMode));
+
+            // Wait for each function to resolve before setting state
+            const investments = await retrieveScenarioData(editMode, "investments");
+            const income = await retrieveScenarioData(editMode, "incomeEvent");
+            const expenses = await retrieveScenarioData(editMode, "expenseEvent");
+            const invest = await retrieveScenarioData(editMode, "invest");
+            const rebalance = await retrieveScenarioData(editMode, "rebalance");
+            const investmentTypes = await retrieveScenarioData(editMode, "investmentType");
+
+            setCurrInvestments(investments);
+            setCurrIncome(income);
+            setCurrExpense(expenses);
+            setCurrInvest(invest);
+            setCurrRebalance(rebalance);
+            setCurrInvestmentTypes(investmentTypes);
+        }
+    };
+
+    loadScenarioData();
+}, [editMode]);
 
   useEffect(() => {
     // Load user data from localStorage
