@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import {
   ThemeProvider, CssBaseline, Container, Typography, Button, Stack, 
   InputAdornment, Box, List, MenuItem, ListItem, ListItemText, 
@@ -17,8 +17,16 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CustomDropdown from "../../../components/customDropDown";
 
 import { useNavigate } from "react-router-dom";
+import { AppContext } from "../../../context/appContext";
 
 const InvestmentLists = () => {
+  const {currInvestments, setCurrInvestments} = useContext(AppContext);
+  const {currInvestmentTypes, setCurrInvestmentTypes} = useContext(AppContext);
+
+  console.log("current Investments");
+  console.log(currInvestments);
+  console.log(currInvestmentTypes);
+
   const [open, setOpen] = useState(false);
   const [newInvestment, setNewInvestment] = useState({
     investmentTypeName: '',
@@ -27,15 +35,16 @@ const InvestmentLists = () => {
   });
   const navigate = useNavigate();
   
-  const [investments, setInvestments] = useState([
-    { investmentTypeName: 'Apple', taxType: 'tax', value: '$50000' },
-    { investmentTypeName: 'Microsoft', taxType: 'tax', value: '$70000' },
-    { investmentTypeName: 'Amazon', taxType: 'tax', value: '$60000' },
-    { investmentTypeName: 'IRA', taxType: 'pre', value: '$50000' },
-    { investmentTypeName: '401k', taxType: 'pre', value: '$70000' },
-    { investmentTypeName: 'Roth 401k', taxType: 'free', value: '$60000' },
-    { investmentTypeName: 'Roth 403k', taxType: 'free', value: '$80000' },
-  ]);
+  // const [investments, setInvestments] = useState([
+  //   { investmentTypeName: 'Apple', accountTaxStatus: 'non-tax', value: '$50000' },
+  //   { investmentTypeName: 'Microsoft', accountTaxStatus: 'non-tax', value: '$70000' },
+  //   { investmentTypeName: 'Amazon', accountTaxStatus: 'non-tax', value: '$60000' },
+  //   { investmentTypeName: 'IRA', accountTaxStatus: 'pre-tax', value: '$50000' },
+  //   { investmentTypeName: '401k', accountTaxStatus: 'pre-tax', value: '$70000' },
+  //   { investmentTypeName: 'Roth 401k', accountTaxStatus: 'after-tax', value: '$60000' },
+  //   { investmentTypeName: 'Roth 403k', accountTaxStatus: 'after-tax', value: '$80000' },
+  // ]);
+  // console.log(investments);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -49,48 +58,50 @@ const InvestmentLists = () => {
   };
 
   const handleAddInvestment = () => {
-    if (newInvestment.investmentTypeName && newInvestment.taxType && newInvestment.value) {
-      setInvestments((prev) => [...prev, newInvestment]);
-      setNewInvestment({ investmentTypeName: '', taxType: '', value: '' });
+    if (newInvestment.investmentTypeName && newInvestment.accountTaxStatus && newInvestment.value) {
+      setCurrInvestments((prev) => [...prev, newInvestment]);
+      setNewInvestment({ investmentTypeName: '', accountTaxStatus: '', value: '' });
       handleClose();
     }
   };
 
   const handleDeleteInvestment = (index) => {
-    const updatedInvestments = investments.filter((_, i) => i !== index);
-    setInvestments(updatedInvestments);
+    // const updatedInvestments = investments.filter((_, i) => i !== index);
+    // setInvestments(updatedInvestments);
+    setCurrInvestments((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const getInvestmentTypeName = (investmentTypeId) => {
+    for (let i = 0; i < currInvestmentTypes.length; i++) {
+        if (currInvestmentTypes[i]._id === investmentTypeId) {
+            return currInvestmentTypes[i].name; // Return the matching investment name
+        }
+    }
+    return "Unknown Type"; // Default if not found
+};
+
   const InvestList = ({ list, taxType }) => {
-    const filteredInvestments = list.filter(item => item.taxType === taxType);
+    const filteredInvestments = list.filter(item => item.accountTaxStatus === taxType);
 
     return (
       <List>
         {filteredInvestments.map((item, index) => (
           <ListItem
-            key={`${item.investmentTypeName}-${index}`}
+            key={`${item.investmentType}-${index}`}
             sx={{
               backgroundColor: index % 2 === 0 ? '#BBBBBB' : '#D9D9D9',
               '&:hover': { backgroundColor: '#B0B0B0' },
             }}
           >
             <ListItemText
-              primary={<span style={{ fontWeight: 'bold' }}>{item.investmentTypeName}</span>}
+              primary={<span style={{ fontWeight: 'bold' }}>{getInvestmentTypeName(item.investmentType)}</span>}
               secondary={`Value: ${item.value}`}
             />
-            
-            {/* <IconButton
-              edge="end"
-              aria-label="edit"
-              onClick={() => alert(`Edit ${item.investmentTypeName}`)}
-            >
-              <EditIcon />
-            </IconButton> */}
 
             <IconButton
               edge="end"
               aria-label="delete"
-              onClick={() => handleDeleteInvestment(investments.indexOf(item))}  // Delete the selected row
+              onClick={() => handleDeleteInvestment(currInvestments.indexOf(item))}  // Delete the selected row
             >
               <DeleteIcon />
             </IconButton>
@@ -131,17 +142,17 @@ const InvestmentLists = () => {
         <Box sx={rowBoxStyles}>
           <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Taxable</Typography>
-            <InvestList list={investments} taxType="tax" />
+            <InvestList list={currInvestments} taxType="non-tax" />
           </Box>
 
           <Box sx={{ flex: 1 }}>
             <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Tax-Deferred</Typography>
-            <InvestList list={investments} taxType="pre" />
+            <InvestList list={currInvestments} taxType="pre-tax" />
           </Box>
 
           <Box sx={{ flex: 1 }}>
             <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Tax-Free</Typography>
-            <InvestList list={investments} taxType="free" />
+            <InvestList list={currInvestments} taxType="after-tax" />
           </Box>
         </Box>
 
@@ -205,15 +216,15 @@ const InvestmentLists = () => {
                   </Typography>
                   <TextField
                     select
-                    name="taxType"
-                    value={newInvestment.taxType}
+                    name="accountTaxStatus"
+                    value={newInvestment.accountTaxStatus}
                     onChange={handleChange}
                     sx={textFieldStyles}
                     fullWidth
                   >
-                    <MenuItem value="tax">Taxable</MenuItem>
-                    <MenuItem value="pre">Tax-Deferred</MenuItem>
-                    <MenuItem value="free">Tax-Free</MenuItem>
+                    <MenuItem value="non-tax">Taxable</MenuItem>
+                    <MenuItem value="pre-tax">Tax-Deferred</MenuItem>
+                    <MenuItem value="after-tax">Tax-Free</MenuItem>
                   </TextField>
                 </Box>
                 <Box sx={{ flex: 1 }}>
