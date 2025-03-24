@@ -87,17 +87,16 @@ const Basics = () => {
 
     try {
       let response;
-      // console.log(this.editMode);
-      // if (editMode){
+      if (!editMode){
         response = await axios.post('http://localhost:8080/basicInfo', formValues);
         console.log('Data successfully saved:', response.data);
-        setEditMode(response.data);
+        setEditMode(response.data._id);
         alert('Data successfully saved!');
-      // } else{
-      //   response = await axios.post(`http://localhost:8080/updateScenario/${editMode}`, formValues);
-      //   console.log('Data successfully updated:', response.data);
-      //   alert('Data successfully updated!');
-      // }
+      } else{
+        response = await axios.post(`http://localhost:8080/updateScenario/${editMode}`, formValues);
+        console.log('Data successfully updated:', response.data);
+        alert('Data successfully updated!');
+      }
       setShowBackdrop(false);
     } catch (error) {
       console.error('Error saving data:', error);
