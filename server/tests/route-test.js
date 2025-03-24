@@ -4,6 +4,8 @@ const InvestmentType = require("../models/investmentType.js");
 const Investment = require("../models/investment.js");
 const { ObjectId } = require("mongoose");
 
+const scenarioId = "833f3c2523356bddab87a833";
+
 async function Income(dynamicId) {
   try {
     const incomeEventData = new IncomeEvent({
@@ -29,8 +31,7 @@ async function Income(dynamicId) {
       isSocialSecurity: false,
     });
 
-    const response = await axios.post("http://localhost:8080/incomeEvent", incomeEventData);
-
+    const response = await axios.post(`http://localhost:8080/scenario/${scenarioId}/incomeEvent`, incomeEventData);
 
     const incomeEventData2 = new IncomeEvent({
       ...response.data,
@@ -38,10 +39,8 @@ async function Income(dynamicId) {
       initialAmount: 500,
     });
 
-
     const update = await axios.post("http://localhost:8080/updateIncome/${dynamicId}", incomeEventData2);
     console.log(update.data);
-
   } catch (error) {
     console.error("Error fetching income:", error);
   }
@@ -72,7 +71,7 @@ async function Expense(dynamicId) {
       isDiscretionary: true,
     });
 
-    const response = await axios.post("http://localhost:8080/expenseEvent", expenseEventData);
+    const response = await axios.post(`http://localhost:8080/scenario/${scenarioId}/expenseEvent`, expenseEventData);
 
     const expenseEventData2 = new ExpenseEvent({
       ...response.data,
@@ -106,15 +105,15 @@ async function Investments(dynamicId) {
       taxability: "pre-tax",
     });
 
-    const responseType = await axios.post("http://localhost:8080/investmentType", investmentType1);
+    const responseType = await axios.post(`http://localhost:8080/scenario/${scenarioId}/investmentType`, investmentType1);
 
     const invest1 = new Investment({
-      investmentType:  responseType.data._id,
+      investmentType: responseType.data._id,
       value: 100,
       accountTaxStatus: "pre-tax",
     });
 
-    const responseInvestment = await axios.post("http://localhost:8080/investment", invest1);
+    const responseInvestment = await axios.post(`http://localhost:8080/scenario/${scenarioId}/investment`, invest1);
 
     //UPDATE
 
@@ -162,8 +161,6 @@ async function Investments(dynamicId) {
     // });
 
     // const inv2 = await axios.post("http://localhost:8080/investment", invest2);
-
-
   } catch (error) {
     console.error("Error updating Investments", error);
   }
@@ -199,7 +196,7 @@ async function InvestStrategy(dynamicId) {
       maxCash: 100,
     });
 
-    const response = await axios.post("http://localhost:8080/investStrategy", investStrategy1);
+    const response = await axios.post(`http://localhost:8080/scenario/${scenarioId}/investStrategy`, investStrategy1);
 
     const updateInvestStrategy1 = new InvestEvent({
       ...response.data,
@@ -240,15 +237,15 @@ async function RebalanceStrategy(dynamicId) {
       },
     });
 
-    const response = await axios.post("http://localhost:8080/rebalanceStrategy", reb);
+    const response = await axios.post(`http://localhost:8080/scenario/${scenarioId}/rebalanceStrategy`, reb);
 
     const updateRebalanceStrategy = new RebalanceEvent({
       ...response.data,
       eventSeriesName: "Rebalance Updated",
-        startYear: {
-          type: "year",
-          year: 2025,
-        },
+      startYear: {
+        type: "year",
+        year: 2025,
+      },
     });
 
     const update = await axios.post(`http://localhost:8080/updateRebalanceStrategy/${dynamicId}`, updateRebalanceStrategy);

@@ -3,6 +3,7 @@ const { Income, Expense, InvestStrategy, RebalanceStrategy, Investments, Scenari
 
 // Mock axios
 jest.mock("axios");
+const scenarioId = "833f3c2523356bddab87a833";
 
 describe("Income function", () => {
   it("should make two POST requests, a create, and an update, with the correct data", async () => {
@@ -14,7 +15,7 @@ describe("Income function", () => {
 
     // Test if axios.post was called with the correct URL and data
     expect(axios.post).toHaveBeenCalledWith(
-      "http://localhost:8080/incomeEvent",
+      `http://localhost:8080/scenario/${scenarioId}/incomeEvent`,
       expect.objectContaining({
         eventSeriesName: "income1980-2000",
         initialAmount: 50000,
@@ -61,7 +62,7 @@ describe("Expense function", () => {
 
     // Test if axios.post was called with the correct URL and data
     expect(axios.post).toHaveBeenCalledWith(
-      "http://localhost:8080/expenseEvent",
+      `http://localhost:8080/scenario/${scenarioId}/expenseEvent`,
       expect.objectContaining({
         eventSeriesName: "Expense 1980-1990",
         initialAmount: 1200,
@@ -102,7 +103,7 @@ describe("InvestEvent function", () => {
 
     // Test if axios.post was called with the correct URL and data
     expect(axios.post).toHaveBeenCalledWith(
-      "http://localhost:8080/investStrategy",
+      `http://localhost:8080/scenario/${scenarioId}/investStrategy`,
       expect.objectContaining({
         eventSeriesName: "Invest 2020-2023",
         maxCash: 100,
@@ -143,7 +144,7 @@ describe("RebalanceEvent function", () => {
 
     // Test if axios.post was called with the correct URL and data
     expect(axios.post).toHaveBeenCalledWith(
-      "http://localhost:8080/rebalanceStrategy",
+      `http://localhost:8080/scenario/${scenarioId}/rebalanceStrategy`,
       expect.objectContaining({
         eventSeriesName: "Rebalance 2023",
         startYear: {
@@ -190,7 +191,7 @@ describe("Investments function", () => {
 
     // Test if axios.post was called with the correct URL and data
     expect(axios.post).toHaveBeenCalledWith(
-      "http://localhost:8080/investmentType",
+      `http://localhost:8080/scenario/${scenarioId}/investmentType`,
       expect.objectContaining({
         name: "Bond Fund",
         taxability: "pre-tax",
@@ -198,16 +199,16 @@ describe("Investments function", () => {
     );
 
     expect(axios.post).toHaveBeenCalledWith(
-      "http://localhost:8080/investment",
+      `http://localhost:8080/scenario/${scenarioId}/investment`,
       expect.objectContaining({
         value: 100,
         accountTaxStatus: "pre-tax",
       })
     );
-    const updateCall2 = axios.post.mock.calls.find((call) => call[0].includes("updateInvestment"));
+    const updateCall = axios.post.mock.calls.find((call) => call[0].includes("updateInvestment"));
 
     // Ensure the second call was made
-    expect(updateCall2).toBeDefined();
+    expect(updateCall).toBeDefined();
 
     // Assert the data being sent in the second request (e.g., updating investment)
     // expect(updateCall2[1]).toEqual(
