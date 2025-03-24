@@ -48,9 +48,9 @@ const InvestmentLists = () => {
   };
 
   const handleAddInvestment = () => {
-    if (newInvestment.investmentTypeName && newInvestment.accountTaxStatus && newInvestment.value) {
+    if (newInvestment.investmentType && newInvestment.accountTaxStatus && newInvestment.value) {
       setCurrInvestments((prev) => [...prev, newInvestment]);
-      setNewInvestment({ investmentTypeName: '', accountTaxStatus: '', value: '' });
+      setNewInvestment({investmentType: '', accountTaxStatus: '', value: '' });
       handleClose();
     }
   };
@@ -60,8 +60,11 @@ const InvestmentLists = () => {
   };
 
   const getInvestmentTypeName = (investmentTypeId) => {
+    console.log("the id ", investmentTypeId);
     for (let i = 0; i < currInvestmentTypes.length; i++) {
+      // console.log("the name", currInvestmentTypes[i].name);
         if (currInvestmentTypes[i]._id === investmentTypeId) {
+          // console.log("a match");
             return currInvestmentTypes[i].name; // Return the matching investment name
         }
     }
@@ -110,7 +113,7 @@ const InvestmentLists = () => {
             Investments
           </Typography>
           <Button variant="contained" color="secondary" sx={buttonStyles}>
-            Save
+            Saves
           </Button>
         </Stack>
 

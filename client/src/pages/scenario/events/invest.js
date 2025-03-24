@@ -40,7 +40,7 @@ const Invest = () => {
         return null; // Return null if not found
       };
 
-    let indieInvest = getInvestById(eventEditMode[1]);
+    let indieInvest = getInvestById(eventEditMode.id);
     // console.log(indieInvest);
 
 

@@ -86,6 +86,10 @@ const InvestmentType = () => {
         setFormValues((prev) => ({ ...prev, [field]: value }));
     };
 
+    const generateRandomId = () => {
+        return `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      };
+
     const handleSave = async () => {
 
 
@@ -118,35 +122,27 @@ const InvestmentType = () => {
         return obj;
         }, {});
 
+        const randomId = generateRandomId();
+
         const finalFormValues = {
             ...filteredFormValues,
-            ...hardcodedValues,  // Merge the hardcoded values for `annualReturn` and `annualIncome`
+            ...hardcodedValues,  
+            id: randomId,
           };
   
         try {
           let response;
           console.log("here", finalFormValues);
-          //console.log("editMode: ", eventEditMode);
-          //console.log(formValues._id);
-          //if (eventEditMode == "new"){
+
             response = await axios.post(`http://localhost:8080/investmentType`, finalFormValues);
             let id = response.data._id;
     
             handleInputChange("_id", id);
+            setCurrInvestmentTypes((prev)=> [...prev, response.data]);
             //setCurrScenario(formValues);
             //setScenarioData((prev)=> [...prev, formValues]);
             
             console.log('Data successfully saved:', response.data);
-        //     setEditMode(id);
-        //   } else {
-        //     let response = await axios.post(`http://localhost:8080/updateScenario/${editMode}`, formValues);
-            
-        //     setScenarioData((prev) => {
-        //       let newList = prev.filter((item)=> item._id !== editMode)
-        //       return [...newList, formValues]
-        //     });
-        //     console.log('Data successfully updated:', response.data);
-        //   }
     
           alert('Save data');
         } catch (error) {

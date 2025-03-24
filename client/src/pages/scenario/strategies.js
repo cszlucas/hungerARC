@@ -9,6 +9,7 @@ import PageHeader from "../../components/pageHeader";
 import CustomInput from "../../components/customInputBox";
 import { AppContext } from "../../context/appContext";
 import { useNavigate } from "react-router-dom";
+import axios from 'axios';
 
 // StrategyList Component
 const StrategyList = ({ title, list, setList, fieldName, setScenario, setScenarioData, currScenario, editMode }) => {
@@ -32,16 +33,8 @@ const StrategyList = ({ title, list, setList, fieldName, setScenario, setScenari
     }
   };
 
-  const handleRemove = (index) => {
-    const newList = list.filter((_, i) => i !== index);
-    setList(newList);
 
-    // Update `currScenario` with the removed item
-    setScenario(prev => ({
-      ...prev,
-      [fieldName]: newList.map(item => item.id),
-    }));
-  };
+
 
   return (
     <>
@@ -71,9 +64,6 @@ const StrategyList = ({ title, list, setList, fieldName, setScenario, setScenari
               </IconButton>
             )}
 
-            {/* <IconButton onClick={() => handleRemove(index)}>
-              <DeleteIcon />
-            </IconButton> */}
           </ListItem>
         ))}
       </List>
@@ -95,6 +85,24 @@ const Strategies = () => {
   /**
    * Matches `spendingStrategy` IDs with names from `currExpense`
    */
+  const handleSave = async () =>
+  {
+      let formValues = {
+        spendingStrategy: currScenario.spendingStrategy,
+        expenseWithdrawalStrategy: currScenario.expenseWithdrawalStrategy,
+        rmdStrategy: currScenario.rmdStrategy,
+        rothConversionStrategy: currScenario.rothConversionStrategy
+      }
+      // currScenario
+      let response = await axios.post(`http://localhost:8080/updateScenario/${editMode}`, formValues);
+      setScenarioData((prev) => {
+        let newList = prev.filter((item)=> item._id !== editMode)
+        return [...newList, currScenario]
+      });
+
+      console.log('Data successfully updated:', response.data);
+  }
+
   const spendingStrategy = useMemo(() => {
     if (!Array.isArray(currExpense)) {
       console.warn("currExpense is not an array:", currExpense);
@@ -161,7 +169,7 @@ const Strategies = () => {
           <Typography variant="h2" component="h1">
             Strategies
           </Typography>
-          <Button variant="contained" color="secondary">Save</Button>
+          <Button variant="contained" color="secondary"onClick={handleSave}>Save</Button>
         </Stack>
 
         <PageHeader />

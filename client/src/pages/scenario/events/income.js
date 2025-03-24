@@ -28,8 +28,8 @@ const Income = () => {
       };
 
     let indieIncome="";
-    if(eventEditMode!="new"){
-     indieIncome = getIncomeById(eventEditMode[1]);
+    if(eventEditMode!=="new"){
+     indieIncome = getIncomeById(eventEditMode.id);
     }
     console.log("indieIncome");
     console.log(indieIncome);

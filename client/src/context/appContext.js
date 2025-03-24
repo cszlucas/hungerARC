@@ -298,45 +298,25 @@ export const AppProvider = ({ children }) => {
 }, [editMode]);
 
 
-  // const getScenarioById = (id) => {
-  //   for (let i = 0; i < scenarioData.length; i++) {
-  //       if (scenarioData[i].id == id) {
-  //           return scenarioData[i]; // Return the found scenario
-  //       }
-  //   }
-  //   return null; // Return null if not found
-  // };
-
   // useEffect(() => {
-  //   if (eventEditMode[0] !== "new")
-  //   {
-  //     switch (eventEditMode[0]) {
-  //       case "Income":
-  //         console.log("Handling TYPE_A", eventEditMode[1]);
-  //         // Perform actions for TYPE_A
+  //   switch (eventEditMode.type) {
+  //     case "Income":
+          
   //         break;
-    
-  //       case "Expense":
-  //         console.log("Handling TYPE_B", eventEditMode[1]);
-  //         // Perform actions for TYPE_B
+  //     case "Expense":
+  //         dayName = "Monday";
   //         break;
-    
-  //       case "Invest":
-  //         console.log("Handling TYPE_C", eventEditMode[1]);
-  //         // Perform actions for TYPE_C
+  //     case "Invest":
+  //         dayName = "Tuesday";
   //         break;
+  //     case "Rebalance":
+  //         dayName = "Wednesday";
+  //         break;
+  //     default:
+  //         dayName = "Invalid day";
+  // }
 
-  //       case "Rebalance":
-  //         console.log("Handling TYPE_C", eventEditMode[1]);
-  //         // Perform actions for TYPE_C
-  //         break;
-    
-  //       default:
-  //         console.log("Unknown event type", eventEditMode[0]);
-  //         break;
-  //     }
-  //   }
-  // }, [eventEditMode[0], eventEditMode[1]]);
+  // }, [eventEditMode]);
 
   useEffect(() => {
     // Load user data from localStorage

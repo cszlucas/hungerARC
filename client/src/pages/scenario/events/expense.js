@@ -31,7 +31,7 @@ const Expense = () => {
         return null; // Return null if not found
       };
 
-    let indieExpense = getExpenseById(eventEditMode[1]);
+    let indieExpense = getExpenseById(eventEditMode.id);
 
     // console.log(indieExpense);
 

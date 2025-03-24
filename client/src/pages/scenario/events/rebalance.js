@@ -84,7 +84,7 @@ const Rebalance = () => {
       return null; // Return null if not found
     };
 
-    console.log(getRebalanceById(eventEditMode[1]));
+    console.log(getRebalanceById(eventEditMode.id));
 
 
     const [eventName, setEventName] = useState('');
