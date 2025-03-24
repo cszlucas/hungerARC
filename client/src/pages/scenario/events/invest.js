@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import {
   ThemeProvider, CssBaseline, Container, Typography, Button, Stack, 
   InputAdornment, Box, List, MenuItem, ListItem, ListItemText, 
@@ -16,18 +16,46 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete'; 
 import CustomDropdown from "../../../components/customDropDown"; 
 import CustomInput from "../../../components/customInputBox";
+import CustomToggle from "../../../components/customToggle";
 
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { useNavigate } from "react-router-dom";
+import { AppContext } from "../../../context/appContext";
 
 const Invest = () => {
+    const {currInvest, setCurrInvest} = useContext(AppContext);
+    const {eventEditMode, setEventEditMode} = useContext(AppContext);
+
+    // console.log("in Invest");
+    // console.log(currInvest);
+    // console.log(eventEditMode);
+
+    const getInvestById = (id) => {
+        for (let i = 0; i < currInvest.length; i++) {
+            if (currInvest[i].id == id) {
+                return currInvest[i]; // Return the found scenario
+            }
+        }
+        return null; // Return null if not found
+      };
+
+    let indieInvest = getInvestById(eventEditMode.id);
+    // console.log(indieInvest);
+
+
     const navigate = useNavigate();
 
     const [eventName, setEventName] = useState('');
     const [description, setDescription] = useState('');
     const [startYear, setStartYear] = useState('');
-    const [endYear, setEndYear] = useState('');
+    // const [endYear, setEndYear] = useState('');
+    const [duration, setDuration] = useState('Fixed');
+    const [durationValue, setDurationValue] = useState('');
+    const [durationMin, setDurationMin] = useState('');
+    const [durationMax, setDurationMax] = useState('');
+    const [durationMean, setDurationMean] = useState('');
+    const [durationVariance, setDurationVariance] = useState('');
 
     const [maxCash, setMaxCash] = useState('');
     const [newInvestment, setNewInvestment] = useState({
@@ -211,21 +239,78 @@ const Invest = () => {
                         />
 
                         <CustomInput
-                            title="End Year" 
-                            type="number" 
-                            value={endYear} 
-                            setValue={setEndYear} 
-                        />
-
-                        <CustomInput
                             title="Maximum Cash"
                             type="number"
                             adornment="$"
                             value={maxCash}
                             setValue={setMaxCash}
                         />
-                    </Stack>
 
+                        
+
+                    </Stack>
+                    <Stack spacing={2}>
+                            {/* Toggle on Top */}
+                            <CustomToggle
+                                title="Duration"
+                                values={['Fixed', 'Normal', 'Uniform']}
+                                sideView={false}
+                                width={100}
+                                value={duration}
+                                setValue={setDuration}
+                            />
+
+                            {/* Input Fields Below in Columns */}
+                            <Stack direction="row" spacing={4} alignItems="start">
+                                {duration === "Fixed" && (
+                                    <CustomInput 
+                                        title="Value"
+                                        type="number"
+                                        adornment={''}
+                                        value={durationValue}
+                                        setValue={setDurationValue}
+                                    />
+                                )}
+
+                                {duration === "Normal" && (
+                                    <Stack direction="row" spacing={4} alignItems="start">
+                                        <CustomInput 
+                                            title="Mean"
+                                            type="number"
+                                            adornment={''}
+                                            value={durationMean}
+                                            setValue={setDurationMean}
+                                        />
+                                        <CustomInput 
+                                            title="Variance"
+                                            type="number"
+                                            adornment={''}
+                                            value={durationVariance}
+                                            setValue={setDurationVariance}
+                                        />
+                                    </Stack>
+                                )}
+
+                                {duration === "Uniform" && (
+                                    <Stack direction="row" spacing={4} alignItems="start">
+                                        <CustomInput 
+                                            title="Min"
+                                            type="number"
+                                            adornment={''}
+                                            value={durationMin}
+                                            setValue={setDurationMin}
+                                        />
+                                        <CustomInput 
+                                            title="Max"
+                                            type="number"
+                                            adornment={''}
+                                            value={durationMax}
+                                            setValue={setDurationMax}
+                                        />
+                                    </Stack>
+                                )}
+                            </Stack>
+                    </Stack>
 
                     <Typography variant="h6" sx={{ fontWeight: 'bold', marginTop: 2, marginBottom: 1 }}>
                             Add Asset Allocation

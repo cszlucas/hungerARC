@@ -76,49 +76,30 @@ const initialState = [
 ];
 
 const defaultInfo = {
-  // Scenario basic Info
-  name: '',
-  person: 'Myself', 
-  financialGoal: '',
-  residence: '',  
-  birthYear: '', 
-  lifeExpectancy: '', 
-  spouseBirthYear: '',
-  spouseLifeExpectancy: '',
-  yourSampleAge: 'Custom',
-  spouseSampleAge: 'Custom',
-  yourMean: '',
-  yourStdDev: '',
-  spouseMean: '',
-  spouseStdDev: '',
-  inflationType: 'None',
-  inflationValue: '', 
-  inflationMean: '', 
-  inflationStdDev: '',
-  inflationMin: '',
-  inflationMax: '',
-
-  // investment lists
-  investments: [],
-  investmentTypes: [],
-
-  // Event Series
-  incomeEvents: [],    // income event series
-  expenseEvents: [],   // expense event series
-  investEvents: [],    // invest event series
-  rebalanceEvents: [], // rebalance event series
-
-  // Strategies
-  spendingStrategy: [],
-  expenseWithdrawalStrategy: [],
-  rothConversionStrategy: [],
-  rmdStrategy: [],
-
-  // roth conversion optimizer:
-  isRothOptimizer: false,
-  startYear: '',
-  endYear: ''
-};
+  "name": "",
+  "person": "Myself",
+  "financialGoal": "",
+  "residence": "",
+  "birthYear": "",
+  "lifeExpectancy": { "type": "fixed", "fixedAge": "" },
+  "startYear": "",
+  "endYear": "",
+  "expenseEventSeries": [],
+  "expenseWithdrawalStrategy": [],
+  "incomeEventSeries": [],
+  "inflationAssumption": { "type": "fixed", "fixedRate": "" },
+  "investEventSeries": [],
+  "irsLimits": { "initialAfterTax": "" },
+  "optimizerSettings": { "enabled": false, "startYear": "", "endYear": "" },
+  "rebalanceEventSeries": [],
+  "rmdStrategy": [],
+  "rothConversionStrategy": [],
+  "setOfInvestmentTypes": [],
+  "setOfInvestments": [],
+  "spendingStrategy": [],
+  "__v": 0,
+  "_id": ""
+}
 
 function transformScenario(input) {
   return {
@@ -190,6 +171,8 @@ export const getInitialState = async (user) => {
       console.log("Fetching scenarios for user:", userId);
       // Fetch scenarios from the backend
       const response = await axios.get(`http://localhost:8080/user/${userId}/scenarios`); // Adjust API route
+      console.log("response: ");
+      console.log(response);
 
       if (response.data) {
           console.log("Scenarios fetched from backend:", response.data);
@@ -299,59 +282,52 @@ export const AppProvider = ({ children }) => {
             setCurrRebalance(rebalance);
             setCurrInvestmentTypes(investmentTypes);
         }
+        else
+        {
+          setCurrScenario(defaultInfo);
+          setCurrInvestments([]);
+          setCurrIncome([]);
+          setCurrExpense([]);
+          setCurrInvest([]);
+          setCurrRebalance([]);
+          setCurrInvestmentTypes([]);
+        }
     };
 
     loadScenarioData();
 }, [editMode]);
 
 
-  const getScenarioById = (id) => {
-    for (let i = 0; i < scenarioData.length; i++) {
-        if (scenarioData[i].id == id) {
-            return scenarioData[i]; // Return the found scenario
-        }
-    }
-    return null; // Return null if not found
-  };
-
   // useEffect(() => {
-  //   if (eventEditMode[0] !== "new")
-  //   {
-  //     switch (eventEditMode[0]) {
-  //       case "Income":
-  //         console.log("Handling TYPE_A", eventEditMode[1]);
-  //         // Perform actions for TYPE_A
+  //   switch (eventEditMode.type) {
+  //     case "Income":
+          
   //         break;
-    
-  //       case "Expense":
-  //         console.log("Handling TYPE_B", eventEditMode[1]);
-  //         // Perform actions for TYPE_B
+  //     case "Expense":
+  //         dayName = "Monday";
   //         break;
-    
-  //       case "Invest":
-  //         console.log("Handling TYPE_C", eventEditMode[1]);
-  //         // Perform actions for TYPE_C
+  //     case "Invest":
+  //         dayName = "Tuesday";
   //         break;
+  //     case "Rebalance":
+  //         dayName = "Wednesday";
+  //         break;
+  //     default:
+  //         dayName = "Invalid day";
+  // }
 
-  //       case "Rebalance":
-  //         console.log("Handling TYPE_C", eventEditMode[1]);
-  //         // Perform actions for TYPE_C
-  //         break;
-    
-  //       default:
-  //         console.log("Unknown event type", eventEditMode[0]);
-  //         break;
-  //     }
-  //   }
-  // }, [eventEditMode[0], eventEditMode[1]]);
+  // }, [eventEditMode]);
 
   useEffect(() => {
     // Load user data from localStorage
+    console.log("changing current scenario");
+    //console.log(currScenario.expenseWithdrawalStrategy);
     localStorage.setItem("currentScenario", JSON.stringify(currScenario));
   }, [currScenario]);
 
   useEffect(() => {
     // Load user data from localStorage
+    console.log("oop this got all scenarios got changed");
     localStorage.setItem("scenarioData", JSON.stringify(scenarioData));
   }, [scenarioData]);
 

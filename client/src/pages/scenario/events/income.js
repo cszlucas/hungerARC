@@ -15,9 +15,9 @@ import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
 
 const Income = () => {
-    const {currIncome, setCurrIncome} = useContext(AppContext);
-    const {eventEditMode, setEventEditMode} = useContext(AppContext);
-
+    const {currIncome, setCurrIncome} = useContext(AppContext); // scenarios/:id/IncomeEvent
+    const {eventEditMode, setEventEditMode} = useContext(AppContext); 
+    // setEventEditMode({ type: event.type, id: event._id}); // 🔹  type: "new" if new
     const getIncomeById = (id) => {
         for (let i = 0; i < currIncome.length; i++) {
             if (currIncome[i].id == id) {
@@ -27,39 +27,128 @@ const Income = () => {
         return null; // Return null if not found
       };
 
-    let indieIncome = getIncomeById(eventEditMode[1]);
-    // console.log(indieIncome);
+    let indieIncome="";
+    if(eventEditMode!=="new"){
+     indieIncome = getIncomeById(eventEditMode.id);
+    }
+    console.log("indieIncome");
+    console.log(indieIncome);
 
     // console.log(eventEditMode);
     // console.log(currIncome);
 
     // scenario has list of income 
     const [formValues, setFormValues] = useState(indieIncome ||  {
-        event: '',
+        eventName: '',
         description: '',
-        startYear: '',
-        endYear: '',
-        expectedChangeType: '',
-        distributionType: '',
-        incomeType: '',
-        changeValue: '',
-        
+        startYear: {
+            type: '',
+            value: '',
+            mean: '',
+            stdDev: '',
+            min: '',
+            max: '',
+            year: ''
+        },
+        duration: {
+            type: '',
+            value: '',
+            mean: '',
+            stdDev: '',
+            min: '',
+            max: ''
+        },
+        initialAmount: '',
+        annualChange: {
+            type:'',
+            amount:''
+        },
+        userPercentage: '',
+        inflationAdjustment: null,
+        isSocialSecurity: ''
+        // isSocialSecurity: false
     });
     
-    const [eventName, setEventName] = useState('');
-    const [description, setDescription] = useState('');
+    // const [eventName, setEventName] = useState('');
+    // const [description, setDescription] = useState('');
     const [startYear, setStartYear] = useState('');
-    const [endYear, setEndYear] = useState('');
+    // const [duration, setDuration] = useState('Fixed');
+    // const [durationValue, setDurationValue] = useState('');
+    // const [durationMin, setDurationMin] = useState('');
+    // const [durationMax, setDurationMax] = useState('');
+    // const [durationMean, setDurationMean] = useState('');
+    // const [durationVariance, setDurationVariance] = useState('');
+
     const [expectedChangeType, setExpectedChangeType] = useState('Fixed');
     const [distributionType, setDistributionType] = useState('None');
-    const [incomeType, setIncomeType] = useState('Wage');
-    const [changeValue, setChangeValue] = useState('');
+    // const [incomeType, setIncomeType] = useState('Wage'); //SORRY VICKY I PUT THIS BACK
+    // const [changeValue, setChangeValue] = useState(''); //SORRY VICKY I PUT THIS BACK
     const [changeMean, setChangeMean] = useState('');
     const [changeVariance, setChangeVariance] = useState('');
     const [changeMin, setChangeMin] = useState('');
     const [changeMax, setChangeMax] = useState('');
 
+    // const [showBackdrop, setShowBackdrop] = useState(false);
+    // const [errorBackdrop, setErrorBackdrop] = useState(false);
     const navigate = useNavigate();
+
+    const handleInputChange = (field, value) => {
+        const fieldParts = field.split('.'); // Split the field into parts (e.g., "lifeExpectancy.mean")
+      
+        setFormValues((prev) => {
+          // Update the nested object
+          if (fieldParts.length === 2) {
+            const [parent, child] = fieldParts; // 'lifeExpectancy' and 'mean'
+            return {
+              ...prev,
+              [parent]: { // Spread the parent object (lifeExpectancy)
+                ...prev[parent],
+                [child]: value, // Update the child property (mean)
+              },
+            };
+          }
+      
+          // For top-level fields (no dot notation)
+          return {
+            ...prev,
+            [field]: value,
+          };
+        });
+    };
+
+    const handleSave = () => {
+        setCurrIncome((prevIncome) =>
+            prevIncome.map((income) =>
+                income.id === indieIncome.id ? { ...income, ...formValues } : income
+            )
+        );
+    };
+
+    const handleBackClick = () => {
+        // setShowBackdrop(false);
+        // setIncome(formValues);
+        handleSave();  
+        navigate("/scenario/event_series");
+      };
+      const handleClose = () => {
+        // setShowBackdrop(false);
+      };
+
+    const handleConfirm = () => {
+        if (!formValues.name.trim()) {
+        // setShowBackdrop(false);
+        // setErrorBackdrop(true);
+        } else {
+        // setIncome(formValues);  // Save formValues before navigating
+        // setShowBackdrop(false);
+        navigate("/scenarios");
+        }
+    };
+    const handleErrorClose = () => {
+        // setErrorBackdrop(false);
+    };
+
+    
 
     return (
         <ThemeProvider theme={theme}>
@@ -82,18 +171,19 @@ const Income = () => {
                     <Box sx={{ flex: 1, display: "flex", flexDirection: "column", width: 250 }}>
                         <CustomInput 
                         title="Event name" 
-                        value={eventName} 
-                        setValue={setEventName} 
+                        value={formValues.eventName} 
+                        setValue={(value) => handleInputChange("eventName", value)}
                         />
 
                         <CustomInput 
                         title="Description (Optional)" 
                         type="multiline" 
-                        value={description} 
-                        setValue={setDescription} 
+                        value={formValues.description} 
+                        setValue={(value) => handleInputChange("description", value)} 
                         />
 
-                        <Stack direction="row" spacing={2}>
+                        <Stack direction="column" spacing={2}>
+                            {/* not needed */}
                             <CustomInput 
                                 title="Start Year" 
                                 type="number" 
@@ -101,12 +191,69 @@ const Income = () => {
                                 setValue={setStartYear} 
                             />
 
-                            <CustomInput
-                                title="End Year" 
-                                type="number" 
-                                value={endYear} 
-                                setValue={setEndYear} 
-                            />
+                            <Stack spacing={2}>
+                                {/* Toggle on Top */}
+                                <CustomToggle
+                                    title="Duration"
+                                    values={['Fixed', 'Normal', 'Uniform']}
+                                    sideView={false}
+                                    width={100}
+                                    value={formValues.duration.type}
+                                    setValue={(value) => handleInputChange("duration.type", value)}
+                                />
+
+                                {/* Input Fields Below in Columns */}
+                                <Stack direction="row" spacing={4} alignItems="start">
+                                    {formValues.duration.type === "Fixed" && (
+                                        <CustomInput 
+                                            title="Value"
+                                            type="number"
+                                            adornment={expectedChangeType === 'Percentage' ? '' : ''}
+                                            value={formValues.duration.type}
+                                            setValue={(value) => handleInputChange("duration.type", value)}
+                                        />
+                                    )}
+
+                                    {formValues.duration.type === "Normal" && (
+                                        <Stack direction="row" spacing={4} alignItems="start">
+                                            <CustomInput 
+                                                title="Mean"
+                                                type="number"
+                                                adornment={expectedChangeType === 'Percentage' ? '' : ''}
+                                                value={formValues.duration.mean}
+                                                setValue={(value) => handleInputChange("duration.mean", value)}
+                                            />
+                                            <CustomInput 
+                                                title="Variance"
+                                                type="number"
+                                                adornment={expectedChangeType === 'Percentage' ? '' : ''}
+                                                value={formValues.duration.stdDev}
+                                                setValue={(value) => handleInputChange("duration.stdDev", value)}
+                                            />
+                                        </Stack>
+                                    )}
+
+                                    {formValues.duration.type === "Uniform" && (
+                                        <Stack direction="row" spacing={4} alignItems="start">
+                                            <CustomInput 
+                                                title="Min"
+                                                type="number"
+                                                adornment={expectedChangeType === 'Percentage' ? '' : ''}
+                                                value={formValues.duration.min}
+                                                setValue={(value) => handleInputChange("duration.min", value)}
+                                            />
+                                            <CustomInput 
+                                                title="Max"
+                                                type="number"
+                                                adornment={expectedChangeType === 'Percentage' ? '' : ''}
+                                                value={formValues.duration.max}
+                                                setValue={(value) => handleInputChange("duration.max", value)}
+                                            />
+                                        </Stack>
+                                    )}
+                                </Stack>
+                            </Stack>
+
                         </Stack>
                     </Box>
                     {/* Second Column */}
@@ -115,8 +262,8 @@ const Income = () => {
                             title="Initial Income Amount"
                             type="number"
                             adornment="$"
-                            value={changeValue}
-                            setValue={setChangeValue}
+                            value={formValues.initialAmount}
+                            setValue={(value) => handleInputChange("initialAmount", value)}
                         />
 
                         <Stack direction="row" spacing={2} sx={{ marginTop: 2 }}>
@@ -124,8 +271,8 @@ const Income = () => {
                                 title="User's Contribution"
                                 type="number"
                                 adornment="%"
-                                value={changeMean}
-                                setValue={setChangeMean}
+                                value={formValues.userPercentage}
+                                setValue={(value) => handleInputChange("userPercentage", value)}
                             />
                             <CustomInput 
                                 title="Spouse's Contribution"
@@ -148,8 +295,8 @@ const Income = () => {
                             values={['Wage', 'Social Security']}
                             sideView={true}
                             width={150}
-                            value={incomeType}
-                            setValue={(v) => {setIncomeType(v)}}
+                            value={formValues.isSocialSecurity}
+                            setValue={(value) => handleInputChange("isSocialSecurity", value)}
                         />
                     </Box>
                     {/* Third Column */}
@@ -170,8 +317,8 @@ const Income = () => {
                             values={['Fixed', 'Percentage']}
                             sideView={true}
                             width={100}
-                            value={expectedChangeType}
-                            setValue={setExpectedChangeType}
+                            value={formValues.annualChange.type}
+                            setValue={(value) => handleInputChange("annualChange.type", value)}
                         />
 
                         {distributionType === "None" && (
@@ -179,8 +326,8 @@ const Income = () => {
                                 title="Value"
                                 type="number"
                                 adornment={expectedChangeType === 'Percentage' ? '%' : '$'}
-                                value={changeValue}
-                                setValue={setChangeValue}
+                                value={formValues.annualChange.amount}
+                                setValue={(value) => handleInputChange("annualChange.amount", value)}
                             />
                         )}
                         
@@ -226,11 +373,17 @@ const Income = () => {
 
                 <Box sx={backContinueContainerStyles}>
                     <Button variant="contained" color="primary" sx={buttonStyles}
-                        onClick={() => navigate("/scenario/event_series")}
+                        onClick={handleBackClick}
+                        // onClick={() => navigate("/scenario/event_series")}
                     >
                         Back
                     </Button>
-                    <Button variant="contained" color="success" sx={buttonStyles}>
+                    <Button variant="contained" color="success" sx={buttonStyles}
+                        onClick={() => {
+                            handleSave();
+                            navigate("/scenario/event_series");
+                          }}
+                    >
                         Continue
                     </Button>
                 </Box>

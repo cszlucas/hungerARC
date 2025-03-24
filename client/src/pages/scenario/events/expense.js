@@ -18,9 +18,9 @@ const Expense = () => {
     const {currExpense, setCurrExpense} = useContext(AppContext);
     const {eventEditMode, setEventEditMode} = useContext(AppContext);
 
-    console.log("in expenses");
-    console.log(currExpense);
-    console.log(eventEditMode);
+    // console.log("in expenses");
+    // console.log(currExpense);
+    // console.log(eventEditMode);
 
     const getExpenseById = (id) => {
         for (let i = 0; i < currExpense.length; i++) {
@@ -31,7 +31,9 @@ const Expense = () => {
         return null; // Return null if not found
       };
 
-    let indieExpense = getExpenseById(eventEditMode[1]);
+    let indieExpense = getExpenseById(eventEditMode.id);
+
+    // console.log(indieExpense);
 
 
     const [eventName, setEventName] = useState('');
@@ -47,6 +49,14 @@ const Expense = () => {
     const [changeMax, setChangeMax] = useState('');
     const [inflationAdjustment, setInflationAdjustment] = useState(false);
     const [discretionary, setDiscretionary] = useState(false);
+
+
+    const [duration, setDuration] = useState('Fixed');
+    const [durationValue, setDurationValue] = useState('');
+    const [durationMin, setDurationMin] = useState('');
+    const [durationMax, setDurationMax] = useState('');
+    const [durationMean, setDurationMean] = useState('');
+    const [durationVariance, setDurationVariance] = useState('');
 
     const navigate = useNavigate();
     
@@ -82,7 +92,7 @@ const Expense = () => {
                         setValue={setDescription} 
                         />
 
-                        <Stack direction="row" spacing={2}>
+                    <Stack direction="column" spacing={2}>
                             <CustomInput 
                                 title="Start Year" 
                                 type="number" 
@@ -90,12 +100,69 @@ const Expense = () => {
                                 setValue={setStartYear} 
                             />
 
-                            <CustomInput
-                                title="End Year" 
-                                type="number" 
-                                value={endYear} 
-                                setValue={setEndYear} 
-                            />
+                            <Stack spacing={2}>
+                                {/* Toggle on Top */}
+                                <CustomToggle
+                                    title="Duration"
+                                    values={['Fixed', 'Normal', 'Uniform']}
+                                    sideView={false}
+                                    width={100}
+                                    value={duration}
+                                    setValue={setDuration}
+                                />
+
+                                {/* Input Fields Below in Columns */}
+                                <Stack direction="row" spacing={4} alignItems="start">
+                                    {duration === "Fixed" && (
+                                        <CustomInput 
+                                            title="Value"
+                                            type="number"
+                                            adornment={expectedChangeType === 'Percentage' ? '' : ''}
+                                            value={durationValue}
+                                            setValue={setDurationValue}
+                                        />
+                                    )}
+
+                                    {duration === "Normal" && (
+                                        <Stack direction="row" spacing={4} alignItems="start">
+                                            <CustomInput 
+                                                title="Mean"
+                                                type="number"
+                                                adornment={expectedChangeType === 'Percentage' ? '' : ''}
+                                                value={durationMean}
+                                                setValue={setDurationMean}
+                                            />
+                                            <CustomInput 
+                                                title="Variance"
+                                                type="number"
+                                                adornment={expectedChangeType === 'Percentage' ? '' : ''}
+                                                value={durationVariance}
+                                                setValue={setDurationVariance}
+                                            />
+                                        </Stack>
+                                    )}
+
+                                    {duration === "Uniform" && (
+                                        <Stack direction="row" spacing={4} alignItems="start">
+                                            <CustomInput 
+                                                title="Min"
+                                                type="number"
+                                                adornment={expectedChangeType === 'Percentage' ? '' : ''}
+                                                value={durationMin}
+                                                setValue={setDurationMin}
+                                            />
+                                            <CustomInput 
+                                                title="Max"
+                                                type="number"
+                                                adornment={expectedChangeType === 'Percentage' ? '' : ''}
+                                                value={durationMax}
+                                                setValue={setDurationMax}
+                                            />
+                                        </Stack>
+                                    )}
+                                </Stack>
+                            </Stack>
+
                         </Stack>
                     </Box>
                     {/* Second Column */}
