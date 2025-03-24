@@ -20,7 +20,7 @@ const Income = () => {
     // setEventEditMode({ type: event.type, id: event._id}); // 🔹  type: "new" if new
     const getIncomeById = (id) => {
         for (let i = 0; i < currIncome.length; i++) {
-            if (currIncome[i].id == id) {
+            if (currIncome[i]._id == id) {
                 return currIncome[i]; // Return the found scenario
             }
         }
@@ -28,9 +28,11 @@ const Income = () => {
       };
 
     let indieIncome="";
-    if(eventEditMode!=="new"){
-     indieIncome = getIncomeById(eventEditMode.id);
+    if (eventEditMode !== "new"){
+        indieIncome = getIncomeById(eventEditMode.id);
     }
+
+
     console.log("indieIncome");
     console.log(indieIncome);
 

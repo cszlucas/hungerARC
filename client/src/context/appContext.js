@@ -261,7 +261,7 @@ export const AppProvider = ({ children }) => {
     };
 
     const loadScenarioData = async () => {
-        console.log(scenarioData);
+        // console.log(scenarioData);
         localStorage.setItem("edit", JSON.stringify(editMode));
 
         if (editMode !== "new" && editMode !== null) {
@@ -274,6 +274,11 @@ export const AppProvider = ({ children }) => {
             const invest = await retrieveScenarioData(editMode, "invest");
             const rebalance = await retrieveScenarioData(editMode, "rebalance");
             const investmentTypes = await retrieveScenarioData(editMode, "investmentType");
+
+            console.log(income);
+            console.log(expenses);
+            console.log(rebalance);
+            console.log(invest);
 
             setCurrInvestments(investments);
             setCurrIncome(income);
