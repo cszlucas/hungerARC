@@ -194,14 +194,18 @@ const Invest = () => {
             ?  Object.keys(formValues.assetAllocation.fixedPercentages)
             :  Object.keys(formValues.assetAllocation.initialPercentages);
         
+        // console.log(currInvestments);
         if (Object.keys(setIds).length === 0) {
             return currInvestments.filter((item) => item.accountTaxStatus !== "pre-tax");
         }
+        
         return currInvestments
             .filter((item) => item.accountTaxStatus !== "pre-tax")
             .filter((item) => !setIds.includes(item._id));
     };
     const [validInvestments, setValidInvestments] = useState(getValidInvestments);
+    console.log(validInvestments);
+    console.log(validInvestments.map((item)=>{ return item._id}));
 
     const [newInvestment, setNewInvestment] = useState({id: "", fixed: '', initial: '', final: '' });
     const handleNewInvestmentChange = (field, value) => {
@@ -289,14 +293,14 @@ const Invest = () => {
 
     const handleSave = async () => {
         if (eventEditMode.id == 'new') {
-            console.log("VV Sending to backend VV")
-            console.log(formValues);
+            // console.log("VV Sending to backend VV")
+            // console.log(formValues);
             let response = await axios.post('http://localhost:8080/investStrategy', formValues);
-            console.log()
+            // console.log()
             let id = response.data._id;
 
-            console.log('Event Id')
-            console.log(id);
+            // console.log('Event Id')
+            // console.log(id);
             handleInputChange("_id", id);
             setCurrInvest((prev) => [...prev, { ...formValues, _id: id }]);
             setEventEditMode({type:"Invest", id: id});

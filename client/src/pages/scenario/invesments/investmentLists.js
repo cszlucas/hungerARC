@@ -83,11 +83,14 @@ const InvestmentLists = () => {
 
     if (newInvestment.investmentTypeName) {
       console.log("transform data");
-      const transformedInvestment = transformInvestmentData(newInvestment);
+      let transformedInvestment = transformInvestmentData(newInvestment);
       console.log(transformedInvestment);
 
       try {
-        await axios.post("http://localhost:8080/investment", transformedInvestment);
+        const response = await axios.post("http://localhost:8080/investment", transformedInvestment);
+        const id = response.data._id;
+        transformedInvestment._id = id;
+        
         setCurrInvestments((prev) => {
           return [...(Array.isArray(prev) ? prev : []), transformedInvestment];
         });
