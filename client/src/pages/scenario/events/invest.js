@@ -66,7 +66,7 @@ const Invest = () => {
                         return currInvest[i]; // Return the found scenario
                     }
                     
-                    const invest = {...currInvest[i], ['assetAllocation'] : {
+                    const invest = {...currInvest[i], 'assetAllocation' : {
                         type: "fixed",
                         fixedPercentages: {}, 
                         initialPercentages: {},

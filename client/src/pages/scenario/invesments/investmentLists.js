@@ -34,7 +34,7 @@ import { AppContext } from "../../../context/appContext";
 const mongoose = require("mongoose");
 
 const InvestmentLists = () => {
-  const { currInvestments, setCurrInvestments } = useContext(AppContext);
+  const { currInvestments, setCurrInvestments, setCurrScenario } = useContext(AppContext);
   const { currInvestmentTypes, setCurrInvestmentTypes } = useContext(AppContext);
 
   console.log("current Investments");
@@ -70,19 +70,35 @@ const InvestmentLists = () => {
     };
   };
 
+  const appendToKey = (key, newValue) => {
+    setCurrScenario((prev) => ({
+      ...prev,
+      [key]: [...(prev[key] || []), newValue]  // Append to the specified key
+    }));
+  };
+
   const handleAddInvestment = async () => {
     console.log("Add investment");
     console.log(newInvestment);
+
     if (newInvestment.investmentTypeName) {
       console.log("transform data");
       const transformedInvestment = transformInvestmentData(newInvestment);
       console.log(transformedInvestment);
+
       try {
         await axios.post("http://localhost:8080/investment", transformedInvestment);
         setCurrInvestments((prev) => {
           return [...(Array.isArray(prev) ? prev : []), transformedInvestment];
         });
         setNewInvestment({ investmentType: "", accountTaxStatus: "", value: "" });
+        
+        if (transformedInvestment.accountTaxStatus == 'pre-tax') {
+          appendToKey('rothConversionStrategy', transformedInvestment._id);
+        } else {
+          appendToKey('expenseWithdrawalStrategy', transformedInvestment._id);
+          appendToKey('rmdStrategy', transformedInvestment._id);
+        }
         handleClose();
       } catch (error) {
         console.error("Error adding investment:", error);

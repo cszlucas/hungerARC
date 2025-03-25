@@ -125,7 +125,8 @@ const Expense = () => {
             setCurrScenario((prevScenario) => {
                 const updatedScenario = {
                     ...prevScenario,
-                    expenseEventSeries: [...(prevScenario?.expenseEventSeries || []), id]
+                    expenseEventSeries: [...(prevScenario?.expenseEventSeries || []), id],
+                    spendingStrategy: [...(prevScenario?.spendingStrategy || []), id]
                 };
 
                 // Send POST request with the updated scenario after state update
