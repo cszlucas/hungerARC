@@ -70,8 +70,8 @@ const Expense = () => {
             amount: 0
         },
         userPercentage: "",
-        inflationAdjustment: "false",
-        isDiscretionary: "false"
+        inflationAdjustment: false,
+        isDiscretionary: false
     });
 
     // console.log(formValues);
@@ -111,6 +111,8 @@ const Expense = () => {
             console.log(id);
             handleInputChange("_id", id);
             setCurrExpense((prev) => [...prev, formValues]);
+            setEventEditMode({type:"Expense", id: id});
+            console.log()
 
             setCurrScenario((prevScenario) => {
                 const updatedScenario = {
@@ -269,10 +271,10 @@ const Expense = () => {
                             <Typography variant="body1" sx={{ fontWeight: 'medium', width: 150 }}>
                                 Inflation Adjustment
                             </Typography>
-                            <Checkbox checked={!formValues.inflationAdjustment} 
+                            <Checkbox checked={formValues.inflationAdjustment} 
                             onChange={(value) => {
                                 console.log(formValues.inflationAdjustment);
-                                handleInputChange("inflationAdjustment", !value.target.checked);
+                                handleInputChange("inflationAdjustment", value.target.checked);
                                 }}/>
                         </Stack>
 
@@ -280,7 +282,7 @@ const Expense = () => {
                             <Typography variant="body1" sx={{ fontWeight: 'medium', width: 150 }}>
                                Discretionary
                             </Typography>
-                            <Checkbox checked={!formValues.isDiscretionary} onChange={(value) => handleInputChange("isDiscretionary", !value.target.checked)}/>
+                            <Checkbox checked={formValues.isDiscretionary} onChange={(value) => handleInputChange("isDiscretionary", value.target.checked)}/>
                         </Stack>
                     </Box>
                     {/* Third Column */}
