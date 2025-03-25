@@ -10,7 +10,7 @@ import CustomInput from "../../../components/customInputBox";
 import CustomToggle from "../../../components/customToggle";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const InvestmentType = () => {
   const { currInvestments, setCurrInvestments, currInvestmentTypes, setCurrInvestmentTypes } = useContext(AppContext);
@@ -19,11 +19,17 @@ const InvestmentType = () => {
   const getInvestmentTypeById = (id) => {
     let investmentType = null;
     console.log("ID BE LIKE: " + id);
-    for (let i = 0; i < currInvestmentTypes.length; i++) {
-      if (currInvestmentTypes[i]._id == id) {
-        investmentType = currInvestmentTypes[i]; // Return the found scenario
-        break;
+
+    if (Array.isArray(currInvestmentTypes) && currInvestmentTypes.length > 0) {
+      for (let i = 0; i < currInvestmentTypes.length; i++) {
+        // Ensure each item has the _id property before comparing
+        if (currInvestmentTypes[i] && currInvestmentTypes[i]._id == id) {
+          investmentType = currInvestmentTypes[i]; // Return the found scenario
+          break;
+        }
       }
+    } else {
+      console.error("currInvestmentTypes is not a valid array.");
     }
 
     const taxMap = {
@@ -121,7 +127,9 @@ const InvestmentType = () => {
       let id = response.data._id;
 
       handleInputChange("_id", id);
-      setCurrInvestmentTypes((prev) => [...prev, response.data]);
+      setCurrInvestmentTypes((prev) => {
+        return [...(Array.isArray(prev) ? prev : []), response.data];
+      });
       //setCurrScenario(formValues);
       //setScenarioData((prev)=> [...prev, formValues]);
 
