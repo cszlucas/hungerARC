@@ -22,9 +22,6 @@ const Income = () => {
     const {currScenario, setCurrScenario} = useContext(AppContext);
     const {editMode, setEditMode} = useContext(AppContext); //scenario
     // setEventEditMode({ type: event.type, id: event._id}); // 🔹  type: "new" if new
-    // console.log(eventEditMode);
-    console.log('current income on page');
-    console.log(currIncome);
     const getIncomeById = (id) => {
         for (let i = 0; i < currIncome.length; i++) {
             if (currIncome[i]._id == id) {
@@ -38,12 +35,6 @@ const Income = () => {
     if (eventEditMode !== "new"){
         indieIncome = getIncomeById(eventEditMode.id);
     }
-
-
-    console.log("indieIncome");
-    console.log(indieIncome);
-
-    // console.log(currIncome);
 
     // scenario has list of income 
     const [formValues, setFormValues] = useState(indieIncome ||  {
@@ -78,27 +69,14 @@ const Income = () => {
         // isSocialSecurity: false
     });
     
-    // const [eventName, setEventName] = useState('');
-    // const [description, setDescription] = useState('');
     const [startYear, setStartYear] = useState('');
-    // const [duration, setDuration] = useState('Fixed');
-    // const [durationValue, setDurationValue] = useState('');
-    // const [durationMin, setDurationMin] = useState('');
-    // const [durationMax, setDurationMax] = useState('');
-    // const [durationMean, setDurationMean] = useState('');
-    // const [durationVariance, setDurationVariance] = useState('');
-
     const [expectedChangeType, setExpectedChangeType] = useState('Fixed');
     const [distributionType, setDistributionType] = useState('None');
-    // const [incomeType, setIncomeType] = useState('Wage'); //SORRY VICKY I PUT THIS BACK
-    // const [changeValue, setChangeValue] = useState(''); //SORRY VICKY I PUT THIS BACK
     const [changeMean, setChangeMean] = useState('');
     const [changeVariance, setChangeVariance] = useState('');
     const [changeMin, setChangeMin] = useState('');
     const [changeMax, setChangeMax] = useState('');
 
-    // const [showBackdrop, setShowBackdrop] = useState(false);
-    // const [errorBackdrop, setErrorBackdrop] = useState(false);
     const navigate = useNavigate();
 
     const handleInputChange = (field, value) => {
@@ -130,19 +108,16 @@ const Income = () => {
       const handleSave = async () => {
         try {
           let response;
-        //   console.log("editMode: ", editMode);
-          console.log(formValues._id);
-          console.log("form valu: ",formValues);
+        //   console.log("form valu: ",formValues);
           if (eventEditMode.id == "new"){
 
             let response = await axios.post('http://localhost:8080/incomeEvent', formValues);
             let id = response.data._id;
-            console.log("NEW EVENT MODE ID: ", id)
 
             handleInputChange("_id", id);
-            setCurrIncome((prev)=> [...prev, formValues]);
+            setCurrIncome((prev) => [...prev, { ...formValues, _id: id }]);
             setEventEditMode({type:"Income", id: id});
-            console.log("NEW EVENT EDIT MODE: ", eventEditMode)
+
             setCurrScenario((prevScenario) => {
                 const updatedScenario = {
                     ...prevScenario,
@@ -156,20 +131,18 @@ const Income = () => {
                 return updatedScenario;
             });
 
-            console.log('Data successfully saved:', response.data);
-            // setEditMode(id);
+            // console.log('Data successfully saved:', response.data);
           } else {
             console.log("EVENT EDIT MODE ID: ", eventEditMode.id)
             let response = await axios.post(`http://localhost:8080/updateIncome/${eventEditMode.id}`, formValues);
-            // setCurrScenario(formValues);
             setCurrIncome((prev) => {
               let newList = prev.filter((item)=> item._id !== eventEditMode.id)
               return [...newList, formValues]
             });
-            console.log('Data successfully updated:', response.data);
+            // console.log('Data successfully updated:', response.data);
           }
     
-          alert('Save data');
+        //   alert('Save data');
         } catch (error) {
           console.error('Error saving data:', error);
         //   setErrorBackdrop(true); 
@@ -177,63 +150,24 @@ const Income = () => {
         }
       };
 
-
-    // const handleSave = () => {
-    //     setCurrIncome((prevIncome) =>
-    //         prevIncome.map((income) =>
-    //             income.id === indieIncome.id ? { ...income, ...formValues } : income
-    //         )
-    //     );
-
-
-        // try {
-        //     const response = await fetch('/api/update-income', {
-        //         method: 'POST',
-        //         headers: {
-        //             'Content-Type': 'application/json',
-        //         },
-        //         body: JSON.stringify({
-        //             id: indieIncome.id, // Use the unique identifier for the document
-        //             updatedIncome: formValues, // Send the updated form values
-        //         }),
-        //     });
-    
-        //     if (!response.ok) {
-        //         throw new Error('Failed to update MongoDB');
-        //     }
-    
-        //     const data = await response.json();
-        //     console.log('MongoDB Update Response:', data);
-        // } catch (error) {
-        //     console.error('Error updating MongoDB:', error);
-        // }
-
-        // console.log('HANDLE SAVE :>> ', currIncome);
-    // };
-
     const handleBackClick = () =>  {
-        // setShowBackdrop(false);
-        // setIncome(formValues);
         handleSave();  
         navigate("/scenario/event_series");
       };
-      const handleClose = () => {
-        // setShowBackdrop(false);
-      };
 
-    const handleConfirm = () => {
-        if (!formValues.name.trim()) {
-        // setShowBackdrop(false);
-        // setErrorBackdrop(true);
-        } else {
-        // setIncome(formValues);  // Save formValues before navigating
-        // setShowBackdrop(false);
-        navigate("/scenarios");
-        }
-    };
-    const handleErrorClose = () => {
-        // setErrorBackdrop(false);
-    };
+    //   const handleClose = () => {
+    //   };
+
+    // const handleConfirm = () => {
+    //     if (!formValues.name.trim()) {
+    //     } else {
+    //     // setIncome(formValues);  // Save formValues before navigating
+    //     navigate("/scenarios");
+    //     }
+    // };
+    // const handleErrorClose = () => {
+    //     // setErrorBackdrop(false);
+    // };
 
     
 
@@ -246,7 +180,11 @@ const Income = () => {
                     <Typography variant="h2" component="h1" sx={{ fontWeight: 'bold' }}>
                         Income
                     </Typography>
-                    <Button variant="contained" color="secondary" sx={{ fontSize: '1.25rem', textTransform: 'none' }}>
+                    <Button variant="contained" color="secondary" sx={{ fontSize: '1.25rem', textTransform: 'none' }}
+                          onClick={() => {
+                            handleSave();
+                          }}
+                    >
                         Save
                     </Button>
                 </Stack>
