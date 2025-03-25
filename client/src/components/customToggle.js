@@ -2,7 +2,11 @@ import React from 'react';
 import { Box, ToggleButtonGroup, ToggleButton, Typography } from '@mui/material';
 import { toggleButtonGroupStyles } from './styles';
 
-const CustomToggle = ({ title, values, sideView, width, value, setValue }) => {
+const CustomToggle = ({ title, labels = [], values=[], sideView=false, width, value, setValue }) => {
+    if (labels == [] || labels.length != values.length) {
+        labels = values
+    }
+
     const handleChange = (event) => {
         setValue(event.target.value);
     };
@@ -26,9 +30,9 @@ const CustomToggle = ({ title, values, sideView, width, value, setValue }) => {
                             onChange={handleChange}
                             sx={toggleButtonGroupStyles}
                         >
-                            {values.map((val) => (
+                            {values.map((val, i) => (
                                 <ToggleButton key={val} value={val}>
-                                    {capitalizeFirstLetter(val)}
+                                    {labels[i]}
                                 </ToggleButton>
                             ))}
                         </ToggleButtonGroup>
@@ -46,9 +50,9 @@ const CustomToggle = ({ title, values, sideView, width, value, setValue }) => {
                             onChange={handleChange}
                             sx={toggleButtonGroupStyles}
                         >
-                        {values.map((val) => (
+                        {values.map((val, i) => (
                             <ToggleButton key={val} value={val}>
-                                {capitalizeFirstLetter(val)}
+                                {labels[i]}
                             </ToggleButton>
                         ))}
                         </ToggleButtonGroup>

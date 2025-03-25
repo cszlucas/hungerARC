@@ -1,6 +1,14 @@
 import { Box, Typography, TextField, MenuItem } from "@mui/material";
 
-const CustomDropdown = ({ label, value, setValue, menuItems, textFieldStyles }) => {
+const CustomDropdown = ({ label, value, setValue, menuLabels=[], menuItems=[], textFieldStyles }) => {
+    if (menuLabels == [] || menuLabels.length != menuItems.length) {
+        menuLabels = menuItems;
+    }
+
+    const handleChange = (event) => {
+        setValue(event.target.value);
+    };
+
     return (
         <Box sx={{ display: "inline-flex", flexDirection: "column", width: "auto" }}>
             <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium" }}>
@@ -9,7 +17,7 @@ const CustomDropdown = ({ label, value, setValue, menuItems, textFieldStyles }) 
             <TextField
                 select
                 value={value}
-                onChange={(e) => setValue(e.target.value)}
+                onChange={handleChange}
                 displayEmpty
                 fullWidth
                 sx={textFieldStyles}
@@ -17,9 +25,9 @@ const CustomDropdown = ({ label, value, setValue, menuItems, textFieldStyles }) 
                 <MenuItem value="" disabled>
                     Select
                 </MenuItem>
-                {menuItems.map((item) => (
+                {menuItems.map((item, i) => (
                     <MenuItem key={item} value={item}>
-                        {item}
+                        {menuLabels[i]}
                     </MenuItem>
                 ))}
             </TextField>

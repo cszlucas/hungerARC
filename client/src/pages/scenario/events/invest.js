@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect, useCallback } from "react";
 import {
   ThemeProvider, CssBaseline, Container, Typography, Button, Stack, 
   InputAdornment, Box, List, MenuItem, ListItem, ListItemText, 
@@ -24,159 +24,219 @@ import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
 
 const Invest = () => {
-    const {currInvest, setCurrInvest} = useContext(AppContext);
+    const {currInvest, setCurrInvest, currInvestments, currInvestmentTypes} = useContext(AppContext);
     const {eventEditMode, setEventEditMode} = useContext(AppContext);
-
+    const navigate = useNavigate();
     // console.log("in Invest");
     // console.log(currInvest);
     // console.log(eventEditMode);
 
+    const getInvesmentTypeById = (id) => {
+        if (id != "") {
+            for (let i = 0; i < currInvestmentTypes.length; i++) {
+                if (currInvestmentTypes[i]._id == id) {
+                    return currInvestmentTypes[i]; // Return the found scenario
+                }
+            }
+        }
+        return {_id: "NULL", name: "Unknown Type"}
+    }
+
+    const getInvestmentById = (id) => {
+        if (id != "") {
+            for (let i = 0; i < currInvestments.length; i++) {
+                if (currInvestments[i]._id == id) {
+                    return currInvestments[i]; // Return the found scenario
+                }
+            }
+        }
+        return {_id: "NULL", investmentType: "NULL"}
+    }
+
     const getInvestById = (id) => {
-        for (let i = 0; i < currInvest.length; i++) {
-            if (currInvest[i].id == id) {
-                return currInvest[i]; // Return the found scenario
+        if (id != "") {
+            for (let i = 0; i < currInvest.length; i++) {
+                if (currInvest[i]._id == id) {
+                    return currInvest[i]; // Return the found scenario
+                }
             }
         }
-        return null; // Return null if not found
+
+        return {
+            _id: "",
+            eventSeriesName: "",
+            eventSeriesDescription: "",
+            maxCash: 0,
+            startYear: {
+                type: "fixedAmt",
+                value: "",
+                mean: "",
+                stdDev: "",
+                min: "",
+                max: "",
+                year: "",
+            },
+            duration: {
+                type: "fixedAmt",
+                value: "",
+                mean: "",
+                stdDev: "",
+                min: "",
+                max: "",
+            },
+            assetAllocation: {
+                type: "fixed",
+                fixedPercentages: {}, 
+                initialPercentages: {},
+                finalPercentages: {},
+            },
+        };
       };
-
-    let indieInvest = getInvestById(eventEditMode.id);
+    
+    let investId = eventEditMode ? eventEditMode._id : "";
+    let indieInvest = getInvestById(investId);
     // console.log(indieInvest);
-
-
-    const navigate = useNavigate();
-
-    const [eventName, setEventName] = useState('');
-    const [description, setDescription] = useState('');
-    const [startYear, setStartYear] = useState('');
-    // const [endYear, setEndYear] = useState('');
-    const [duration, setDuration] = useState('Fixed');
-    const [durationValue, setDurationValue] = useState('');
-    const [durationMin, setDurationMin] = useState('');
-    const [durationMax, setDurationMax] = useState('');
-    const [durationMean, setDurationMean] = useState('');
-    const [durationVariance, setDurationVariance] = useState('');
-
-    const [maxCash, setMaxCash] = useState('');
-    const [newInvestment, setNewInvestment] = useState({
-        investmentTypeName: '',
-        initial: '',
-        final: '',
-      });
-    
-    const [allocationType, setAllocationType] = useState("glide"); // Default is Glide Path
-    const handleAllocationChange = (event, newType) => {
-        if (newType !== null) {
-            setAllocationType(newType);
-        }
-    };
-
-    const [allInvestments] = useState([
-        { investmentTypeName: 'Apple', initial: '0', final: '0'},
-        { investmentTypeName: 'Microsoft', initial: '0', final: '0'},
-        { investmentTypeName: 'Amazon', initial: '0', final: '0'},
-        { investmentTypeName: 'IRA', initial: '0', final: '0'},
-        { investmentTypeName: '401k', initial: '0', final: '0'},
-        { investmentTypeName: 'Roth 401k', initial: '0', final: '0'},
-        { investmentTypeName: 'Roth 403k', initial: '0', final: '0'},
-    ]);
-
-    const [selectedInvestments, setSelectedInvestments] = useState([]);
-    
-    // import { List, ListItem, ListItemText, IconButton } from "@mui/material";
-    const handleMoveInvestment = (fromIndex, toIndex) => {
-        setSelectedInvestments((prevInvestments) => {
-            if (fromIndex === toIndex || fromIndex < 0 || toIndex >= prevInvestments.length) {
-                return prevInvestments;
+    const [formValues, setFormValues] = useState(indieInvest);
+    const handleInputChange = (field, value) => {
+        const fieldParts = field.split('.'); // Split the field into parts (e.g., "lifeExpectancy.mean")
+      
+        setFormValues((prev) => {
+            if (fieldParts.length === 3) {
+                const [grandparent, parent, child] = fieldParts; 
+                return {
+                    ...prev,
+                    [grandparent]: {
+                        ...prev[grandparent],
+                        [parent]: {
+                            ...prev[grandparent]?.[parent],
+                            [child]: value,
+                        }
+                    }
+                };
             }
     
-            // Swap elements in selectedInvestments
-            const newInvestments = [...prevInvestments];
-            [newInvestments[fromIndex], newInvestments[toIndex]] = [newInvestments[toIndex], newInvestments[fromIndex]];
-    
-            return newInvestments;
+            if (fieldParts.length === 2) {
+                const [parent, child] = fieldParts; // 'lifeExpectancy' and 'mean'
+                return {
+                ...prev,
+                [parent]: { // Spread the parent object (lifeExpectancy)
+                    ...prev[parent],
+                    [child]: value, // Update the child property (mean)
+                },
+                };
+            }
+        
+            // For top-level fields (no dot notation)
+            return {
+                ...prev,
+                [field]: value,
+            };
         });
     };
-    
 
+    const [listOfSelectedInvestments, setListOfSelectedInvestments] = useState([]);
+
+    useEffect(() => {
+        const resetAllocations = {
+            initialPercentages: {},
+            finalPercentages: {},
+            fixedPercentages: {},
+        };
+    
+        if (formValues.assetAllocation.type === "fixed") {
+            handleInputChange("assetAllocation", { ...formValues.assetAllocation, ...resetAllocations, fixedPercentages: {} });
+        } else {
+            handleInputChange("assetAllocation", { ...formValues.assetAllocation, ...resetAllocations, initialPercentages: {}, finalPercentages: {} });
+        }
+        setValidInvestments(getValidInvestments);
+        setListOfSelectedInvestments([]);
+    }, [formValues.assetAllocation.type]);
+
+    // console.log(validInvestments);
+    const getValidInvestments = useCallback(() => {
+        return currInvestments.filter((item) => item.accountTaxStatus !== "pre-tax");
+    }, [currInvestments]);
+    const [validInvestments, setValidInvestments] = useState(getValidInvestments);
+    // useEffect(() => {
+    //     console.log("Updated Investments:", validInvestments);
+    // }, [validInvestments]);
+
+    const [newInvestment, setNewInvestment] = useState({id: "", fixed: '', initial: '', final: '' });
+    const handleNewInvestmentChange = (field, value) => {
+        setNewInvestment((prev) => {
+            return { ...prev, [field]: value, };
+        });
+    };
 
     const handleAddInvestment = () => {
-        if (!newInvestment.investmentTypeName || newInvestment.initial === '') {
+        if (!newInvestment.id || (formValues.assetAllocation.type == "fixed" && newInvestment.fixed === '') 
+        || ( formValues.assetAllocation.type == "glidePath" && newInvestment.initial === '' && newInvestment.final === '')) {
             alert("Please select an investment and enter a valid allocation percentage.");
             return;
         }
-    
-        // Ensure investment is not already in selectedInvestments
-        const investmentExists = selectedInvestments.some(
-            (investment) => investment.investmentTypeName === newInvestment.investmentTypeName
-        );
-    
-        if (!investmentExists) {
-            setSelectedInvestments([...selectedInvestments, { ...newInvestment }]);
-    
-            // Reset input fields after adding
-            setNewInvestment({
-                investmentTypeName: '',
-                initial: '',
-                final: '',
-            });
+        setValidInvestments((prev) => prev.filter((item) => item._id !== newInvestment.id));
+        console.log(validInvestments);
+        let newAllocation = {}
+        if (formValues.assetAllocation.type == "fixed") {
+            newAllocation = { ...formValues.assetAllocation.fixedPercentages, [newInvestment.id]: newInvestment.fixed };
+            handleInputChange("assetAllocation.fixedPercentages", newAllocation);
         } else {
-            alert("Investment already added!");
+            newAllocation = { ...formValues.assetAllocation.initialPercentages, [newInvestment.id]: newInvestment.initial };
+            handleInputChange("assetAllocation.initialPercentages", newAllocation);
+            newAllocation = { ...formValues.assetAllocation.finalPercentages, [newInvestment.id]: newInvestment.final };
+            handleInputChange("assetAllocation.finalPercentages", newAllocation);
         }
+
+        const description = formValues.assetAllocation.type === "fixed"
+            ? `Allocation: ${newInvestment.fixed}%`
+            : `Initial: ${newInvestment.initial}%\t\tFinal: ${newInvestment.final}%`;
+        
+        let investmentTypeId = getInvestmentById(newInvestment.id).investmentType;
+        
+        setListOfSelectedInvestments((prev) => [...prev, {
+            id: newInvestment.id,
+            name: getInvesmentTypeById(investmentTypeId).name,
+            description
+        }]);
+        setNewInvestment({ id: "", fixed: '', initial: '', final: ''})
     };
 
-    const handleRemoveInvestment = (index) => {
-        setSelectedInvestments((prevInvestments) => prevInvestments.filter((_, i) => i !== index));
+    const handleRemoveInvestment = (id) => {
+        if (formValues.assetAllocation.type === "fixed") {
+            const { [id]: discardFixed, ...updatedFixedAlloc } = formValues.assetAllocation.fixedPercentages;
+            handleInputChange("assetAllocation.fixedPercentages", updatedFixedAlloc);
+        } else {
+            const { [id]: discardInitial, ...updatedInitialAlloc } = formValues.assetAllocation.initialPercentages;
+            handleInputChange("assetAllocation.initialPercentages", updatedInitialAlloc);
+    
+            const { [id]: discardFinal, ...updatedFinalAlloc } = formValues.assetAllocation.finalPercentages;
+            handleInputChange("assetAllocation.finalPercentages", updatedFinalAlloc);
+        }
+        setValidInvestments((prev) => [...prev, getInvestmentById(id)])
+        setListOfSelectedInvestments((prevInvestments) => prevInvestments.filter((item) => item.id !== id));
     };    
-
-    const availableInvestments = allInvestments.filter(
-        (investment) => !selectedInvestments.some((sel) => sel.investmentTypeName === investment.investmentTypeName)
-    );    
-    
-    
-    const InvestList = ({ list, handleMoveInvestment, handleRemoveInvestment }) => {
+     
+    const InvestList = ({ list, handleRemoveInvestment }) => {
         return (
             <List>
                 {list.map((item, index) => (
                     <ListItem
-                        key={`${item.investmentTypeName}-${index}`}
+                        key={item.id}
                         sx={{
                             backgroundColor: index % 2 === 0 ? "#BBBBBB" : "#D9D9D9",
                             "&:hover": { backgroundColor: "#B0B0B0" },
                         }}
                     >
                         <ListItemText
-                            primary={<span style={{ fontWeight: "bold" }}>{item.investmentTypeName}</span>}
-                            secondary={`Initial: ${item.initial}, Final: ${item.final}`}
+                            primary={item.name}
+                            secondary={item.description}
                         />
-    
-                        {/* Move Up Button (Not for first item) */}
-                        {index > 0 && (
-                            <IconButton
-                                edge="end"
-                                aria-label="move up"
-                                onClick={() => handleMoveInvestment(index, index - 1)}
-                            >
-                                <ArrowUpwardIcon />
-                            </IconButton>
-                        )}
-    
-                        {/* Move Down Button (Not for last item) */}
-                        {index < list.length - 1 && (
-                            <IconButton
-                                edge="end"
-                                aria-label="move down"
-                                onClick={() => handleMoveInvestment(index, index + 1)}
-                            >
-                                <ArrowDownwardIcon />
-                            </IconButton>
-                        )}
     
                         {/* Delete Button */}
                         <IconButton
                             edge="end"
                             aria-label="delete"
-                            onClick={() => handleRemoveInvestment(index)}
+                            onClick={() => handleRemoveInvestment(item.id)}
                         >
                             <DeleteIcon color="grey" />
                         </IconButton>
@@ -184,16 +244,6 @@ const Invest = () => {
                 ))}
             </List>
         );
-    };
-    
-    
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setNewInvestment((prev) => ({
-          ...prev,
-          [name]: value,
-        }));
     };
 
     return (
@@ -216,201 +266,199 @@ const Invest = () => {
 
             <Box sx={rowBoxStyles}>
                 {/* First Column - Input Fields */}
-                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, width: 400 }}>
                     <CustomInput 
                         title="Event name" 
-                        value={eventName} 
-                        setValue={setEventName} 
+                        value={formValues.eventSeriesName} 
+                        setValue={(value) => handleInputChange("eventSeriesName", value)} 
                     />
 
                     <CustomInput 
                         title="Description (Optional)" 
                         type="multiline" 
-                        value={description} 
-                        setValue={setDescription} 
+                        value={formValues.eventSeriesDescription} 
+                        setValue={(value) => handleInputChange("eventSeriesDescription", value)} 
                     />
+                     <CustomInput
+                        title="Maximum Cash"
+                        type="number"
+                        adornment="$"
+                        value={formValues.maxCash}
+                        setValue={(value) => handleInputChange("maxCash", value)}
+                    /> 
 
-                    <Stack direction="row" spacing={2}>
-                        <CustomInput 
-                            title="Start Year" 
-                            type="number" 
-                            value={startYear} 
-                            setValue={setStartYear} 
+                    <Stack direction="row" spacing={1} alignItems="start">
+                        <CustomToggle
+                            title="Start Year"
+                            labels={['Fixed', 'Normal', 'Uniform']}
+                            values={['fixedAmt', 'normal', 'uniform']}
+                            value={formValues.startYear.type}
+                            setValue={(value) => handleInputChange("startYear.type", value)}
                         />
 
-                        <CustomInput
-                            title="Maximum Cash"
-                            type="number"
-                            adornment="$"
-                            value={maxCash}
-                            setValue={setMaxCash}
-                        />
-
-                        
-
-                    </Stack>
-                    <Stack spacing={2}>
-                            {/* Toggle on Top */}
-                            <CustomToggle
-                                title="Duration"
-                                values={['Fixed', 'Normal', 'Uniform']}
-                                sideView={false}
-                                width={100}
-                                value={duration}
-                                setValue={setDuration}
-                            />
-
-                            {/* Input Fields Below in Columns */}
-                            <Stack direction="row" spacing={4} alignItems="start">
-                                {duration === "Fixed" && (
-                                    <CustomInput 
-                                        title="Value"
-                                        type="number"
-                                        adornment={''}
-                                        value={durationValue}
-                                        setValue={setDurationValue}
-                                    />
-                                )}
-
-                                {duration === "Normal" && (
-                                    <Stack direction="row" spacing={4} alignItems="start">
-                                        <CustomInput 
-                                            title="Mean"
-                                            type="number"
-                                            adornment={''}
-                                            value={durationMean}
-                                            setValue={setDurationMean}
-                                        />
-                                        <CustomInput 
-                                            title="Variance"
-                                            type="number"
-                                            adornment={''}
-                                            value={durationVariance}
-                                            setValue={setDurationVariance}
-                                        />
-                                    </Stack>
-                                )}
-
-                                {duration === "Uniform" && (
-                                    <Stack direction="row" spacing={4} alignItems="start">
-                                        <CustomInput 
-                                            title="Min"
-                                            type="number"
-                                            adornment={''}
-                                            value={durationMin}
-                                            setValue={setDurationMin}
-                                        />
-                                        <CustomInput 
-                                            title="Max"
-                                            type="number"
-                                            adornment={''}
-                                            value={durationMax}
-                                            setValue={setDurationMax}
-                                        />
-                                    </Stack>
-                                )}
+                        {formValues.startYear.type === "fixedAmt" && (
+                            <Stack direction="row" spacing={1} alignItems="start">
+                                <CustomInput 
+                                    title="Value"
+                                    type="number"
+                                    value={formValues.startYear.value}
+                                    setValue={(value) => handleInputChange("startYear.value", value)}
+                                />
                             </Stack>
+                        )}
+                        {formValues.startYear.type === "normal" && (
+                            <Stack direction="row" spacing={1} alignItems="start">
+                                <CustomInput 
+                                    title="Mean"
+                                    type="number"
+                                    value={formValues.startYear.mean}
+                                    setValue={(value) => handleInputChange("startYear.mean", value)}
+                                />
+                                <CustomInput 
+                                    title="Standard Deviation"
+                                    type="number"
+                                    value={formValues.startYear.stdDev}
+                                    setValue={(value) => handleInputChange("startYear.stdDev", value)}
+                                />
+                            </Stack>
+                        )}
+                        {formValues.startYear.type === "uniform" && (
+                            <Stack direction="row" spacing={1} alignItems="start">
+                                <CustomInput 
+                                    title="Min"
+                                    type="number"
+                                    value={formValues.startYear.min}
+                                    setValue={(value) => handleInputChange("startYear.min", value)}
+                                />
+                                <CustomInput 
+                                    title="Max"
+                                    type="number"
+                                    value={formValues.startYear.max}
+                                    setValue={(value) => handleInputChange("startYear.max", value)}
+                                />
+                            </Stack>
+                        )}
+                    </Stack>
+                   
+                    {/* Input Fields Below in Columns */}
+                    <Stack direction="row" spacing={1} alignItems="start">
+                        <CustomToggle
+                            title="Duration"
+                            labels={['Fixed', 'Normal', 'Uniform']}
+                            values={['fixedAmt', 'normal', 'uniform']}
+                            width={100}
+                            value={formValues.duration.type}
+                            setValue={(value) => handleInputChange("duration.type", value)}
+                        />
+
+                        {formValues.duration.type === "fixedAmt" && (
+                            <Stack direction="row" spacing={1} alignItems="start">
+                            <CustomInput 
+                                title="Value"
+                                type="number"
+                                value={formValues.duration.value}
+                                setValue={(value) => handleInputChange("duration.value", value)}
+                            />
+                            </Stack>
+                        )}
+
+                        {formValues.duration.type === "normal" && (
+                            <Stack direction="row" spacing={1} alignItems="start">
+                                <CustomInput 
+                                    title="Mean"
+                                    type="number"
+                                    value={formValues.duration.mean}
+                                    setValue={(value) => handleInputChange("duration.mean", value)}
+                                />
+                                <CustomInput 
+                                    title="Standard Deviation"
+                                    type="number"
+                                    value={formValues.duration.stdDev}
+                                    setValue={(value) => handleInputChange("duration.stdDev", value)}
+                                />
+                            </Stack>
+                        )}
+
+                        {formValues.duration.type === "uniform" && (
+                            <Stack direction="row" spacing={1} alignItems="start">
+                                <CustomInput 
+                                    title="Min"
+                                    type="number"
+                                    value={formValues.duration.min}
+                                    setValue={(value) => handleInputChange("duration.min", value)}
+                                />
+                                <CustomInput 
+                                    title="Max"
+                                    type="number"
+                                    value={formValues.duration.max}
+                                    setValue={(value) => handleInputChange("duration.max", value)}
+                                />
+                            </Stack>
+                        )}
                     </Stack>
 
                     <Typography variant="h6" sx={{ fontWeight: 'bold', marginTop: 2, marginBottom: 1 }}>
-                            Add Asset Allocation
+                        Add Asset Allocation
                     </Typography>
                     <Box sx={rowBoxStyles}>
                         <Box>
-                            <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                                Investment Name
-                            </Typography>
-                            <TextField
-                                select
-                                name="investmentTypeName"
-                                value={newInvestment.investmentTypeName}
-                                onChange={handleChange}
-                                sx={{ ...textFieldStyles, width: "150px" }}
-                                fullWidth
-                            >
-                                <MenuItem value="" disabled>
-                                    Select an Investment
-                                </MenuItem>
-                                {availableInvestments.map((investment) => (
-                                    <MenuItem key={investment.investmentTypeName} value={investment.investmentTypeName}>
-                                        {investment.investmentTypeName}
-                                    </MenuItem>
-                                ))}
-                            </TextField>
+                            <CustomDropdown
+                                label="Investment Name"
+                                value={newInvestment.id}
+                                menuLabels={validInvestments.map((item)=>{ return getInvesmentTypeById(item.investmentType).name})}
+                                menuItems={validInvestments.map((item)=>{ return item._id})}
+                                setValue={(value) => {
+                                    handleNewInvestmentChange("id", value);
+                                }}
+                                textFieldStyles={textFieldStyles}
+                            />
                         </Box>
                         {/* Toggle Button for Glide Path / Fixed Percentage */}
-                        <Box sx={{ mt: 4, mb: 2 }}>
-                            <ToggleButtonGroup
-                                value={allocationType}
-                                exclusive
-                                onChange={handleAllocationChange}
-                                aria-label=""
-                                sx={toggleButtonGroupStyles}
-                            >
-                                <ToggleButton value="glide"> Glided Path </ToggleButton>
-                                <ToggleButton value="fixed"> Fixed </ToggleButton>
-                            </ToggleButtonGroup>
+                        <Box>
+                            <CustomToggle
+                                title="Allocation Type"
+                                labels={['Glide Path', 'Fixed']}
+                                values={['glidePath', 'fixed']}
+                                value={formValues.assetAllocation.type}
+                                setValue={(value) => handleInputChange("assetAllocation.type", value)}
+                            />
                         </Box>
                     </Box>
 
                     <Box sx={{mt: -4}}>
                         {/* Show Initial & Final Fields if Glide Path is selected */}
-                        {allocationType === "glide" && (
+                        {formValues.assetAllocation.type === "glidePath" && (
                             <Stack direction="row" spacing={2}>
-                                <Box sx={{mb: 2}}>
-                                    <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                                        Initial Investment Allocation
-                                    </Typography>
-                                    <TextField
-                                        type="number"
-                                        name="initial"
-                                        value={newInvestment.initial}
-                                        onChange={handleChange}
-                                        sx={{ ...textFieldStyles, width: "150px" }}
-                                        fullWidth
-                                        InputProps={{
-                                            endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                                        }}
-                                    />
-                                </Box>
+                                <CustomInput
+                                    title="Initial Allocation"
+                                    type="number"
+                                    value={newInvestment.initial}
+                                    adornment={"%"}
+                                    setValue={(value) => handleNewInvestmentChange("initial", value)}
+                                    inputProps={{ min: 0 }}
+                                />
 
-                                <Box>
-                                    <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                                        Final Investment Allocation
-                                    </Typography>
-                                    <TextField
-                                        type="number"
-                                        name="final"
-                                        value={newInvestment.final}
-                                        onChange={handleChange}
-                                        sx={{ ...textFieldStyles, width: "150px" }}
-                                        fullWidth
-                                        InputProps={{
-                                            endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                                        }}
-                                    />
-                                </Box>
+                                <CustomInput
+                                    title="Final Allocation"
+                                    type="number"
+                                    value={newInvestment.final}
+                                    adornment={"%"}
+                                    setValue={(value) => handleNewInvestmentChange("final", value)}
+                                    inputProps={{ min: 0 }}
+                                />
                             </Stack>
                         )}
 
                         {/* Show only Initial Field if Fixed Percentage is selected */}
-                        {allocationType === "fixed" && (
-                            <Box>
-                                <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
-                                    Fixed Allocation Percentage
-                                </Typography>
-                                <TextField
-                                    type="number"
-                                    name="initial"
-                                    value={newInvestment.initial}
-                                    onChange={handleChange}
-                                    sx={{ ...textFieldStyles, width: "150px" }}
-                                    fullWidth
-                                    InputProps={{
-                                        endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                                    }}
-                                />
-                            </Box>
+                        {formValues.assetAllocation.type === "fixed" && (
+                            <CustomInput
+                                title="Fixed Allocation"
+                                type="number"
+                                value={newInvestment.fixed}
+                                adornment={"%"}
+                                setValue={(value) => handleNewInvestmentChange("fixed", value)}
+                                inputProps={{ min: 0 }}
+                            />
                         )}
                     </Box>
 
@@ -429,10 +477,9 @@ const Invest = () => {
                 {/* Second Column - Investment List */}
                 <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Taxable</Typography>
-                    <InvestList list={selectedInvestments} handleMoveInvestment={handleMoveInvestment} handleRemoveInvestment={handleRemoveInvestment}/>
+                    <InvestList list={listOfSelectedInvestments} handleRemoveInvestment={handleRemoveInvestment}/>
                 </Box>
             </Box>
-
            
 
             {/* Back and Continue buttons */}

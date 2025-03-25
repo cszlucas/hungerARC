@@ -22,11 +22,11 @@ const Income = () => {
     const {currScenario, setCurrScenario} = useContext(AppContext);
     const {editMode, setEditMode} = useContext(AppContext); //scenario
     // setEventEditMode({ type: event.type, id: event._id}); // 🔹  type: "new" if new
+    // console.log(eventEditMode);
+    console.log('current income on page');
+    console.log(currIncome);
     const getIncomeById = (id) => {
         for (let i = 0; i < currIncome.length; i++) {
-            // console.log('currIncome[i].id :>> ', currIncome[i]._id);
-            // console.log('currIncome[i] :>> ', currIncome[i]);
-            // console.log('id :>> ', id);
             if (currIncome[i]._id == id) {
                 return currIncome[i]; // Return the found scenario
             }
@@ -35,28 +35,14 @@ const Income = () => {
       };
 
     let indieIncome="";
-    if(eventEditMode.type!=="new"){
-        console.log("printed");
-     indieIncome = getIncomeById(eventEditMode.id);
+    if (eventEditMode !== "new"){
+        indieIncome = getIncomeById(eventEditMode.id);
     }
 
-    // useEffect(() => {
-    //     if (eventEditMode.type !== "new") {
-    //         console.log("Fetching income data for edit mode");
-    //         indieIncome = getIncomeById(eventEditMode.id);
-    //         console.log("Fetched indieIncome:", indieIncome);
-    //         if (indieIncome) {
-    //             setFormValues(indieIncome);
-    //         }
-    //     }
-    // }, [eventEditMode]);
 
-    console.log('currIncome :>> ', currIncome);
-    console.log("event edit mode: ",eventEditMode)
     console.log("indieIncome");
     console.log(indieIncome);
 
-    // console.log(eventEditMode);
     // console.log(currIncome);
 
     // scenario has list of income 
