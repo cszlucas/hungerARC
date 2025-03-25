@@ -18,6 +18,9 @@ const Income = () => {
     const {currIncome, setCurrIncome} = useContext(AppContext); // scenarios/:id/IncomeEvent
     const {eventEditMode, setEventEditMode} = useContext(AppContext); 
     // setEventEditMode({ type: event.type, id: event._id}); // 🔹  type: "new" if new
+    // console.log(eventEditMode);
+    console.log('current income on page');
+    console.log(currIncome);
     const getIncomeById = (id) => {
         for (let i = 0; i < currIncome.length; i++) {
             if (currIncome[i]._id == id) {
@@ -36,7 +39,6 @@ const Income = () => {
     console.log("indieIncome");
     console.log(indieIncome);
 
-    // console.log(eventEditMode);
     // console.log(currIncome);
 
     // scenario has list of income 

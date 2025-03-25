@@ -233,6 +233,7 @@ export const AppProvider = ({ children }) => {
   const { user } = useContext(AuthContext);
 
   //all stuff:
+  console.log('reading from local storage for event series!!!');
   const [currInvestments, setCurrInvestments] = useState(readStateFromLS('currentInvestments'));
   const [currIncome, setCurrIncome] = useState(readStateFromLS('currentIncome'));  // incomeEvents[],    // income event series
   const [currExpense, setCurrExpense] = useState(readStateFromLS('currentExpense'));   // expenseEvents[],   // expense event series
@@ -335,6 +336,35 @@ export const AppProvider = ({ children }) => {
     console.log("oop this got all scenarios got changed");
     localStorage.setItem("scenarioData", JSON.stringify(scenarioData));
   }, [scenarioData]);
+
+
+  useEffect(() => {
+    if (currScenario) localStorage.setItem("currentScenario", JSON.stringify(currScenario));
+  }, [currScenario]);
+
+  useEffect(() => {
+      if (currInvestments) localStorage.setItem("currentInvestments", JSON.stringify(currInvestments));
+  }, [currInvestments]);
+
+  useEffect(() => {
+      if (currIncome) localStorage.setItem("currentIncome", JSON.stringify(currIncome));
+  }, [currIncome]);
+
+  useEffect(() => {
+      if (currExpense) localStorage.setItem("currentExpense", JSON.stringify(currExpense));
+  }, [currExpense]);
+
+  useEffect(() => {
+      if (currInvest) localStorage.setItem("currentInvest", JSON.stringify(currInvest));
+  }, [currInvest]);
+
+  useEffect(() => {
+      if (currRebalance) localStorage.setItem("currentRebalance", JSON.stringify(currRebalance));
+  }, [currRebalance]);
+
+  useEffect(() => {
+      if (currInvestmentTypes) localStorage.setItem("currentInvestmentType", JSON.stringify(currInvestmentTypes));
+  }, [currInvestmentTypes]);
 
   console.log("Current scenarios:", scenarioData);
 
