@@ -212,12 +212,12 @@ const Invest = () => {
     };
 
     const handleRemoveInvestment = (index) => {
-        setSelectedInvestments((prevInvestments) => prevInvestments.filter((_, i) => i !== index));
+        // setSelectedInvestments((prevInvestments) => prevInvestments.filter((_, i) => i !== index));
     };    
 
-    const availableInvestments = allInvestments.filter(
-        (investment) => !selectedInvestments.some((sel) => sel.investmentTypeName === investment.investmentTypeName)
-    );    
+    // const availableInvestments = allInvestments.filter(
+    //     (investment) => !selectedInvestments.some((sel) => sel.investmentTypeName === investment.investmentTypeName)
+    // );    
     
     
     const InvestList = ({ list, handleRemoveInvestment }) => {
@@ -417,8 +417,8 @@ const Invest = () => {
                             <CustomDropdown
                                 label="Investment Name"
                                 value={newInvestment.id}
-                                menuLabels={allInvestments.map((item)=>{ return getInvesmentTypeById(item.investmentType)})}
-                                menuItems={allInvestments.map((item)=>{ return item.investmentType})}
+                                menuLabels={newInvestment.id}
+                                menuItems={newInvestment.id}
                                 setValue={(value) => handleNewInvestmentChange("newInvestment.id", value)}
                                 textFieldStyles={textFieldStyles}
                             />
@@ -487,7 +487,7 @@ const Invest = () => {
                 {/* Second Column - Investment List */}
                 <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Taxable</Typography>
-                    <InvestList list={selectedInvestments} handleRemoveInvestment={handleRemoveInvestment}/>
+                    <InvestList list={newInvestment} handleRemoveInvestment={handleRemoveInvestment}/>
                 </Box>
             </Box>
            

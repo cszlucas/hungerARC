@@ -69,22 +69,30 @@ const EventSeries = () => {
   };
 
   const handleAddIncome = () => {
-    setEventEditMode({type: "Income", id: "new"})
+    let editObject = {type: "Income", id: "new"};
+    localStorage.setItem("editEvent", JSON.stringify(editObject));
+    setEventEditMode(editObject);
     navigate("/scenario/income")
   };
 
   const handleAddInvest = () => {
-    setEventEditMode({type: "Invest", id: "new"})
+    let editObject = {type: "Invest", id: "new"};
+    localStorage.setItem("editEvent", JSON.stringify(editObject ));
+    setEventEditMode(editObject );
     navigate("/scenario/invest")
   }
 
   const handleAddExpense = () => {
-    setEventEditMode({type: "Expense", id: "new"})
+    let editObject = {type: "Expense", id: "new"};
+    localStorage.setItem("editEvent", JSON.stringify(editObject));
+    setEventEditMode(editObject);
     navigate("/scenario/expense")
   }
 
   const handleAddRebalance = () => {
-    setEventEditMode({type: "Rebalance", id: "new"})
+    let editObject = {type: "Rebalance", id: "new"};
+    localStorage.setItem("editEvent", JSON.stringify(editObject));
+    setEventEditMode(editObject);
     navigate("/scenario/rebalance")
   }
 
@@ -98,7 +106,9 @@ const EventSeries = () => {
   };
 
   const handleEditEvent = (event) => {
-    setEventEditMode({ type: event.type, id: event._id}); // 🔹 Store the event ID in context
+    let editObject = { type: event.type, id: event._id};
+    localStorage.setItem("editEvent", JSON.stringify(editObject));
+    setEventEditMode(editObject); // 🔹 Store the event ID in context
   
     // 🔹 Determine the correct route based on event type
     let route = "";
