@@ -1,13 +1,13 @@
 import React, { useState, useContext } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, List, ListItem, ListItemText, IconButton, Backdrop, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import PaymentsIcon from '@mui/icons-material/Payments';
-import SellIcon from '@mui/icons-material/Sell';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import BalanceIcon from '@mui/icons-material/Balance';
-import theme from '../../../components/theme';
-import Navbar from '../../../components/navbar';
-import PageHeader from '../../../components/pageHeader';
+import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, List, ListItem, ListItemText, IconButton, Backdrop, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import PaymentsIcon from "@mui/icons-material/Payments";
+import SellIcon from "@mui/icons-material/Sell";
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import BalanceIcon from "@mui/icons-material/Balance";
+import theme from "../../../components/theme";
+import Navbar from "../../../components/navbar";
+import PageHeader from "../../../components/pageHeader";
 import {
   stackStyles,
   titleStyles,
@@ -15,7 +15,7 @@ import {
   buttonStyles,
   rowBoxStyles,
   multiLineTextFieldStyles,
-} from '../../../components/styles';
+} from "../../../components/styles";
 
 import CustomInput from "../../../components/customInputBox";
 import { useNavigate } from "react-router-dom";
@@ -72,29 +72,29 @@ const EventSeries = () => {
     let editObject = {type: "Income", id: "new"};
     localStorage.setItem("editEvent", JSON.stringify(editObject));
     setEventEditMode(editObject);
-    navigate("/scenario/income")
+    navigate("/scenario/income");
   };
 
   const handleAddInvest = () => {
     let editObject = {type: "Invest", id: "new"};
     localStorage.setItem("editEvent", JSON.stringify(editObject ));
     setEventEditMode(editObject );
-    navigate("/scenario/invest")
-  }
+    navigate("/scenario/invest");
+  };
 
   const handleAddExpense = () => {
     let editObject = {type: "Expense", id: "new"};
     localStorage.setItem("editEvent", JSON.stringify(editObject));
     setEventEditMode(editObject);
-    navigate("/scenario/expense")
-  }
+    navigate("/scenario/expense");
+  };
 
   const handleAddRebalance = () => {
     let editObject = {type: "Rebalance", id: "new"};
     localStorage.setItem("editEvent", JSON.stringify(editObject));
     setEventEditMode(editObject);
-    navigate("/scenario/rebalance")
-  }
+    navigate("/scenario/rebalance");
+  };
 
   const handleCloseBackdrop = () => {
     setOpenBackdrop(false);
@@ -136,7 +136,7 @@ const EventSeries = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Navbar currentPage={''} />
+      <Navbar currentPage={""} />
       <Container>
 
         {/* Stack for title and save button */}
@@ -156,10 +156,10 @@ const EventSeries = () => {
           <Box sx={{ flex: 1 }}>
             
             <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <Typography variant="h6" sx={{ fontWeight: 'bold', marginTop: 4, marginBottom: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: "bold", marginTop: 4, marginBottom: 2 }}>
                 List of Event Series
               </Typography>
-              <Button variant="contained" color="primary" onClick={handleAddEvent} sx={{ textTransform: 'none' }}>
+              <Button variant="contained" color="primary" onClick={handleAddEvent} sx={{ textTransform: "none" }}>
                 Add
               </Button>
             </Stack>
@@ -171,14 +171,14 @@ const EventSeries = () => {
                   <ListItem 
                     key={index} 
                     sx={{
-                      backgroundColor: index % 2 === 0 ? '#BBBBBB' : '#D9D9D9',
-                      '&:hover': {
-                        backgroundColor: '#B0B0B0',
+                      backgroundColor: index % 2 === 0 ? "#BBBBBB" : "#D9D9D9",
+                      "&:hover": {
+                        backgroundColor: "#B0B0B0",
                       },
                     }}
                   >
                     <ListItemText
-                      primary={<span style={{ fontWeight: 'bold' }}>{event.eventSeriesName}</span>} 
+                      primary={<span style={{ fontWeight: "bold" }}>{event.eventSeriesName}</span>} 
                       secondary={event.type} 
                     />
                     <IconButton edge="end" aria-label="edit" onClick={() => handleEditEvent(event)}>
@@ -206,34 +206,34 @@ const EventSeries = () => {
         </Box>
 
         {/* Backdrop with Buttons for Event Type Selection */}
-        <Backdrop open={openBackdrop} onClick={handleCloseBackdrop} sx={{ zIndex: 1200, color: '#fff' }}>
+        <Backdrop open={openBackdrop} onClick={handleCloseBackdrop} sx={{ zIndex: 1200, color: "#fff" }}>
           <Dialog open={openBackdrop} onClose={handleCloseBackdrop} >
             <DialogTitle>
-              <Typography variant="h5" sx={{ fontWeight: 'bold', marginTop: 2, marginBottom: 1, minWidth: 400 }}>
+              <Typography variant="h5" sx={{ fontWeight: "bold", marginTop: 2, marginBottom: 1, minWidth: 400 }}>
                 Select a category
               </Typography>
             </DialogTitle>
             <DialogContent>
-              <Stack direction="row" spacing={3} sx={{ justifyContent: 'center' }}>
+              <Stack direction="row" spacing={3} sx={{ justifyContent: "center" }}>
                 <Button variant="contained" onClick={handleAddIncome} 
-                  sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 200, marginBottom: 1 }}>
+                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}>
                   <PaymentsIcon sx={{ fontSize: 60, marginBottom: 1 }} />
                   Income
                 </Button>
                 <Button variant="contained" onClick={handleAddExpense}
-                  sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 200, marginBottom: 1 }}>
+                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}>
                   <SellIcon sx={{ fontSize: 60, marginBottom: 1 }} />
                   Expense
                 </Button>
               </Stack>
-              <Stack direction="row" spacing={3} sx={{ justifyContent: 'center', mt: 2 }}>
+              <Stack direction="row" spacing={3} sx={{ justifyContent: "center", mt: 2 }}>
                 <Button variant="contained" onClick={handleAddInvest}
-                  sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 200, marginBottom: 1 }}>
+                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}>
                   <AccountBalanceIcon sx={{ fontSize: 60, marginBottom: 1 }} />
                   Invest
                 </Button>
                 <Button variant="contained" onClick={handleAddRebalance}
-                  sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 200, marginBottom: 1 }}>
+                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}>
                   <BalanceIcon sx={{ fontSize: 60, marginBottom: 1 }} />
                   Rebalance
                 </Button>

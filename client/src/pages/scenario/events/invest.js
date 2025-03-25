@@ -3,17 +3,17 @@ import {
   ThemeProvider, CssBaseline, Container, Typography, Button, Stack, 
   Box, List, ListItem, ListItemText, 
   IconButton,
-} from '@mui/material';
-import theme from '../../../components/theme';
-import Navbar from '../../../components/navbar';
-import PageHeader from '../../../components/pageHeader';
+} from "@mui/material";
+import theme from "../../../components/theme";
+import Navbar from "../../../components/navbar";
+import PageHeader from "../../../components/pageHeader";
 import {
   stackStyles, titleStyles, buttonStyles, rowBoxStyles, 
   backContinueContainerStyles, textFieldStyles, toggleButtonGroupStyles
-} from '../../../components/styles';
+} from "../../../components/styles";
 
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete'; 
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete"; 
 import CustomDropdown from "../../../components/customDropDown"; 
 import CustomInput from "../../../components/customInputBox";
 import CustomToggle from "../../../components/customToggle";
@@ -23,7 +23,7 @@ import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
 
-import axios from 'axios';
+import axios from "axios";
 
 
 const Invest = () => {
@@ -42,8 +42,8 @@ const Invest = () => {
                 }
             }
         }
-        return {_id: "NULL", name: "Unknown Type"}
-    }
+        return {_id: "NULL", name: "Unknown Type"};
+    };
 
     const getInvestmentById = (id) => {
         if (id != "") {
@@ -53,8 +53,8 @@ const Invest = () => {
                 }
             }
         }
-        return {_id: "NULL", investmentType: "NULL"}
-    }
+        return {_id: "NULL", investmentType: "NULL"};
+    };
 
     const getInvestById = (id) => {
 
@@ -66,13 +66,13 @@ const Invest = () => {
                         return currInvest[i]; // Return the found scenario
                     }
                     
-                    const invest = {...currInvest[i], 'assetAllocation' : {
+                    const invest = {...currInvest[i], "assetAllocation" : {
                         type: "fixed",
                         fixedPercentages: {}, 
                         initialPercentages: {},
                         finalPercentages: {},
-                    }}
-                    return invest
+                    }};
+                    return invest;
                 }
             }
         }
@@ -111,7 +111,7 @@ const Invest = () => {
     let indieInvest = getInvestById(investId);
     const [formValues, setFormValues] = useState(indieInvest);
     const handleInputChange = (field, value) => {
-        const fieldParts = field.split('.'); // Split the field into parts (e.g., "lifeExpectancy.mean")
+        const fieldParts = field.split("."); // Split the field into parts (e.g., "lifeExpectancy.mean")
       
         setFormValues((prev) => {
             if (fieldParts.length === 3) {
@@ -153,9 +153,9 @@ const Invest = () => {
         :  Object.keys(formValues.assetAllocation.initialPercentages);
 
         if (Object.keys(setIds).length === 0) {
-            return []
+            return [];
         }
-        let listOfSI = []
+        let listOfSI = [];
         setIds.forEach((investmentId) => {
             const description = formValues.assetAllocation.type === "fixed"
                 ? `Allocation: ${formValues.assetAllocation.fixedPercentages[`${investmentId}`]}%`
@@ -167,7 +167,7 @@ const Invest = () => {
                 id: investmentId,
                 name: getInvesmentTypeById(investmentTypeId).name,
                 description
-            })
+            });
         });
         return listOfSI;
     };
@@ -205,9 +205,9 @@ const Invest = () => {
     };
     const [validInvestments, setValidInvestments] = useState(getValidInvestments);
     console.log(validInvestments);
-    console.log(validInvestments.map((item)=>{ return item._id}));
+    console.log(validInvestments.map((item)=>{ return item._id;}));
 
-    const [newInvestment, setNewInvestment] = useState({id: "", fixed: '', initial: '', final: '' });
+    const [newInvestment, setNewInvestment] = useState({id: "", fixed: "", initial: "", final: "" });
     const handleNewInvestmentChange = (field, value) => {
         setNewInvestment((prev) => {
             return { ...prev, [field]: value, };
@@ -215,13 +215,13 @@ const Invest = () => {
     };
 
     const handleAddInvestment = () => {
-        if (!newInvestment.id || (formValues.assetAllocation.type == "fixed" && newInvestment.fixed === '') 
-        || ( formValues.assetAllocation.type == "glidePath" && newInvestment.initial === '' && newInvestment.final === '')) {
+        if (!newInvestment.id || (formValues.assetAllocation.type == "fixed" && newInvestment.fixed === "") 
+        || ( formValues.assetAllocation.type == "glidePath" && newInvestment.initial === "" && newInvestment.final === "")) {
             alert("Please select an investment and enter a valid allocation percentage.");
             return;
         }
         setValidInvestments((prev) => prev.filter((item) => item._id !== newInvestment.id));
-        let newAllocation = {}
+        let newAllocation = {};
         if (formValues.assetAllocation.type == "fixed") {
             newAllocation = { ...formValues.assetAllocation.fixedPercentages, [newInvestment.id]: newInvestment.fixed };
             handleInputChange("assetAllocation.fixedPercentages", newAllocation);
@@ -243,7 +243,7 @@ const Invest = () => {
             name: getInvesmentTypeById(investmentTypeId).name,
             description
         }]);
-        setNewInvestment({ id: "", fixed: '', initial: '', final: ''})
+        setNewInvestment({ id: "", fixed: "", initial: "", final: ""});
     };
 
     const handleRemoveInvestment = (id) => {
@@ -257,7 +257,7 @@ const Invest = () => {
             const { [id]: discardFinal, ...updatedFinalAlloc } = formValues.assetAllocation.finalPercentages;
             handleInputChange("assetAllocation.finalPercentages", updatedFinalAlloc);
         }
-        setValidInvestments((prev) => [...prev, getInvestmentById(id)])
+        setValidInvestments((prev) => [...prev, getInvestmentById(id)]);
         setListOfSelectedInvestments((prevInvestments) => prevInvestments.filter((item) => item.id !== id));
     };    
      
@@ -292,10 +292,10 @@ const Invest = () => {
     };
 
     const handleSave = async () => {
-        if (eventEditMode.id == 'new') {
+        if (eventEditMode.id == "new") {
             // console.log("VV Sending to backend VV")
             // console.log(formValues);
-            let response = await axios.post('http://localhost:8080/investStrategy', formValues);
+            let response = await axios.post("http://localhost:8080/investStrategy", formValues);
             // console.log()
             let id = response.data._id;
 
@@ -322,17 +322,17 @@ const Invest = () => {
         } else {
             let response = await axios.post(`http://localhost:8080/updateInvestStrategy/${eventEditMode.id}`, formValues);
             setCurrInvest((prev) => {
-                let newList = prev.filter((item)=> item._id !== eventEditMode.id)
-                return [...newList, formValues]
+                let newList = prev.filter((item)=> item._id !== eventEditMode.id);
+                return [...newList, formValues];
             });
             // console.log(response);
         }
-    }
+    };
 
     return (
         <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Navbar currentPage={''} />
+        <Navbar currentPage={""} />
         <Container>
 
             {/* Stack for title and save button */}
@@ -349,7 +349,7 @@ const Invest = () => {
 
             <Box sx={rowBoxStyles}>
                 {/* First Column - Input Fields */}
-                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, width: 400 }}>
+                <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, width: 400 }}>
                     <CustomInput 
                         title="Event name" 
                         value={formValues.eventSeriesName} 
@@ -374,8 +374,8 @@ const Invest = () => {
                     <Stack direction="row" spacing={1} alignItems="start">
                         <CustomToggle
                             title="Start Year"
-                            labels={['Fixed', 'Normal', 'Uniform']}
-                            values={['fixedAmt', 'normal', 'uniform']}
+                            labels={["Fixed", "Normal", "Uniform"]}
+                            values={["fixedAmt", "normal", "uniform"]}
                             value={formValues.startYear.type}
                             setValue={(value) => handleInputChange("startYear.type", value)}
                         />
@@ -428,8 +428,8 @@ const Invest = () => {
                     <Stack direction="row" spacing={1} alignItems="start">
                         <CustomToggle
                             title="Duration"
-                            labels={['Fixed', 'Normal', 'Uniform']}
-                            values={['fixedAmt', 'normal', 'uniform']}
+                            labels={["Fixed", "Normal", "Uniform"]}
+                            values={["fixedAmt", "normal", "uniform"]}
                             width={100}
                             value={formValues.duration.type}
                             setValue={(value) => handleInputChange("duration.type", value)}
@@ -481,7 +481,7 @@ const Invest = () => {
                         )}
                     </Stack>
 
-                    <Typography variant="h6" sx={{ fontWeight: 'bold', marginTop: 2, marginBottom: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: "bold", marginTop: 2, marginBottom: 1 }}>
                         Add Asset Allocation
                     </Typography>
                     <Box sx={rowBoxStyles}>
@@ -489,8 +489,8 @@ const Invest = () => {
                             <CustomDropdown
                                 label="Investment Name"
                                 value={newInvestment.id}
-                                menuLabels={validInvestments.map((item)=>{ return getInvesmentTypeById(item.investmentType).name})}
-                                menuItems={validInvestments.map((item)=>{ return item._id})}
+                                menuLabels={validInvestments.map((item)=>{ return getInvesmentTypeById(item.investmentType).name;})}
+                                menuItems={validInvestments.map((item)=>{ return item._id;})}
                                 setValue={(value) => {
                                     handleNewInvestmentChange("id", value);
                                 }}
@@ -501,8 +501,8 @@ const Invest = () => {
                         <Box>
                             <CustomToggle
                                 title="Allocation Type"
-                                labels={['Glide Path', 'Fixed']}
-                                values={['glidePath', 'fixed']}
+                                labels={["Glide Path", "Fixed"]}
+                                values={["glidePath", "fixed"]}
                                 value={formValues.assetAllocation.type}
                                 setValue={(value) => handleInputChange("assetAllocation.type", value)}
                             />
@@ -550,7 +550,7 @@ const Invest = () => {
                         <Button 
                             variant="contained" 
                             color="primary"
-                            sx={{ fontSize: '1.1rem', textTransform: 'none' }}
+                            sx={{ fontSize: "1.1rem", textTransform: "none" }}
                             onClick={handleAddInvestment}
                         >
                             Add
@@ -559,8 +559,8 @@ const Invest = () => {
                 </Box>
 
                 {/* Second Column - Investment List */}
-                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Taxable</Typography>
+                <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                    <Typography variant="h5" sx={{ fontWeight: "bold" }}>Taxable</Typography>
                     <InvestList list={listOfSelectedInvestments} handleRemoveInvestment={handleRemoveInvestment}/>
                 </Box>
             </Box>

@@ -96,11 +96,11 @@ const InvestmentLists = () => {
         });
         setNewInvestment({ investmentType: "", accountTaxStatus: "", value: "" });
         
-        if (transformedInvestment.accountTaxStatus == 'pre-tax') {
-          appendToKey('rothConversionStrategy', transformedInvestment._id);
+        if (transformedInvestment.accountTaxStatus == "pre-tax") {
+          appendToKey("rothConversionStrategy", transformedInvestment._id);
         } else {
-          appendToKey('expenseWithdrawalStrategy', transformedInvestment._id);
-          appendToKey('rmdStrategy', transformedInvestment._id);
+          appendToKey("expenseWithdrawalStrategy", transformedInvestment._id);
+          appendToKey("rmdStrategy", transformedInvestment._id);
         }
         handleClose();
       } catch (error) {

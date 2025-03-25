@@ -1,19 +1,19 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme } from "@mui/material/styles";
 
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#000000',
+      main: "#000000",
     },
     secondary: {
-      main: '#00825B',
+      main: "#00825B",
     },
     success: {
-      main: '#00825B',
+      main: "#00825B",
     }
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: "\"Roboto\", \"Helvetica\", \"Arial\", sans-serif",
   },
 });
 

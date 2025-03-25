@@ -1,19 +1,19 @@
 import React, { useState, useContext, useEffect } from "react";
-import { ThemeProvider, CssBaseline, Container, Button, Stack, Box, Checkbox, Typography } from '@mui/material';
-import theme from '../../../components/theme';
-import Navbar from '../../../components/navbar';
-import PageHeader from '../../../components/pageHeader';
+import { ThemeProvider, CssBaseline, Container, Button, Stack, Box, Checkbox, Typography } from "@mui/material";
+import theme from "../../../components/theme";
+import Navbar from "../../../components/navbar";
+import PageHeader from "../../../components/pageHeader";
 import {
     backContinueContainerStyles,
     buttonStyles,
     rowBoxStyles,
-} from '../../../components/styles';
+} from "../../../components/styles";
 
-import CustomInput from '../../../components/customInputBox';
-import CustomToggle from '../../../components/customToggle';
+import CustomInput from "../../../components/customInputBox";
+import CustomToggle from "../../../components/customToggle";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
-import axios from 'axios';
+import axios from "axios";
 
 const Expense = () => {
     const {currExpense, setCurrExpense} = useContext(AppContext);
@@ -78,7 +78,7 @@ const Expense = () => {
 
     // console.log(indieExpense);
     const handleInputChange = (field, value) => {
-        const fieldParts = field.split('.'); // Split the field into parts (e.g., "lifeExpectancy.mean")
+        const fieldParts = field.split("."); // Split the field into parts (e.g., "lifeExpectancy.mean")
       
         setFormValues((prev) => {
           // Update the nested object
@@ -109,9 +109,9 @@ const Expense = () => {
         console.log("HANDLER");
         console.log(formValues);
         console.log(eventEditMode);
-        if (eventEditMode.id == 'new')
+        if (eventEditMode.id == "new")
         {
-            let response = await axios.post('http://localhost:8080/expenseEvent', formValues);
+            let response = await axios.post("http://localhost:8080/expenseEvent", formValues);
             let id = response.data._id;
 
             console.log(id);
@@ -141,25 +141,25 @@ const Expense = () => {
         {
             let response = await axios.post(`http://localhost:8080/updateExpense/${eventEditMode.id}`, formValues);
             setCurrExpense((prev) => {
-                let newList = prev.filter((item)=> item._id !== eventEditMode.id)
-                return [...newList, formValues]
+                let newList = prev.filter((item)=> item._id !== eventEditMode.id);
+                return [...newList, formValues];
               });
             console.log(response);
         }
-    }
+    };
 
     const navigate = useNavigate();
     
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <Navbar currentPage={''} />
+            <Navbar currentPage={""} />
             <Container>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ marginTop: 6, marginBottom: 2 }}>
-                    <Typography variant="h2" component="h1" sx={{ fontWeight: 'bold' }}>
+                    <Typography variant="h2" component="h1" sx={{ fontWeight: "bold" }}>
                         Expense
                     </Typography>
-                    <Button variant="contained" color="secondary" sx={{ fontSize: '1.25rem', textTransform: 'none' }} onClick={handleSave}>
+                    <Button variant="contained" color="secondary" sx={{ fontSize: "1.25rem", textTransform: "none" }} onClick={handleSave}>
                         Save
                     </Button>
                 </Stack>
@@ -194,8 +194,8 @@ const Expense = () => {
                                 {/* Toggle on Top */}
                                 <CustomToggle
                                     title="Duration"
-                                    labels = {['Fixed', 'Normal', 'Uniform']}
-                                    values={['fixedAmt', 'normal', 'uniform']}
+                                    labels = {["Fixed", "Normal", "Uniform"]}
+                                    values={["fixedAmt", "normal", "uniform"]}
                                     sideView={false}
                                     width={100}
                                     value={formValues.duration.type}//formValues.duration.type
@@ -208,7 +208,7 @@ const Expense = () => {
                                         <CustomInput 
                                             title="Value"
                                             type="number"
-                                            adornment={''}
+                                            adornment={""}
                                             value={formValues.duration.value} //formValues.duration.value
                                             setValue={(value) => handleInputChange("duration.value", value)}
                                         />
@@ -219,14 +219,14 @@ const Expense = () => {
                                             <CustomInput 
                                                 title="Mean"
                                                 type="number"
-                                                adornment={''}
+                                                adornment={""}
                                                 value={formValues.duration.mean}
                                                 setValue={(value) => handleInputChange("duration.mean", value)}
                                             />
                                             <CustomInput 
                                                 title="Standard Deviation"
                                                 type="number"
-                                                adornment={''}
+                                                adornment={""}
                                                 value={formValues.duration.stdDev}
                                                 setValue={(value) => handleInputChange("duration.stdDev", value)}
                                             />
@@ -238,14 +238,14 @@ const Expense = () => {
                                             <CustomInput 
                                                 title="Min"
                                                 type="number"
-                                                adornment={''}
+                                                adornment={""}
                                                 value={formValues.duration.min}
                                                 setValue={(value) => handleInputChange("duration.min", value)}
                                             />
                                             <CustomInput 
                                                 title="Max"
                                                 type="number"
-                                                adornment={''}
+                                                adornment={""}
                                                 value={formValues.duration.max}
                                                 setValue={(value) => handleInputChange("duration.max", value)}
                                             />
@@ -257,7 +257,7 @@ const Expense = () => {
                         </Stack>
                     </Box>
                     {/* Second Column */}
-                    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', width: 300 }}>
+                    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", width: 300 }}>
                         <CustomInput 
                             title="Initial Expense Amount"
                             type="number"
@@ -277,7 +277,7 @@ const Expense = () => {
                         </Stack>
 
                         <Stack direction="row" alignItems="center" spacing={2} sx={{ marginTop: 4, mb: 1 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 'medium', width: 150 }}>
+                            <Typography variant="body1" sx={{ fontWeight: "medium", width: 150 }}>
                                 Inflation Adjustment
                             </Typography>
                             <Checkbox checked={formValues.inflationAdjustment} 
@@ -288,7 +288,7 @@ const Expense = () => {
                         </Stack>
 
                         <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 'medium', width: 150 }}>
+                            <Typography variant="body1" sx={{ fontWeight: "medium", width: 150 }}>
                                Discretionary
                             </Typography>
                             <Checkbox checked={formValues.isDiscretionary} onChange={(value) => handleInputChange("isDiscretionary", value.target.checked)}/>
@@ -296,12 +296,12 @@ const Expense = () => {
                     </Box>
                     {/* Third Column */}
                     <Box sx={{ flex: 1 }}>
-                        <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'bold' }}>Expected Annual Change:</Typography>
+                        <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "bold" }}>Expected Annual Change:</Typography>
 
                         <CustomToggle
                             title="Distribution"
-                            labels = {['Fixed', 'Normal', 'Uniform']}
-                            values={['fixedAmt', 'normal', 'uniform']}
+                            labels = {["Fixed", "Normal", "Uniform"]}
+                            values={["fixedAmt", "normal", "uniform"]}
                             sideView={true}
                             width={100}
                             value={formValues.annualChange.distributionType}
@@ -310,8 +310,8 @@ const Expense = () => {
 
                         <CustomToggle
                             title="Rate/Unit"
-                            labels = {['Fixed', 'Percentage']}
-                            values={['fixed', 'percentage']}
+                            labels = {["Fixed", "Percentage"]}
+                            values={["fixed", "percentage"]}
                             sideView={true}
                             width={100}
                             value={formValues.annualChange.type}
@@ -322,7 +322,7 @@ const Expense = () => {
                             <CustomInput 
                                 title="Value"
                                 type="number"
-                                adornment={formValues.annualChange.type === 'percentage' ? '%' : '$'}
+                                adornment={formValues.annualChange.type === "percentage" ? "%" : "$"}
                                 value={formValues.annualChange.value}
                                 setValue={(value) => handleInputChange("annualChange.value", value)}
                             />
@@ -333,14 +333,14 @@ const Expense = () => {
                                 <CustomInput 
                                     title="Mean"
                                     type="number"
-                                    adornment={formValues.annualChange.type === 'percentage' ? '%' : '$'}
+                                    adornment={formValues.annualChange.type === "percentage" ? "%" : "$"}
                                     value={formValues.annualChange.mean}
                                     setValue={(value) => handleInputChange("annualChange.mean", value)}
                                 />
                                 <CustomInput 
                                     title="Standard Deviation"
                                     type="number"
-                                    adornment={formValues.annualChange.type === 'percentage' ? '%' : '$'}
+                                    adornment={formValues.annualChange.type === "percentage" ? "%" : "$"}
                                     value={formValues.annualChange.stdDev}
                                     setValue={(value) => handleInputChange("annualChange.stdDev", value)}
                                 />
@@ -352,14 +352,14 @@ const Expense = () => {
                                 <CustomInput 
                                     title="Min"
                                     type="number"
-                                    adornment={formValues.annualChange.type === 'percentage' ? '%' : '$'}
+                                    adornment={formValues.annualChange.type === "percentage" ? "%" : "$"}
                                     value={formValues.annualChange.min}
                                     setValue={(value) => handleInputChange("annualChange.min", value)}
                                 />
                                 <CustomInput 
                                     title="Max"
                                     type="number"
-                                    adornment={formValues.annualChange.type === 'percentage' ? '%' : '$'}
+                                    adornment={formValues.annualChange.type === "percentage" ? "%" : "$"}
                                     value={formValues.annualChange.max}
                                     setValue={(value) => handleInputChange("annualChange.type", value)}
                                 />

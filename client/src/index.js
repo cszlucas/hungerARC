@@ -1,27 +1,27 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+import React from "react";
+import ReactDOM from "react-dom/client";
 
-import Homepage from './pages/homepage';
-import Profile from './pages/profile';
-import Scenarios from './scenarios';
-import Login from './pages/login';
-import ScenarioList from './pages/scenario/scenarioList';
-import Basics from './pages/scenario/basics';
-import InvestmentLists from './pages/scenario/invesments/investmentLists';
-import EventSeries from './pages/scenario/events/eventSeries';
-import InvestmentType from './pages/scenario/invesments/investmentType';
-import Income from './pages/scenario/events/income';
-import Expense from './pages/scenario/events/expense';
-import Invest from './pages/scenario/events/invest';
-import Rebalance from './pages/scenario/events/rebalance';
-import RunSimulations from './pages/scenario/runSimulations';
-import Strategies from './pages/scenario/strategies';
+import Homepage from "./pages/homepage";
+import Profile from "./pages/profile";
+import Scenarios from "./scenarios";
+import Login from "./pages/login";
+import ScenarioList from "./pages/scenario/scenarioList";
+import Basics from "./pages/scenario/basics";
+import InvestmentLists from "./pages/scenario/invesments/investmentLists";
+import EventSeries from "./pages/scenario/events/eventSeries";
+import InvestmentType from "./pages/scenario/invesments/investmentType";
+import Income from "./pages/scenario/events/income";
+import Expense from "./pages/scenario/events/expense";
+import Invest from "./pages/scenario/events/invest";
+import Rebalance from "./pages/scenario/events/rebalance";
+import RunSimulations from "./pages/scenario/runSimulations";
+import Strategies from "./pages/scenario/strategies";
 
-import reportWebVitals from './reportWebVitals';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import reportWebVitals from "./reportWebVitals";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
-import { AuthProvider } from './context/authContext';
-import { AppProvider } from './context/appContext';
+import { AuthProvider } from "./context/authContext";
+import { AppProvider } from "./context/appContext";
 
 const router = createBrowserRouter([
   { path: "/", element: <Homepage />, },
@@ -47,7 +47,7 @@ const router = createBrowserRouter([
   },
 ]);
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
     <AuthProvider>
       <AppProvider>

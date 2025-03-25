@@ -123,7 +123,7 @@ const InvestmentType = () => {
       let response;
       console.log("here", finalFormValues);
 
-      response = await axios.post(`http://localhost:8080/investmentType`, finalFormValues);
+      response = await axios.post("http://localhost:8080/investmentType", finalFormValues);
       let id = response.data._id;
 
       handleInputChange("_id", id);

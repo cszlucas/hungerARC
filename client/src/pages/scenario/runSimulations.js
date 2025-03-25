@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Switch, MenuItem, TextField, IconButton, Backdrop, Fade } from '@mui/material';
-import theme from '../../components/theme';
-import Navbar from '../../components/navbar';
-import PageHeader from '../../components/pageHeader';
+import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Switch, MenuItem, TextField, IconButton, Backdrop, Fade } from "@mui/material";
+import theme from "../../components/theme";
+import Navbar from "../../components/navbar";
+import PageHeader from "../../components/pageHeader";
 import {
   stackStyles,
   titleStyles,
@@ -12,13 +12,13 @@ import {
   backContinueContainerStyles,
   buttonStyles,
   rowBoxStyles,
-} from '../../components/styles';  // Import your modular styles
-import CustomInput from '../../components/customInputBox';
-import { Close as CloseIcon } from '@mui/icons-material';
+} from "../../components/styles";  // Import your modular styles
+import CustomInput from "../../components/customInputBox";
+import { Close as CloseIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
 const EventSeries = () => {
-  const [numSimulations, setNumSimulations] = useState('1');
+  const [numSimulations, setNumSimulations] = useState("1");
   const [openBackdrop, setOpenBackdrop] = useState(false); // State to control backdrop visibility
   const [emails, setEmails] = useState([]); // Store the email addresses
   const [permission, setPermission] = useState([]);
@@ -35,9 +35,9 @@ const EventSeries = () => {
   };
 
   const handleEmailChange = (event) => {
-    if (event.key === 'Enter' && event.target.value) {
+    if (event.key === "Enter" && event.target.value) {
       setEmails([...emails, event.target.value]); // Add email to the list when Enter is pressed
-      event.target.value = ''; // Clear input field after adding email
+      event.target.value = ""; // Clear input field after adding email
     }
   };
 
@@ -48,7 +48,7 @@ const EventSeries = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Navbar currentPage={''} />
+      <Navbar currentPage={""} />
       <Container>
 
         {/* Stack for title and save button */}
@@ -106,7 +106,7 @@ const EventSeries = () => {
         {/* Stack for title and save button */}
         <Box sx={rowBoxStyles}>
           <Box>
-            <Typography variant="h5" sx={{fontWeight: 'bold', mb: 3}}>
+            <Typography variant="h5" sx={{fontWeight: "bold", mb: 3}}>
               Simulation
             </Typography>
             <CustomInput
@@ -134,9 +134,9 @@ const EventSeries = () => {
         <Backdrop
           sx={{
             zIndex: (theme) => theme.zIndex.drawer + 1,
-            display: openBackdrop ? 'flex' : 'none',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: openBackdrop ? "flex" : "none",
+            alignItems: "center",
+            justifyContent: "center",
           }}
           open={openBackdrop}
           onClick={handleBackdropClose} // Close backdrop on clicking outside
@@ -205,7 +205,7 @@ const EventSeries = () => {
                 ))}
               </Box>
               
-              <Button variant="contained" color="secondary" sx={{textTransform: 'none', fontSize: '1.05rem', mt: 2}}>
+              <Button variant="contained" color="secondary" sx={{textTransform: "none", fontSize: "1.05rem", mt: 2}}>
                 Click to share scenario
               </Button>
             </Box>

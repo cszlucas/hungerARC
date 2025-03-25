@@ -15,8 +15,8 @@ import {
   rowBoxStyles,
   stackStyles,
   titleStyles
-} from '../../components/styles';
-import axios from 'axios';
+} from "../../components/styles";
+import axios from "axios";
 
 
 const StrategyList = ({ title, list, setList, fieldName, setScenario, setScenarioData, currScenario, editMode }) => {
@@ -89,7 +89,7 @@ const Strategies = () => {
   };
 
   const handleCurrScenarioChange = (field, value) => {
-    const fieldParts = field.split('.'); // Split the field into parts (e.g., "lifeExpectancy.mean")
+    const fieldParts = field.split("."); // Split the field into parts (e.g., "lifeExpectancy.mean")
   
     setCurrScenario((prev) => {
       // Update the nested object
@@ -129,7 +129,7 @@ const Strategies = () => {
     let response = await axios.post(`http://localhost:8080/updateScenario/${editMode}`, formValues);
     setScenarioData(prev => prev.map(item => (item._id === editMode ? currScenario : item)));
     console.log(scenarioData);
-    console.log('Data successfully updated:', response.data);
+    console.log("Data successfully updated:", response.data);
   };
 
   const spendingStrategy = useMemo(() => {
@@ -225,8 +225,8 @@ const Strategies = () => {
                       type="number"
                       value={startYear}
                       setValue={(value)=>{ 
-                        setStartYear(value)
-                        handleCurrScenarioChange("optimizerSettings.startYear", value)
+                        setStartYear(value);
+                        handleCurrScenarioChange("optimizerSettings.startYear", value);
                       }}
                       inputProps={{ min: 0 }}
                     />
@@ -235,8 +235,8 @@ const Strategies = () => {
                       type="number"
                       value={endYear}
                       setValue={(value)=>{ 
-                        setEndYear(value)
-                        handleCurrScenarioChange("optimizerSettings.endYear", value)
+                        setEndYear(value);
+                        handleCurrScenarioChange("optimizerSettings.endYear", value);
                       }}
                       inputProps={{ min: 0 }}
                     />

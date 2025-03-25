@@ -1,20 +1,20 @@
 import React, { useState, useContext, useEffect } from "react";
-import { ThemeProvider, CssBaseline, Container, Button, Stack, Box, Checkbox, Typography } from '@mui/material';
-import theme from '../../../components/theme';
-import Navbar from '../../../components/navbar';
-import PageHeader from '../../../components/pageHeader';
+import { ThemeProvider, CssBaseline, Container, Button, Stack, Box, Checkbox, Typography } from "@mui/material";
+import theme from "../../../components/theme";
+import Navbar from "../../../components/navbar";
+import PageHeader from "../../../components/pageHeader";
 import {
     backContinueContainerStyles,
     buttonStyles,
     rowBoxStyles,
-} from '../../../components/styles';
+} from "../../../components/styles";
 
-import CustomInput from '../../../components/customInputBox';
-import CustomToggle from '../../../components/customToggle';
+import CustomInput from "../../../components/customInputBox";
+import CustomToggle from "../../../components/customToggle";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
 
-import axios from 'axios';
+import axios from "axios";
 
 const Income = () => {
     const {currIncome, setCurrIncome} = useContext(AppContext); // scenarios/:id/IncomeEvent
@@ -38,49 +38,49 @@ const Income = () => {
 
     // scenario has list of income 
     const [formValues, setFormValues] = useState(indieIncome ||  {
-        _id:'',
-        eventSeriesName: '',
-        description: '',
+        _id:"",
+        eventSeriesName: "",
+        description: "",
         startYear: {
-            type: 'fixedAmt',
-            value: '',
-            mean: '',
-            stdDev: '',
-            min: '',
-            max: '',
-            year: ''
+            type: "fixedAmt",
+            value: "",
+            mean: "",
+            stdDev: "",
+            min: "",
+            max: "",
+            year: ""
         },
         duration: {
-            type: '',
-            value: '',
-            mean: '',
-            stdDev: '',
-            min: '',
-            max: ''
+            type: "",
+            value: "",
+            mean: "",
+            stdDev: "",
+            min: "",
+            max: ""
         },
-        initialAmount: '',
+        initialAmount: "",
         annualChange: {
-            type:'',
-            amount:''
+            type:"",
+            amount:""
         },
-        userPercentage: '',
+        userPercentage: "",
         inflationAdjustment: false,
         isSocialSecurity: false
         // isSocialSecurity: false
     });
     
-    const [startYear, setStartYear] = useState('');
-    const [expectedChangeType, setExpectedChangeType] = useState('Fixed');
-    const [distributionType, setDistributionType] = useState('None');
-    const [changeMean, setChangeMean] = useState('');
-    const [changeVariance, setChangeVariance] = useState('');
-    const [changeMin, setChangeMin] = useState('');
-    const [changeMax, setChangeMax] = useState('');
+    const [startYear, setStartYear] = useState("");
+    const [expectedChangeType, setExpectedChangeType] = useState("Fixed");
+    const [distributionType, setDistributionType] = useState("None");
+    const [changeMean, setChangeMean] = useState("");
+    const [changeVariance, setChangeVariance] = useState("");
+    const [changeMin, setChangeMin] = useState("");
+    const [changeMax, setChangeMax] = useState("");
 
     const navigate = useNavigate();
 
     const handleInputChange = (field, value) => {
-        const fieldParts = field.split('.'); // Split the field into parts (e.g., "lifeExpectancy.mean")
+        const fieldParts = field.split("."); // Split the field into parts (e.g., "lifeExpectancy.mean")
       
         setFormValues((prev) => {
           // Update the nested object
@@ -111,7 +111,7 @@ const Income = () => {
         //   console.log("form valu: ",formValues);
           if (eventEditMode.id == "new"){
 
-            let response = await axios.post('http://localhost:8080/incomeEvent', formValues);
+            let response = await axios.post("http://localhost:8080/incomeEvent", formValues);
             let id = response.data._id;
 
             handleInputChange("_id", id);
@@ -133,20 +133,20 @@ const Income = () => {
 
             // console.log('Data successfully saved:', response.data);
           } else {
-            console.log("EVENT EDIT MODE ID: ", eventEditMode.id)
+            console.log("EVENT EDIT MODE ID: ", eventEditMode.id);
             let response = await axios.post(`http://localhost:8080/updateIncome/${eventEditMode.id}`, formValues);
             setCurrIncome((prev) => {
-              let newList = prev.filter((item)=> item._id !== eventEditMode.id)
-              return [...newList, formValues]
+              let newList = prev.filter((item)=> item._id !== eventEditMode.id);
+              return [...newList, formValues];
             });
             // console.log('Data successfully updated:', response.data);
           }
     
         //   alert('Save data');
         } catch (error) {
-          console.error('Error saving data:', error);
+          console.error("Error saving data:", error);
         //   setErrorBackdrop(true); 
-          alert('Failed to save data!');
+          alert("Failed to save data!");
         }
       };
 
@@ -174,13 +174,13 @@ const Income = () => {
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <Navbar currentPage={''} />
+            <Navbar currentPage={""} />
             <Container>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ marginTop: 6, marginBottom: 2 }}>
-                    <Typography variant="h2" component="h1" sx={{ fontWeight: 'bold' }}>
+                    <Typography variant="h2" component="h1" sx={{ fontWeight: "bold" }}>
                         Income
                     </Typography>
-                    <Button variant="contained" color="secondary" sx={{ fontSize: '1.25rem', textTransform: 'none' }}
+                    <Button variant="contained" color="secondary" sx={{ fontSize: "1.25rem", textTransform: "none" }}
                           onClick={() => {
                             handleSave();
                           }}
@@ -219,7 +219,7 @@ const Income = () => {
                                 {/* Toggle on Top */}
                                 <CustomToggle
                                     title="Duration"
-                                    values={['fixedAmt', 'Normal', 'Uniform']}
+                                    values={["fixedAmt", "Normal", "Uniform"]}
                                     sideView={false}
                                     width={100}
                                     value={formValues.duration.type}
@@ -232,7 +232,7 @@ const Income = () => {
                                         <CustomInput 
                                             title="Value"
                                             type="number"
-                                            adornment={expectedChangeType === 'Percentage' ? '' : ''}
+                                            adornment={expectedChangeType === "Percentage" ? "" : ""}
                                             value={formValues.duration.value}
                                             setValue={(value) => handleInputChange("duration.value", value)}
                                         />
@@ -243,14 +243,14 @@ const Income = () => {
                                             <CustomInput 
                                                 title="Mean"
                                                 type="number"
-                                                adornment={expectedChangeType === 'Percentage' ? '' : ''}
+                                                adornment={expectedChangeType === "Percentage" ? "" : ""}
                                                 value={formValues.duration.mean}
                                                 setValue={(value) => handleInputChange("duration.mean", value)}
                                             />
                                             <CustomInput 
                                                 title="Variance"
                                                 type="number"
-                                                adornment={expectedChangeType === 'Percentage' ? '' : ''}
+                                                adornment={expectedChangeType === "Percentage" ? "" : ""}
                                                 value={formValues.duration.stdDev}
                                                 setValue={(value) => handleInputChange("duration.stdDev", value)}
                                             />
@@ -262,14 +262,14 @@ const Income = () => {
                                             <CustomInput 
                                                 title="Min"
                                                 type="number"
-                                                adornment={expectedChangeType === 'Percentage' ? '' : ''}
+                                                adornment={expectedChangeType === "Percentage" ? "" : ""}
                                                 value={formValues.duration.min}
                                                 setValue={(value) => handleInputChange("duration.min", value)}
                                             />
                                             <CustomInput 
                                                 title="Max"
                                                 type="number"
-                                                adornment={expectedChangeType === 'Percentage' ? '' : ''}
+                                                adornment={expectedChangeType === "Percentage" ? "" : ""}
                                                 value={formValues.duration.max}
                                                 setValue={(value) => handleInputChange("duration.max", value)}
                                             />
@@ -281,7 +281,7 @@ const Income = () => {
                         </Stack>
                     </Box>
                     {/* Second Column */}
-                    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', width: 300 }}>
+                    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", width: 300 }}>
                         <CustomInput 
                             title="Initial Income Amount"
                             type="number"
@@ -308,7 +308,7 @@ const Income = () => {
                         </Stack>
 
                         <Stack direction="row" alignItems="center" spacing={2} sx={{ marginTop: 4, mb: 2 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                            <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                                 Inflation Adjustment
                             </Typography>
                             <Checkbox 
@@ -326,7 +326,7 @@ const Income = () => {
                             setValue={(value) => handleInputChange("isSocialSecurity", value)}
                         /> */}
                        <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 'medium', width: 150 }}>
+                            <Typography variant="body1" sx={{ fontWeight: "medium", width: 150 }}>
                                Social Security
                             </Typography>
                             <Checkbox checked={formValues.isSocialSecurity || false}  
@@ -337,11 +337,11 @@ const Income = () => {
                     </Box>
                     {/* Third Column */}
                     <Box sx={{ flex: 1 }}>
-                        <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'bold' }}>Expected Annual Change:</Typography>
+                        <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "bold" }}>Expected Annual Change:</Typography>
 
                         <CustomToggle
                             title="Distribution"
-                            values={['None', 'Normal', 'Uniform']}
+                            values={["None", "Normal", "Uniform"]}
                             sideView={true}
                             width={100}
                             value={distributionType}
@@ -350,7 +350,7 @@ const Income = () => {
 
                         <CustomToggle
                             title="Rate/Unit"
-                            values={['fixed', 'percentage']}
+                            values={["fixed", "percentage"]}
                             sideView={true}
                             width={100}
                             value={formValues.annualChange.type}
@@ -361,7 +361,7 @@ const Income = () => {
                             <CustomInput 
                                 title="Value"
                                 type="number"
-                                adornment={expectedChangeType === 'Percentage' ? '%' : '$'}
+                                adornment={expectedChangeType === "Percentage" ? "%" : "$"}
                                 value={formValues.annualChange.amount}
                                 setValue={(value) => handleInputChange("annualChange.amount", value)}
                             />
@@ -372,14 +372,14 @@ const Income = () => {
                                 <CustomInput 
                                     title="Mean"
                                     type="number"
-                                    adornment={expectedChangeType === 'Percentage' ? '%' : '$'}
+                                    adornment={expectedChangeType === "Percentage" ? "%" : "$"}
                                     value={changeMean}
                                     setValue={setChangeMean}
                                 />
                                 <CustomInput 
                                     title="Variance"
                                     type="number"
-                                    adornment={expectedChangeType === 'Percentage' ? '%' : '$'}
+                                    adornment={expectedChangeType === "Percentage" ? "%" : "$"}
                                     value={changeVariance}
                                     setValue={setChangeVariance}
                                 />
@@ -391,14 +391,14 @@ const Income = () => {
                                 <CustomInput 
                                     title="Min"
                                     type="number"
-                                    adornment={expectedChangeType === 'Percentage' ? '%' : '$'}
+                                    adornment={expectedChangeType === "Percentage" ? "%" : "$"}
                                     value={changeMin}
                                     setValue={setChangeMin}
                                 />
                                 <CustomInput 
                                     title="Max"
                                     type="number"
-                                    adornment={expectedChangeType === 'Percentage' ? '%' : '$'}
+                                    adornment={expectedChangeType === "Percentage" ? "%" : "$"}
                                     value={changeMax}
                                     setValue={setChangeMax}
                                 />

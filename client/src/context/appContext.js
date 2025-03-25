@@ -99,32 +99,32 @@ const defaultInfo = {
   "spendingStrategy": [],
   "__v": 0,
   "_id": ""
-}
+};
 
 function transformScenario(input) {
   return {
       // Scenario basic Info
       id: input._id,
-      name: input.name || '',
-      person: 'Myself',
-      financialGoal: input.financialGoal || '',
-      residence: input.stateResident || '',
-      birthYear: input.birthYearUser || '',
-      lifeExpectancy: input.lifeExpectancy?.fixedAge || '',
-      spouseBirthYear: '', // Not present in input
-      spouseLifeExpectancy: '', // Not present in input
-      yourSampleAge: 'fixed',
-      spouseSampleAge: 'fixed',
-      yourMean: '',
-      yourStdDev: '',
-      spouseMean: '',
-      spouseStdDev: '',
-      inflationType: input.inflationAssumption?.type || 'none',
-      inflationValue: input.inflationAssumption?.fixedRate || '',
-      inflationMean: '',
-      inflationStdDev: '',
-      inflationMin: '',
-      inflationMax: '',
+      name: input.name || "",
+      person: "Myself",
+      financialGoal: input.financialGoal || "",
+      residence: input.stateResident || "",
+      birthYear: input.birthYearUser || "",
+      lifeExpectancy: input.lifeExpectancy?.fixedAge || "",
+      spouseBirthYear: "", // Not present in input
+      spouseLifeExpectancy: "", // Not present in input
+      yourSampleAge: "fixed",
+      spouseSampleAge: "fixed",
+      yourMean: "",
+      yourStdDev: "",
+      spouseMean: "",
+      spouseStdDev: "",
+      inflationType: input.inflationAssumption?.type || "none",
+      inflationValue: input.inflationAssumption?.fixedRate || "",
+      inflationMean: "",
+      inflationStdDev: "",
+      inflationMin: "",
+      inflationMax: "",
 
       // Investment lists
       investments: input.setOfInvestments || [],
@@ -144,8 +144,8 @@ function transformScenario(input) {
 
       // Roth conversion optimizer
       isRothOptimizer: input.optimizerSettings?.enabled || false,
-      startYear: input.optimizerSettings?.startYear || '',
-      endYear: input.optimizerSettings?.endYear || ''
+      startYear: input.optimizerSettings?.startYear || "",
+      endYear: input.optimizerSettings?.endYear || ""
   };
 }
 
@@ -193,7 +193,7 @@ export const getInitialState = async (user) => {
 const readStateFromLS = (key_value) => {
   const storedState = localStorage.getItem(key_value);
   return storedState ? JSON.parse(storedState) : null;
-}
+};
 
 const retrieveScenarioData = async (scenarioId, dataType) => {
   try {
@@ -220,12 +220,12 @@ const capitalizeFirstLetter = (string) => string.charAt(0).toUpperCase() + strin
 
 // Context Provider Component
 export const AppProvider = ({ children }) => {
-  const [scenarioData, setScenarioData] = useState(readStateFromLS('scenarioData'));
-  const [editMode, setEditMode] = useState(readStateFromLS('edit'));
-  const [eventEditMode, setEventEditMode] = useState(readStateFromLS('editEvent')); // this will contain a tuple ex: (income, {some random id})
+  const [scenarioData, setScenarioData] = useState(readStateFromLS("scenarioData"));
+  const [editMode, setEditMode] = useState(readStateFromLS("edit"));
+  const [eventEditMode, setEventEditMode] = useState(readStateFromLS("editEvent")); // this will contain a tuple ex: (income, {some random id})
   
   //individual events
-  const [currScenario, setCurrScenario] = useState(readStateFromLS('currentScenario'));
+  const [currScenario, setCurrScenario] = useState(readStateFromLS("currentScenario"));
   // const [indieInvest, setIndieInvest] = useState(readStateFromLS('indieInvest'));
   // const [indieIncome, setIndieIncome] = useState(readStateFromLS('indieIncome'));
   // const [indieExpense, setIndieExpense] = useState(readStateFromLS('indieExpense'));
@@ -233,13 +233,13 @@ export const AppProvider = ({ children }) => {
   const { user } = useContext(AuthContext);
 
   //all stuff:
-  console.log('reading from local storage for event series!!!');
-  const [currInvestments, setCurrInvestments] = useState(readStateFromLS('currentInvestments'));
-  const [currIncome, setCurrIncome] = useState(readStateFromLS('currentIncome'));  // incomeEvents[],    // income event series
-  const [currExpense, setCurrExpense] = useState(readStateFromLS('currentExpense'));   // expenseEvents[],   // expense event series
-  const [currInvest, setCurrInvest] = useState(readStateFromLS('currentInvest'));  // investEvents[],    // invest event series
-  const [currRebalance, setCurrRebalance] = useState(readStateFromLS('currentRebalance'));   // rebalanceEvents[], // rebalance event series
-  const [currInvestmentTypes, setCurrInvestmentTypes] = useState(readStateFromLS('currentInvestmentType'));
+  console.log("reading from local storage for event series!!!");
+  const [currInvestments, setCurrInvestments] = useState(readStateFromLS("currentInvestments"));
+  const [currIncome, setCurrIncome] = useState(readStateFromLS("currentIncome"));  // incomeEvents[],    // income event series
+  const [currExpense, setCurrExpense] = useState(readStateFromLS("currentExpense"));   // expenseEvents[],   // expense event series
+  const [currInvest, setCurrInvest] = useState(readStateFromLS("currentInvest"));  // investEvents[],    // invest event series
+  const [currRebalance, setCurrRebalance] = useState(readStateFromLS("currentRebalance"));   // rebalanceEvents[], // rebalance event series
+  const [currInvestmentTypes, setCurrInvestmentTypes] = useState(readStateFromLS("currentInvestmentType"));
 
   // console.log(transformScenario(initialState[0]));
   

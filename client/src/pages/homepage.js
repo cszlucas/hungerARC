@@ -1,10 +1,10 @@
 // App.js
 import React, { useContext } from "react";
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import theme from '../components/theme';
-import Navbar from '../components/navbar';
-import { Container } from '@mui/material';
-import { AuthContext } from '../context/authContext';
+import { ThemeProvider, CssBaseline } from "@mui/material";
+import theme from "../components/theme";
+import Navbar from "../components/navbar";
+import { Container } from "@mui/material";
+import { AuthContext } from "../context/authContext";
 
 function extractPrefix(email) {
     let match = email.match(/^[a-zA-Z0-9]+/);
@@ -21,8 +21,8 @@ function DisplayUser({ user }) {
 const Homepage = () => {
     // const { user } = useContext(AuthContext); // If AuthContext is undefined, this throws an error
     // console.log(localStorage.user);
-    let user = null
-    const userString = localStorage.getItem('user');
+    let user = null;
+    const userString = localStorage.getItem("user");
     if (userString) {
         user = JSON.parse(userString); // Convert string to object
         console.log("Parsed User:", user);
@@ -35,7 +35,7 @@ const Homepage = () => {
     return (
         <ThemeProvider theme={theme}>
         <CssBaseline /> {/* Applies global styles based on the theme */}
-        <Navbar currentPage={'homepage'}/>
+        <Navbar currentPage={"homepage"}/>
         <Container>
         <div>
             {/* Your page content goes here */}

@@ -1,10 +1,10 @@
-import React from 'react';
-import { Box, ToggleButtonGroup, ToggleButton, Typography } from '@mui/material';
-import { toggleButtonGroupStyles } from './styles';
+import React from "react";
+import { Box, ToggleButtonGroup, ToggleButton, Typography } from "@mui/material";
+import { toggleButtonGroupStyles } from "./styles";
 
 const CustomToggle = ({ title, labels = [], values=[], sideView=false, width, value, setValue }) => {
     if (labels == [] || labels.length != values.length) {
-        labels = values
+        labels = values;
     }
 
     const handleChange = (event) => {
@@ -12,15 +12,15 @@ const CustomToggle = ({ title, labels = [], values=[], sideView=false, width, va
     };
 
     const capitalizeFirstLetter = (str) => {
-        if (!str) return '';  // Handle empty or null strings
+        if (!str) return "";  // Handle empty or null strings
         return str.charAt(0).toUpperCase() + str.slice(1);
     };
 
     return (<>
         
             {sideView ? (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginTop: 2, marginBottom: 3 }}>
-                    <Box width={width || '100px'}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2, marginTop: 2, marginBottom: 3 }}>
+                    <Box width={width || "100px"}>
                         <Typography>{title}</Typography>
                     </Box>
                     <Box>
@@ -39,8 +39,8 @@ const CustomToggle = ({ title, labels = [], values=[], sideView=false, width, va
                     </Box>
                 </Box>
             ) : (
-                <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-                    <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
+                <Box sx={{ display: "inline-flex", flexDirection: "column", width: "auto" }}>
+                    <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium" }}>
                         {title}
                     </Typography>
                     <Box>

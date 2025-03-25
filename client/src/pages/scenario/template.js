@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, ToggleButton, ToggleButtonGroup, MenuItem } from '@mui/material';
-import theme from '../../../components/theme';
-import Navbar from '../../../components/navbar';
-import PageHeader from '../../../components/pageHeader';
+import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, ToggleButton, ToggleButtonGroup, MenuItem } from "@mui/material";
+import theme from "../../../components/theme";
+import Navbar from "../../../components/navbar";
+import PageHeader from "../../../components/pageHeader";
 import {
   stackStyles,
   titleStyles,
@@ -12,11 +12,11 @@ import {
   backContinueContainerStyles,
   buttonStyles,
   rowBoxStyles,
-} from '../../../components/styles';  // Import your modular styles
+} from "../../../components/styles";  // Import your modular styles
 
 const EventSeries = () => {
-  const [toggleType, setToggleType] = useState('Toggle A');
-  const [value, setValue] = useState('');
+  const [toggleType, setToggleType] = useState("Toggle A");
+  const [value, setValue] = useState("");
 
   const handleToggleChange = (event, newToggleType) => {
     if (newToggleType !== null) {
@@ -31,7 +31,7 @@ const EventSeries = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Navbar currentPage={''} />
+      <Navbar currentPage={""} />
       <Container>
 
         {/* Stack for title and save button */}
@@ -47,14 +47,14 @@ const EventSeries = () => {
         <PageHeader />
 
         {/* Row 3 - Inflation Assumptions */}
-        <Typography variant="h6" sx={{ fontWeight: 'bold', marginTop: 4, marginBottom: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: "bold", marginTop: 4, marginBottom: 2 }}>
           Subtitle Text Here
         </Typography>
 
         <Box sx={rowBoxStyles}>
           {/* Distribution Type */}
-          <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-            <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
+          <Box sx={{ display: "inline-flex", flexDirection: "column", width: "auto" }}>
+            <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium" }}>
               Toggle Type
             </Typography>
 
@@ -78,9 +78,9 @@ const EventSeries = () => {
           </Box>
 
           {/* Inflation Value (Conditional) */}
-          {toggleType === 'Toggle A' && (
-            <Box sx={{ display: 'inline-flex', flexDirection: 'column', width: 'auto' }}>
-              <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: 'medium' }}>
+          {toggleType === "Toggle A" && (
+            <Box sx={{ display: "inline-flex", flexDirection: "column", width: "auto" }}>
+              <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium" }}>
                 Temp Value
               </Typography>
 

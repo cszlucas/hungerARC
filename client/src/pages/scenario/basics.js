@@ -1,18 +1,18 @@
 import React, { useState, useContext } from "react";
-import axios from 'axios';
+import axios from "axios";
 import {
   ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Backdrop, Fade, Paper
-} from '@mui/material';
-import theme from '../../components/theme';
-import Navbar from '../../components/navbar';
-import PageHeader from '../../components/pageHeader';
+} from "@mui/material";
+import theme from "../../components/theme";
+import Navbar from "../../components/navbar";
+import PageHeader from "../../components/pageHeader";
 import {
   stackStyles, titleStyles, textFieldStyles, backContinueContainerStyles, buttonStyles, rowBoxStyles,
-} from '../../components/styles';
+} from "../../components/styles";
 
-import CustomInput from '../../components/customInputBox';
-import CustomToggle from '../../components/customToggle';
-import CustomDropdown from '../../components/customDropDown';
+import CustomInput from "../../components/customInputBox";
+import CustomToggle from "../../components/customToggle";
+import CustomDropdown from "../../components/customDropDown";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../context/appContext";
 
@@ -31,26 +31,26 @@ const Basics = () => {
   const {editMode, setEditMode} = useContext(AppContext);
   // console.log(currScenario);
   const [formValues, setFormValues] = useState(currScenario || {
-    _id: '',
-    name: '',
-    filingStatus: 'single',
-    financialGoal: '',
+    _id: "",
+    name: "",
+    filingStatus: "single",
+    financialGoal: "",
     inflationAssumption: {
-      type:'',
-      fixedRate: '',
-      mean: '',
-      stdDev: '',
-      min: '',
-      max: '',
+      type:"",
+      fixedRate: "",
+      mean: "",
+      stdDev: "",
+      min: "",
+      max: "",
     },
-    birthYearUser: '',
+    birthYearUser: "",
     lifeExpectancy: {
-      type: '',
-      fixedAge: '',
-      mean: '',
-      stdDev: '',
+      type: "",
+      fixedAge: "",
+      mean: "",
+      stdDev: "",
     },
-    stateResident: '',
+    stateResident: "",
   });
 
   const [showBackdrop, setShowBackdrop] = useState(false);
@@ -59,7 +59,7 @@ const Basics = () => {
 
   // Unified handle input change function
   const handleInputChange = (field, value) => {
-    const fieldParts = field.split('.'); // Split the field into parts (e.g., "lifeExpectancy.mean")
+    const fieldParts = field.split("."); // Split the field into parts (e.g., "lifeExpectancy.mean")
   
     setFormValues((prev) => {
       // Update the nested object
@@ -111,30 +111,30 @@ const Basics = () => {
       console.log("editMode: ", editMode);
       console.log(formValues._id);
       if (editMode == "new"){
-        let response = await axios.post('http://localhost:8080/basicInfo', formValues);
+        let response = await axios.post("http://localhost:8080/basicInfo", formValues);
         let id = response.data._id;
 
         handleInputChange("_id", id);
         setCurrScenario(formValues);
         setScenarioData((prev)=> [...prev, formValues]);
         
-        console.log('Data successfully saved:', response.data);
+        console.log("Data successfully saved:", response.data);
         setEditMode(id);
       } else {
         let response = await axios.post(`http://localhost:8080/updateScenario/${editMode}`, formValues);
         setCurrScenario(formValues);
         setScenarioData((prev) => {
-          let newList = prev.filter((item)=> item._id !== editMode)
-          return [...newList, formValues]
+          let newList = prev.filter((item)=> item._id !== editMode);
+          return [...newList, formValues];
         });
-        console.log('Data successfully updated:', response.data);
+        console.log("Data successfully updated:", response.data);
       }
 
-      alert('Save data');
+      alert("Save data");
     } catch (error) {
-      console.error('Error saving data:', error);
+      console.error("Error saving data:", error);
       setErrorBackdrop(true); 
-      alert('Failed to save data!');
+      alert("Failed to save data!");
     }
   };
 
@@ -142,7 +142,7 @@ const Basics = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Navbar currentPage={''} />
+      <Navbar currentPage={""} />
       <Container>
 
         {/* Stack for title and save button */}
@@ -189,7 +189,7 @@ const Basics = () => {
 
           <CustomToggle
             title="Is the scenario for yourself or with your spouse?"
-            values={['single', 'married']}
+            values={["single", "married"]}
             sideView={false}
             width={100}
             value={formValues.filingStatus}
@@ -208,14 +208,14 @@ const Basics = () => {
 
           <CustomToggle
             title="Your age type"
-            values={['fixed', 'normal']}
+            values={["fixed", "normal"]}
             sideView={false}
             width={100}
             value={formValues.lifeExpectancy.type}
             setValue={(value) => handleInputChange("lifeExpectancy.type", value)}
           />
 
-          {formValues.lifeExpectancy.type === 'fixed' ? (
+          {formValues.lifeExpectancy.type === "fixed" ? (
             <CustomInput
               title="Your Life Expectancy"
               type="number"
@@ -241,7 +241,7 @@ const Basics = () => {
         </Box>
 
         {/* Spouse Row */}
-        {formValues.filingStatus === 'married' && (
+        {formValues.filingStatus === "married" && (
           <Box sx={rowBoxStyles}>
             <CustomInput
               title="Spouse's Birth Year"
@@ -252,14 +252,14 @@ const Basics = () => {
 
             <CustomToggle
               title="Spouse age type"
-              values={['fixed', 'normal']}
+              values={["fixed", "normal"]}
               sideView={false}
               width={100}
               value={formValues.spouseSampleAge}
               setValue={(value) => handleInputChange("spouseSampleAge", value)}
             />
 
-            {formValues.spouseSampleAge === 'fixed' ? (
+            {formValues.spouseSampleAge === "fixed" ? (
               <CustomInput
                 title="Spouse's Life Expectancy"
                 type="number"
@@ -286,14 +286,14 @@ const Basics = () => {
         )}
         
         {/* Row 4 - Inflation Assumptions */}
-        <Typography variant="h6" sx={{ fontWeight: 'bold', marginTop: 4, marginBottom: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: "bold", marginTop: 4, marginBottom: 2 }}>
           Inflation Assumptions
         </Typography>
 
         <Box sx={rowBoxStyles}>
           <CustomToggle
               title="Distribution"
-              values={['fixed', 'uniform', 'normal']}
+              values={["fixed", "uniform", "normal"]}
               sideView={false}
               width={100}
               value={formValues.inflationAssumption.type}
@@ -301,7 +301,7 @@ const Basics = () => {
           />
 
           {/* Inflation Value (Conditional) */}
-          {formValues.inflationAssumption.type === 'fixed' && (
+          {formValues.inflationAssumption.type === "fixed" && (
             <CustomInput 
                 title="Value"
                 type="number"
@@ -310,7 +310,7 @@ const Basics = () => {
                 setValue={(value) => handleInputChange("inflationAssumption.fixedRate", value)}
             />
           )}
-          {formValues.inflationAssumption.type === 'uniform' && (
+          {formValues.inflationAssumption.type === "uniform" && (
             <>
               <CustomInput 
                   title="Min"
@@ -328,7 +328,7 @@ const Basics = () => {
               />
             </>
           )}
-          {formValues.inflationAssumption.type === 'normal' && (
+          {formValues.inflationAssumption.type === "normal" && (
             <>
               <CustomInput 
                   title="Mean"
@@ -356,7 +356,7 @@ const Basics = () => {
           <Button variant="contained" color="success" sx={buttonStyles} 
             onClick={() => {
               setCurrScenario(formValues);
-              navigate("/scenario/investment_lists")
+              navigate("/scenario/investment_lists");
             }}
           >
             Continue
@@ -374,13 +374,13 @@ const Basics = () => {
               elevation={3} 
               sx={{
                 padding: 4,
-                width: '400px',
-                backgroundColor: 'white',
+                width: "400px",
+                backgroundColor: "white",
                 borderRadius: 2,
-                textAlign: 'center'
+                textAlign: "center"
               }}
             >
-              <Typography variant="h5" sx={{fontWeight: 'bold'}} gutterBottom>
+              <Typography variant="h5" sx={{fontWeight: "bold"}} gutterBottom>
                 Do you want to save your changes?
               </Typography>
 
@@ -417,13 +417,13 @@ const Basics = () => {
               elevation={4} 
               sx={{
                 padding: 4,
-                width: '350px',
-                backgroundColor: 'white',
+                width: "350px",
+                backgroundColor: "white",
                 borderRadius: 2,
-                textAlign: 'center'
+                textAlign: "center"
               }}
             >
-              <Typography variant="h5" color="error" sx={{fontWeight: 'bold'}}>
+              <Typography variant="h5" color="error" sx={{fontWeight: "bold"}}>
                 Please enter a scenario name before saving.
               </Typography>
             </Paper>

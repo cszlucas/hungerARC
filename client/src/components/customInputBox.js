@@ -21,7 +21,7 @@ const CustomInput = ({
     const getAdornment = () => {
         if (adornment === "none") return null;
         return (
-            <InputAdornment position={adornment === '%' ? "end" : "start"}>
+            <InputAdornment position={adornment === "%" ? "end" : "start"}>
                 {adornment}
             </InputAdornment>
         );

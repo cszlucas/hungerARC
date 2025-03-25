@@ -1,9 +1,9 @@
 import React, { useContext, useState } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, List, ListItem, ListItemText, IconButton, Box, Button } from '@mui/material';
-import { AuthContext } from '../context/authContext';
-import DeleteIcon from '@mui/icons-material/Delete';
-import theme from '../components/theme';
-import Navbar from '../components/navbar';
+import { ThemeProvider, CssBaseline, Container, Typography, List, ListItem, ListItemText, IconButton, Box, Button } from "@mui/material";
+import { AuthContext } from "../context/authContext";
+import DeleteIcon from "@mui/icons-material/Delete";
+import theme from "../components/theme";
+import Navbar from "../components/navbar";
 
 function extractPrefix(email) {
     let match = email.match(/^[a-zA-Z0-9]+/);
@@ -22,9 +22,9 @@ const Profile = () => {
     const [file, setFile] = useState(null); 
 
     const stateTaxes = {
-        'New_York_Tax': { 'date': new Date(2025, 2, 20) },
-        'New_Jersery_Tax': { 'date': new Date(2025, 2, 19) },
-        'Texas_Tax': { 'date': new Date(2025, 2, 18) },
+        "New_York_Tax": { "date": new Date(2025, 2, 20) },
+        "New_Jersery_Tax": { "date": new Date(2025, 2, 19) },
+        "Texas_Tax": { "date": new Date(2025, 2, 18) },
     };
 
     const handleSelectState = (taxKey) => {
@@ -63,7 +63,7 @@ const Profile = () => {
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <Navbar currentPage={'homepage'} />
+            <Navbar currentPage={"homepage"} />
             <Container>
                 <DisplayUserName user={user} />
                 <Typography 
@@ -76,7 +76,7 @@ const Profile = () => {
                 </Typography>
 
                 {/* File Upload Section */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 5 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 5 }}>
                     <input type="file" accept=".yaml,.yml" onChange={handleFileChange} />
                     <Button 
                         color="secondary"
@@ -93,27 +93,27 @@ const Profile = () => {
                     </Button>
                 </Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", marginBottom: 1 }}>
                     <Typography variant="h6" component="h5" sx={{ marginRight: 2 }}>
                         Uploaded YAMLs:
                     </Typography>
                 </Box>
 
-                <Box sx={{ width: '45%' }}>
+                <Box sx={{ width: "45%" }}>
                     <List>
                         {Object.entries(stateTaxes).map(([key, value], index) => (
                             <ListItem 
                                 key={key} 
                                 sx={{
-                                    backgroundColor: selectedStateTax === key ? '#A2E7D2' : (index % 2 === 0 ? '#BBBBBB' : '#D9D9D9'),
-                                    '&:hover': {
-                                        backgroundColor: selectedStateTax !== key ? '#B0B0B0' : '#A2E7D2',
+                                    backgroundColor: selectedStateTax === key ? "#A2E7D2" : (index % 2 === 0 ? "#BBBBBB" : "#D9D9D9"),
+                                    "&:hover": {
+                                        backgroundColor: selectedStateTax !== key ? "#B0B0B0" : "#A2E7D2",
                                     },
                                 }}
                                 onClick={() => handleSelectState(key)}
                             >
                                 <ListItemText
-                                    primary={<span style={{ fontWeight: 'bold' }}>{key}</span>}
+                                    primary={<span style={{ fontWeight: "bold" }}>{key}</span>}
                                     secondary={`Date: ${value.date.toDateString()}`}
                                 />
                                 <IconButton 
