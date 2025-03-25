@@ -7,8 +7,7 @@ var BaseEventSchema = new Schema({
   startYear: {
     type: {
       type: String,
-      enum: ["fixedAmt", "normal", "uniform", "year"],
-      required: true,
+      // enum: ["fixedAmt", "normal", "uniform", "year"],
     },
     value: { type: Number },
     mean: { type: Number },
@@ -20,8 +19,7 @@ var BaseEventSchema = new Schema({
   duration: {
     type: {
       type: String,
-      enum: ["fixedAmt", "normal", "uniform"],
-      required: true,
+      // enum: ["fixedAmt", "normal", "uniform"],
     },
     value: { type: Number },
     mean: { type: Number },
@@ -34,19 +32,17 @@ var BaseEventSchema = new Schema({
 var AnnualChange = new Schema({
     type: {
       type: String,
-      enum: ["fixed", "percentage"], // Example valid values
-      required: true,
+      // enum: ["fixed", "percentage"], // Example valid values
     },
     amount: {
       type: Number,
-      required: true,
     },
   });
   
 
 var IncomeEventSchema = new Schema({
   ...BaseEventSchema.obj,
-  initialAmount: { type: Number, required: true },
+  initialAmount: { type: Number },
   annualChange: { type: AnnualChange },
   userPercentage: { type: Number },
   inflationAdjustment: { type: Boolean },
@@ -56,7 +52,7 @@ var IncomeEventSchema = new Schema({
 
 var ExpenseEventSchema = new Schema({
   ...BaseEventSchema.obj,
-  initialAmount: { type: Number, required: true },
+  initialAmount: { type: Number },
   annualChange: { type: AnnualChange },
   userPercentage: { type: Number },
   inflationAdjustment: { type: Boolean },
@@ -64,7 +60,7 @@ var ExpenseEventSchema = new Schema({
 });
 
 var AssetAllocationSchema = new Schema({
-  type: { type: String, enum: ["fixed", "glidePath"], required: true },
+  type: { type: String, enum: ["fixed", "glidePath"] },
   fixedPercentages: { type: Map, of: Number }, // eg: { 'objectIdBondInvestment': 30, 'objectIdStockInvestment': 70 }
   initialPercentages: { type: Map, of: Number }, // glidePath
   finalPercentages: { type: Map, of: Number }, // glidePath

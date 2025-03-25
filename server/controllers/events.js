@@ -6,7 +6,20 @@ const Scenario = require("../models/scenario.js");
 //INCOME EVENTS
 exports.incomeEvent = async (req, res) => {
   try {
-    const { eventSeriesName, description, startYear, duration, initialAmount, annualChange, userPercentage, inflationAdjustment, isSocialSecurity, baseEventSeries } = req.body;
+    // const { eventSeriesName, description, startYear, duration, initialAmount, annualChange, userPercentage, inflationAdjustment, isSocialSecurity, baseEventSeries } = req.body;
+
+    const {
+      eventSeriesName,  
+      description = "", 
+      startYear = {},   
+      duration = {},  
+      initialAmount = 0, 
+      annualChange = { type: 'None', amount: 0 },
+      userPercentage = 0, 
+      inflationAdjustment = false, 
+      isSocialSecurity = false,
+      scenarioId
+    } = req.body;
 
     const newIncomeEvent = new IncomeEvent({
       eventSeriesName,
@@ -24,6 +37,15 @@ exports.incomeEvent = async (req, res) => {
     });
 
     const savedIncomeEvent = await newIncomeEvent.save();
+
+    // if (scenarioId) {
+    //   // Find the Scenario by its ID and update its incomeEventSeries array
+    //   await Scenario.findByIdAndUpdate(
+    //     scenarioId, 
+    //     { $push: { incomeEventSeries: savedIncomeEvent._id } },  // Push the new IncomeEvent's _id to the incomeEventSeries array
+    //     { new: true } // Return the updated scenario document
+    //   );
+    // }
 
     res.status(201).json(savedIncomeEvent);
   } catch (err) {

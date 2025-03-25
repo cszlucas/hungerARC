@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { ThemeProvider, CssBaseline, Container, Button, Stack, Box, Checkbox, Typography } from '@mui/material';
 import theme from '../../../components/theme';
 import Navbar from '../../../components/navbar';
@@ -14,13 +14,14 @@ import CustomToggle from '../../../components/customToggle';
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
 
+import axios from 'axios';
+
 const Income = () => {
     const {currIncome, setCurrIncome} = useContext(AppContext); // scenarios/:id/IncomeEvent
     const {eventEditMode, setEventEditMode} = useContext(AppContext); 
+    const {currScenario, setCurrScenario} = useContext(AppContext);
+    const {editMode, setEditMode} = useContext(AppContext); //scenario
     // setEventEditMode({ type: event.type, id: event._id}); // 🔹  type: "new" if new
-    // console.log(eventEditMode);
-    console.log('current income on page');
-    console.log(currIncome);
     const getIncomeById = (id) => {
         for (let i = 0; i < currIncome.length; i++) {
             if (currIncome[i]._id == id) {
@@ -35,18 +36,13 @@ const Income = () => {
         indieIncome = getIncomeById(eventEditMode.id);
     }
 
-
-    console.log("indieIncome");
-    console.log(indieIncome);
-
-    // console.log(currIncome);
-
     // scenario has list of income 
     const [formValues, setFormValues] = useState(indieIncome ||  {
-        eventName: '',
+        _id:'',
+        eventSeriesName: '',
         description: '',
         startYear: {
-            type: '',
+            type: 'fixedAmt',
             value: '',
             mean: '',
             stdDev: '',
@@ -68,32 +64,19 @@ const Income = () => {
             amount:''
         },
         userPercentage: '',
-        inflationAdjustment: null,
-        isSocialSecurity: ''
+        inflationAdjustment: false,
+        isSocialSecurity: false
         // isSocialSecurity: false
     });
     
-    // const [eventName, setEventName] = useState('');
-    // const [description, setDescription] = useState('');
     const [startYear, setStartYear] = useState('');
-    // const [duration, setDuration] = useState('Fixed');
-    // const [durationValue, setDurationValue] = useState('');
-    // const [durationMin, setDurationMin] = useState('');
-    // const [durationMax, setDurationMax] = useState('');
-    // const [durationMean, setDurationMean] = useState('');
-    // const [durationVariance, setDurationVariance] = useState('');
-
     const [expectedChangeType, setExpectedChangeType] = useState('Fixed');
     const [distributionType, setDistributionType] = useState('None');
-    // const [incomeType, setIncomeType] = useState('Wage'); //SORRY VICKY I PUT THIS BACK
-    // const [changeValue, setChangeValue] = useState(''); //SORRY VICKY I PUT THIS BACK
     const [changeMean, setChangeMean] = useState('');
     const [changeVariance, setChangeVariance] = useState('');
     const [changeMin, setChangeMin] = useState('');
     const [changeMax, setChangeMax] = useState('');
 
-    // const [showBackdrop, setShowBackdrop] = useState(false);
-    // const [errorBackdrop, setErrorBackdrop] = useState(false);
     const navigate = useNavigate();
 
     const handleInputChange = (field, value) => {
@@ -120,37 +103,71 @@ const Income = () => {
         });
     };
 
-    const handleSave = () => {
-        setCurrIncome((prevIncome) =>
-            prevIncome.map((income) =>
-                income.id === indieIncome.id ? { ...income, ...formValues } : income
-            )
-        );
-    };
 
-    const handleBackClick = () => {
-        // setShowBackdrop(false);
-        // setIncome(formValues);
+    
+      const handleSave = async () => {
+        try {
+          let response;
+        //   console.log("form valu: ",formValues);
+          if (eventEditMode.id == "new"){
+
+            let response = await axios.post('http://localhost:8080/incomeEvent', formValues);
+            let id = response.data._id;
+
+            handleInputChange("_id", id);
+            setCurrIncome((prev) => [...prev, { ...formValues, _id: id }]);
+            setEventEditMode({type:"Income", id: id});
+
+            setCurrScenario((prevScenario) => {
+                const updatedScenario = {
+                    ...prevScenario,
+                    incomeEventSeries: [...(prevScenario?.incomeEventSeries || []), id]
+                };
+
+                axios.post(`http://localhost:8080/updateScenario/${editMode}`, updatedScenario)
+                    .then(() => console.log("Scenario updated successfully"))
+                    .catch((error) => console.error("Error updating scenario:", error));
+
+                return updatedScenario;
+            });
+
+            // console.log('Data successfully saved:', response.data);
+          } else {
+            console.log("EVENT EDIT MODE ID: ", eventEditMode.id)
+            let response = await axios.post(`http://localhost:8080/updateIncome/${eventEditMode.id}`, formValues);
+            setCurrIncome((prev) => {
+              let newList = prev.filter((item)=> item._id !== eventEditMode.id)
+              return [...newList, formValues]
+            });
+            // console.log('Data successfully updated:', response.data);
+          }
+    
+        //   alert('Save data');
+        } catch (error) {
+          console.error('Error saving data:', error);
+        //   setErrorBackdrop(true); 
+          alert('Failed to save data!');
+        }
+      };
+
+    const handleBackClick = () =>  {
         handleSave();  
         navigate("/scenario/event_series");
       };
-      const handleClose = () => {
-        // setShowBackdrop(false);
-      };
 
-    const handleConfirm = () => {
-        if (!formValues.name.trim()) {
-        // setShowBackdrop(false);
-        // setErrorBackdrop(true);
-        } else {
-        // setIncome(formValues);  // Save formValues before navigating
-        // setShowBackdrop(false);
-        navigate("/scenarios");
-        }
-    };
-    const handleErrorClose = () => {
-        // setErrorBackdrop(false);
-    };
+    //   const handleClose = () => {
+    //   };
+
+    // const handleConfirm = () => {
+    //     if (!formValues.name.trim()) {
+    //     } else {
+    //     // setIncome(formValues);  // Save formValues before navigating
+    //     navigate("/scenarios");
+    //     }
+    // };
+    // const handleErrorClose = () => {
+    //     // setErrorBackdrop(false);
+    // };
 
     
 
@@ -163,7 +180,11 @@ const Income = () => {
                     <Typography variant="h2" component="h1" sx={{ fontWeight: 'bold' }}>
                         Income
                     </Typography>
-                    <Button variant="contained" color="secondary" sx={{ fontSize: '1.25rem', textTransform: 'none' }}>
+                    <Button variant="contained" color="secondary" sx={{ fontSize: '1.25rem', textTransform: 'none' }}
+                          onClick={() => {
+                            handleSave();
+                          }}
+                    >
                         Save
                     </Button>
                 </Stack>
@@ -175,8 +196,8 @@ const Income = () => {
                     <Box sx={{ flex: 1, display: "flex", flexDirection: "column", width: 250 }}>
                         <CustomInput 
                         title="Event name" 
-                        value={formValues.eventName} 
-                        setValue={(value) => handleInputChange("eventName", value)}
+                        value={formValues.eventSeriesName} 
+                        setValue={(value) => handleInputChange("eventSeriesName", value)}
                         />
 
                         <CustomInput 
@@ -187,19 +208,18 @@ const Income = () => {
                         />
 
                         <Stack direction="column" spacing={2}>
-                            {/* not needed */}
                             <CustomInput 
                                 title="Start Year" 
                                 type="number" 
-                                value={startYear} 
-                                setValue={setStartYear} 
+                                value={formValues.startYear.value} 
+                                setValue={(value) => handleInputChange("startYear.value", value)} 
                             />
 
                             <Stack spacing={2}>
                                 {/* Toggle on Top */}
                                 <CustomToggle
                                     title="Duration"
-                                    values={['Fixed', 'Normal', 'Uniform']}
+                                    values={['fixedAmt', 'Normal', 'Uniform']}
                                     sideView={false}
                                     width={100}
                                     value={formValues.duration.type}
@@ -208,13 +228,13 @@ const Income = () => {
 
                                 {/* Input Fields Below in Columns */}
                                 <Stack direction="row" spacing={4} alignItems="start">
-                                    {formValues.duration.type === "Fixed" && (
+                                    {formValues.duration.type === "fixedAmt" && (
                                         <CustomInput 
                                             title="Value"
                                             type="number"
                                             adornment={expectedChangeType === 'Percentage' ? '' : ''}
-                                            value={formValues.duration.type}
-                                            setValue={(value) => handleInputChange("duration.type", value)}
+                                            value={formValues.duration.value}
+                                            setValue={(value) => handleInputChange("duration.value", value)}
                                         />
                                     )}
 
@@ -291,17 +311,29 @@ const Income = () => {
                             <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
                                 Inflation Adjustment
                             </Typography>
-                            <Checkbox />
+                            <Checkbox 
+                                    checked={formValues.inflationAdjustment || false}
+                                    onChange={(value) => handleInputChange("inflationAdjustment", value.target.checked)}
+                            />
                         </Stack>
 
-                        <CustomToggle
+                        {/* <CustomToggle
                             title="Income Type"
                             values={['Wage', 'Social Security']}
                             sideView={true}
                             width={150}
                             value={formValues.isSocialSecurity}
                             setValue={(value) => handleInputChange("isSocialSecurity", value)}
-                        />
+                        /> */}
+                       <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1 }}>
+                            <Typography variant="body1" sx={{ fontWeight: 'medium', width: 150 }}>
+                               Social Security
+                            </Typography>
+                            <Checkbox checked={formValues.isSocialSecurity || false}  
+                                onChange={(value) => handleInputChange("isSocialSecurity", value.target.checked)}/>
+                        </Stack>
+
+                        
                     </Box>
                     {/* Third Column */}
                     <Box sx={{ flex: 1 }}>
@@ -318,13 +350,13 @@ const Income = () => {
 
                         <CustomToggle
                             title="Rate/Unit"
-                            values={['Fixed', 'Percentage']}
+                            values={['fixed', 'percentage']}
                             sideView={true}
                             width={100}
                             value={formValues.annualChange.type}
                             setValue={(value) => handleInputChange("annualChange.type", value)}
                         />
-
+    
                         {distributionType === "None" && (
                             <CustomInput 
                                 title="Value"
