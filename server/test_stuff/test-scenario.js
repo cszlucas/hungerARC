@@ -94,8 +94,8 @@ async function createScenario() {
       eventSeriesName: "income2020-2023",
       description: "Income event series from 2020-2025.",
       startYear: {
-        type: "year",
-        year: 2020,
+        type: "fixedAmt",
+        value: 2020,
       },
       duration: {
         type: "fixedAmt",

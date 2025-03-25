@@ -13,7 +13,7 @@ function extractPrefix(email) {
 function DisplayUserName({ user }) {
     if (!user) return <h1>Hello weirdo!</h1>;
     const prefix = extractPrefix(user.email);
-    return <h1>{prefix || "Guest"}'s Profile:</h1>;
+    return <h1>{prefix || "Guest"}&#39;s Profile:</h1>;
 }
 
 const Profile = () => {

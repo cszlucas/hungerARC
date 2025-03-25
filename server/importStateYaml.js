@@ -59,7 +59,7 @@ const parseYaml= async (filePath)=>{
             }
         });
 
-        //await StateTax.insertMany(stateTax);
+        await StateTax.insertMany(stateTax);
         console.log("state tax is in db");
     } catch(error){
         console.log("error in parsing yaml file: ", error)
