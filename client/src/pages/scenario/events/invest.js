@@ -28,7 +28,7 @@ import axios from "axios";
 
 const Invest = () => {
     const {editMode, eventEditMode, setEventEditMode, currInvest, setCurrInvest, currInvestments, currInvestmentTypes, setCurrScenario} = useContext(AppContext);
-    const {} = useContext(AppContext);
+    // const {} = useContext(AppContext);
     const navigate = useNavigate();
     // console.log("in Invest");
     // console.log(currInvest);
