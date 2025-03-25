@@ -13,8 +13,11 @@ import {
   backContinueContainerStyles,
   buttonStyles,
   rowBoxStyles,
+  stackStyles,
+  titleStyles
 } from '../../components/styles';
 import axios from 'axios';
+
 
 const StrategyList = ({ title, list, setList, fieldName, setScenario, setScenarioData, currScenario, editMode }) => {
   const handleMove = (index, direction) => {
@@ -85,6 +88,30 @@ const Strategies = () => {
     });
   };
 
+  const handleCurrScenarioChange = (field, value) => {
+    const fieldParts = field.split('.'); // Split the field into parts (e.g., "lifeExpectancy.mean")
+  
+    setCurrScenario((prev) => {
+      // Update the nested object
+      if (fieldParts.length === 2) {
+        const [parent, child] = fieldParts; // 'lifeExpectancy' and 'mean'
+        return {
+          ...prev,
+          [parent]: { // Spread the parent object (lifeExpectancy)
+            ...prev[parent],
+            [child]: value, // Update the child property (mean)
+          },
+        };
+      }
+  
+      // For top-level fields (no dot notation)
+      return {
+        ...prev,
+        [field]: value,
+      };
+    });
+  };
+
   const handleSave = async () => {
     let formValues = {
       spendingStrategy: currScenario.spendingStrategy,
@@ -93,15 +120,15 @@ const Strategies = () => {
       rothConversionStrategy: currScenario.rothConversionStrategy,
       optimizerSettings: {
         enabled: currScenario.optimizerSettings?.enabled,
-        startYear: currScenario.optimizerSettings?.startYear,
-        endYear: currScenario.optimizerSettings?.endYear
+        startYear: startYear,
+        endYear: endYear
       },
       isRothOptimized
     };
 
     let response = await axios.post(`http://localhost:8080/updateScenario/${editMode}`, formValues);
     setScenarioData(prev => prev.map(item => (item._id === editMode ? currScenario : item)));
-
+    console.log(scenarioData);
     console.log('Data successfully updated:', response.data);
   };
 
@@ -157,9 +184,15 @@ const Strategies = () => {
       <CssBaseline />
       <Navbar currentPage={""} />
       <Container>
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Typography variant="h2">Strategies</Typography>
-          <Button variant="contained" color="secondary" onClick={handleSave}>Save</Button>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={stackStyles}>
+          <Typography variant="h2" component="h1" sx={titleStyles}>
+            Strategies
+          </Typography>
+          <Button variant="contained" color="secondary" sx={buttonStyles} 
+            onClick={handleSave}
+          >
+            Save
+          </Button>
         </Stack>
 
         <PageHeader />
@@ -175,14 +208,39 @@ const Strategies = () => {
 
             {/* ✅ Roth Strategy Toggle */}
             <Grid item xs={12} md={6}>
-              <Stack direction="row" alignItems="center" sx={{ marginBottom: 2 }}>
-                <Typography variant="h6">Roth Conversion Strategy:</Typography>
+              {!isRothOptimized && (
+              <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: -5 }}>
+                Roth Conversion Strategy:
+              </Typography>)}
+              <Stack direction="row" alignItems="center" justifyContent="flex-end" sx={{ marginBottom: -4 }}>
+                
                 <Switch checked={isRothOptimized} onChange={handleToggleRothOptimizer} color="secondary" />
               </Stack>
-
               {isRothOptimized && (
                 <>
                   <StrategyList title="Roth Conversion Strategy:" list={rothConversionStrategy} setList={() => {}} fieldName="rothConversionStrategy" setScenario={setCurrScenario} />
+                  <Box sx={{...rowBoxStyles, mt: 2}}>
+                    <CustomInput
+                      title="Start Year"
+                      type="number"
+                      value={startYear}
+                      setValue={(value)=>{ 
+                        setStartYear(value)
+                        handleCurrScenarioChange("optimizerSettings.startYear", value)
+                      }}
+                      inputProps={{ min: 0 }}
+                    />
+                    <CustomInput
+                      title="End Year"
+                      type="number"
+                      value={endYear}
+                      setValue={(value)=>{ 
+                        setEndYear(value)
+                        handleCurrScenarioChange("optimizerSettings.endYear", value)
+                      }}
+                      inputProps={{ min: 0 }}
+                    />
+                  </Box>
                 </>
               )}
             </Grid>

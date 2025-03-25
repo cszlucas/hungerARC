@@ -1,8 +1,8 @@
-import React, { useState, useContext, useEffect, useCallback } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import {
   ThemeProvider, CssBaseline, Container, Typography, Button, Stack, 
-  InputAdornment, Box, List, MenuItem, ListItem, ListItemText, 
-  IconButton, TextField, ToggleButton, ToggleButtonGroup
+  Box, List, ListItem, ListItemText, 
+  IconButton,
 } from '@mui/material';
 import theme from '../../../components/theme';
 import Navbar from '../../../components/navbar';
@@ -23,16 +23,19 @@ import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
 
+import axios from 'axios';
+
+
 const Invest = () => {
-    const {currInvest, setCurrInvest, currInvestments, currInvestmentTypes} = useContext(AppContext);
-    const {eventEditMode, setEventEditMode} = useContext(AppContext);
+    const {editMode, eventEditMode, setEventEditMode, currInvest, setCurrInvest, currInvestments, currInvestmentTypes, setCurrScenario} = useContext(AppContext);
+    const {} = useContext(AppContext);
     const navigate = useNavigate();
     // console.log("in Invest");
     // console.log(currInvest);
     // console.log(eventEditMode);
 
     const getInvesmentTypeById = (id) => {
-        if (id != "") {
+        if (id != "new") {
             for (let i = 0; i < currInvestmentTypes.length; i++) {
                 if (currInvestmentTypes[i]._id == id) {
                     return currInvestmentTypes[i]; // Return the found scenario
@@ -54,16 +57,27 @@ const Invest = () => {
     }
 
     const getInvestById = (id) => {
-        if (id != "") {
+
+        if (id) {
             for (let i = 0; i < currInvest.length; i++) {
                 if (currInvest[i]._id == id) {
-                    return currInvest[i]; // Return the found scenario
+
+                    if (currInvest[i].assetAllocation) {
+                        return currInvest[i]; // Return the found scenario
+                    }
+                    
+                    const invest = {...currInvest[i], ['assetAllocation'] : {
+                        type: "fixed",
+                        fixedPercentages: {}, 
+                        initialPercentages: {},
+                        finalPercentages: {},
+                    }}
+                    return invest
                 }
             }
         }
 
         return {
-            _id: "",
             eventSeriesName: "",
             eventSeriesDescription: "",
             maxCash: 0,
@@ -93,9 +107,8 @@ const Invest = () => {
         };
       };
     
-    let investId = eventEditMode ? eventEditMode._id : "";
+    let investId = eventEditMode ? eventEditMode.id : "new";
     let indieInvest = getInvestById(investId);
-    // console.log(indieInvest);
     const [formValues, setFormValues] = useState(indieInvest);
     const handleInputChange = (field, value) => {
         const fieldParts = field.split('.'); // Split the field into parts (e.g., "lifeExpectancy.mean")
@@ -134,7 +147,31 @@ const Invest = () => {
         });
     };
 
-    const [listOfSelectedInvestments, setListOfSelectedInvestments] = useState([]);
+    const getListOfSelectedInvestments = () => {
+        const setIds = formValues.assetAllocation.type === "fixed" 
+        ?  Object.keys(formValues.assetAllocation.fixedPercentages)
+        :  Object.keys(formValues.assetAllocation.initialPercentages);
+
+        if (Object.keys(setIds).length === 0) {
+            return []
+        }
+        let listOfSI = []
+        setIds.forEach((investmentId) => {
+            const description = formValues.assetAllocation.type === "fixed"
+                ? `Allocation: ${formValues.assetAllocation.fixedPercentages[`${investmentId}`]}%`
+                : `Initial: ${formValues.assetAllocation.initialPercentages[`${investmentId}`]}%\t\tFinal: ${formValues.assetAllocation.finalPercentages[`${investmentId}`]}%`;
+            
+            let investmentTypeId = getInvestmentById(investmentId).investmentType;
+            
+            listOfSI.push({
+                id: investmentId,
+                name: getInvesmentTypeById(investmentTypeId).name,
+                description
+            })
+        });
+        return listOfSI;
+    };
+    const [listOfSelectedInvestments, setListOfSelectedInvestments] = useState(getListOfSelectedInvestments);
 
     useEffect(() => {
         const resetAllocations = {
@@ -149,17 +186,22 @@ const Invest = () => {
             handleInputChange("assetAllocation", { ...formValues.assetAllocation, ...resetAllocations, initialPercentages: {}, finalPercentages: {} });
         }
         setValidInvestments(getValidInvestments);
-        setListOfSelectedInvestments([]);
+        setListOfSelectedInvestments(getListOfSelectedInvestments);
     }, [formValues.assetAllocation.type]);
 
-    // console.log(validInvestments);
-    const getValidInvestments = useCallback(() => {
-        return currInvestments.filter((item) => item.accountTaxStatus !== "pre-tax");
-    }, [currInvestments]);
+    const getValidInvestments = () => {
+        const setIds = formValues.assetAllocation.type === "fixed" 
+            ?  Object.keys(formValues.assetAllocation.fixedPercentages)
+            :  Object.keys(formValues.assetAllocation.initialPercentages);
+        
+        if (Object.keys(setIds).length === 0) {
+            return currInvestments.filter((item) => item.accountTaxStatus !== "pre-tax");
+        }
+        return currInvestments
+            .filter((item) => item.accountTaxStatus !== "pre-tax")
+            .filter((item) => !setIds.includes(item._id));
+    };
     const [validInvestments, setValidInvestments] = useState(getValidInvestments);
-    // useEffect(() => {
-    //     console.log("Updated Investments:", validInvestments);
-    // }, [validInvestments]);
 
     const [newInvestment, setNewInvestment] = useState({id: "", fixed: '', initial: '', final: '' });
     const handleNewInvestmentChange = (field, value) => {
@@ -175,7 +217,6 @@ const Invest = () => {
             return;
         }
         setValidInvestments((prev) => prev.filter((item) => item._id !== newInvestment.id));
-        console.log(validInvestments);
         let newAllocation = {}
         if (formValues.assetAllocation.type == "fixed") {
             newAllocation = { ...formValues.assetAllocation.fixedPercentages, [newInvestment.id]: newInvestment.fixed };
@@ -246,6 +287,44 @@ const Invest = () => {
         );
     };
 
+    const handleSave = async () => {
+        if (eventEditMode.id == 'new') {
+            console.log("VV Sending to backend VV")
+            console.log(formValues);
+            let response = await axios.post('http://localhost:8080/investStrategy', formValues);
+            console.log()
+            let id = response.data._id;
+
+            console.log('Event Id')
+            console.log(id);
+            handleInputChange("_id", id);
+            setCurrInvest((prev) => [...prev, { ...formValues, _id: id }]);
+            setEventEditMode({type:"Invest", id: id});
+            // console.log()
+
+            setCurrScenario((prevScenario) => {
+                const updatedScenario = {
+                    ...prevScenario,
+                    investEventSeries: [...(prevScenario?.investEventSeries || []), id]
+                };
+
+                // Send POST request with the updated scenario after state update
+                axios.post(`http://localhost:8080/updateScenario/${editMode}`, updatedScenario)
+                    .then(() => console.log("Scenario updated successfully"))
+                    .catch((error) => console.error("Error updating scenario:", error));
+
+                return updatedScenario;
+            });
+        } else {
+            let response = await axios.post(`http://localhost:8080/updateInvestStrategy/${eventEditMode.id}`, formValues);
+            setCurrInvest((prev) => {
+                let newList = prev.filter((item)=> item._id !== eventEditMode.id)
+                return [...newList, formValues]
+            });
+            // console.log(response);
+        }
+    }
+
     return (
         <ThemeProvider theme={theme}>
         <CssBaseline />
@@ -257,7 +336,7 @@ const Invest = () => {
             <Typography variant="h2" component="h1" sx={titleStyles}>
                 Invest
             </Typography>
-            <Button variant="contained" color="secondary" sx={buttonStyles}>
+            <Button variant="contained" color="secondary" sx={buttonStyles} onClick={handleSave}>
                 Save
             </Button>
             </Stack>
@@ -285,6 +364,7 @@ const Invest = () => {
                         adornment="$"
                         value={formValues.maxCash}
                         setValue={(value) => handleInputChange("maxCash", value)}
+                        inputProps={{ min: 0 }}
                     /> 
 
                     <Stack direction="row" spacing={1} alignItems="start">
@@ -435,7 +515,7 @@ const Invest = () => {
                                     value={newInvestment.initial}
                                     adornment={"%"}
                                     setValue={(value) => handleNewInvestmentChange("initial", value)}
-                                    inputProps={{ min: 0 }}
+                                    inputProps={{ min: 0, max: 100 }}
                                 />
 
                                 <CustomInput
@@ -444,7 +524,7 @@ const Invest = () => {
                                     value={newInvestment.final}
                                     adornment={"%"}
                                     setValue={(value) => handleNewInvestmentChange("final", value)}
-                                    inputProps={{ min: 0 }}
+                                    inputProps={{ min: 0, max: 100 }}
                                 />
                             </Stack>
                         )}
@@ -457,7 +537,7 @@ const Invest = () => {
                                 value={newInvestment.fixed}
                                 adornment={"%"}
                                 setValue={(value) => handleNewInvestmentChange("fixed", value)}
-                                inputProps={{ min: 0 }}
+                                inputProps={{ min: 0, max: 100 }}
                             />
                         )}
                     </Box>
@@ -487,11 +567,16 @@ const Invest = () => {
             <Button variant="contained" color="primary" sx={buttonStyles}
                 onClick={() => navigate("/scenario/event_series")}
             >
-                Back
+                Cancel
             </Button>
 
-            <Button variant="contained" color="success" sx={buttonStyles}>
-                Continue
+            <Button variant="contained" color="success" sx={buttonStyles} 
+                onClick={()=> {
+                    handleSave();
+                    navigate("/scenario/event_series");
+                }}
+            >
+                Save & Continue
             </Button>
             </Box>
         </Container>
