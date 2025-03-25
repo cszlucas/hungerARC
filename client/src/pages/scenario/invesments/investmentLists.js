@@ -31,8 +31,7 @@ import CustomDropdown from "../../../components/customDropDown";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
 
-const mongoose = require('mongoose');
-
+const mongoose = require("mongoose");
 
 const InvestmentLists = () => {
   const { currInvestments, setCurrInvestments } = useContext(AppContext);
@@ -62,7 +61,6 @@ const InvestmentLists = () => {
     }));
   };
 
-
   const transformInvestmentData = (investment) => {
     console.log("Valid? ", mongoose.Types.ObjectId.isValid(investment.investmentTypeName));
     return {
@@ -81,7 +79,9 @@ const InvestmentLists = () => {
       console.log(transformedInvestment);
       try {
         await axios.post("http://localhost:8080/investment", transformedInvestment);
-        setCurrInvestments((prev) => [...prev, transformedInvestment]);
+        setCurrInvestments((prev) => {
+          return [...(Array.isArray(prev) ? prev : []), transformedInvestment];
+        });
         setNewInvestment({ investmentType: "", accountTaxStatus: "", value: "" });
         handleClose();
       } catch (error) {
@@ -93,7 +93,6 @@ const InvestmentLists = () => {
   const handleDeleteInvestment = (index) => {
     setCurrInvestments((prev) => prev.filter((_, i) => i !== index));
   };
-
 
   const getInvestmentTypeName = (investmentTypeId) => {
     //console.log("the id ", investmentTypeId);
@@ -107,14 +106,26 @@ const InvestmentLists = () => {
     return "Unknown Type"; // Default if not found
   };
 
-
   const InvestList = ({ list, taxType }) => {
-    const filteredInvestments = list.filter((item) => item.accountTaxStatus === taxType);
-
-
+    const filteredInvestments = Array.isArray(list) ? list.filter((item) => item.accountTaxStatus === taxType) : [];
+    
     return (
       <List>
-        {filteredInvestments.map((item, index) => (
+      {filteredInvestments.map((item, index) => {
+        // Validate each item has required properties
+        if (!item || !item.investmentType || !item.value) {
+          console.error("Invalid investment data:", item); // Log an error in the console
+          return (
+            <ListItem key={`invalid-${index}`}>
+              <ListItemText primary="Invalid investment data" />
+            </ListItem>
+          );
+        }
+
+        // Safely call getInvestmentTypeName in case of unexpected investmentType
+        const investmentTypeName = getInvestmentTypeName(item.investmentType) || "Unknown Type";
+
+        return (
           <ListItem
             key={`${item.investmentType}-${index}`}
             sx={{
@@ -122,18 +133,22 @@ const InvestmentLists = () => {
               "&:hover": { backgroundColor: "#B0B0B0" },
             }}
           >
-            <ListItemText primary={<span style={{ fontWeight: "bold" }}>{getInvestmentTypeName(item.investmentType)}</span>} secondary={`Value: ${item.value}`} />
+            <ListItemText
+              primary={<span style={{ fontWeight: "bold" }}>{investmentTypeName}</span>}
+              secondary={`Value: ${item.value}`}
+            />
 
             <IconButton
               edge="end"
               aria-label="delete"
-              onClick={() => handleDeleteInvestment(currInvestments.indexOf(item))} // Delete the selected row
+              onClick={() => handleDeleteInvestment(filteredInvestments.indexOf(item))} // Delete the selected row
             >
               <DeleteIcon />
             </IconButton>
           </ListItem>
-        ))}
-      </List>
+        );
+      })}
+    </List>
     );
   };
 
@@ -216,10 +231,21 @@ const InvestmentLists = () => {
                 </Typography>
                 <Box sx={{ display: "flex", justifyContent: "space-between", gap: 4 }}>
                   <TextField select name="investmentTypeName" value={newInvestment.investmentTypeName || ""} onChange={handleChange} sx={textFieldStyles} fullWidth>
-                    <MenuItem value="Real Estate">Real Estate</MenuItem>
-                    {currInvestmentTypes.map((it) => (
-                      <MenuItem value={it._id}>{it.name}</MenuItem>
-                    ))}
+                    {/* Check if currInvestmentTypes is an array */}
+                    {Array.isArray(currInvestmentTypes) && currInvestmentTypes.length > 0 ? (
+                      currInvestmentTypes.map((it) =>
+                        // Ensure the item has _id and name properties before rendering
+                        it._id && it.name ? (
+                          <MenuItem key={it._id} value={it._id}>
+                            {it.name}
+                          </MenuItem>
+                        ) : null
+                      )
+                    ) : (
+                      <MenuItem value="" disabled>
+                        No Investment Types Available
+                      </MenuItem> // Fallback if no valid data
+                    )}
                   </TextField>
                   <Button variant="contained" color="primary" onClick={() => navigate("/scenario/investment_type")} sx={{ textTransform: "none", minWidth: 150 }}>
                     Add Custom Type
@@ -245,7 +271,7 @@ const InvestmentLists = () => {
                   <TextField
                     type="number"
                     name="value"
-                    value={newInvestment.value || ''}
+                    value={newInvestment.value || ""}
                     onChange={handleChange}
                     sx={textFieldStyles}
                     fullWidth
