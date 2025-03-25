@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, useCallback } from "react";
 import {
   ThemeProvider, CssBaseline, Container, Typography, Button, Stack, 
   InputAdornment, Box, List, MenuItem, ListItem, ListItemText, 
@@ -35,11 +35,22 @@ const Invest = () => {
         if (id != "") {
             for (let i = 0; i < currInvestmentTypes.length; i++) {
                 if (currInvestmentTypes[i]._id == id) {
-                    return currInvestmentTypes[i].name; // Return the found scenario
+                    return currInvestmentTypes[i]; // Return the found scenario
                 }
             }
         }
-        return "Unknown Type"
+        return {_id: "NULL", name: "Unknown Type"}
+    }
+
+    const getInvestmentById = (id) => {
+        if (id != "") {
+            for (let i = 0; i < currInvestments.length; i++) {
+                if (currInvestments[i]._id == id) {
+                    return currInvestments[i]; // Return the found scenario
+                }
+            }
+        }
+        return {_id: "NULL", investmentType: "NULL"}
     }
 
     const getInvestById = (id) => {
@@ -125,42 +136,32 @@ const Invest = () => {
 
     const [listOfSelectedInvestments, setListOfSelectedInvestments] = useState([]);
 
-    useEffect(()=>{
-        if (formValues.assetAllocation.type == "fixed") {
-            handleInputChange("assetAllocation.initialPercentages", {});
-            handleInputChange("assetAllocation.finalPercentages", {});
+    useEffect(() => {
+        const resetAllocations = {
+            initialPercentages: {},
+            finalPercentages: {},
+            fixedPercentages: {},
+        };
+    
+        if (formValues.assetAllocation.type === "fixed") {
+            handleInputChange("assetAllocation", { ...formValues.assetAllocation, ...resetAllocations, fixedPercentages: {} });
         } else {
-            handleInputChange("assetAllocation.fixedPercentages", {});
+            handleInputChange("assetAllocation", { ...formValues.assetAllocation, ...resetAllocations, initialPercentages: {}, finalPercentages: {} });
         }
+        setValidInvestments(getValidInvestments);
         setListOfSelectedInvestments([]);
-    }, [formValues.assetAllocation.type])
+    }, [formValues.assetAllocation.type]);
 
-    const updateListOfSelectedInvestments = () => {
-        let listSI = [];
-        if (formValues.assetAllocation && formValues.assetAllocation.type == "fixed") {
-            listSI = Object.entries(formValues.assetAllocation.fixedPercentages).map(([key, value]) => ({
-                name: getInvesmentTypeById(key),
-                description: "Allocation: " + value + "%"
-            }));
-        } else {
-            listSI = Object.entries(formValues.assetAllocation.initialPercentages).map(([key, value]) => ({
-                name: getInvesmentTypeById(key),
-                description: "Initial Allocation: " + value + "%\t\tFinal Allocation: " 
-                + formValues.assetAllocation.finalPercentages[key] +"%"
-            }));
-        }
-        setListOfSelectedInvestments(listSI);
-    }
-
-    const getValidInvestments = () => { return currInvestments.filter((item) => item.accountTaxStatus != "pre-tax") };
     // console.log(validInvestments);
+    const getValidInvestments = useCallback(() => {
+        return currInvestments.filter((item) => item.accountTaxStatus !== "pre-tax");
+    }, [currInvestments]);
     const [validInvestments, setValidInvestments] = useState(getValidInvestments);
-    const [newInvestment, setNewInvestment] = useState({
-        id: "",
-        fixed: '',
-        initial: '',
-        final: '',
-    });
+    // useEffect(() => {
+    //     console.log("Updated Investments:", validInvestments);
+    // }, [validInvestments]);
+
+    const [newInvestment, setNewInvestment] = useState({id: "", fixed: '', initial: '', final: '' });
     const handleNewInvestmentChange = (field, value) => {
         setNewInvestment((prev) => {
             return { ...prev, [field]: value, };
@@ -173,74 +174,69 @@ const Invest = () => {
             alert("Please select an investment and enter a valid allocation percentage.");
             return;
         }
-        setValidInvestments(validInvestments.filter((item) => item._id != newInvestment.id));
-
+        setValidInvestments((prev) => prev.filter((item) => item._id !== newInvestment.id));
+        console.log(validInvestments);
         let newAllocation = {}
         if (formValues.assetAllocation.type == "fixed") {
-            newAllocation = formValues.assetAllocation.fixedPercentages[newInvestment.id] = newInvestment.fixed;
+            newAllocation = { ...formValues.assetAllocation.fixedPercentages, [newInvestment.id]: newInvestment.fixed };
+            handleInputChange("assetAllocation.fixedPercentages", newAllocation);
         } else {
             newAllocation = { ...formValues.assetAllocation.initialPercentages, [newInvestment.id]: newInvestment.initial };
-            newAllocation = formValues.assetAllocation.finialPercentages[newInvestment.id] = newInvestment.final;
+            handleInputChange("assetAllocation.initialPercentages", newAllocation);
+            newAllocation = { ...formValues.assetAllocation.finalPercentages, [newInvestment.id]: newInvestment.final };
+            handleInputChange("assetAllocation.finalPercentages", newAllocation);
         }
 
+        const description = formValues.assetAllocation.type === "fixed"
+            ? `Allocation: ${newInvestment.fixed}%`
+            : `Initial: ${newInvestment.initial}%\t\tFinal: ${newInvestment.final}%`;
         
-        const handleAddKey = () => {
-            // Create a new object by copying the old state and adding the new key
-            const updatedForm = { ...formValues.assetAllocation.initialPercentages, [newInvestment.id]: newInvestment.initial };
-            handleInputChange("",updatedForm);
-        };
-  
-
-        // Ensure investment is not already in selectedInvestments
-        // const investmentExists = selectedInvestments.some(
-        //     (investment) => investment.investmentTypeName === newInvestment.investmentTypeName
-        // );
-
-        // if (!investmentExists) {
-        //     setSelectedInvestments([...selectedInvestments, { ...newInvestment }]);
-    
-        //     // Reset input fields after adding
-        //     setNewInvestment({
-        //         id: "",
-        //         fixed: '',
-        //         initial: '',
-        //         final: '',
-        //     });
-        // } else {
-        //     alert("Investment already added!");
-        // }
+        let investmentTypeId = getInvestmentById(newInvestment.id).investmentType;
+        
+        setListOfSelectedInvestments((prev) => [...prev, {
+            id: newInvestment.id,
+            name: getInvesmentTypeById(investmentTypeId).name,
+            description
+        }]);
+        setNewInvestment({ id: "", fixed: '', initial: '', final: ''})
     };
 
-    const handleRemoveInvestment = (index) => {
-        setSelectedInvestments((prevInvestments) => prevInvestments.filter((_, i) => i !== index));
+    const handleRemoveInvestment = (id) => {
+        if (formValues.assetAllocation.type === "fixed") {
+            const { [id]: discardFixed, ...updatedFixedAlloc } = formValues.assetAllocation.fixedPercentages;
+            handleInputChange("assetAllocation.fixedPercentages", updatedFixedAlloc);
+        } else {
+            const { [id]: discardInitial, ...updatedInitialAlloc } = formValues.assetAllocation.initialPercentages;
+            handleInputChange("assetAllocation.initialPercentages", updatedInitialAlloc);
+    
+            const { [id]: discardFinal, ...updatedFinalAlloc } = formValues.assetAllocation.finalPercentages;
+            handleInputChange("assetAllocation.finalPercentages", updatedFinalAlloc);
+        }
+        setValidInvestments((prev) => [...prev, getInvestmentById(id)])
+        setListOfSelectedInvestments((prevInvestments) => prevInvestments.filter((item) => item.id !== id));
     };    
-
-    const availableInvestments = allInvestments.filter(
-        (investment) => !selectedInvestments.some((sel) => sel.investmentTypeName === investment.investmentTypeName)
-    );    
-    
-    
+     
     const InvestList = ({ list, handleRemoveInvestment }) => {
         return (
             <List>
                 {list.map((item, index) => (
                     <ListItem
-                        key={`${item.investmentTypeName}-${index}`}
+                        key={item.id}
                         sx={{
                             backgroundColor: index % 2 === 0 ? "#BBBBBB" : "#D9D9D9",
                             "&:hover": { backgroundColor: "#B0B0B0" },
                         }}
                     >
                         <ListItemText
-                            primary={<span style={{ fontWeight: "bold" }}>{item.investmentTypeName}</span>}
-                            secondary={`Initial: ${item.initial}, Final: ${item.final}`}
+                            primary={item.name}
+                            secondary={item.description}
                         />
     
                         {/* Delete Button */}
                         <IconButton
                             edge="end"
                             aria-label="delete"
-                            onClick={() => handleRemoveInvestment(index)}
+                            onClick={() => handleRemoveInvestment(item.id)}
                         >
                             <DeleteIcon color="grey" />
                         </IconButton>
@@ -248,14 +244,6 @@ const Invest = () => {
                 ))}
             </List>
         );
-    };
-    
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setNewInvestment((prev) => ({
-          ...prev,
-          [name]: value,
-        }));
     };
 
     return (
@@ -296,7 +284,7 @@ const Invest = () => {
                         type="number"
                         adornment="$"
                         value={formValues.maxCash}
-                        setValue={(value) => handleInputChange("eventSeriesDescription", value)}
+                        setValue={(value) => handleInputChange("maxCash", value)}
                     /> 
 
                     <Stack direction="row" spacing={1} alignItems="start">
@@ -417,9 +405,11 @@ const Invest = () => {
                             <CustomDropdown
                                 label="Investment Name"
                                 value={newInvestment.id}
-                                menuLabels={allInvestments.map((item)=>{ return getInvesmentTypeById(item.investmentType)})}
-                                menuItems={allInvestments.map((item)=>{ return item.investmentType})}
-                                setValue={(value) => handleNewInvestmentChange("newInvestment.id", value)}
+                                menuLabels={validInvestments.map((item)=>{ return getInvesmentTypeById(item.investmentType).name})}
+                                menuItems={validInvestments.map((item)=>{ return item._id})}
+                                setValue={(value) => {
+                                    handleNewInvestmentChange("id", value);
+                                }}
                                 textFieldStyles={textFieldStyles}
                             />
                         </Box>
@@ -444,7 +434,7 @@ const Invest = () => {
                                     type="number"
                                     value={newInvestment.initial}
                                     adornment={"%"}
-                                    setValue={(value) => handleNewInvestmentChange("newInvestment.initial", value)}
+                                    setValue={(value) => handleNewInvestmentChange("initial", value)}
                                     inputProps={{ min: 0 }}
                                 />
 
@@ -453,7 +443,7 @@ const Invest = () => {
                                     type="number"
                                     value={newInvestment.final}
                                     adornment={"%"}
-                                    setValue={(value) => handleNewInvestmentChange("newInvestment.final", value)}
+                                    setValue={(value) => handleNewInvestmentChange("final", value)}
                                     inputProps={{ min: 0 }}
                                 />
                             </Stack>
@@ -466,7 +456,7 @@ const Invest = () => {
                                 type="number"
                                 value={newInvestment.fixed}
                                 adornment={"%"}
-                                setValue={(value) => handleNewInvestmentChange("newInvestment.fixed", value)}
+                                setValue={(value) => handleNewInvestmentChange("fixed", value)}
                                 inputProps={{ min: 0 }}
                             />
                         )}
@@ -487,7 +477,7 @@ const Invest = () => {
                 {/* Second Column - Investment List */}
                 <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Taxable</Typography>
-                    <InvestList list={selectedInvestments} handleRemoveInvestment={handleRemoveInvestment}/>
+                    <InvestList list={listOfSelectedInvestments} handleRemoveInvestment={handleRemoveInvestment}/>
                 </Box>
             </Box>
            
