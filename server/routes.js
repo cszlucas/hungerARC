@@ -55,5 +55,6 @@ router.get("/incomeSingle", webscraping.incomeSingle);
 router.get("/incomeMarried", webscraping.incomeMarried);
 router.get("/capitalGains", webscraping.capitalGains);
 router.get("/rmd", webscraping.rmd);
+router.get("/handleAllRoutes", webscraping.handleAllRoutes);
 
 module.exports = router;

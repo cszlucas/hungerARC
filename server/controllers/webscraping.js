@@ -1,9 +1,57 @@
-const taxId = "67d8912a816a92a8fcb6dd55";
-const rmdId = "67da256d6fc3c7abbf1d675d";
+let taxId;
+let rmdId;
 const RMD = require("../models/rmd-schema.js");
 const Tax = require("../models/tax.js");
 const cheerio = require("cheerio");
 const { ObjectId } = require("mongoose").Types;
+const axios = require("axios");
+
+exports.handleAllRoutes = async (req, res) => {
+  try {
+    const newTaxData = new Tax({
+      year: 2025,
+      single: {
+        federalIncomeTaxRatesBrackets: [
+          { incomeRange: [0, 0], taxRate: 0 },
+          { incomeRange: [0, 0], taxRate: 0 },
+        ],
+        standardDeductions: 0,
+        capitalGainsTaxRates: [
+          { incomeRange: [0, 0], gainsRate: 0 },
+          { incomeRange: [0, 0], gainsRate: 0 },
+        ],
+      },
+    });
+    const savedTaxData = await newTaxData.save();
+    taxId = savedTaxData._id;
+
+    const newRMD = new RMD({
+      rmd: [{ age: 0, distributionPeriod: 0 }],
+    });
+
+    const savedRMD = await newRMD.save();
+    rmdId = savedRMD._id;
+    console.log("The RMD id: ", rmdId);
+
+    const standardDeductions = await exports.standardDeductions(req, res);
+    const incomeMarried = await exports.incomeMarried(req, res);
+    const incomeSingle = await exports.incomeSingle(req, res);
+    const capitalGains = await exports.capitalGains(req, res);
+    const rmd = await exports.rmd(req, res);
+
+    // Aggregate all results into one response
+    res.status(200).json({
+      standardDeductions,
+      incomeMarried,
+      incomeSingle,
+      capitalGains,
+      rmd,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "An error occurred while fetching data", mymessage: error.message });
+  }
+};
 
 //TAXES
 exports.standardDeductions = async (req, res) => {
@@ -279,12 +327,13 @@ exports.rmd = async (req, res) => {
     const response = await axios.get("https://www.irs.gov/publications/p590b#en_US_2023_publink100090310");
     const $ = cheerio.load(response.data);
 
-    const targetLink = $('.table a[name="en_US_2023_publink100090310"]');
+    const targetLink = $('.table a[name="en_US_2024_publink100090310"]');
     const rmds = [];
     let age = "";
     let distPeriod = "";
 
     if (targetLink.length > 0) {
+      console.log("hello");
       // Navigate to the sibling or parent elements to find the table
       targetLink
         .closest(".table") // Find the closest .table div
@@ -309,15 +358,16 @@ exports.rmd = async (req, res) => {
                     distributionPeriod: Number(distPeriod),
                   });
                 }
-                //console.log(`Row ${rowIndex}, Column ${colIndex}: ${cellText}`);
+                console.log(`Row ${rowIndex}, Column ${colIndex}: ${cellText}`);
               }
             });
         });
       console.log("RMD: ", rmds);
+      console.log("The id: ", rmdId);
       rmds.forEach((rmd) => {
         RMD.updateOne(
           {
-            _id: new ObjectId(rmdId),
+            _id: rmdId,
             // "rmd.age": { $ne: rmd.age }, // Check if age doesn't already exist
           },
           {
@@ -333,6 +383,7 @@ exports.rmd = async (req, res) => {
           .catch((err) => console.error("Error Saving RMD Document:", err));
       });
     }
+    console.log(targetLink.length);
   } catch (error) {
     console.error(error);
     res.status(500).send("An error occurred while scraping data.");
