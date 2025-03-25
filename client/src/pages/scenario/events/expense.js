@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { ThemeProvider, CssBaseline, Container, Button, Stack, Box, Checkbox, Typography } from '@mui/material';
 import theme from '../../../components/theme';
 import Navbar from '../../../components/navbar';
@@ -101,8 +101,14 @@ const Expense = () => {
         });
     };
 
+    useEffect(() => {
+                    console.log("Updated eventEditMode:", eventEditMode);
+                }, [eventEditMode]);
     const handleSave = async () =>
     {
+        console.log("HANDLER");
+        console.log(formValues);
+        console.log(eventEditMode);
         if (eventEditMode.id == 'new')
         {
             let response = await axios.post('http://localhost:8080/expenseEvent', formValues);
@@ -110,9 +116,11 @@ const Expense = () => {
 
             console.log(id);
             handleInputChange("_id", id);
-            setCurrExpense((prev) => [...prev, formValues]);
+            setCurrExpense((prev) => [...prev, { ...formValues, _id: id }]);
+            console.log(formValues);
+
             setEventEditMode({type:"Expense", id: id});
-            console.log()
+           
 
             setCurrScenario((prevScenario) => {
                 const updatedScenario = {

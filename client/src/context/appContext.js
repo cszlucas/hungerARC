@@ -366,6 +366,10 @@ export const AppProvider = ({ children }) => {
       if (currInvestmentTypes) localStorage.setItem("currentInvestmentType", JSON.stringify(currInvestmentTypes));
   }, [currInvestmentTypes]);
 
+  useEffect(() => {
+    if (eventEditMode) localStorage.setItem("editEvent", JSON.stringify(eventEditMode));
+  }, [eventEditMode]);
+
   console.log("Current scenarios:", scenarioData);
 
   return (
