@@ -2,9 +2,11 @@ import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
-import { Container, Typography, Card, CardContent, Avatar, Button, Box, Stack } from "@mui/material";
+import { ThemeProvider, Container, Typography, Card, CardContent, Avatar, Button, Box, Stack } from "@mui/material";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { AuthContext } from "../context/authContext";
+import theme from "../components/theme";
+import Navbar from "../components/navbar";
 
 const GoogleAuth = () => {
     const {user, setUser} = useContext(AuthContext);
@@ -54,7 +56,7 @@ const GoogleAuth = () => {
         // setScenarioData(getInitialState);
 
         // ✅ Redirect to homepage
-        navigate("/");
+        navigate("/profile");
     };
 
     const handleGuestLogin = () => {
@@ -69,36 +71,45 @@ const GoogleAuth = () => {
 
         // localStorage.setItem("user", JSON.stringify(guestUser));
         // console.log(localStorage.getItem("user"));
-        navigate("/"); // Redirect guest users to homepage
+        navigate("/profile"); // Redirect guest users to homepage
     };
 
     console.log(localStorage);
     return (
+        <ThemeProvider theme={theme}>
+        <Navbar currentPage={"login"}/>
         <GoogleOAuthProvider clientId="600916289393-qfjvma6fnncebuv070vt2h9oddeuddhd.apps.googleusercontent.com">
-            <Container maxWidth="sm" sx={{ textAlign: "center", mt: 8 }}>
-                <Card elevation={3} sx={{ p: 4, borderRadius: 3 }}>
-                    <Typography variant="h4" gutterBottom>
-                        Sign in with Google
-                    </Typography>
+            
+            <Container sx={{ textAlign: "center", mt: 8 }}>
+                <Typography variant="h2" sx={{mt: 20, fontWeight: "bold"}}>
+                    Welcome to Hunger <span style={{ color: "#00825B" }}>Finance</span>
+                </Typography>
+                <Typography variant="h6" sx={{mt: 4, mb: 10}}>
+                    Please login or visit as guest to start using our Financial Planner 
+                </Typography>
+                <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+                    <Stack direction="column" spacing={4} sx={{ width: "100%", maxWidth: 300 }}>
+                    <GoogleLogin
+                        onSuccess={handleSuccess}
+                        onError={() => alert("Login Failed")}
+                    />
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleGuestLogin}
+                        size="large"
+                        sx={{ 
+                            textTransform: "none", 
+                        }}
+                    >
+                        Go as Guest
+                    </Button>
 
-                    {
-                        <Stack spacing={2} mt={2}>
-                            <GoogleLogin 
-                                onSuccess={handleSuccess} 
-                                onError={() => alert("Login Failed")} 
-                            />
-                            <Button 
-                                variant="contained" 
-                                color="primary" 
-                                onClick={handleGuestLogin}
-                            >
-                                Sign in as Guest
-                            </Button>
-                        </Stack>
-                     }
-                </Card>
+                    </Stack>
+                </Box>
             </Container>
         </GoogleOAuthProvider>
+        </ThemeProvider>
     );
 };
 

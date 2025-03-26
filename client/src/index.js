@@ -24,7 +24,7 @@ import { AuthProvider } from "./context/authContext";
 import { AppProvider } from "./context/appContext";
 
 const router = createBrowserRouter([
-  { path: "/", element: <Homepage />, },
+  { path: "/", element: <Login />, },
   { path: "/login", element: <Login />, },
   { path: "/profile", element: <Profile />, },
   { path: "/scenarios", element: <ScenarioList />, },

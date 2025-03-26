@@ -1,4 +1,5 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import { ThemeProvider, CssBaseline, Container, Typography, List, ListItem, ListItemText, IconButton, Box, Button } from "@mui/material";
 import { AuthContext } from "../context/authContext";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -10,14 +11,29 @@ function extractPrefix(email) {
     return match ? match[0] : "Guest"; // Default to "Guest" if no match
 }
 
+const capitalizeFirstLetter = (str) => {
+    if (!str) return "";  // Handle empty or null strings
+    return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
 function DisplayUserName({ user }) {
-    if (!user) return <h1>Hello weirdo!</h1>;
+    if (!user) { return; }
     const prefix = extractPrefix(user.email);
-    return <h1>{prefix || "Guest"}&#39;s Profile:</h1>;
+    return (<>
+        <Typography variant="h2" sx={{  fontWeight: "bold", mb: 2, mt: 4}}>{capitalizeFirstLetter(prefix)}&#39;s Profile:</Typography>
+    </>);
 }
 
 const Profile = () => {
     const { user } = useContext(AuthContext);
+    const navigate = useNavigate(); // Initialize useNavigate
+
+    useEffect(() => {
+        if (!user) {
+            navigate("/"); // Redirect to home page if user doesn't exist
+        }
+    }, [user, navigate]);
+
     const [selectedStateTax, setStateTax] = useState(null);
     const [file, setFile] = useState(null); 
 
@@ -63,7 +79,7 @@ const Profile = () => {
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <Navbar currentPage={"homepage"} />
+            <Navbar currentPage={"profile"} />
             <Container>
                 <DisplayUserName user={user} />
                 <Typography 
@@ -94,7 +110,7 @@ const Profile = () => {
                 </Box>
 
                 <Box sx={{ display: "flex", alignItems: "center", marginBottom: 1 }}>
-                    <Typography variant="h6" component="h5" sx={{ marginRight: 2 }}>
+                    <Typography variant="h6" component="h5" sx={{ marginRight: 2, fontWeight: "bold" }}>
                         Uploaded YAMLs:
                     </Typography>
                 </Box>

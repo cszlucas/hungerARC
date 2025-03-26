@@ -372,10 +372,15 @@ const Expense = () => {
                     <Button variant="contained" color="primary" sx={buttonStyles}
                         onClick={() => navigate("/scenario/event_series")}
                     >
-                        Back
+                        Cancel
                     </Button>
-                    <Button variant="contained" color="success" sx={buttonStyles}>
-                        Continue
+                    <Button variant="contained" color="success" sx={buttonStyles}
+                        onClick={() => {
+                            handleSave();
+                            navigate("/scenario/event_series");
+                        }}
+                    >
+                        Save & Continue
                     </Button>
                 </Box>
             </Container>

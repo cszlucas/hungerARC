@@ -14,7 +14,6 @@ import {
   backContinueContainerStyles,
   buttonStyles,
   rowBoxStyles,
-  multiLineTextFieldStyles,
 } from "../../../components/styles";
 
 import CustomInput from "../../../components/customInputBox";
@@ -100,10 +99,10 @@ const EventSeries = () => {
     setOpenBackdrop(false);
   };
 
-  const handleSelectEventType = (type) => {
-    alert(`Selected Event: ${type}`);
-    setOpenBackdrop(false);
-  };
+  // const handleSelectEventType = (type) => {
+  //   alert(`Selected Event: ${type}`);
+  //   setOpenBackdrop(false);
+  // };
 
   const handleEditEvent = (event) => {
     let editObject = { type: event.type, id: event._id};

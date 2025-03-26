@@ -13,7 +13,8 @@ const ScenarioList = () => {
 
     const navigate = useNavigate();
     const handleSelectScenario = (scenarioKey) => {
-        setSelectedScenario(scenarioKey); // Update the selected scenario
+        return;
+        //setSelectedScenario(scenarioKey); // Update the selected scenario
     };
 
     return (

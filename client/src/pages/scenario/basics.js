@@ -189,6 +189,7 @@ const Basics = () => {
 
           <CustomToggle
             title="Is the scenario for yourself or with your spouse?"
+            labels={["Single","Married"]}
             values={["single", "married"]}
             sideView={false}
             width={100}
@@ -208,6 +209,7 @@ const Basics = () => {
 
           <CustomToggle
             title="Your age type"
+            labels={["Fixed","Normal"]}
             values={["fixed", "normal"]}
             sideView={false}
             width={100}
@@ -252,6 +254,7 @@ const Basics = () => {
 
             <CustomToggle
               title="Spouse age type"
+              labels={["Fixed","Normal"]}
               values={["fixed", "normal"]}
               sideView={false}
               width={100}
@@ -293,6 +296,7 @@ const Basics = () => {
         <Box sx={rowBoxStyles}>
           <CustomToggle
               title="Distribution"
+              labels={["Fixed", "Uniform", "Normal"]}
               values={["fixed", "uniform", "normal"]}
               sideView={false}
               width={100}

@@ -151,7 +151,7 @@ const Rebalance = () => {
         currInvestments = taxFreeInvestments;
       }
 
-      if (duration == "Fixed") {
+      if (duration == "fixedAmt") {
         //b/c of naming difference
         dur = "fixedAmt";
       } else {
@@ -340,20 +340,20 @@ const Rebalance = () => {
 
               <Stack spacing={2}>
                 {/* Toggle on Top */}
-                <CustomToggle title="Duration" values={["Fixed", "Normal", "Uniform"]} sideView={false} width={100} value={duration} setValue={setDuration} />
+                <CustomToggle title="Duration" labels={["Fixed", "Normal", "Uniform"]} values={["fixed", "normal", "uniform"]} sideView={false} width={100} value={duration} setValue={setDuration} />
 
                 {/* Input Fields Below in Columns */}
                 <Stack direction="row" spacing={4} alignItems="start">
-                  {duration === "Fixed" && <CustomInput title="Value" type="number" adornment={""} value={durationValue} setValue={setDurationValue} />}
+                  {duration === "fixed" && <CustomInput title="Value" type="number" adornment={""} value={durationValue} setValue={setDurationValue} />}
 
-                  {duration === "Normal" && (
+                  {duration === "normal" && (
                     <Stack direction="row" spacing={4} alignItems="start">
                       <CustomInput title="Mean" type="number" adornment={""} value={durationMean} setValue={setDurationMean} />
                       <CustomInput title="Variance" type="number" adornment={""} value={durationVariance} setValue={setDurationVariance} />
                     </Stack>
                   )}
 
-                  {duration === "Uniform" && (
+                  {duration === "uniform" && (
                     <Stack direction="row" spacing={4} alignItems="start">
                       <CustomInput title="Min" type="number" adornment={""} value={durationMin} setValue={setDurationMin} />
                       <CustomInput title="Max" type="number" adornment={""} value={durationMax} setValue={setDurationMax} />
@@ -405,7 +405,7 @@ const Rebalance = () => {
 
             <Stack spacing={2}>
               {/* Toggle on Top */}
-              <CustomToggle title="Allocations" values={["fixed", "glidePath"]} sideView={false} width={100} value={allocations} setValue={setAllocations} />
+              <CustomToggle title="Allocations" labels={["Fixed", "Glide Path"]} values={["fixed", "glidePath"]} sideView={false} width={100} value={allocations} setValue={setAllocations} />
 
               {/* Input Fields Below in Columns */}
               <Stack direction="row" spacing={4} alignItems="start">

@@ -103,13 +103,11 @@ const Income = () => {
         });
     };
 
-
-    
-      const handleSave = async () => {
+    const handleSave = async () => {
         try {
-          let response;
-        //   console.log("form valu: ",formValues);
-          if (eventEditMode.id == "new"){
+            let response;
+            //   console.log("form valu: ",formValues);
+            if (eventEditMode.id == "new"){
 
             let response = await axios.post("http://localhost:8080/incomeEvent", formValues);
             let id = response.data._id;
@@ -132,44 +130,28 @@ const Income = () => {
             });
 
             // console.log('Data successfully saved:', response.data);
-          } else {
+            } else {
             console.log("EVENT EDIT MODE ID: ", eventEditMode.id);
             let response = await axios.post(`http://localhost:8080/updateIncome/${eventEditMode.id}`, formValues);
             setCurrIncome((prev) => {
-              let newList = prev.filter((item)=> item._id !== eventEditMode.id);
-              return [...newList, formValues];
+                let newList = prev.filter((item)=> item._id !== eventEditMode.id);
+                return [...newList, formValues];
             });
             // console.log('Data successfully updated:', response.data);
-          }
+            }
     
         //   alert('Save data');
         } catch (error) {
-          console.error("Error saving data:", error);
-        //   setErrorBackdrop(true); 
-          alert("Failed to save data!");
+            console.error("Error saving data:", error);
+            //  setErrorBackdrop(true); 
+            alert("Failed to save data!");
         }
       };
 
     const handleBackClick = () =>  {
         handleSave();  
         navigate("/scenario/event_series");
-      };
-
-    //   const handleClose = () => {
-    //   };
-
-    // const handleConfirm = () => {
-    //     if (!formValues.name.trim()) {
-    //     } else {
-    //     // setIncome(formValues);  // Save formValues before navigating
-    //     navigate("/scenarios");
-    //     }
-    // };
-    // const handleErrorClose = () => {
-    //     // setErrorBackdrop(false);
-    // };
-
-    
+    };
 
     return (
         <ThemeProvider theme={theme}>
@@ -219,7 +201,8 @@ const Income = () => {
                                 {/* Toggle on Top */}
                                 <CustomToggle
                                     title="Duration"
-                                    values={["fixedAmt", "Normal", "Uniform"]}
+                                    labels={["Fixed", "Normal", "Uniform"]}
+                                    values={["fixedAmt", "normal", "uniform"]}
                                     sideView={false}
                                     width={100}
                                     value={formValues.duration.type}
@@ -238,7 +221,7 @@ const Income = () => {
                                         />
                                     )}
 
-                                    {formValues.duration.type === "Normal" && (
+                                    {formValues.duration.type === "normal" && (
                                         <Stack direction="row" spacing={4} alignItems="start">
                                             <CustomInput 
                                                 title="Mean"
@@ -257,7 +240,7 @@ const Income = () => {
                                         </Stack>
                                     )}
 
-                                    {formValues.duration.type === "Uniform" && (
+                                    {formValues.duration.type === "uniform" && (
                                         <Stack direction="row" spacing={4} alignItems="start">
                                             <CustomInput 
                                                 title="Min"
@@ -312,8 +295,8 @@ const Income = () => {
                                 Inflation Adjustment
                             </Typography>
                             <Checkbox 
-                                    checked={formValues.inflationAdjustment || false}
-                                    onChange={(value) => handleInputChange("inflationAdjustment", value.target.checked)}
+                                checked={formValues.inflationAdjustment || false}
+                                onChange={(value) => handleInputChange("inflationAdjustment", value.target.checked)}
                             />
                         </Stack>
 
@@ -341,7 +324,8 @@ const Income = () => {
 
                         <CustomToggle
                             title="Distribution"
-                            values={["None", "Normal", "Uniform"]}
+                            labels={["None", "Normal", "Uniform"]}
+                            values={["fixAmt", "normal", "uniform"]}
                             sideView={true}
                             width={100}
                             value={distributionType}
@@ -350,6 +334,7 @@ const Income = () => {
 
                         <CustomToggle
                             title="Rate/Unit"
+                            labels={["Fixed", "Percentage"]}
                             values={["fixed", "percentage"]}
                             sideView={true}
                             width={100}
@@ -357,7 +342,7 @@ const Income = () => {
                             setValue={(value) => handleInputChange("annualChange.type", value)}
                         />
     
-                        {distributionType === "None" && (
+                        {distributionType === "fixAmt" && (
                             <CustomInput 
                                 title="Value"
                                 type="number"
@@ -367,7 +352,7 @@ const Income = () => {
                             />
                         )}
                         
-                        {distributionType === "Normal" && (
+                        {distributionType === "normal" && (
                             <Stack direction="row" spacing={2} sx={{ marginTop: 2 }}>
                                 <CustomInput 
                                     title="Mean"
@@ -386,7 +371,7 @@ const Income = () => {
                             </Stack>
                         )}
 
-                        {distributionType === "Uniform" && (
+                        {distributionType === "U=uniform" && (
                             <Stack direction="row" spacing={2} sx={{ marginTop: 2 }}>
                                 <CustomInput 
                                     title="Min"
@@ -409,10 +394,10 @@ const Income = () => {
 
                 <Box sx={backContinueContainerStyles}>
                     <Button variant="contained" color="primary" sx={buttonStyles}
-                        onClick={handleBackClick}
-                        // onClick={() => navigate("/scenario/event_series")}
+                        // onClick={handleBackClick}
+                        onClick={() => navigate("/scenario/event_series")}
                     >
-                        Back
+                        Cancel
                     </Button>
                     <Button variant="contained" color="success" sx={buttonStyles}
                         onClick={() => {
@@ -420,7 +405,7 @@ const Income = () => {
                             navigate("/scenario/event_series");
                           }}
                     >
-                        Continue
+                        Save & Continue
                     </Button>
                 </Box>
             </Container>

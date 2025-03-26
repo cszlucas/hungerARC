@@ -259,7 +259,7 @@ const Strategies = () => {
                   <Button variant="contained" color="success" sx={buttonStyles}
                     onClick={() => navigate("/scenario/run_simulations")}
                   >
-                      Continue
+                      Finish
                   </Button>
             </Box>
       </Container>

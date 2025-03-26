@@ -15,7 +15,6 @@ import {
   ListItemText,
   IconButton,
   Backdrop,
-  Modal,
   Fade,
   TextField,
 } from "@mui/material";
@@ -24,9 +23,7 @@ import Navbar from "../../../components/navbar";
 import PageHeader from "../../../components/pageHeader";
 import { stackStyles, titleStyles, buttonStyles, rowBoxStyles, backContinueContainerStyles, textFieldStyles } from "../../../components/styles";
 
-import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import CustomDropdown from "../../../components/customDropDown";
 
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";

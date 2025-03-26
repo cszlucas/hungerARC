@@ -34,10 +34,18 @@ export default function PageHeader() {
 
         {/* Event Series */}
         <Typography
-          color={isActive(["event_series", "invest", "expense", "income", "rebalance", "strategies"]) ? "primary" : "textPrimary"}
-          fontWeight={isActive(["event_series", "invest", "expense", "income", "rebalance", "strategies"]) ? "bold" : "normal"}
+          color={isActive(["event_series", "invest", "expense", "income", "rebalance"]) ? "primary" : "textPrimary"}
+          fontWeight={isActive(["event_series", "invest", "expense", "income", "rebalance"]) ? "bold" : "normal"}
         >
           Event Series
+        </Typography>
+
+        {/* Event Series */}
+        <Typography
+          color={isActive(["strategies"]) ? "primary" : "textPrimary"}
+          fontWeight={isActive(["strategies"]) ? "bold" : "normal"}
+        >
+          Strategies
         </Typography>
 
         {/* Run Simulations */}
