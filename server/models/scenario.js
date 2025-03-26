@@ -9,7 +9,7 @@ var scenarioSchema = new Schema({
     type: {
       type: String,
       // percentage
-      enum: ["fixed", "normal"],
+      enum: ["fixed", "normal", ""],
     },
     fixedAge: { type: Number },
     mean: { type: Number },
@@ -24,8 +24,8 @@ var scenarioSchema = new Schema({
   inflationAssumption: {
     type: {
       type: String,
-      // percentage
-      enum: ["fixed", "normal", "uniform"],
+      // all is a percentage
+      enum: ["fixed", "normal", "uniform", ""],
     },
     fixedRate: { type: Number },
     mean: { type: Number },

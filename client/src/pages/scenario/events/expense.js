@@ -40,7 +40,7 @@ const Expense = () => {
         eventSeriesName: "",
         eventSeriesDescription: "",
         startYear: {
-            type: "fixedAmt",
+            type: "",
             value: "",
             mean: "",
             stdDev: "",
@@ -50,7 +50,7 @@ const Expense = () => {
         },
         duration:
         {
-            type: "fixedAmt",
+            type: "",
             value: "",
             mean: "",
             stdDev: "",
@@ -60,14 +60,14 @@ const Expense = () => {
         initialAmount: "",
         annualChange: 
         {
-            distributioType: "fixedAmt",
-            type: "fixed",
-            value: "",
+            distribution: "",
+            type: "",
+            // value: "",
             mean: "",
             stdDev: "",
             min: "",
             max: "",
-            amount: 0
+            amount: ""
         },
         userPercentage: "",
         inflationAdjustment: false,
@@ -300,12 +300,12 @@ const Expense = () => {
 
                         <CustomToggle
                             title="Distribution"
-                            labels = {["Fixed", "Normal", "Uniform"]}
-                            values={["fixedAmt", "normal", "uniform"]}
+                            labels = {["None", "Normal", "Uniform"]}
+                            values={["none", "normal", "uniform"]}
                             sideView={true}
                             width={100}
                             value={formValues.annualChange.distributionType}
-                            setValue={(value) => handleInputChange("annualChange.distributionType", value)}
+                            setValue={(value) => handleInputChange("annualChange.distribution", value)}
                         />
 
                         <CustomToggle
@@ -318,17 +318,17 @@ const Expense = () => {
                             setValue={(value) => handleInputChange("annualChange.type", value)}
                         />
 
-                        {formValues.annualChange.distributionType === "fixedAmt" && (
+                        {formValues.annualChange.distribution === "none" && (
                             <CustomInput 
                                 title="Value"
                                 type="number"
                                 adornment={formValues.annualChange.type === "percentage" ? "%" : "$"}
-                                value={formValues.annualChange.value}
-                                setValue={(value) => handleInputChange("annualChange.value", value)}
+                                value={formValues.annualChange.amount}
+                                setValue={(value) => handleInputChange("annualChange.amount", value)}
                             />
                         )}
                         
-                        {formValues.annualChange.distributionType === "normal" && (
+                        {formValues.annualChange.distribution === "normal" && (
                             <Stack direction="row" spacing={2} sx={{ marginTop: 2 }}>
                                 <CustomInput 
                                     title="Mean"
@@ -347,7 +347,7 @@ const Expense = () => {
                             </Stack>
                         )}
 
-                        {formValues.annualChange.distributionType === "uniform" && (
+                        {formValues.annualChange.distribution === "uniform" && (
                             <Stack direction="row" spacing={2} sx={{ marginTop: 2 }}>
                                 <CustomInput 
                                     title="Min"

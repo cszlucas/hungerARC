@@ -19,7 +19,7 @@ const InvestmentType = () => {
   const getInvestmentTypeById = (id) => {
     let investmentType = null;
     console.log("ID BE LIKE: " + id);
-
+    console.log("curr invesmtnet tpe: ", currInvestmentTypes);
     if (Array.isArray(currInvestmentTypes) && currInvestmentTypes.length > 0) {
       for (let i = 0; i < currInvestmentTypes.length; i++) {
         // Ensure each item has the _id property before comparing

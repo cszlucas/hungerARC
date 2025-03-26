@@ -4,23 +4,13 @@ const { ObjectId } = require("mongoose").Types;
 const Scenario = require("../models/scenario.js");
 
 //INCOME EVENTS
+
+// add a new income event to incomeevent collection
 exports.incomeEvent = async (req, res) => {
   try {
-    // const { eventSeriesName, description, startYear, duration, initialAmount, annualChange, userPercentage, inflationAdjustment, isSocialSecurity, baseEventSeries } = req.body;
+    const { eventSeriesName, description, startYear, duration, initialAmount, annualChange, userPercentage, inflationAdjustment, isSocialSecurity } = req.body;
 
-    const {
-      eventSeriesName,  
-      description = "", 
-      startYear = {},   
-      duration = {},  
-      initialAmount = 0, 
-      annualChange = { type: 'None', amount: 0 },
-      userPercentage = 0, 
-      inflationAdjustment = false, 
-      isSocialSecurity = false,
-      scenarioId
-    } = req.body;
-
+    // creates a new income event using extracted request body data
     const newIncomeEvent = new IncomeEvent({
       eventSeriesName,
       description,
@@ -30,6 +20,11 @@ exports.incomeEvent = async (req, res) => {
       annualChange: {
         type: annualChange.type,
         amount: annualChange.amount,
+        distribution: annualChange.distribution,
+        mean: annualChange.mean,
+        stdDev: annualChange.stdDev,
+        min: annualChange.min,
+        max: annualChange.max
       },
       userPercentage,
       inflationAdjustment,
@@ -38,22 +33,13 @@ exports.incomeEvent = async (req, res) => {
 
     const savedIncomeEvent = await newIncomeEvent.save();
 
-    // if (scenarioId) {
-    //   // Find the Scenario by its ID and update its incomeEventSeries array
-    //   await Scenario.findByIdAndUpdate(
-    //     scenarioId, 
-    //     { $push: { incomeEventSeries: savedIncomeEvent._id } },  // Push the new IncomeEvent's _id to the incomeEventSeries array
-    //     { new: true } // Return the updated scenario document
-    //   );
-    // }
-
     res.status(201).json(savedIncomeEvent);
   } catch (err) {
-    console.error("Error creating IncomeEvent:", err);
     res.status(500).json({ error: "Failed to create IncomeEvent" });
   }
 };
 
+// update existing income event with changed entries
 exports.updateIncome = async (req, res) => {
   const { id } = req.params;
   const updateData = req.body; // Data to update (from the request body)
@@ -82,12 +68,12 @@ exports.updateIncome = async (req, res) => {
   }
 };
 
-//getAllIncomeEvents based on scenarioId
+//get all income events based on the scenario id
 exports.getAllIncomeEventsByScenario = async (req, res) => {
   const { id } = req.params;
   try {
     const scenario = await Scenario.findOne({ _id: id });
-    const incomeEventId = scenario.incomeEventSeries;
+    const incomeEventId = scenario.incomeEventSeries; // array of income events belonging to the scenario
     const incomeEvent = await IncomeEvent.find({ _id: { $in: incomeEventId } });
     res.status(200).json(incomeEvent);
   } catch (err) {
@@ -96,6 +82,8 @@ exports.getAllIncomeEventsByScenario = async (req, res) => {
 };
 
 //EXPENSE EVENTS
+
+// add a new expense event to expenseevent collection
 exports.expenseEvent = async (req, res) => {
   try {
     const { eventSeriesName, description, startYear, duration, initialAmount, annualChange, userPercentage, inflationAdjustment, isDiscretionary } = req.body;
@@ -123,6 +111,7 @@ exports.expenseEvent = async (req, res) => {
   }
 };
 
+// update the field(s) in existing expense in mongodb
 exports.updateExpense = async (req, res) => {
   const { id } = req.params;
   const updateData = req.body; // Data to update (from the request body)
@@ -147,6 +136,8 @@ exports.updateExpense = async (req, res) => {
 };
 
 // INVEST STRATEGY EVENTS
+
+// add a new invest event to investevent collection
 exports.investStrategy = async (req, res) => {
   const { eventSeriesName, description, startYear, duration, type, assetAllocation, maxCash } = req.body;
   try {
@@ -165,7 +156,7 @@ exports.investStrategy = async (req, res) => {
       maxCash,
     });
 
-    const savedInvestEvent = await investEvent.save();
+    const savedInvestEvent = await investEvent.save(); // save to database
 
     res.status(201).json(savedInvestEvent);
   } catch (err) {
@@ -173,6 +164,7 @@ exports.investStrategy = async (req, res) => {
   }
 };
 
+// retrieve the invest event based on the id
 exports.getInvestStrategy = async (req, res) => {
   const strategyId = new ObjectId(req.params.id);
   try {
@@ -186,6 +178,7 @@ exports.getInvestStrategy = async (req, res) => {
   }
 };
 
+// update field(s) of existing invest event
 exports.updateInvestStrategy = async (req, res) => {
   const strategyId = new ObjectId(req.params.id);
   const updateData = req.body; // Data to update (from the request body)
@@ -207,6 +200,8 @@ exports.updateInvestStrategy = async (req, res) => {
 };
 
 // REBALANCE STRATEGY
+
+// add a new rebalance event to rebalanceevent collection
 exports.rebalanceStrategy = async (req, res) => {
   const { eventSeriesName, description, startYear, duration, type, fixedPercentages, initialPercentages, finalPercentages } = req.body;
 
@@ -230,6 +225,7 @@ exports.rebalanceStrategy = async (req, res) => {
   }
 };
 
+// retrieve the rebalance event based on its id
 exports.getRebalanceStrategy = async (req, res) => {
   const strategyId = new ObjectId(req.params.id);
   try {
@@ -243,6 +239,7 @@ exports.getRebalanceStrategy = async (req, res) => {
   }
 };
 
+// update existing rebalance event
 exports.updateRebalanceStrategy = async (req, res) => {
   const strategyId = new ObjectId(req.params.id);
   const updateData = req.body; // Data to update (from the request body)
@@ -263,10 +260,11 @@ exports.updateRebalanceStrategy = async (req, res) => {
   }
 };
 
+// retrieve array of rebalance events object belonging to a scenario
 exports.getAllRebalanceEventsByScenario = async (req, res) => {
   const { id } = req.params;
   try {
-    const scenario = await Scenario.findOne({ _id: id });
+    const scenario = await Scenario.findOne({ _id: id }); // find the scenario based on its id
     const rebalanceEventId = scenario.rebalanceEventSeries;
     const rebalanceEvent = await RebalanceEvent.find({ _id: { $in: rebalanceEventId } });
     res.status(200).json(rebalanceEvent);
@@ -275,6 +273,7 @@ exports.getAllRebalanceEventsByScenario = async (req, res) => {
   }
 };
 
+// retrieve array of invest events object belonging to a scenario
 exports.getAllInvestEventsByScenario = async (req, res) => {
   const { id } = req.params;
   try {
@@ -287,6 +286,7 @@ exports.getAllInvestEventsByScenario = async (req, res) => {
   }
 };
 
+// retrieve array of expense events object belonging to a scenario
 exports.getAllExpenseEventsByScenario = async (req, res) => {
   const { id } = req.params;
   try {
