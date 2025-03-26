@@ -1,7 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-import Homepage from "./pages/homepage";
 import Profile from "./pages/profile";
 import Scenarios from "./scenarios";
 import Login from "./pages/login";

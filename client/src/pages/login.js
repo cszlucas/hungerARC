@@ -77,38 +77,38 @@ const GoogleAuth = () => {
     console.log(localStorage);
     return (
         <ThemeProvider theme={theme}>
-        <Navbar currentPage={"login"}/>
-        <GoogleOAuthProvider clientId="600916289393-qfjvma6fnncebuv070vt2h9oddeuddhd.apps.googleusercontent.com">
-            
-            <Container sx={{ textAlign: "center", mt: 8 }}>
-                <Typography variant="h2" sx={{mt: 20, fontWeight: "bold"}}>
-                    Welcome to Hunger <span style={{ color: "#00825B" }}>Finance</span>
-                </Typography>
-                <Typography variant="h6" sx={{mt: 4, mb: 10}}>
-                    Please login or visit as guest to start using our Financial Planner 
-                </Typography>
-                <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-                    <Stack direction="column" spacing={4} sx={{ width: "100%", maxWidth: 300 }}>
-                    <GoogleLogin
-                        onSuccess={handleSuccess}
-                        onError={() => alert("Login Failed")}
-                    />
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleGuestLogin}
-                        size="large"
-                        sx={{ 
-                            textTransform: "none", 
-                        }}
-                    >
-                        Go as Guest
-                    </Button>
+            <Navbar currentPage={"login"}/>
+            <GoogleOAuthProvider clientId="600916289393-qfjvma6fnncebuv070vt2h9oddeuddhd.apps.googleusercontent.com">
+                
+                <Container sx={{ textAlign: "center", mt: 8 }}>
+                    <Typography variant="h2" sx={{mt: 20, fontWeight: "bold"}}>
+                        Welcome to Hunger <span style={{ color: "#00825B" }}>Finance</span>
+                    </Typography>
+                    <Typography variant="h6" sx={{mt: 4, mb: 10}}>
+                        Please login or visit as guest to start using our Financial Planner 
+                    </Typography>
+                    <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+                        <Stack direction="column" spacing={4} sx={{ width: "100%", maxWidth: 300 }}>
+                        <GoogleLogin
+                            onSuccess={handleSuccess}
+                            onError={() => alert("Login Failed")}
+                        />
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleGuestLogin}
+                            size="large"
+                            sx={{ 
+                                textTransform: "none", 
+                            }}
+                        >
+                            Go as Guest
+                        </Button>
 
-                    </Stack>
-                </Box>
-            </Container>
-        </GoogleOAuthProvider>
+                        </Stack>
+                    </Box>
+                </Container>
+            </GoogleOAuthProvider>
         </ThemeProvider>
     );
 };

@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { ThemeProvider, CssBaseline, Container, Link, Typography, List, ListItem, ListItemText, IconButton, Box, Button } from "@mui/material";
+import { ThemeProvider, CssBaseline, Container, Typography, List, ListItem, ListItemText, IconButton, Box, Button } from "@mui/material";
 import { AppContext } from "../../context/appContext";
 import EditIcon from "@mui/icons-material/Edit";
 import theme from "../../components/theme";
