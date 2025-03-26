@@ -1,13 +1,15 @@
 var mongoose = require("mongoose");
 var Schema = mongoose.Schema;
 
+// common fields for all event series, will be populated into event series schema
 var BaseEventSchema = new Schema({
-  eventSeriesName: { type: String, required: true },
+  eventSeriesName: { type: String },
   eventSeriesDescription: { type: String },
   startYear: {
     type: {
       type: String,
-      // enum: ["fixedAmt", "normal", "uniform", "year"],
+      // will be either one of these fields
+      enum: ["fixedAmt", "normal", "uniform", "year", ""],
     },
     value: { type: Number },
     mean: { type: Number },
@@ -19,7 +21,7 @@ var BaseEventSchema = new Schema({
   duration: {
     type: {
       type: String,
-      // enum: ["fixedAmt", "normal", "uniform"],
+      enum: ["fixedAmt", "normal", "uniform",""],
     },
     value: { type: Number },
     mean: { type: Number },
@@ -32,21 +34,28 @@ var BaseEventSchema = new Schema({
 var AnnualChange = new Schema({
     type: {
       type: String,
-      // enum: ["fixed", "percentage"], // Example valid values
+      enum: ["fixed", "percentage",""], 
+    },
+    distribution: {
+      type: String,
+      enum: ["none", "normal", "uniform", ""]
     },
     amount: {
       type: Number,
     },
+    mean: { type: Number },
+    stdDev: { type: Number },
+    min: { type: Number },
+    max: { type: Number },
   });
   
 
 var IncomeEventSchema = new Schema({
-  ...BaseEventSchema.obj,
+  ...BaseEventSchema.obj, // populate the fields from base event schema
   initialAmount: { type: Number },
   annualChange: { type: AnnualChange },
   userPercentage: { type: Number },
   inflationAdjustment: { type: Boolean },
-  // change in code
   isSocialSecurity: { type: Boolean, default: false },
 });
 
@@ -60,8 +69,9 @@ var ExpenseEventSchema = new Schema({
 });
 
 var AssetAllocationSchema = new Schema({
-  type: { type: String, enum: ["fixed", "glidePath"] },
-  fixedPercentages: { type: Map, of: Number }, // eg: { 'objectIdBondInvestment': 30, 'objectIdStockInvestment': 70 }
+  type: { type: String, enum: ["fixed", "glidePath",""] },
+  // eg: { 'objectIdBondInvestment': 30, 'objectIdStockInvestment': 70 }
+  fixedPercentages: { type: Map, of: Number }, // fixed
   initialPercentages: { type: Map, of: Number }, // glidePath
   finalPercentages: { type: Map, of: Number }, // glidePath
 });
@@ -77,6 +87,7 @@ var RebalanceEventSchema = new Schema({
   rebalanceAllocation: { type: AssetAllocationSchema },
 });
 
+// export mongoose model for difference event series and annual change
 module.exports = {
   BaseEventSeries: mongoose.model("BaseEventSeries", BaseEventSchema),
   IncomeEvent: mongoose.model("IncomeEvent", IncomeEventSchema),

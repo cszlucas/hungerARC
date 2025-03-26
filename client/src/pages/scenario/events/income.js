@@ -21,11 +21,12 @@ const Income = () => {
     const {eventEditMode, setEventEditMode} = useContext(AppContext); 
     const {currScenario, setCurrScenario} = useContext(AppContext);
     const {editMode, setEditMode} = useContext(AppContext); //scenario
-    // setEventEditMode({ type: event.type, id: event._id}); // 🔹  type: "new" if new
+
+    // find the income event series object based on the id
     const getIncomeById = (id) => {
         for (let i = 0; i < currIncome.length; i++) {
             if (currIncome[i]._id == id) {
-                return currIncome[i]; // Return the found scenario
+                return currIncome[i];
             }
         }
         return null; // Return null if not found
@@ -42,7 +43,7 @@ const Income = () => {
         eventSeriesName: "",
         description: "",
         startYear: {
-            type: "fixedAmt",
+            type: "",
             value: "",
             mean: "",
             stdDev: "",
@@ -61,21 +62,20 @@ const Income = () => {
         initialAmount: "",
         annualChange: {
             type:"",
-            amount:""
+            amount:"",
+            distribution:"",
+            mean:"",
+            stdDev:"",
+            min:"",
+            max:""
         },
         userPercentage: "",
         inflationAdjustment: false,
         isSocialSecurity: false
-        // isSocialSecurity: false
     });
     
-    const [startYear, setStartYear] = useState("");
-    const [expectedChangeType, setExpectedChangeType] = useState("Fixed");
-    const [distributionType, setDistributionType] = useState("None");
-    const [changeMean, setChangeMean] = useState("");
-    const [changeVariance, setChangeVariance] = useState("");
-    const [changeMin, setChangeMin] = useState("");
-    const [changeMax, setChangeMax] = useState("");
+    // const [expectedChangeType, setExpectedChangeType] = useState("Fixed");
+  
 
     const navigate = useNavigate();
 
@@ -106,9 +106,8 @@ const Income = () => {
     const handleSave = async () => {
         try {
             let response;
-            //   console.log("form valu: ",formValues);
             if (eventEditMode.id == "new"){
-
+            // calls endpoint to make a new income event and put in db
             let response = await axios.post("http://localhost:8080/incomeEvent", formValues);
             let id = response.data._id;
 
@@ -121,7 +120,7 @@ const Income = () => {
                     ...prevScenario,
                     incomeEventSeries: [...(prevScenario?.incomeEventSeries || []), id]
                 };
-
+                // add this income event id into scenario incomeEventSeries array
                 axios.post(`http://localhost:8080/updateScenario/${editMode}`, updatedScenario)
                     .then(() => console.log("Scenario updated successfully"))
                     .catch((error) => console.error("Error updating scenario:", error));
@@ -129,29 +128,24 @@ const Income = () => {
                 return updatedScenario;
             });
 
-            // console.log('Data successfully saved:', response.data);
             } else {
-            console.log("EVENT EDIT MODE ID: ", eventEditMode.id);
             let response = await axios.post(`http://localhost:8080/updateIncome/${eventEditMode.id}`, formValues);
             setCurrIncome((prev) => {
                 let newList = prev.filter((item)=> item._id !== eventEditMode.id);
                 return [...newList, formValues];
             });
-            // console.log('Data successfully updated:', response.data);
             }
     
-        //   alert('Save data');
         } catch (error) {
             console.error("Error saving data:", error);
-            //  setErrorBackdrop(true); 
             alert("Failed to save data!");
         }
       };
 
-    const handleBackClick = () =>  {
-        handleSave();  
-        navigate("/scenario/event_series");
-    };
+    // const handleBackClick = () =>  {
+    //     handleSave();  
+    //     navigate("/scenario/event_series");
+    // };
 
     return (
         <ThemeProvider theme={theme}>
@@ -215,7 +209,7 @@ const Income = () => {
                                         <CustomInput 
                                             title="Value"
                                             type="number"
-                                            adornment={expectedChangeType === "Percentage" ? "" : ""}
+                                            adornment={""}
                                             value={formValues.duration.value}
                                             setValue={(value) => handleInputChange("duration.value", value)}
                                         />
@@ -226,14 +220,14 @@ const Income = () => {
                                             <CustomInput 
                                                 title="Mean"
                                                 type="number"
-                                                adornment={expectedChangeType === "Percentage" ? "" : ""}
+                                                adornment={""}
                                                 value={formValues.duration.mean}
                                                 setValue={(value) => handleInputChange("duration.mean", value)}
                                             />
                                             <CustomInput 
                                                 title="Variance"
                                                 type="number"
-                                                adornment={expectedChangeType === "Percentage" ? "" : ""}
+                                                adornment={""}
                                                 value={formValues.duration.stdDev}
                                                 setValue={(value) => handleInputChange("duration.stdDev", value)}
                                             />
@@ -245,14 +239,14 @@ const Income = () => {
                                             <CustomInput 
                                                 title="Min"
                                                 type="number"
-                                                adornment={expectedChangeType === "Percentage" ? "" : ""}
+                                                adornment={""}
                                                 value={formValues.duration.min}
                                                 setValue={(value) => handleInputChange("duration.min", value)}
                                             />
                                             <CustomInput 
                                                 title="Max"
                                                 type="number"
-                                                adornment={expectedChangeType === "Percentage" ? "" : ""}
+                                                adornment={""}
                                                 value={formValues.duration.max}
                                                 setValue={(value) => handleInputChange("duration.max", value)}
                                             />
@@ -281,13 +275,13 @@ const Income = () => {
                                 value={formValues.userPercentage}
                                 setValue={(value) => handleInputChange("userPercentage", value)}
                             />
-                            <CustomInput 
+                            {/* <CustomInput 
                                 title="Spouse's Contribution"
                                 type="number"
                                 adornment="%"
                                 value={changeVariance}
                                 setValue={setChangeVariance}
-                            />
+                            /> */}
                         </Stack>
 
                         <Stack direction="row" alignItems="center" spacing={2} sx={{ marginTop: 4, mb: 2 }}>
@@ -325,11 +319,11 @@ const Income = () => {
                         <CustomToggle
                             title="Distribution"
                             labels={["None", "Normal", "Uniform"]}
-                            values={["fixAmt", "normal", "uniform"]}
+                            values={["none", "normal", "uniform"]}
                             sideView={true}
                             width={100}
-                            value={distributionType}
-                            setValue={setDistributionType}
+                            value={formValues.annualChange.distribution}
+                            setValue={(value) => handleInputChange("annualChange.distribution", value)}
                         />
 
                         <CustomToggle
@@ -342,50 +336,50 @@ const Income = () => {
                             setValue={(value) => handleInputChange("annualChange.type", value)}
                         />
     
-                        {distributionType === "fixAmt" && (
+                        {formValues.annualChange.distribution === "none" && (
                             <CustomInput 
                                 title="Value"
                                 type="number"
-                                adornment={expectedChangeType === "Percentage" ? "%" : "$"}
+                                adornment={formValues.annualChange.type === "Percentage" ? "%" : "$"}
                                 value={formValues.annualChange.amount}
                                 setValue={(value) => handleInputChange("annualChange.amount", value)}
                             />
                         )}
                         
-                        {distributionType === "normal" && (
+                        {formValues.annualChange.distribution === "normal" && (
                             <Stack direction="row" spacing={2} sx={{ marginTop: 2 }}>
                                 <CustomInput 
                                     title="Mean"
                                     type="number"
-                                    adornment={expectedChangeType === "Percentage" ? "%" : "$"}
-                                    value={changeMean}
-                                    setValue={setChangeMean}
+                                    adornment={formValues.annualChange.type === "Percentage" ? "%" : "$"}
+                                    value={formValues.annualChange.mean}
+                                    setValue={(value) => handleInputChange("annualChange.mean", value)}
                                 />
                                 <CustomInput 
                                     title="Variance"
                                     type="number"
-                                    adornment={expectedChangeType === "Percentage" ? "%" : "$"}
-                                    value={changeVariance}
-                                    setValue={setChangeVariance}
+                                    adornment={formValues.annualChange.type === "Percentage" ? "%" : "$"}
+                                    value={formValues.annualChange.stdDev}
+                                    setValue={(value) => handleInputChange("annualChange.stdDev", value)}
                                 />
                             </Stack>
                         )}
 
-                        {distributionType === "U=uniform" && (
+                        {formValues.annualChange.distribution === "uniform" && (
                             <Stack direction="row" spacing={2} sx={{ marginTop: 2 }}>
                                 <CustomInput 
                                     title="Min"
                                     type="number"
-                                    adornment={expectedChangeType === "Percentage" ? "%" : "$"}
-                                    value={changeMin}
-                                    setValue={setChangeMin}
+                                    adornment={formValues.annualChange.type === "Percentage" ? "%" : "$"}
+                                    value={formValues.annualChange.min}
+                                    setValue={(value) => handleInputChange("annualChange.min", value)}
                                 />
                                 <CustomInput 
                                     title="Max"
                                     type="number"
-                                    adornment={expectedChangeType === "Percentage" ? "%" : "$"}
-                                    value={changeMax}
-                                    setValue={setChangeMax}
+                                    adornment={formValues.annualChange.type === "Percentage" ? "%" : "$"}
+                                    value={formValues.annualChange.max}
+                                    setValue={(value) => handleInputChange("annualChange.max", value)}
                                 />
                             </Stack>
                         )}
