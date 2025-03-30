@@ -24,46 +24,14 @@ const InvestmentType = () => {
   const { eventEditMode } = useContext(AppContext);
 
   const getInvestmentTypeById = (id) => {
-    let investmentType = null;
     if (Array.isArray(currInvestmentTypes) && currInvestmentTypes.length > 0) {
       for (let i = 0; i < currInvestmentTypes.length; i++) {
         // Ensure each item has the _id property before comparing
         if (currInvestmentTypes[i] && currInvestmentTypes[i]._id == id) {
-          investmentType = currInvestmentTypes[i]; // Return the found scenario
-          break;
+          return currInvestmentTypes[i]; // Return the found scenario
         }
       }
-    } else {
-      console.error("currInvestmentTypes is not a valid array.");
-    }
-
-    const taxMap = {
-      "taxable": "Taxable",
-      "tax-deferred": "Tax-Deferred",
-      "tax-free": "Tax-Free",
-    };
-
-    if (investmentType) {
-      return {
-        id: investmentType._id || "new",
-        name: investmentType.name || "",
-        description: investmentType.description || "",
-        expenseRatio: investmentType.expenseRatio || "",
-        taxability: taxMap[investmentType.taxability] || "",
-
-        returnAmountType: investmentType.annualReturn.type.indexOf("Amt") != -1 ? "Fixed" : "Percentage",
-        returnDistributionType: investmentType.annualReturn.type.indexOf("fix") != -1 ? "Fixed" : "Normal",
-        returnValue: investmentType.annualReturn.fixed || "",
-        returnMean: investmentType.annualReturn.mean || "",
-        returnStdDev: investmentType.annualReturn.stdDev || "",
-
-        incomeAmountType: investmentType.annualIncome.type.indexOf("Amt") != -1 ? "Fixed" : "Percentage",
-        incomeDistributionType: investmentType.annualIncome.type.indexOf("fix") != -1 ? "Fixed" : "Normal",
-        incomeValue: investmentType.annualIncome.fixed || "",
-        incomeMean: investmentType.annualIncome.mean || "",
-        incomeStdDev: investmentType.annualIncome.stdDev || "",
-      };
-    }
+    } 
     return null; // Return null if not found
   };
 
@@ -75,24 +43,26 @@ const InvestmentType = () => {
   };
 
   const navigate = useNavigate();
-  const [formValues, setFormValues] = useState(
-    getInvestmentTypeById(eventEditMode) || {
+  const [formValues, setFormValues] = useState(getInvestmentTypeById(eventEditMode) || 
+    {
       name: "",
       description: "",
-      expenseRatio: "",
-      taxability: "",
-
-      returnAmountType: "Fixed",
-      returnDistributionType: "Fixed",
-      returnValue: "",
-      returnMean: "",
-      returnStdDev: "",
-
-      incomeAmountType: "Fixed",
-      incomeDistributionType: "Fixed",
-      incomeValue: "",
-      incomeMean: "",
-      incomeStdDev: "",
+      expenseRatio: "", //fixed percentage
+      taxability: false, // tax-exempt or taxable
+      annualReturn: {
+        unit: "fixed",
+        type: "fixed",
+        fixed: "",
+        mean: "",
+        stdDev: "",
+      },
+      annualIncome: {
+        unit: "fixed",
+        type: "fixed",
+        fixed: "",
+        mean: "",
+        stdDev: "",
+      },
     }
   );
 
