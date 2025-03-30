@@ -5,79 +5,9 @@ import { AuthContext } from "./authContext";
 // Create Context
 export const AppContext = createContext();
 
-const initialState = [
-  {
-    id: 1,
-    name: "Base Scenario",
-    filingStatus: "single",
-    birthYearUser: 1990,
-    lifeExpectancy: {
-      type: "fixed",
-      fixedAge: 85,
-    },
-
-    // scenarioId <- tells the program what scenario the user editing
-    // Scenario'sSetOfInvestments: <- fetch(scenarioId, investments))
-    
-    setOfInvestments: [],
-    incomeEventSeries: [],
-    expenseEventSeries: [],
-    investEventSeries: [],
-    rebalanceEventSeries: [],
-    inflationAssumption: {
-      type: "fixed",
-      fixedRate: 2.5, // Default fixed inflation rate in %
-    },
-    spendingStrategy: [],
-    expenseWithdrawalStrategy: [],
-    rothConversionStrategy: [],
-    rmdStrategy: [],
-    optimizerSettings: {
-      enabled: true,
-      startYear: 2024,
-      endYear: 2050,
-    },
-    financialGoal: 500000, // Default financial goal of $500,000
-    stateResident: "NY",
-  },
-  {
-    id: 2,
-    name: "Optimistic Growth Scenario",
-    filingStatus: "married",
-    birthYearUser: 1985,
-    lifeExpectancy: {
-      type: "fixed",
-      fixedAge: 90,
-    },
-    setOfInvestments: [
-      { type: "stocks", percentage: 70 },
-      { type: "bonds", percentage: 30 },
-    ],
-    incomeEventSeries: [{ year: 2025, amount: 80000 }],
-    expenseEventSeries: [{ year: 2025, amount: 40000 }],
-    investEventSeries: [{ year: 2025, amount: 20000 }],
-    rebalanceEventSeries: [],
-    inflationAssumption: {
-      type: "fixed",
-      fixedRate: 3.0, // Higher inflation rate for an optimistic scenario
-    },
-    spendingStrategy: [],
-    expenseWithdrawalStrategy: [],
-    rothConversionStrategy: [],
-    rmdStrategy: [],
-    optimizerSettings: {
-      enabled: true,
-      startYear: 2025,
-      endYear: 2060,
-    },
-    financialGoal: 1000000, // Higher financial goal of $1M
-    stateResident: "CA",
-  },
-];
-
-const defaultInfo = {
+export const defaultInfo = {
   "name": "",
-  "person": "Myself",
+  "filingStatus": "single",
   "financialGoal": "",
   "residence": "",
   "birthYear": "",
@@ -101,54 +31,6 @@ const defaultInfo = {
   "_id": ""
 };
 
-function transformScenario(input) {
-  return {
-      // Scenario basic Info
-      id: input._id,
-      name: input.name || "",
-      person: "Myself",
-      financialGoal: input.financialGoal || "",
-      residence: input.stateResident || "",
-      birthYear: input.birthYearUser || "",
-      lifeExpectancy: input.lifeExpectancy?.fixedAge || "",
-      spouseBirthYear: "", // Not present in input
-      spouseLifeExpectancy: "", // Not present in input
-      yourSampleAge: "fixed",
-      spouseSampleAge: "fixed",
-      yourMean: "",
-      yourStdDev: "",
-      spouseMean: "",
-      spouseStdDev: "",
-      inflationType: input.inflationAssumption?.type || "none",
-      inflationValue: input.inflationAssumption?.fixedRate || "",
-      inflationMean: "",
-      inflationStdDev: "",
-      inflationMin: "",
-      inflationMax: "",
-
-      // Investment lists
-      investments: input.setOfInvestments || [],
-      investmentTypes: input.investmentTypes || [],
-
-      // Event Series
-      incomeEvents: input.incomeEventSeries || [],
-      expenseEvents: input.expenseEventSeries || [],
-      investEvents: input.investEventSeries || [],
-      rebalanceEvents: input.rebalanceEventSeries || [],
-
-      // Strategies
-      spendingStrategy: input.spendingStrategy || [],
-      expenseWithdrawalStrategy: input.expenseWithdrawalStrategy || [],
-      rothConversionStrategy: input.rothConversionStrategy || [],
-      rmdStrategy: input.rmdStrategy || [],
-
-      // Roth conversion optimizer
-      isRothOptimizer: input.optimizerSettings?.enabled || false,
-      startYear: input.optimizerSettings?.startYear || "",
-      endYear: input.optimizerSettings?.endYear || ""
-  };
-}
-
 // routes for getting user scenario ids 
 // routes for getting user scenario event series and if empty send an object for that event series back
 
@@ -158,9 +40,9 @@ export const getInitialState = async (user) => {
       // Check if scenario data already exists in localStorage
       const storedScenarios = JSON.parse(localStorage.getItem("scenarioData"));
       if (storedScenarios) {
-          console.log("Using cached scenarios from localStorage:", storedScenarios);
           return storedScenarios; // Return cached scenarios if available
       }
+
       // Retrieve user ID from localStorage
       const userId = user._id;
       if (!userId) {
@@ -171,14 +53,9 @@ export const getInitialState = async (user) => {
       console.log("Fetching scenarios for user:", userId);
       // Fetch scenarios from the backend
       const response = await axios.get(`http://localhost:8080/user/${userId}/scenarios`); // Adjust API route
-      console.log("response: ");
-      console.log(response);
 
       if (response.data) {
           console.log("Scenarios fetched from backend:", response.data);
-          // const transformedScenarios = response.data.map(transformScenario); // Transform each scenario
-          // localStorage.setItem("scenarioData", JSON.stringify(transformedScenarios)); // Cache in localStorage
-          // return transformedScenarios;
           localStorage.setItem("scenarioData", JSON.stringify(response.data));
           return response.data;
       }
@@ -220,20 +97,13 @@ const capitalizeFirstLetter = (string) => string.charAt(0).toUpperCase() + strin
 
 // Context Provider Component
 export const AppProvider = ({ children }) => {
+  console.log("Reading from local storage first!");
   const [scenarioData, setScenarioData] = useState(readStateFromLS("scenarioData"));
-  const [editMode, setEditMode] = useState(readStateFromLS("edit"));
-  const [eventEditMode, setEventEditMode] = useState(readStateFromLS("editEvent")); // this will contain a tuple ex: (income, {some random id})
-  
-  //individual events
-  const [currScenario, setCurrScenario] = useState(readStateFromLS("currentScenario"));
-  // const [indieInvest, setIndieInvest] = useState(readStateFromLS('indieInvest'));
-  // const [indieIncome, setIndieIncome] = useState(readStateFromLS('indieIncome'));
-  // const [indieExpense, setIndieExpense] = useState(readStateFromLS('indieExpense'));
-  // const [indieRebalance, setIndieRebalance] = useState(readStateFromLS('indieRebalance'));
-  const { user } = useContext(AuthContext);
 
-  //all stuff:
-  console.log("reading from local storage for event series!!!");
+  const [editMode, setEditMode] = useState(readStateFromLS("edit"));
+  const [currScenario, setCurrScenario] = useState(readStateFromLS("currentScenario"));
+  
+  const [eventEditMode, setEventEditMode] = useState(readStateFromLS("editEvent")); // this will contain a tuple ex: (income, {some random id})
   const [currInvestments, setCurrInvestments] = useState(readStateFromLS("currentInvestments"));
   const [currIncome, setCurrIncome] = useState(readStateFromLS("currentIncome"));  // incomeEvents[],    // income event series
   const [currExpense, setCurrExpense] = useState(readStateFromLS("currentExpense"));   // expenseEvents[],   // expense event series
@@ -241,7 +111,7 @@ export const AppProvider = ({ children }) => {
   const [currRebalance, setCurrRebalance] = useState(readStateFromLS("currentRebalance"));   // rebalanceEvents[], // rebalance event series
   const [currInvestmentTypes, setCurrInvestmentTypes] = useState(readStateFromLS("currentInvestmentType"));
 
-  // console.log(transformScenario(initialState[0]));
+  const { user } = useContext(AuthContext);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -253,90 +123,51 @@ export const AppProvider = ({ children }) => {
   
   useEffect(() => {
     const getScenarioById = (id) => {
-        for (let i = 0; i < scenarioData.length; i++) {
-            if (scenarioData[i]._id == id) {
-                return scenarioData[i]; // Return the found scenario
-            }
+      for (let i = 0; i < scenarioData.length; i++) {
+        if (scenarioData[i]._id == id) {
+          return scenarioData[i]; // Return the found scenario
         }
-        return null; // Return null if not found
+      }
+      return null; // Return null if not found
     };
 
     const loadScenarioData = async () => {
-        // console.log(scenarioData);
-        localStorage.setItem("edit", JSON.stringify(editMode));
+      // console.log(scenarioData);
+      localStorage.setItem("edit", JSON.stringify(editMode));
 
-        if (editMode !== "new" && editMode !== null) {
-            setCurrScenario(getScenarioById(editMode));
+      if (editMode !== "new" && editMode !== null) {
+        setCurrScenario(getScenarioById(editMode));
 
-            // Wait for each function to resolve before setting state
-            const investments = await retrieveScenarioData(editMode, "investments");
-            const income = await retrieveScenarioData(editMode, "incomeEvent");
-            const expenses = await retrieveScenarioData(editMode, "expenseEvent");
-            const invest = await retrieveScenarioData(editMode, "invest");
-            const rebalance = await retrieveScenarioData(editMode, "rebalance");
-            const investmentTypes = await retrieveScenarioData(editMode, "investmentType");
+        // Wait for each function to resolve before setting state
+        const investments = await retrieveScenarioData(editMode, "investments");
+        const income = await retrieveScenarioData(editMode, "incomeEvent");
+        const expenses = await retrieveScenarioData(editMode, "expenseEvent");
+        const invest = await retrieveScenarioData(editMode, "invest");
+        const rebalance = await retrieveScenarioData(editMode, "rebalance");
+        const investmentTypes = await retrieveScenarioData(editMode, "investmentType");
 
-            console.log(income);
-            console.log(expenses);
-            console.log(rebalance);
-            console.log(invest);
+        // console.log(income);
+        // console.log(expenses);
+        // console.log(rebalance);
+        // console.log(invest);
 
-            setCurrInvestments(investments);
-            setCurrIncome(income);
-            setCurrExpense(expenses);
-            setCurrInvest(invest);
-            setCurrRebalance(rebalance);
-            setCurrInvestmentTypes(investmentTypes);
-        }
-        else
-        {
-          setCurrScenario(defaultInfo);
-          setCurrInvestments([]);
-          setCurrIncome([]);
-          setCurrExpense([]);
-          setCurrInvest([]);
-          setCurrRebalance([]);
-          setCurrInvestmentTypes([]);
-        }
+        setCurrInvestments(investments);
+        setCurrIncome(income);
+        setCurrExpense(expenses);
+        setCurrInvest(invest);
+        setCurrRebalance(rebalance);
+        setCurrInvestmentTypes(investmentTypes);
+      } 
     };
 
     loadScenarioData();
-}, [editMode]);
-
-
-  // useEffect(() => {
-  //   switch (eventEditMode.type) {
-  //     case "Income":
-          
-  //         break;
-  //     case "Expense":
-  //         dayName = "Monday";
-  //         break;
-  //     case "Invest":
-  //         dayName = "Tuesday";
-  //         break;
-  //     case "Rebalance":
-  //         dayName = "Wednesday";
-  //         break;
-  //     default:
-  //         dayName = "Invalid day";
-  // }
-
-  // }, [eventEditMode]);
-
-  useEffect(() => {
-    // Load user data from localStorage
-    console.log("changing current scenario");
-    //console.log(currScenario.expenseWithdrawalStrategy);
-    localStorage.setItem("currentScenario", JSON.stringify(currScenario));
-  }, [currScenario]);
+  }, [editMode]); // This triggers on reload even if editMode doesnt changes
 
   useEffect(() => {
     // Load user data from localStorage
     console.log("oop this got all scenarios got changed");
     localStorage.setItem("scenarioData", JSON.stringify(scenarioData));
   }, [scenarioData]);
-
 
   useEffect(() => {
     if (currScenario) localStorage.setItem("currentScenario", JSON.stringify(currScenario));
@@ -370,7 +201,7 @@ export const AppProvider = ({ children }) => {
     if (eventEditMode) localStorage.setItem("editEvent", JSON.stringify(eventEditMode));
   }, [eventEditMode]);
 
-  console.log("Current scenarios:", scenarioData);
+  // console.log("Current scenarios:", scenarioData);
 
   return (
     <AppContext.Provider value={{ 

@@ -1,31 +1,21 @@
 import axios from "axios";
 import React, { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  ThemeProvider,
-  CssBaseline,
-  Container,
-  Typography,
-  Button,
-  Stack,
-  InputAdornment,
-  Box,
-  List,
-  MenuItem,
-  ListItem,
-  ListItemText,
-  IconButton,
-  Backdrop,
-  Fade,
-  TextField,
+  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, InputAdornment, Box, List, MenuItem, ListItem, 
+  ListItemText, IconButton, Backdrop, Fade, TextField,
 } from "@mui/material";
-import theme from "../../../components/theme";
-import Navbar from "../../../components/navbar";
-import PageHeader from "../../../components/pageHeader";
-import { stackStyles, titleStyles, buttonStyles, rowBoxStyles, backContinueContainerStyles, textFieldStyles } from "../../../components/styles";
-
 import DeleteIcon from "@mui/icons-material/Delete";
 
-import { useNavigate } from "react-router-dom";
+import theme from "../../../components/theme";
+import Navbar from "../../../components/navbar";
+import CustomDropdown from "../../../components/customDropDown";
+import CustomInput from "../../../components/customInputBox";
+import CustomSave from "../../../components/customSaveBtn";
+import PageHeader from "../../../components/pageHeader";
+import { 
+  stackStyles, titleStyles, buttonStyles, rowBoxStyles, backContinueContainerStyles, textFieldStyles 
+} from "../../../components/styles";
 import { AppContext } from "../../../context/appContext";
 
 const mongoose = require("mongoose");
@@ -34,13 +24,9 @@ const InvestmentLists = () => {
   const { currInvestments, setCurrInvestments, setCurrScenario } = useContext(AppContext);
   const { currInvestmentTypes, setCurrInvestmentTypes } = useContext(AppContext);
 
-  console.log("current Investments");
-  console.log(currInvestments);
-  console.log(currInvestmentTypes);
-
   const [open, setOpen] = useState(false);
   const [newInvestment, setNewInvestment] = useState({
-    investmentTypeName: "",
+    investmentTypeId: "",
     taxType: "",
     value: "",
   });
@@ -49,25 +35,25 @@ const InvestmentLists = () => {
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    console.log(`Field: ${name}, New Value: ${value}`);
-    setNewInvestment((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const handleInputChange = (field, value) => {  
+    setNewInvestment((prev) => {
+      return {
+        ...prev,
+        [field]: value,
+      };
+    });
   };
 
   const transformInvestmentData = (investment) => {
-    console.log("Valid? ", mongoose.Types.ObjectId.isValid(investment.investmentTypeName));
+    console.log("Valid? ", mongoose.Types.ObjectId.isValid(investment.investmentTypeId));
     return {
-      investmentType: new mongoose.Types.ObjectId(investment.investmentTypeName), // Example: change 'investmentType' to 'investment_type'
-      accountTaxStatus: investment.accountTaxStatus, // Example: change 'accountTaxStatus' to 'account_tax_status'
+      investmentType: new mongoose.Types.ObjectId(investment.investmentTypeId), // Example: change 'investmentType' to 'investment_type'
+      accountTaxStatus: investment.taxType, // Example: change 'accountTaxStatus' to 'account_tax_status'
       value: investment.value, // Keep 'value' as it is
     };
   };
 
-  const appendToKey = (key, newValue) => {
+  const handleAppendInScenario = (key, newValue) => {
     setCurrScenario((prev) => ({
       ...prev,
       [key]: [...(prev[key] || []), newValue]  // Append to the specified key
@@ -78,7 +64,7 @@ const InvestmentLists = () => {
     console.log("Add investment");
     console.log(newInvestment);
 
-    if (newInvestment.investmentTypeName) {
+    if (newInvestment.investmentTypeId) {
       console.log("transform data");
       let transformedInvestment = transformInvestmentData(newInvestment);
       console.log(transformedInvestment);
@@ -91,14 +77,16 @@ const InvestmentLists = () => {
         setCurrInvestments((prev) => {
           return [...(Array.isArray(prev) ? prev : []), transformedInvestment];
         });
-        setNewInvestment({ investmentType: "", accountTaxStatus: "", value: "" });
+        handleAppendInScenario("setOfInvestments", transformedInvestment);
+        setNewInvestment({ investmentTypeId: "", taxType: "", value: "" });
         
         if (transformedInvestment.accountTaxStatus == "pre-tax") {
-          appendToKey("rothConversionStrategy", transformedInvestment._id);
+          handleAppendInScenario("rothConversionStrategy", transformedInvestment._id);
+          handleAppendInScenario("rmdStrategy", transformedInvestment._id);
         } else {
-          appendToKey("expenseWithdrawalStrategy", transformedInvestment._id);
-          appendToKey("rmdStrategy", transformedInvestment._id);
+          handleAppendInScenario("expenseWithdrawalStrategy", transformedInvestment._id);
         }
+
         handleClose();
       } catch (error) {
         console.error("Error adding investment:", error);
@@ -110,11 +98,11 @@ const InvestmentLists = () => {
     setCurrInvestments((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const getInvestmentTypeName = (investmentTypeId) => {
+  const getInvestmentTypeName = (id) => {
     //console.log("the id ", investmentTypeId);
     for (let i = 0; i < currInvestmentTypes.length; i++) {
-      console.log("the match", currInvestmentTypes[i]._id.toString(), investmentTypeId.toString());
-      if (currInvestmentTypes[i]._id.toString() === investmentTypeId.toString()) {
+      console.log("the match", currInvestmentTypes[i]._id.toString(), id.toString());
+      if (currInvestmentTypes[i]._id.toString() === id.toString()) {
         // console.log("a match");
         return currInvestmentTypes[i].name; // Return the matching investment name
       }
@@ -139,11 +127,11 @@ const InvestmentLists = () => {
         }
 
         // Safely call getInvestmentTypeName in case of unexpected investmentType
-        const investmentTypeName = getInvestmentTypeName(item.investmentType) || "Unknown Type";
+        const investmentTypeName = getInvestmentTypeName(item.investmentTypeId) || "Unknown Type";
 
         return (
           <ListItem
-            key={`${item.investmentType}-${index}`}
+            key={`${item.investmentTypeId}`}
             sx={{
               backgroundColor: index % 2 === 0 ? "#BBBBBB" : "#D9D9D9",
               "&:hover": { backgroundColor: "#B0B0B0" },
@@ -217,9 +205,7 @@ const InvestmentLists = () => {
           <Button variant="contained" color="primary" sx={buttonStyles} onClick={() => navigate("/scenario/basics")}>
             Back
           </Button>
-          <Button variant="contained" color="success" sx={buttonStyles} onClick={() => navigate("/scenario/event_series")}>
-            Continue
-          </Button>
+          <CustomSave label={"Continue"} routeTo={"/scenario/strategies"}/>
         </Box>
 
         {/* Backdrop + Modal */}
@@ -228,25 +214,24 @@ const InvestmentLists = () => {
             <Box
               onClick={(e) => e.stopPropagation()}
               sx={{
-                backgroundColor: "white",
-                boxShadow: 24,
-                p: 4,
-                borderRadius: 2,
-                minWidth: 400,
-                maxWidth: 800,
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
+                backgroundColor: "white", boxShadow: 24, p: 4, borderRadius: 2, 
+                minWidth: 500, maxWidth: 800, display: "flex", flexDirection: "column", gap: 2,
               }}
             >
               <Typography variant="h5">Add New Investment</Typography>
-
               <Box>
                 <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium" }}>
                   Investment Type
                 </Typography>
                 <Box sx={{ display: "flex", justifyContent: "space-between", gap: 4 }}>
-                  <TextField select name="investmentTypeName" value={newInvestment.investmentTypeName || ""} onChange={handleChange} sx={textFieldStyles} fullWidth>
+                  <TextField 
+                    select 
+                    name="investmentTypeId" 
+                    value={newInvestment.investmentTypeId || ""} 
+                    onChange={(e) => handleInputChange("investmentTypeId", e.target.value)} 
+                    sx={textFieldStyles} 
+                    fullWidth
+                  >
                     {/* Check if currInvestmentTypes is an array */}
                     {Array.isArray(currInvestmentTypes) && currInvestmentTypes.length > 0 ? (
                       currInvestmentTypes.map((it) =>
@@ -263,7 +248,12 @@ const InvestmentLists = () => {
                       </MenuItem> // Fallback if no valid data
                     )}
                   </TextField>
-                  <Button variant="contained" color="primary" onClick={() => navigate("/scenario/investment_type")} sx={{ textTransform: "none", minWidth: 150 }}>
+                  <Button 
+                    variant="contained" 
+                    color="primary" 
+                    onClick={() => navigate("/scenario/investment_type")} 
+                    sx={{ textTransform: "none", minWidth: 150 }}
+                  >
                     Add Custom Type
                   </Button>
                 </Box>
@@ -271,29 +261,22 @@ const InvestmentLists = () => {
 
               <Box sx={rowBoxStyles}>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium" }}>
-                    Tax Status of account
-                  </Typography>
-                  <TextField select name="accountTaxStatus" value={newInvestment.accountTaxStatus || ""} onChange={handleChange} sx={textFieldStyles} fullWidth>
-                    <MenuItem value="non-tax">Taxable</MenuItem>
-                    <MenuItem value="pre-tax">Tax-Deferred</MenuItem>
-                    <MenuItem value="after-tax">Tax-Free</MenuItem>
-                  </TextField>
+                  <CustomDropdown 
+                    label={"Tax Status of account"}
+                    value={newInvestment.taxType || ""}
+                    setValue={(value) => handleInputChange("taxType", value)}
+                    menuLabels={["Taxable", "Tax-Deferred", "Tax-Free"]}
+                    menuItems={["non-tax", "pre-tax", "after-tax"]}
+                  />
                 </Box>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium" }}>
-                    Value
-                  </Typography>
-                  <TextField
+                  <CustomInput
+                    title="Value"
                     type="number"
-                    name="value"
                     value={newInvestment.value || ""}
-                    onChange={handleChange}
-                    sx={textFieldStyles}
-                    fullWidth
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                    }}
+                    setValue={(value) => handleInputChange("value", value)}
+                    adornment={"$"}
+                    inputProps={{ min: 0 }}
                   />
                 </Box>
               </Box>

@@ -40,7 +40,7 @@ export default function PageHeader() {
           Event Series
         </Typography>
 
-        {/* Event Series */}
+        {/* Strategies */}
         <Typography
           color={isActive(["strategies"]) ? "primary" : "textPrimary"}
           fontWeight={isActive(["strategies"]) ? "bold" : "normal"}

@@ -1,6 +1,8 @@
 import { Box, Typography, TextField, MenuItem } from "@mui/material";
 import React from "react";
-const CustomDropdown = ({ label, value, setValue, menuLabels=[], menuItems=[], textFieldStyles }) => {
+import { textFieldStyles } from "./styles";
+
+const CustomDropdown = ({ label, value, setValue, menuLabels=[], menuItems=[] }) => {
     if (menuLabels == [] || menuLabels.length != menuItems.length) {
         menuLabels = menuItems;
     }

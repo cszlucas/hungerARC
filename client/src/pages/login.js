@@ -71,7 +71,7 @@ const GoogleAuth = () => {
 
         // localStorage.setItem("user", JSON.stringify(guestUser));
         // console.log(localStorage.getItem("user"));
-        navigate("/profile"); // Redirect guest users to homepage
+        navigate("/profile"); // Redirect guest users to profile
     };
 
     console.log(localStorage);

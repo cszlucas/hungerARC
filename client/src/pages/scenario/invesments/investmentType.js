@@ -1,25 +1,30 @@
 import axios from "axios";
 import React, { useState, useContext } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, ToggleButton, ToggleButtonGroup, Select, MenuItem } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { 
+  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, 
+  ToggleButton, ToggleButtonGroup, Select, MenuItem 
+} from "@mui/material";
+
 import theme from "../../../components/theme";
 import Navbar from "../../../components/navbar";
 import PageHeader from "../../../components/pageHeader";
-import { textFieldStyles, numFieldStyles, backContinueContainerStyles, buttonStyles, rowBoxStyles } from "../../../components/styles";
 import CustomDropdown from "../../../components/customDropDown";
 import CustomInput from "../../../components/customInputBox";
 import CustomToggle from "../../../components/customToggle";
-import { useNavigate } from "react-router-dom";
+import { 
+  textFieldStyles, numFieldStyles, backContinueContainerStyles, buttonStyles, rowBoxStyles 
+} from "../../../components/styles";
 import { AppContext } from "../../../context/appContext";
+
 const mongoose = require("mongoose");
 
 const InvestmentType = () => {
-  const { currInvestments, setCurrInvestments, currInvestmentTypes, setCurrInvestmentTypes } = useContext(AppContext);
+  const { currInvestments, setCurrInvestments, currInvestmentTypes, setCurrInvestmentTypes, setCurrScenario } = useContext(AppContext);
   const { eventEditMode } = useContext(AppContext);
 
   const getInvestmentTypeById = (id) => {
     let investmentType = null;
-    console.log("ID BE LIKE: " + id);
-    console.log("curr invesmtnet tpe: ", currInvestmentTypes);
     if (Array.isArray(currInvestmentTypes) && currInvestmentTypes.length > 0) {
       for (let i = 0; i < currInvestmentTypes.length; i++) {
         // Ensure each item has the _id property before comparing
@@ -33,7 +38,7 @@ const InvestmentType = () => {
     }
 
     const taxMap = {
-      taxable: "Taxable",
+      "taxable": "Taxable",
       "tax-deferred": "Tax-Deferred",
       "tax-free": "Tax-Free",
     };
@@ -60,6 +65,13 @@ const InvestmentType = () => {
       };
     }
     return null; // Return null if not found
+  };
+
+  const handleAppendInScenario = (key, newValue) => {
+    setCurrScenario((prev) => ({
+      ...prev,
+      [key]: [...(prev[key] || []), newValue]  // Append to the specified key
+    }));
   };
 
   const navigate = useNavigate();
@@ -130,15 +142,11 @@ const InvestmentType = () => {
       setCurrInvestmentTypes((prev) => {
         return [...(Array.isArray(prev) ? prev : []), response.data];
       });
-      //setCurrScenario(formValues);
-      //setScenarioData((prev)=> [...prev, formValues]);
-
+      handleAppendInScenario("setOfInvestmentTypes", response.data);
       console.log("Data successfully saved:", response.data);
-
       alert("Save data");
     } catch (error) {
       console.error("Error saving data:", error);
-      //setErrorBackdrop(true);
       alert("Failed to save data!");
     }
   };
@@ -152,10 +160,6 @@ const InvestmentType = () => {
           <Typography variant="h2" component="h1" sx={{ fontWeight: "bold" }}>
             Investment Types
           </Typography>
-          {/* <Button variant="contained" color="secondary" sx={{ fontSize: '1.25rem', textTransform: 'none' }}
-                    onClick={handleSave}>
-                        Save
-                    </Button> */}
         </Stack>
 
         <PageHeader />
