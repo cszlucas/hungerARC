@@ -3,7 +3,6 @@ import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, 
-  ToggleButton, ToggleButtonGroup, Select, MenuItem 
 } from "@mui/material";
 
 import theme from "../../../components/theme";
@@ -67,7 +66,27 @@ const InvestmentType = () => {
   );
 
   const handleInputChange = (field, value) => {
-    setFormValues((prev) => ({ ...prev, [field]: value }));
+    const fieldParts = field.split("."); // Split the field into parts (e.g., "lifeExpectancy.mean")
+  
+    setFormValues((prev) => {
+      // Update the nested object
+      if (fieldParts.length === 2) {
+        const [parent, child] = fieldParts; // 'lifeExpectancy' and 'mean'
+        return {
+          ...prev,
+          [parent]: { // Spread the parent object (lifeExpectancy)
+            ...prev[parent],
+            [child]: value, // Update the child property (mean)
+          },
+        };
+      }
+  
+      // For top-level fields (no dot notation)
+      return {
+        ...prev,
+        [field]: value,
+      };
+    });
   };
 
   const handleSave = async () => {
