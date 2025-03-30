@@ -182,7 +182,6 @@ const InvestmentType = () => {
                 value={formValues.taxability}
                 setValue={(value) => handleInputChange("taxability", value)}
                 menuItems={["Taxable", "Tax-Deferred", "Tax-Free"]}
-                textFieldStyles={textFieldStyles}
               />
             </Stack>
           </Box>

@@ -494,7 +494,6 @@ const Invest = () => {
                                 setValue={(value) => {
                                     handleNewInvestmentChange("id", value);
                                 }}
-                                textFieldStyles={textFieldStyles}
                             />
                         </Box>
                         {/* Toggle Button for Glide Path / Fixed Percentage */}

@@ -121,7 +121,6 @@ const Basics = () => {
             value={currScenario.stateResident}
             menuItems={states}
             setValue={(value) => handleInputChange("stateResident", value)}
-            textFieldStyles={textFieldStyles}
           />
 
           <CustomToggle
