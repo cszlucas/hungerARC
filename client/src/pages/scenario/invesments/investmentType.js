@@ -2,7 +2,7 @@ import axios from "axios";
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
-  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, 
+  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, Checkbox,
 } from "@mui/material";
 
 import theme from "../../../components/theme";
@@ -23,6 +23,7 @@ const InvestmentType = () => {
   const { eventEditMode } = useContext(AppContext);
 
   const getInvestmentTypeById = (id) => {
+    if (id == null) return null;
     if (Array.isArray(currInvestmentTypes) && currInvestmentTypes.length > 0) {
       for (let i = 0; i < currInvestmentTypes.length; i++) {
         // Ensure each item has the _id property before comparing
@@ -90,41 +91,38 @@ const InvestmentType = () => {
   };
 
   const handleSave = async () => {
-    const validKeys = ["name", "description", "expenseRatio", "taxability"];
+    // const validKeys = ["name", "description", "expenseRatio", "taxability"];
 
-    // Hardcoded values for certain keys
-    const hardcodedValues = {
-      annualReturn: {
-        type: "normalPercent",
-        mean: 0.05,
-        stdDev: 0.1,
-      },
-      annualIncome: {
-        type: "fixedPercent",
-        fixed: 5,
-        mean: 0.04,
-        stdDev: 0.05,
-      },
-    };
+    // // Hardcoded values for certain keys
+    // const hardcodedValues = {
+    //   annualReturn: {
+    //     type: "normalPercent",
+    //     mean: 0.05,
+    //     stdDev: 0.1,
+    //   },
+    //   annualIncome: {
+    //     type: "fixedPercent",
+    //     fixed: 5,
+    //     mean: 0.04,
+    //     stdDev: 0.05,
+    //   },
+    // };
 
-    const filteredFormValues = Object.keys(formValues)
-      .filter((key) => validKeys.includes(key)) // Only keep keys that are in the validKeys array
-      .reduce((obj, key) => {
-        obj[key] = formValues[key]; // Construct a new object with only valid keys
-        return obj;
-      }, {});
+    // const filteredFormValues = Object.keys(formValues)
+    //   .filter((key) => validKeys.includes(key)) // Only keep keys that are in the validKeys array
+    //   .reduce((obj, key) => {
+    //     obj[key] = formValues[key]; // Construct a new object with only valid keys
+    //     return obj;
+    //   }, {});
 
-    const finalFormValues = {
-      ...filteredFormValues,
-      ...hardcodedValues,
-      id: new mongoose.Types.ObjectId(),
-    };
+    // const finalFormValues = {
+    //   ...filteredFormValues,
+    //   ...hardcodedValues,
+    //   id: new mongoose.Types.ObjectId(),
+    // };
 
     try {
-      let response;
-      console.log("here", finalFormValues);
-
-      response = await axios.post("http://localhost:8080/investmentType", finalFormValues);
+      let response = await axios.post("http://localhost:8080/investmentType", formValues);
       let id = response.data._id;
 
       handleInputChange("_id", id);
@@ -133,7 +131,7 @@ const InvestmentType = () => {
       });
       handleAppendInScenario("setOfInvestmentTypes", response.data);
       console.log("Data successfully saved:", response.data);
-      alert("Save data");
+      alert("Investment Type has been added");
     } catch (error) {
       console.error("Error saving data:", error);
       alert("Failed to save data!");
@@ -160,7 +158,7 @@ const InvestmentType = () => {
 
             <CustomInput title="Description (Optional)" type="multiline" value={formValues.description} setValue={(value) => handleInputChange("description", value)} />
 
-            <Stack direction="row" spacing={2} sx={{ marginTop: 2 }}>
+            <Stack direction="row" spacing={2}>
               <Box sx={{ display: "inline-flex", flexDirection: "column", width: "auto" }}>
                 <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium" }}>
                   Expense Ratio
@@ -177,12 +175,17 @@ const InvestmentType = () => {
                   sx={numFieldStyles}
                 />
               </Box>
-              <CustomDropdown
-                label="Taxability"
-                value={formValues.taxability}
-                setValue={(value) => handleInputChange("taxability", value)}
-                menuItems={["Taxable", "Tax-Deferred", "Tax-Free"]}
-              />
+            </Stack>
+            <Stack direction="row" alignItems="center" spacing={2} sx={{ mt: 2, mb: 1 }}>
+                <Typography variant="body1" sx={{ fontWeight: "medium" }}>
+                  Taxability
+                </Typography>
+                <Checkbox 
+                  checked={formValues.taxability} 
+                  onChange={(value) => {
+                    console.log(formValues.taxability);
+                    handleInputChange("taxability", value.target.checked);
+                  }}/>
             </Stack>
           </Box>
 
@@ -195,55 +198,57 @@ const InvestmentType = () => {
               {/* Amount Toggle */}
               <CustomToggle
                 title="Amount"
-                values={["Fixed", "Percentage"]}
+                labels={["Fixed", "Percentage"]}
+                values={["fixed", "percentage"]}
                 sideView={true}
                 width={100}
-                value={formValues.returnAmountType}
+                value={formValues.annualReturn.unit}
                 setValue={(value) => {
-                  handleInputChange("returnAmountType", value);
+                  handleInputChange("annualReturn.unit", value);
                 }}
               />
               {/* Distribution Toggle */}
               <CustomToggle
                 title="Distribution"
-                values={["Fixed", "Normal"]}
+                labels={["Fixed", "Normal"]}
+                values={["fixed", "normal"]}
                 sideView={true}
                 width={100}
-                value={formValues.returnDistributionType}
+                value={formValues.annualReturn.type}
                 setValue={(value) => {
-                  handleInputChange("returnDistributionType", value);
+                  handleInputChange("annualReturn.type", value);
                 }}
               />
               {/* Conditional Inputs */}
-              {formValues.returnDistributionType === "Fixed" && (
+              {formValues.annualReturn.type === "fixed" && (
                 <CustomInput
                   title="Value"
                   type="number"
-                  adornment={formValues.returnAmountType == "Fixed" ? "$" : "%"}
-                  value={formValues.returnValue}
+                  adornment={formValues.annualReturn.unit == "fixed" ? "$" : "%"}
+                  value={formValues.annualReturn.value}
                   setValue={(value) => {
-                    handleInputChange("returnValue", value);
+                    handleInputChange("annualReturn.value", value);
                   }}
                 />
               )}
-              {formValues.returnDistributionType === "Normal" && (
+              {formValues.annualReturn.type === "normal" && (
                 <Box sx={{ display: "flex", gap: 2, marginTop: 2 }}>
                   <CustomInput
                     title="Mean"
                     type="number"
-                    adornment={formValues.returnAmountType == "Fixed" ? "$" : "%"}
-                    value={formValues.returnMean}
+                    adornment={formValues.annualReturn.unit == "fixed" ? "$" : "%"}
+                    value={formValues.annualReturn.mean}
                     setValue={(value) => {
-                      handleInputChange("returnMean", value);
+                      handleInputChange("annualReturn.mean", value);
                     }}
                   />
                   <CustomInput
                     title="Variance"
                     type="number"
-                    adornment={formValues.returnAmountType == "Fixed" ? "$" : "%"}
-                    value={formValues.returnStdDev}
+                    adornment={formValues.annualReturn.unit == "fixed" ? "$" : "%"}
+                    value={formValues.annualReturn.stdDev}
                     setValue={(value) => {
-                      handleInputChange("returnStdDev", value);
+                      handleInputChange("annualReturn.stdDev", value);
                     }}
                   />
                 </Box>
@@ -260,55 +265,57 @@ const InvestmentType = () => {
               {/* Amount Toggle */}
               <CustomToggle
                 title="Amount"
-                values={["Fixed", "Percentage"]}
+                labels={["Fixed", "Percentage"]}
+                values={["fixed", "percentage"]}
                 sideView={true}
                 width={100}
-                value={formValues.incomeAmountType}
+                value={formValues.annualIncome.unit}
                 setValue={(value) => {
-                  handleInputChange("incomeAmountType", value);
+                  handleInputChange("annualIncome.unit", value);
                 }}
               />
               {/* Distribution Toggle */}
               <CustomToggle
                 title="Distribution"
-                values={["Fixed", "Normal"]}
+                labels={["Fixed", "Normal"]}
+                values={["fixed", "normal"]}
                 sideView={true}
                 width={100}
-                value={formValues.incomeDistributionType}
+                value={formValues.annualIncome.type}
                 setValue={(value) => {
-                  handleInputChange("incomeDistributionType", value);
+                  handleInputChange("annualIncome.type", value);
                 }}
               />
               {/* Conditional Inputs */}
-              {formValues.incomeDistributionType === "Fixed" && (
+              {formValues.annualIncome.type === "fixed" && (
                 <CustomInput
                   title="Value"
                   type="number"
-                  adornment={formValues.incomeAmountType == "Fixed" ? "$" : "%"}
-                  value={formValues.incomeValue}
+                  adornment={formValues.annualIncome.unit == "fixed" ? "$" : "%"}
+                  value={formValues.annualIncome.value}
                   setValue={(value) => {
-                    handleInputChange("incomeValue", value);
+                    handleInputChange("annualIncome.value", value);
                   }}
                 />
               )}
-              {formValues.incomeDistributionType === "Normal" && (
+              {formValues.annualIncome.type === "normal" && (
                 <Box sx={{ display: "flex", gap: 2, marginTop: 2 }}>
                   <CustomInput
                     title="Mean"
                     type="number"
-                    adornment={formValues.incomeAmountType == "Fixed" ? "$" : "%"}
-                    value={formValues.incomeMean}
+                    adornment={formValues.annualIncome.unit == "fixed" ? "$" : "%"}
+                    value={formValues.annualIncome.mean}
                     setValue={(value) => {
-                      handleInputChange("incomeMean", value);
+                      handleInputChange("annualIncome.mean", value);
                     }}
                   />
                   <CustomInput
                     title="Variance"
                     type="number"
-                    adornment={formValues.incomeAmountType == "Fixed" ? "$" : "%"}
-                    value={formValues.incomeStdDev}
+                    adornment={formValues.annualIncome.unit == "fixed" ? "$" : "%"}
+                    value={formValues.annualIncome.stdDev}
                     setValue={(value) => {
-                      handleInputChange("incomeStdDev", value);
+                      handleInputChange("annualIncome.stdDev", value);
                     }}
                   />
                 </Box>
