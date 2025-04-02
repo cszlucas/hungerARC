@@ -183,11 +183,7 @@ const EventSeries = () => {
           >
             Back
           </Button>
-          <Button variant="contained" color="success" sx={buttonStyles}
-            onClick={() => navigate("/scenario/strategies")}
-          >
-            Continue
-          </Button>
+          <CustomSave label={"Continue"} routeTo={"/scenario/strategies"}/>
         </Box>
 
         {/* Backdrop with Buttons for Event Type Selection */}
