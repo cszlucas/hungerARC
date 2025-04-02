@@ -100,6 +100,7 @@ const InvestmentLists = () => {
 
   const getInvestmentTypeName = (id) => {
     //console.log("the id ", investmentTypeId);
+    console.log(currInvestmentTypes);
     for (let i = 0; i < currInvestmentTypes.length; i++) {
       console.log("the match", currInvestmentTypes[i]._id.toString(), id.toString());
       if (currInvestmentTypes[i]._id.toString() === id.toString()) {
@@ -127,7 +128,7 @@ const InvestmentLists = () => {
         }
 
         // Safely call getInvestmentTypeName in case of unexpected investmentType
-        const investmentTypeName = getInvestmentTypeName(item.investmentTypeId) || "Unknown Type";
+        const investmentTypeName = getInvestmentTypeName(item.investmentType) || "Unknown Type";
 
         return (
           <ListItem
