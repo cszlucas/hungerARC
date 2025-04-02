@@ -14,7 +14,7 @@ exports.createInvestmentType = async (req, res) => {
       annualReturn: {
         type: annualReturn.type,
         unit: annualReturn.unit,
-        fixed: annualReturn.fixed,
+        value: annualReturn.value,
         mean: annualReturn.mean,
         stdDev: annualReturn.stdDev,
       },
@@ -22,7 +22,7 @@ exports.createInvestmentType = async (req, res) => {
       annualIncome: {
         type: annualIncome.type,
         unit: annualReturn.unit,
-        fixed: annualIncome.fixed,
+        value: annualIncome.value,
         mean: annualIncome.mean,
         stdDev: annualIncome.stdDev,
       },

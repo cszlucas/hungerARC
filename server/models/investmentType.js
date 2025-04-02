@@ -2,9 +2,9 @@ var mongoose=require('mongoose');
 var Schema=mongoose.Schema;
 
 var expectedAnnual=new Schema({
-    type: {type: String, enum: ['fixedAmt', 'fixedPercent', 'normalAmt', 'normalPercent'], required: false},
-    unit: {type: String},
-    fixed: {type: Number},
+    type: {type: String, enum: ['fixed', 'normal'], required: false},
+    unit: {type: String, enum: ['fixed', 'percentage'], required: false},
+    value: {type: Number},
     mean: {type: Number,},
     stdDev: {type: Number},
 })
