@@ -37,7 +37,7 @@ export default function NavBar({ currentPage }) {
     setIsDarkMode((prevMode) => !prevMode);
   };
 
-  const menuItems = ["Profile", "Scenarios", "Login"];
+  const menuItems = ["Profile", "Scenarios"];
 
   const DrawerList = (
     <Box
@@ -119,9 +119,11 @@ export default function NavBar({ currentPage }) {
           <Typography variant="h5" sx={{ flexGrow: 1, marginTop: 2, marginBottom: 2 }}>
             Hunger <span style={{ color: "#00825B" }}>Finance</span>
           </Typography>
+          { currentPage != "login" &&
           <IconButton edge="end" color="inherit" onClick={toggleDrawer(true)}>
             <MenuIcon />
           </IconButton>
+          }
         </Toolbar>
       </AppBar>
       { currentPage != "login" &&
