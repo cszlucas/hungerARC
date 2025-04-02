@@ -39,7 +39,7 @@ router.post("/updateInvestment/:id", investments.updateInvestment);
 
 // scenario
 router.get("/scenario/:id", scenario.scenario);
-router.post("/basicInfo", scenario.basicInfo);
+router.post("/basicInfo/user/:id", scenario.basicInfo);
 router.post("/updateScenario/:id", scenario.updateScenario);
 router.post("/scenarioInvestments", scenario.scenarioInvestments);
 
