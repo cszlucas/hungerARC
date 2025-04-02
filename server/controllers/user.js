@@ -31,7 +31,7 @@ exports.auth = async (req, res) => {
     res.json({ user, token });
   } catch (err) {
     console.log(err.message);
-    res.status(500).json({ message: err, error: err });
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 

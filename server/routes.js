@@ -14,28 +14,26 @@ router.post("/auth/google", user.auth);
 // events
 router.get("/getInvestStrategy/:id", events.getInvestStrategy);
 router.get("/getRebalanceStrategy/:id", events.getRebalanceStrategy);
-router.post("/incomeEvent", events.incomeEvent);
-router.post("/updateIncome/:id", events.updateIncome);
-router.post("/expenseEvent", events.expenseEvent);
-router.post("/updateExpense/:id", events.updateExpense);
-router.post("/investStrategy", events.investStrategy);
-router.post("/updateInvestStrategy/:id", events.updateInvestStrategy);
-router.post("/rebalanceStrategy", events.rebalanceStrategy);
-router.post("/updateRebalanceStrategy/:id", events.updateRebalanceStrategy);
 router.get("/scenario/:id/incomeEvent", events.getAllIncomeEventsByScenario);
 router.get("/scenario/:id/expenseEvent", events.getAllExpenseEventsByScenario);
-router.get("/scenario/:id/invest", events.getAllInvestEventsByScenario);
-router.get("/scenario/:id/rebalance", events.getAllRebalanceEventsByScenario);
+router.post("/scenario/:id/incomeEvent", events.createIncomeEvent);
+router.post("/updateIncome/:id", events.updateIncome);
+router.post("/scenario/:id/expenseEvent", events.createExpenseEvent);
+router.post("/updateExpense/:id", events.updateExpense);
+router.post("/scenario/:id/investStrategy", events.createInvestStrategy);
+router.post("/updateInvestStrategy/:id", events.updateInvestStrategy);
+router.post("/scenario/:id/rebalanceStrategy", events.createRebalanceStrategy);
+router.post("/updateRebalanceStrategy/:id", events.updateRebalanceStrategy);
 
 // investments
 router.get("/investmentType/:id", investments.investmentType);
 router.get("/getInvestment/:id", investments.getInvestment);
-router.post("/investmentType", investments.investmentType);
-router.post("/investment", investments.investment);
-router.post("/updateInvestment/:id", investments.updateInvestment);
-router.post("/updateInvestmentType/:id", investments.updateInvestmentType);
 router.get("/scenario/:id/investments", investments.getAllInvestmentsByScenario);
 router.get("/scenario/:id/investmentType", investments.getInvestmentTypeByScenario);
+router.post("/scenario/:id/investmentType", investments.createInvestmentType);
+router.post("/updateInvestmentType/:id", investments.updateInvestmentType);
+router.post("/scenario/:id/investment", investments.createInvestment);
+router.post("/updateInvestment/:id", investments.updateInvestment);
 
 
 // scenario

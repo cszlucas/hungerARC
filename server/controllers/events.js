@@ -6,7 +6,8 @@ const Scenario = require("../models/scenario.js");
 //INCOME EVENTS
 
 // add a new income event to incomeevent collection
-exports.incomeEvent = async (req, res) => {
+exports.createIncomeEvent = async (req, res) => {
+  const { id } = req.params;
   try {
     const { eventSeriesName, description, startYear, duration, initialAmount, annualChange, userPercentage, inflationAdjustment, isSocialSecurity } = req.body;
 
@@ -32,6 +33,13 @@ exports.incomeEvent = async (req, res) => {
     });
 
     const savedIncomeEvent = await newIncomeEvent.save();
+    const scenario = await Scenario.findOne({ _id: id });
+    if (!scenario) {
+      console.log("Scenario not found");
+      return res.status(404).json({ message: "Scenario not found" });
+    }
+    scenario.incomeEventSeries.push(savedIncomeEvent._id);
+    await scenario.save();
 
     res.status(201).json(savedIncomeEvent);
   } catch (err) {
@@ -84,7 +92,8 @@ exports.getAllIncomeEventsByScenario = async (req, res) => {
 //EXPENSE EVENTS
 
 // add a new expense event to expenseevent collection
-exports.expenseEvent = async (req, res) => {
+exports.createExpenseEvent = async (req, res) => {
+  const { id } = req.params;
   try {
     const { eventSeriesName, description, startYear, duration, initialAmount, annualChange, userPercentage, inflationAdjustment, isDiscretionary } = req.body;
 
@@ -104,6 +113,13 @@ exports.expenseEvent = async (req, res) => {
     });
 
     const savedExpenseEvent = await newExpenseEvent.save();
+    const scenario = await Scenario.findOne({ _id: id });
+    if (!scenario) {
+      console.log("Scenario not found");
+      return res.status(404).json({ message: "Scenario not found" });
+    }
+    scenario.expenseEventSeries.push(savedExpenseEvent._id);
+    await scenario.save();
 
     res.status(201).json(savedExpenseEvent);
   } catch (err) {
@@ -138,7 +154,8 @@ exports.updateExpense = async (req, res) => {
 // INVEST STRATEGY EVENTS
 
 // add a new invest event to investevent collection
-exports.investStrategy = async (req, res) => {
+exports.createInvestStrategy = async (req, res) => {
+  const { id } = req.params;
   const { eventSeriesName, description, startYear, duration, type, assetAllocation, maxCash } = req.body;
   try {
     const investEvent = new InvestEvent({
@@ -157,6 +174,13 @@ exports.investStrategy = async (req, res) => {
     });
 
     const savedInvestEvent = await investEvent.save(); // save to database
+    const scenario = await Scenario.findOne({ _id: id });
+    if (!scenario) {
+      console.log("Scenario not found");
+      return res.status(404).json({ message: "Scenario not found" });
+    }
+    scenario.investEventSeries.push(savedInvestEvent._id);
+    await scenario.save();
 
     res.status(201).json(savedInvestEvent);
   } catch (err) {
@@ -202,7 +226,8 @@ exports.updateInvestStrategy = async (req, res) => {
 // REBALANCE STRATEGY
 
 // add a new rebalance event to rebalanceevent collection
-exports.rebalanceStrategy = async (req, res) => {
+exports.createRebalanceStrategy = async (req, res) => {
+  const { id } = req.params;
   const { eventSeriesName, description, startYear, duration, type, fixedPercentages, initialPercentages, finalPercentages } = req.body;
 
   try {
@@ -218,6 +243,13 @@ exports.rebalanceStrategy = async (req, res) => {
     });
 
     const savedRebalanceEvent = await rebalanceEvent.save();
+    const scenario = await Scenario.findOne({ _id: id });
+    if (!scenario) {
+      console.log("Scenario not found");
+      return res.status(404).json({ message: "Scenario not found" });
+    }
+    scenario.rebalanceEventSeries.push(savedRebalanceEvent._id);
+    await scenario.save();
 
     res.status(201).json(savedRebalanceEvent);
   } catch (err) {
