@@ -158,24 +158,19 @@ const InvestmentType = () => {
 
             <CustomInput title="Description (Optional)" type="multiline" value={formValues.description} setValue={(value) => handleInputChange("description", value)} />
 
-            <Stack direction="row" spacing={2}>
-              <Box sx={{ display: "inline-flex", flexDirection: "column", width: "auto" }}>
-                <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium" }}>
-                  Expense Ratio
-                </Typography>
-                <TextField
-                  variant="outlined"
-                  type="number"
-                  inputProps={{
-                    step: "any", // Allows decimal values
-                    min: "0", // Prevents negative numbers (optional)
-                  }}
-                  value={formValues.expenseRatio || ""} // Ensure the value is a string or number
-                  onChange={(event) => handleInputChange("expenseRatio", event.target.value)} // Get the value from the event
-                  sx={numFieldStyles}
-                />
-              </Box>
-            </Stack>
+            <CustomInput
+              title="Expense Ratio"
+              type="number"
+              adornment={"%"}
+              value={formValues.expenseRatio}
+              setValue={(value) => { handleInputChange("expenseRatio", value); }}
+              inputProps={{
+                step: "any", // Allows decimal values
+                min: "0", // Prevents negative numbers (optional)
+                max: "100"
+              }}
+            />
+            
             <Stack direction="row" alignItems="center" spacing={2} sx={{ mt: 2, mb: 1 }}>
                 <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                   Taxability
@@ -207,6 +202,7 @@ const InvestmentType = () => {
                   handleInputChange("annualReturn.unit", value);
                 }}
               />
+              
               {/* Distribution Toggle */}
               <CustomToggle
                 title="Distribution"

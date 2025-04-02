@@ -19,11 +19,7 @@ const CustomSave = ({ label = "Save", routeTo, color = "secondary" }) => {
         const id = response.data._id;
   
         // Use the callback form of setState to avoid stale values
-        setCurrScenario((prev) => ({
-          ...prev,
-          _id: id,
-        }));
-  
+        setCurrScenario((prev) => ({...prev, _id: id, }));
         setScenarioData((prev) => [...prev, { ...currScenario, _id: id }]);
         setEditMode(id);
       } else {
@@ -36,7 +32,6 @@ const CustomSave = ({ label = "Save", routeTo, color = "secondary" }) => {
           );
           return newList;
         });
-  
         console.log("Data successfully updated:", response.data);
       }
   

@@ -124,9 +124,11 @@ export default function NavBar({ currentPage }) {
           </IconButton>
         </Toolbar>
       </AppBar>
+      { currentPage != "login" &&
       <Drawer anchor="right" open={open} onClose={toggleDrawer(false)} onClick={(e) => e.stopPropagation()}>
         {DrawerList}
-      </Drawer>
+      </Drawer> 
+      } 
     </>
   );
 }

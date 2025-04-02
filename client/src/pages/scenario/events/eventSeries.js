@@ -1,24 +1,24 @@
 import React, { useState, useContext } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, List, ListItem, ListItemText, IconButton, Backdrop, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { 
+  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, 
+  List, ListItem, ListItemText, IconButton, Backdrop, Dialog, DialogActions, DialogContent, DialogTitle 
+} from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import PaymentsIcon from "@mui/icons-material/Payments";
 import SellIcon from "@mui/icons-material/Sell";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import BalanceIcon from "@mui/icons-material/Balance";
+
+import { AppContext } from "../../../context/appContext";
 import theme from "../../../components/theme";
 import Navbar from "../../../components/navbar";
 import PageHeader from "../../../components/pageHeader";
+import CustomSave from "../../../components/customSaveBtn";
 import {
-  stackStyles,
-  titleStyles,
-  backContinueContainerStyles,
-  buttonStyles,
-  rowBoxStyles,
+  stackStyles,titleStyles, backContinueContainerStyles, buttonStyles, rowBoxStyles,
 } from "../../../components/styles";
 
-import CustomInput from "../../../components/customInputBox";
-import { useNavigate } from "react-router-dom";
-import { AppContext } from "../../../context/appContext";
 
 const EventSeries = () => {
   const [openBackdrop, setOpenBackdrop] = useState(false);
@@ -33,36 +33,24 @@ const EventSeries = () => {
   let safeCurrInvest = Array.isArray(currInvest) ? currInvest : [];
   let safeCurrRebalance = Array.isArray(currRebalance) ? currRebalance : [];
   
-  // 🔹 Ensure all states are arrays before merging, and add an event type label
-  safeCurrIncome = Array.isArray(currIncome) 
-  ? currIncome.map(event => ({ ...event, type: "Income" }))  // 🔹 Added `.map()` to add "type"
-    : [];
-  console.log("safety: " );
-  console.log(safeCurrIncome);
-  safeCurrExpense = Array.isArray(currExpense) 
-    ? currExpense.map(event => ({ ...event, type: "Expense" }))  // 🔹 Added `.map()` to add "type"
-    : [];
-  
-  safeCurrInvest = Array.isArray(currInvest) 
-    ? currInvest.map(event => ({ ...event, type: "Invest" }))  // 🔹 Added `.map()` to add "type"
-    : [];
-  
-  safeCurrRebalance = Array.isArray(currRebalance) 
-    ? currRebalance.map(event => ({ ...event, type: "Rebalance" }))  // 🔹 Added `.map()` to add "type"
-    : [];
+  // 🔹 Ensure all states are arrays before merging, and add an event type label using `.map()` to add "type"
+  safeCurrIncome = Array.isArray(currIncome)  ? currIncome.map(event => ({ ...event, type: "Income" })) : [];
+  safeCurrExpense = Array.isArray(currExpense) ? currExpense.map(event => ({ ...event, type: "Expense" })) : []; 
+  safeCurrInvest = Array.isArray(currInvest) ? currInvest.map(event => ({ ...event, type: "Invest" })) : []; 
+  safeCurrRebalance = Array.isArray(currRebalance) ? currRebalance.map(event => ({ ...event, type: "Rebalance" })) : [];
+  // console.log("safety: " );
+  // console.log(safeCurrIncome);
   // console.log(currIncome);
   // console.log(currExpense);
   // console.log(currInvest);
   // console.log(currRebalance);
 
   const currEventSeries = [...safeCurrIncome, ...safeCurrExpense, ...safeCurrInvest, ...safeCurrRebalance];
-
   console.log(currEventSeries);
 
   const navigate = useNavigate();
 
   // Example event series
-
   const handleAddEvent = () => {
     setOpenBackdrop(true);
   };
@@ -143,9 +131,7 @@ const EventSeries = () => {
           <Typography variant="h2" component="h1" sx={titleStyles}>
             Event Series
           </Typography>
-          <Button variant="contained" color="secondary" sx={buttonStyles}>
-            Save
-          </Button>
+          <CustomSave label={"Save"}/>
         </Stack>
 
         <PageHeader />
