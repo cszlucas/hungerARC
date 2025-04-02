@@ -104,8 +104,8 @@ const InvestmentLists = () => {
 
   const getInvestmentTypeName = (id) => {
     // console.log(currInvestmentTypes);
-    //console.log("the id ", investmentTypeId);
-    console.log(currInvestmentTypes);
+    // console.log("the id ", investmentTypeId);
+    // console.log(currInvestmentTypes);
     for (let i = 0; i < currInvestmentTypes.length; i++) {
       // console.log("the match", currInvestmentTypes[i]._id.toString(), id.toString());
       if (currInvestmentTypes[i]._id.toString() === id.toString()) {
@@ -136,7 +136,7 @@ const InvestmentLists = () => {
 
         return (
           <ListItem
-            key={`${item.investmentTypeId}`}
+            key={`${item._id}`}
             sx={{
               backgroundColor: index % 2 === 0 ? "#BBBBBB" : "#D9D9D9",
               "&:hover": { backgroundColor: "#B0B0B0" },
@@ -144,7 +144,7 @@ const InvestmentLists = () => {
           >
             <ListItemText
               primary={<span style={{ fontWeight: "bold" }}>{investmentTypeName}</span>}
-              secondary={`Value: ${item.value}`}
+              secondary={`Value: ${item.value} | ${item._id}`}
             />
 
             <IconButton
