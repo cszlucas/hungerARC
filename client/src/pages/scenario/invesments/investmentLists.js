@@ -101,6 +101,7 @@ const InvestmentLists = () => {
   const getInvestmentTypeName = (id) => {
     // console.log(currInvestmentTypes);
     //console.log("the id ", investmentTypeId);
+    console.log(currInvestmentTypes);
     for (let i = 0; i < currInvestmentTypes.length; i++) {
       // console.log("the match", currInvestmentTypes[i]._id.toString(), id.toString());
       if (currInvestmentTypes[i]._id.toString() === id.toString()) {

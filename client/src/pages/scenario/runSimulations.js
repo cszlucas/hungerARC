@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Switch, MenuItem, TextField, IconButton, Backdrop, Fade } from "@mui/material";
 import theme from "../../components/theme";
 import Navbar from "../../components/navbar";
@@ -14,12 +14,68 @@ import {
 import CustomInput from "../../components/customInputBox";
 import { Close as CloseIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import { AppContext } from "../../context/appContext";
+import { saveAs } from "file-saver";
+import yaml from "js-yaml";
 
 const EventSeries = () => {
   const [numSimulations, setNumSimulations] = useState("1");
   const [openBackdrop, setOpenBackdrop] = useState(false); // State to control backdrop visibility
   const [emails, setEmails] = useState([]); // Store the email addresses
   const [permission, setPermission] = useState([]);
+
+
+  const {currScenario, currInvestmentTypes, currInvestments, currIncome, currExpense, currInvest, currRebalance} = useContext(AppContext);
+  function exportToYAML({
+    currScenario,
+    currInvestmentTypes,
+    currInvestments,
+    currIncome,
+    currExpense,
+    currInvest,
+    currRebalance
+  }) {
+    // Copy currScenario but exclude unwanted fields
+    const {
+      setOfInvestmentTypes,
+      setOfInvestments,
+      incomeEventSeries,
+      expenseEventSeries,
+      investEventSeries,
+      rebalanceEventSeries,
+      ...filteredScenario
+    } = currScenario;
+  
+    const data = {
+      scenario: {
+        ...filteredScenario,
+        investmentTypes: currInvestmentTypes,
+        investments: currInvestments,
+        income: currIncome,
+        expense: currExpense,
+        invest: currInvest,
+        rebalance: currRebalance
+      }
+    };
+  
+    const yamlStr = yaml.dump(data, { lineWidth: -1 }); // prevents line folding
+
+    const fileName = `${currScenario.name?.replace(/\s+/g, "_").toLowerCase() || "scenario"}.yaml`;
+    const blob = new Blob([yamlStr], { type: "text/yaml;charset=utf-8" });
+    saveAs(blob, fileName);
+  }
+  
+    const handleExport = () => {
+      exportToYAML({
+        currScenario,
+        currInvestmentTypes,
+        currInvestments,
+        currIncome,
+        currExpense,
+        currInvest,
+        currRebalance
+      });
+    };
 
   const navigate = useNavigate();
   
@@ -80,6 +136,7 @@ const EventSeries = () => {
                   backgroundColor: "#a67a99", // Optionally set hover color
                 },
               }}
+              onClick={handleExport}
             >
               Export
             </Button>
