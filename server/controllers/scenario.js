@@ -1,4 +1,4 @@
-const mongoose = require("mongoose"); 
+const mongoose = require("mongoose");
 const Scenario = require("../models/scenario.js");
 const Investment = require("../models/investment.js");
 const { ObjectId } = mongoose.Types;
@@ -17,6 +17,7 @@ exports.scenario = async (req, res) => {
 };
 
 exports.basicInfo = async (req, res) => {
+  const { id } = req.params; //user id
   try {
     const { name, filingStatus, financialGoal, inflationAssumption, birthYearUser, lifeExpectancy, stateResident } = req.body;
     console.log("why");
@@ -43,6 +44,13 @@ exports.basicInfo = async (req, res) => {
     });
 
     const savedBasicInfo = await newBasicInfo.save();
+    const user = await User.findOne({ _id: id });
+    if (!user) {
+      console.log("user not found");
+      return res.status(404).json({ message: "user not found" });
+    }
+    user.scenarios.push(savedBasicInfo._id);
+    await user.save();
 
     res.status(201).json(savedBasicInfo);
   } catch (err) {
@@ -63,15 +71,13 @@ exports.updateScenario = async (req, res) => {
   }
 };
 
-
-exports.scenarioInvestments = async(req,res) => {
+exports.scenarioInvestments = async (req, res) => {
   try {
     const { investmentIds } = req.body;
-    const objectIds = investmentIds.map(id => new ObjectId(id));
+    const objectIds = investmentIds.map((id) => new ObjectId(id));
     const investments = await Investment.find({ _id: { $in: objectIds } });
     res.status(200).json(investments);
   } catch (err) {
     res.status(500).json({ error: "Failed to retrieve investments", message: err.message });
   }
 };
-
