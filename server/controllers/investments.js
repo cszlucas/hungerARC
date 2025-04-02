@@ -3,7 +3,8 @@ const Investment = require("../models/investment.js");
 const { ObjectId } = require("mongoose").Types;
 const Scenario = require("../models/scenario.js");
 
-exports.investmentType = async (req, res) => {
+exports.createInvestmentType = async (req, res) => {
+  const { id } = req.params;
   const { name, description, annualReturn, expenseRatio, annualIncome, taxability } = req.body;
 
   try {
@@ -27,6 +28,13 @@ exports.investmentType = async (req, res) => {
     });
 
     const savedInvestmentType = await newInvestmentType.save();
+    const scenario = await Scenario.findOne({ _id: id });
+    if (!scenario) {
+      console.log("Scenario not found");
+      return res.status(404).json({ message: "Scenario not found" });
+    }
+    scenario.setOfInvestmentTypes.push(savedInvestmentType._id);
+    await scenario.save();
 
     res.status(201).json(savedInvestmentType);
   } catch (err) {
@@ -34,7 +42,8 @@ exports.investmentType = async (req, res) => {
   }
 };
 
-exports.investment = async (req, res) => {
+exports.createInvestment = async (req, res) => {
+  const { id } = req.params;
   const { investmentType, value, accountTaxStatus } = req.body;
 
   try {
@@ -45,6 +54,13 @@ exports.investment = async (req, res) => {
     });
 
     const investment = await invest.save();
+    const scenario = await Scenario.findOne({ _id: id });
+    if (!scenario) {
+      console.log("Scenario not found");
+      return res.status(404).json({ message: "Scenario not found" });
+    }
+    scenario.setOfInvestments.push(investment._id);
+    await scenario.save();
     console.log("Investment saved ");
 
     res.status(201).json(investment);
