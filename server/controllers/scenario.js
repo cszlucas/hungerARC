@@ -49,7 +49,7 @@ exports.basicInfo = async (req, res) => {
       console.log("user not found");
       return res.status(404).json({ message: "user not found" });
     }
-    user.push(savedBasicInfo._id);
+    user.scenarios.push(savedBasicInfo._id);
     await user.save();
 
     res.status(201).json(savedBasicInfo);
