@@ -25,14 +25,12 @@ import { AppContext } from "../../../context/appContext";
 
 import axios from "axios";
 
+const mongoose = require("mongoose");
+
 
 const Invest = () => {
     const {editMode, eventEditMode, setEventEditMode, currInvest, setCurrInvest, currInvestments, currInvestmentTypes, setCurrScenario} = useContext(AppContext);
-    // const {} = useContext(AppContext);
     const navigate = useNavigate();
-    // console.log("in Invest");
-    // console.log(currInvest);
-    // console.log(eventEditMode);
 
     const getInvesmentTypeById = (id) => {
         if (id != "new") {
@@ -57,11 +55,9 @@ const Invest = () => {
     };
 
     const getInvestById = (id) => {
-
         if (id) {
             for (let i = 0; i < currInvest.length; i++) {
                 if (currInvest[i]._id == id) {
-
                     if (currInvest[i].assetAllocation) {
                         return currInvest[i]; // Return the found scenario
                     }
@@ -222,13 +218,24 @@ const Invest = () => {
         }
         setValidInvestments((prev) => prev.filter((item) => item._id !== newInvestment.id));
         let newAllocation = {};
+
+        // Adding the Assest Allocation under Invest
         if (formValues.assetAllocation.type == "fixed") {
-            newAllocation = { ...formValues.assetAllocation.fixedPercentages, [newInvestment.id]: newInvestment.fixed };
+            newAllocation = { 
+                ...formValues.assetAllocation.fixedPercentages, 
+                [new mongoose.Types.ObjectId(newInvestment.id)]: newInvestment.fixed 
+            };
             handleInputChange("assetAllocation.fixedPercentages", newAllocation);
         } else {
-            newAllocation = { ...formValues.assetAllocation.initialPercentages, [newInvestment.id]: newInvestment.initial };
+            newAllocation = { 
+                ...formValues.assetAllocation.initialPercentages, 
+                [new mongoose.Types.ObjectId(newInvestment.id)]: newInvestment.initial 
+            };
             handleInputChange("assetAllocation.initialPercentages", newAllocation);
-            newAllocation = { ...formValues.assetAllocation.finalPercentages, [newInvestment.id]: newInvestment.final };
+            newAllocation = { 
+                ...formValues.assetAllocation.finalPercentages, 
+                [new mongoose.Types.ObjectId(newInvestment.id)]: newInvestment.final 
+            };
             handleInputChange("assetAllocation.finalPercentages", newAllocation);
         }
 

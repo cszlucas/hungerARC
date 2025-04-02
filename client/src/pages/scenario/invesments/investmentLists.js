@@ -17,12 +17,13 @@ import {
   stackStyles, titleStyles, buttonStyles, rowBoxStyles, backContinueContainerStyles, textFieldStyles 
 } from "../../../components/styles";
 import { AppContext } from "../../../context/appContext";
+import { AuthContext } from "../../../context/authContext";
 
 const mongoose = require("mongoose");
 
 const InvestmentLists = () => {
-  const { currInvestments, setCurrInvestments, setCurrScenario } = useContext(AppContext);
-  const { currInvestmentTypes, setCurrInvestmentTypes } = useContext(AppContext);
+  const { editMode, currInvestments, setCurrInvestments, currInvestmentTypes, setCurrScenario } = useContext(AppContext);
+  const { user } = useContext(AuthContext);
 
   const [open, setOpen] = useState(false);
   const [newInvestment, setNewInvestment] = useState({
@@ -45,7 +46,7 @@ const InvestmentLists = () => {
   };
 
   const transformInvestmentData = (investment) => {
-    console.log("Valid? ", mongoose.Types.ObjectId.isValid(investment.investmentTypeId));
+    // console.log("Valid? ", mongoose.Types.ObjectId.isValid(investment.investmentTypeId));
     return {
       investmentType: new mongoose.Types.ObjectId(investment.investmentTypeId), // Example: change 'investmentType' to 'investment_type'
       accountTaxStatus: investment.taxType, // Example: change 'accountTaxStatus' to 'account_tax_status'
@@ -70,21 +71,24 @@ const InvestmentLists = () => {
       console.log(transformedInvestment);
 
       try {
-        const response = await axios.post("http://localhost:8080/investment", transformedInvestment);
-        const id = response.data._id;
+        let id;
+        if (!user.guest) {
+          const response = await axios.post(`http://localhost:8080/scenario/${editMode}/investment`, transformedInvestment);
+          id = response.data._id;
+        } else {
+          id = currInvestments.length;
+        }
+
         transformedInvestment._id = id;
-        
-        setCurrInvestments((prev) => {
-          return [...(Array.isArray(prev) ? prev : []), transformedInvestment];
-        });
-        handleAppendInScenario("setOfInvestments", transformedInvestment);
+        setCurrInvestments((prev) => { return [...(Array.isArray(prev) ? prev : []), transformedInvestment]; });
+        handleAppendInScenario("setOfInvestments", id);
         setNewInvestment({ investmentTypeId: "", taxType: "", value: "" });
         
         if (transformedInvestment.accountTaxStatus == "pre-tax") {
-          handleAppendInScenario("rothConversionStrategy", transformedInvestment._id);
-          handleAppendInScenario("rmdStrategy", transformedInvestment._id);
+          handleAppendInScenario("rothConversionStrategy", id);
+          handleAppendInScenario("rmdStrategy", id);
         } else {
-          handleAppendInScenario("expenseWithdrawalStrategy", transformedInvestment._id);
+          handleAppendInScenario("expenseWithdrawalStrategy", id);
         }
 
         handleClose();
@@ -206,7 +210,7 @@ const InvestmentLists = () => {
           <Button variant="contained" color="primary" sx={buttonStyles} onClick={() => navigate("/scenario/basics")}>
             Back
           </Button>
-          <CustomSave label={"Continue"} routeTo={"/scenario/strategies"}/>
+          <CustomSave label={"Continue"} routeTo={"/scenario/event_series"}/>
         </Box>
 
         {/* Backdrop + Modal */}

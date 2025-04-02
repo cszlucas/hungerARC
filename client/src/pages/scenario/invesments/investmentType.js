@@ -2,25 +2,26 @@ import axios from "axios";
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
-  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, Checkbox,
+  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Checkbox,
 } from "@mui/material";
 
 import theme from "../../../components/theme";
 import Navbar from "../../../components/navbar";
 import PageHeader from "../../../components/pageHeader";
-import CustomDropdown from "../../../components/customDropDown";
 import CustomInput from "../../../components/customInputBox";
 import CustomToggle from "../../../components/customToggle";
-import { 
-  textFieldStyles, numFieldStyles, backContinueContainerStyles, buttonStyles, rowBoxStyles 
-} from "../../../components/styles";
 import { AppContext } from "../../../context/appContext";
+import { AuthContext } from "../../../context/authContext";
+import { 
+  backContinueContainerStyles, buttonStyles, rowBoxStyles 
+} from "../../../components/styles";
+
 
 const mongoose = require("mongoose");
 
 const InvestmentType = () => {
-  const { currInvestments, setCurrInvestments, currInvestmentTypes, setCurrInvestmentTypes, setCurrScenario } = useContext(AppContext);
-  const { eventEditMode } = useContext(AppContext);
+  const { editMode, eventEditMode, currInvestmentTypes, setCurrInvestmentTypes, setCurrScenario } = useContext(AppContext);
+  const { user } = useContext(AuthContext);
 
   const getInvestmentTypeById = (id) => {
     if (id == null) return null;
@@ -91,47 +92,22 @@ const InvestmentType = () => {
   };
 
   const handleSave = async () => {
-    // const validKeys = ["name", "description", "expenseRatio", "taxability"];
-
-    // // Hardcoded values for certain keys
-    // const hardcodedValues = {
-    //   annualReturn: {
-    //     type: "normalPercent",
-    //     mean: 0.05,
-    //     stdDev: 0.1,
-    //   },
-    //   annualIncome: {
-    //     type: "fixedPercent",
-    //     fixed: 5,
-    //     mean: 0.04,
-    //     stdDev: 0.05,
-    //   },
-    // };
-
-    // const filteredFormValues = Object.keys(formValues)
-    //   .filter((key) => validKeys.includes(key)) // Only keep keys that are in the validKeys array
-    //   .reduce((obj, key) => {
-    //     obj[key] = formValues[key]; // Construct a new object with only valid keys
-    //     return obj;
-    //   }, {});
-
-    // const finalFormValues = {
-    //   ...filteredFormValues,
-    //   ...hardcodedValues,
-    //   id: new mongoose.Types.ObjectId(),
-    // };
-
     try {
-      let response = await axios.post("http://localhost:8080/investmentType", formValues);
-      let id = response.data._id;
+      let id;
+
+      if (!user.guest) {
+        const response = await axios.post(`http://localhost:8080/scenario/${editMode}/investmentType`, formValues);
+        id = response.data._id;
+      } else {
+        id = currInvestmentTypes.length;
+      }
 
       handleInputChange("_id", id);
-      setCurrInvestmentTypes((prev) => {
-        return [...(Array.isArray(prev) ? prev : []), response.data];
-      });
-      handleAppendInScenario("setOfInvestmentTypes", response.data);
-      console.log("Data successfully saved:", response.data);
-      alert("Investment Type has been added");
+      setCurrInvestmentTypes((prev) => { return [...(Array.isArray(prev) ? prev : []), formValues];});
+      handleAppendInScenario("setOfInvestmentTypes", id);
+      
+      // console.log("Data successfully saved:", response.data);
+      // alert("Investment Type has been added");
     } catch (error) {
       console.error("Error saving data:", error);
       alert("Failed to save data!");
