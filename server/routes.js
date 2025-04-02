@@ -16,6 +16,8 @@ router.get("/getInvestStrategy/:id", events.getInvestStrategy);
 router.get("/getRebalanceStrategy/:id", events.getRebalanceStrategy);
 router.get("/scenario/:id/incomeEvent", events.getAllIncomeEventsByScenario);
 router.get("/scenario/:id/expenseEvent", events.getAllExpenseEventsByScenario);
+router.get("/scenario/:id/invest", events.getAllInvestEventsByScenario);
+router.get("/scenario/:id/rebalance", events.getAllRebalanceEventsByScenario);
 router.post("/scenario/:id/incomeEvent", events.createIncomeEvent);
 router.post("/updateIncome/:id", events.updateIncome);
 router.post("/scenario/:id/expenseEvent", events.createExpenseEvent);
@@ -26,7 +28,6 @@ router.post("/scenario/:id/rebalanceStrategy", events.createRebalanceStrategy);
 router.post("/updateRebalanceStrategy/:id", events.updateRebalanceStrategy);
 
 // investments
-router.get("/investmentType/:id", investments.investmentType);
 router.get("/getInvestment/:id", investments.getInvestment);
 router.get("/scenario/:id/investments", investments.getAllInvestmentsByScenario);
 router.get("/scenario/:id/investmentType", investments.getInvestmentTypeByScenario);
