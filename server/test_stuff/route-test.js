@@ -242,7 +242,7 @@ async function InvestStrat() {
       maxCash: 20,
     });
 
-    // const savedStrategy1 = await axios.post("http://localhost:8080/investStrategy", strategy1);
+    const savedStrategy1 = await axios.post("http://localhost:8080/scenario/67e0b7dc0de0ec503315d62f/investStrategy", strategy1);
   
 
     const investStrategyUpdate = new InvestEvent({
@@ -275,8 +275,21 @@ async function InvestStrat() {
 
 async function RebalanceStrat() {
   try {
+
+    const newAssetAllocation = ({
+      type: 'glidePath',
+      initialPercentages: {
+        ["67df68e520abee9d9188b03a"]: .60,
+        ["67df7a358d16d4c00df75a72"]: .40,
+      },
+      finalPercentages: {
+        ["67df68e520abee9d9188b03a"]: .30,
+        ["67df7a358d16d4c00df75a72"]: .70,
+      }
+    });
+
     const reb = new RebalanceEvent({
-      eventSeriesName: "Rebalance 2023-2025",
+      eventSeriesName: "Rebalance Zoe",
       description: "Rebalance event series 2023-2025",
       startYear: {
         type: "year",
@@ -286,40 +299,38 @@ async function RebalanceStrat() {
         type: "fixedAmt",
         value: 2,
       },
-      type: "glidePath",
-      initialPercentages: {
-        ["67df68e520abee9d9188b03a"]: 60,
-        ["67df7a358d16d4c00df75a72"]: 40,
-      },
-      finalPercentages: {
-        ["67df68e520abee9d9188b03a"]: 30,
-        ["67df7a358d16d4c00df75a72"]: 70,
+      taxStatus: "non-retirement",
+      rebalanceAllocation: {
+        type: newAssetAllocation.type,  // Use the type from the request
+        initialPercentages: newAssetAllocation.initialPercentages,
+        finalPercentages: newAssetAllocation.finalPercentages,
       },
     });
 
-    // const strategy = await axios.post("http://localhost:8080/rebalanceStrategy", reb);
+    const strategy = await axios.post("http://localhost:8080/scenario/67e0b7dc0de0ec503315d62f/rebalanceStrategy", reb);
 
-    const rebUpdate = new RebalanceEvent({
-      eventSeriesName: "Rebalance update",
-      description: "Rebalance update 2023-2025",
-      startYear: {
-        type: "year",
-        year: 2023,
-      },
-      duration: {
-        type: "fixedAmt",
-        value: 2,
-      },
-      type: "glidePath",
-      initialPercentages: {
-        ["67df68e520abee9d9188b03a"]: 60,
-        ["67df7a358d16d4c00df75a72"]: 40,
-      },
-      finalPercentages: {
-        ["67df68e520abee9d9188b03a"]: 30,
-        ["67df7a358d16d4c00df75a72"]: 70,
-      },
-    });
+    // const rebUpdate = new RebalanceEvent({
+    //   eventSeriesName: "Rebalance update",
+    //   description: "Rebalance update 2023-2025",
+    //   startYear: {
+    //     type: "year",
+    //     year: 2023,
+    //   },
+    //   duration: {
+    //     type: "fixedAmt",
+    //     value: 2,
+    //   },
+    //   taxStatus: "non-retirement",
+    //   type: "glidePath",
+    //   initialPercentages: {
+    //     ["67df68e520abee9d9188b03a"]: 60,
+    //     ["67df7a358d16d4c00df75a72"]: 40,
+    //   },
+    //   finalPercentages: {
+    //     ["67df68e520abee9d9188b03a"]: 30,
+    //     ["67df7a358d16d4c00df75a72"]: 70,
+    //   },
+    // });
 
     // const strategy = await axios.post("http://localhost:8080/updateRebalanceStrategy/67e0256ecfc4989ce1dcf568", rebUpdate);
 
@@ -335,4 +346,4 @@ async function RebalanceStrat() {
 //Investments();
 //Users();
 //InvestStrat();
-//RebalanceStrat();
+RebalanceStrat();
