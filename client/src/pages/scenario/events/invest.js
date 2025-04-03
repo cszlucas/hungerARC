@@ -22,6 +22,7 @@ import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
+import { AuthContext } from "../../../context/authContext";
 
 import axios from "axios";
 
@@ -30,6 +31,7 @@ const mongoose = require("mongoose");
 
 const Invest = () => {
     const {editMode, eventEditMode, setEventEditMode, currInvest, setCurrInvest, currInvestments, currInvestmentTypes, setCurrScenario} = useContext(AppContext);
+    const { user } = useContext(AuthContext);
     const navigate = useNavigate();
 
     const getInvesmentTypeById = (id) => {
@@ -300,18 +302,19 @@ const Invest = () => {
 
     const handleSave = async () => {
         if (eventEditMode.id == "new") {
-            // console.log("VV Sending to backend VV")
-            // console.log(formValues);
-            let response = await axios.post("http://localhost:8080/investStrategy", formValues);
-            // console.log()
-            let id = response.data._id;
+            let id;
 
-            // console.log('Event Id')
-            // console.log(id);
+            if (!user.guest) {
+              const response = await axios.post(`http://localhost:8080/scenario/${editMode}/investStrategy`, formValues);
+              id = response.data._id;
+            } else {
+              id = currInvest.length;
+            }
+
             handleInputChange("_id", id);
             setCurrInvest((prev) => [...prev, { ...formValues, _id: id }]);
             setEventEditMode({type:"Invest", id: id});
-            // console.log()
+
 
             setCurrScenario((prevScenario) => {
                 const updatedScenario = {
@@ -320,9 +323,9 @@ const Invest = () => {
                 };
 
                 // Send POST request with the updated scenario after state update
-                axios.post(`http://localhost:8080/updateScenario/${editMode}`, updatedScenario)
-                    .then(() => console.log("Scenario updated successfully"))
-                    .catch((error) => console.error("Error updating scenario:", error));
+                // axios.post(`http://localhost:8080/updateScenario/${editMode}`, updatedScenario)
+                //     .then(() => console.log("Scenario updated successfully"))
+                //     .catch((error) => console.error("Error updating scenario:", error));
 
                 return updatedScenario;
             });

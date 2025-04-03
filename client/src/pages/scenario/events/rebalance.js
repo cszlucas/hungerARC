@@ -35,6 +35,7 @@ import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
 import axios from "axios";
+import { AuthContext } from "../../../context/authContext";
 
 const investmentsData = [
   { investmentTypeName: "Apple", taxType: "Taxable", percent: "0" },
@@ -79,8 +80,9 @@ const InvestList = ({ list, handleMoveInvestment }) => {
 };
 
 const Rebalance = () => {
-  const { currRebalance, setCurrRebalance } = useContext(AppContext);
+  const { currRebalance, setCurrRebalance, setCurrScenario, editMode } = useContext(AppContext);
   const { eventEditMode, setEventEditMode } = useContext(AppContext);
+  const { user } = useContext(AuthContext);
 
   console.log(currRebalance);
   console.log(eventEditMode);
@@ -96,10 +98,15 @@ const Rebalance = () => {
 
   console.log(getRebalanceById(eventEditMode.id));
 
+  let indieRebalance = getRebalanceById(eventEditMode.id);
+  const [formValues, setFormValues] = useState(indieRebalance || {
+    
+  });
+
+
   const [eventName, setEventName] = useState("");
   const [description, setDescription] = useState("");
   const [startYear, setStartYear] = useState("");
-  const [endYear, setEndYear] = useState("");
 
   const [selectedTaxType, setSelectedTaxType] = useState("");
   const [selectedInvestment, setSelectedInvestment] = useState("");

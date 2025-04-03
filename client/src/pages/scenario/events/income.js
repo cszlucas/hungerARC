@@ -13,6 +13,7 @@ import CustomInput from "../../../components/customInputBox";
 import CustomToggle from "../../../components/customToggle";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
+import { AuthContext } from "../../../context/authContext";
 
 import axios from "axios";
 
@@ -21,6 +22,7 @@ const Income = () => {
     const {eventEditMode, setEventEditMode} = useContext(AppContext); 
     const {currScenario, setCurrScenario} = useContext(AppContext);
     const {editMode, setEditMode} = useContext(AppContext); //scenario
+    const { user } = useContext(AuthContext);
 
     // find the income event series object based on the id
     const getIncomeById = (id) => {
@@ -52,7 +54,7 @@ const Income = () => {
             year: ""
         },
         duration: {
-            type: "",
+            type: "fixedAmt",
             value: "",
             mean: "",
             stdDev: "",
@@ -61,9 +63,9 @@ const Income = () => {
         },
         initialAmount: "",
         annualChange: {
-            type:"",
+            type:"fixed",
             amount:"",
-            distribution:"",
+            distribution:"none",
             mean:"",
             stdDev:"",
             min:"",
@@ -105,12 +107,16 @@ const Income = () => {
 
     const handleSave = async () => {
         try {
-            let response;
+            // let response;
             if (eventEditMode.id == "new"){
             // calls endpoint to make a new income event and put in db
-            let response = await axios.post("http://localhost:8080/incomeEvent", formValues);
-            let id = response.data._id;
-
+            let id;
+            if (!user.guest) {
+                const response = await axios.post(`http://localhost:8080/scenario/${editMode}/incomeEvent`, formValues);
+                id = response.data._id;
+              } else {
+                id = currIncome.length;
+              }
             handleInputChange("_id", id);
             setCurrIncome((prev) => [...prev, { ...formValues, _id: id }]);
             setEventEditMode({type:"Income", id: id});
@@ -121,9 +127,9 @@ const Income = () => {
                     incomeEventSeries: [...(prevScenario?.incomeEventSeries || []), id]
                 };
                 // add this income event id into scenario incomeEventSeries array
-                axios.post(`http://localhost:8080/updateScenario/${editMode}`, updatedScenario)
-                    .then(() => console.log("Scenario updated successfully"))
-                    .catch((error) => console.error("Error updating scenario:", error));
+                // axios.post(`http://localhost:8080/updateScenario/${editMode}`, updatedScenario)
+                //     .then(() => console.log("Scenario updated successfully"))
+                //     .catch((error) => console.error("Error updating scenario:", error));
 
                 return updatedScenario;
             });
