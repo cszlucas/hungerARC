@@ -15,7 +15,13 @@ app.use(express.json());
 const PORT = 8080;
 
 // Connect to MongoDB
-mongoose.connect("mongodb://localhost:27017/hungerarc", { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect("mongodb://localhost:27017/hungerarc", { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log("Connected to MongoDB");
+    const parseAndInsertYaml = require("./importStateYaml.js");
+    parseAndInsertYaml();
+  })
+  .catch(err => console.error("MongoDB connection error:", err));
 
 const routes = require('./routes.js');
 app.use('/', routes); 
