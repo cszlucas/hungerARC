@@ -89,7 +89,7 @@ const Rebalance = () => {
 
   const getRebalanceById = (id) => {
     for (let i = 0; i < currRebalance.length; i++) {
-      if (currRebalance[i].id == id) {
+      if (currRebalance[i]._id == id) {
         return currRebalance[i]; // Return the found scenario
       }
     }
@@ -99,21 +99,71 @@ const Rebalance = () => {
   console.log(getRebalanceById(eventEditMode.id));
 
   let indieRebalance = getRebalanceById(eventEditMode.id);
+  console.log(indieRebalance);
   const [formValues, setFormValues] = useState(indieRebalance || {
-    
+    _id: "",
+    eventSeriesName: "",
+    description: "",
+    startYear: {
+      type: "",
+      value: "",
+      mean: "",
+      stdDev: "",
+      min: "",
+      max: "",
+      year: ""
+    },
+    duration: {
+      type: "fixedAmt",
+      value: "",
+      mean: "",
+      stdDev: "",
+      min: "",
+      max: ""
+    },
+    rebalanceAllocation: {
+      type: "",
+      fixedPercentages: "",
+      initialPercenatages: "",
+      finalPercentages: ""
+    }
   });
+
+  const handleInputChange = (field, value) => {
+    const fieldParts = field.split("."); // Split the field into parts (e.g., "lifeExpectancy.mean")
+  
+    setFormValues((prev) => {
+      // Update the nested object
+      if (fieldParts.length === 2) {
+        const [parent, child] = fieldParts; // 'lifeExpectancy' and 'mean'
+        return {
+          ...prev,
+          [parent]: { // Spread the parent object (lifeExpectancy)
+            ...prev[parent],
+            [child]: value, // Update the child property (mean)
+          },
+        };
+      }
+  
+      // For top-level fields (no dot notation)
+      return {
+        ...prev,
+        [field]: value,
+      };
+    });
+  };
 
 
   const [eventName, setEventName] = useState("");
   const [description, setDescription] = useState("");
   const [startYear, setStartYear] = useState("");
 
-  const [selectedTaxType, setSelectedTaxType] = useState("");
-  const [selectedInvestment, setSelectedInvestment] = useState("");
+  const [selectedTaxType, setSelectedTaxType] = useState(""); //keep
+  const [selectedInvestment, setSelectedInvestment] = useState(""); //keep
 
-  const [taxableInvestments, setTaxableInvestments] = useState([]);
-  const [taxDeferredInvestments, setTaxDeferredInvestments] = useState([]);
-  const [taxFreeInvestments, setTaxFreeInvestments] = useState([]);
+  const [taxableInvestments, setTaxableInvestments] = useState([]); //keep
+  const [taxDeferredInvestments, setTaxDeferredInvestments] = useState([]); //keep
+  const [taxFreeInvestments, setTaxFreeInvestments] = useState([]); //keep
 
   const [duration, setDuration] = useState("Fixed");
   const [durationValue, setDurationValue] = useState("");
@@ -338,32 +388,38 @@ const Rebalance = () => {
           {/* Left Column - Tax Category & Investment Dropdowns */}
           <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
             {/* Tax Category Dropdown */}
-            <CustomInput title="Event name" value={eventName} setValue={setEventName} />
+            <CustomInput title="Event name" value={formValues.eventSeriesName} setValue={(value) => handleInputChange("eventSeriesName", value)} />
 
-            <CustomInput title="Description (Optional)" type="multiline" value={description} setValue={setDescription} />
+            <CustomInput title="Description (Optional)" type="multiline" value={formValues.description} setValue={(value) => handleInputChange("description", value)} />
 
             <Stack direction="column" spacing={2}>
-              <CustomInput title="Start Year" type="number" value={startYear} setValue={setStartYear} />
+              <CustomInput title="Start Year" type="number" value={formValues.startYear.year} setValue={(value) => handleInputChange("startYear.year", value)} />
 
               <Stack spacing={2}>
                 {/* Toggle on Top */}
-                <CustomToggle title="Duration" labels={["Fixed", "Normal", "Uniform"]} values={["fixed", "normal", "uniform"]} sideView={false} width={100} value={duration} setValue={setDuration} />
+                <CustomToggle 
+                  title="Duration" 
+                  labels={["Fixed", "Normal", "Uniform"]} 
+                  values={["fixedAmt", "normal", "uniform"]} 
+                  sideView={false} width={100} 
+                  value={formValues.duration.type} setValue={(value) => handleInputChange("duration.type", value)} />
 
                 {/* Input Fields Below in Columns */}
                 <Stack direction="row" spacing={4} alignItems="start">
-                  {duration === "fixed" && <CustomInput title="Value" type="number" adornment={""} value={durationValue} setValue={setDurationValue} />}
+                  {formValues.duration.type === "fixedAmt" && 
+                  <CustomInput title="Value" type="number" adornment={""} value={formValues.duration.value} setValue={(value) => handleInputChange("duration.value", value)} />}
 
-                  {duration === "normal" && (
+                  {formValues.duration.type === "normal" && (
                     <Stack direction="row" spacing={4} alignItems="start">
-                      <CustomInput title="Mean" type="number" adornment={""} value={durationMean} setValue={setDurationMean} />
-                      <CustomInput title="Variance" type="number" adornment={""} value={durationVariance} setValue={setDurationVariance} />
+                      <CustomInput title="Mean" type="number" adornment={""} value={formValues.duration.mean} setValue={(value) => handleInputChange("duration.mean", value)} />
+                      <CustomInput title="Variance" type="number" adornment={""} value={formValues.duration.stdDev} setValue={(value) => handleInputChange("duration.stdDev", value)} />
                     </Stack>
                   )}
 
-                  {duration === "uniform" && (
+                  {formValues.duration.type === "uniform" && (
                     <Stack direction="row" spacing={4} alignItems="start">
-                      <CustomInput title="Min" type="number" adornment={""} value={durationMin} setValue={setDurationMin} />
-                      <CustomInput title="Max" type="number" adornment={""} value={durationMax} setValue={setDurationMax} />
+                      <CustomInput title="Min" type="number" adornment={""} value={formValues.duration.min} setValue={(value) => handleInputChange("duration.min", value)} />
+                      <CustomInput title="Max" type="number" adornment={""} value={formValues.duration.max} setValue={(value) => handleInputChange("duration.max", value)} />
                     </Stack>
                   )}
                 </Stack>
@@ -412,16 +468,17 @@ const Rebalance = () => {
 
             <Stack spacing={2}>
               {/* Toggle on Top */}
-              <CustomToggle title="Allocations" labels={["Fixed", "Glide Path"]} values={["fixed", "glidePath"]} sideView={false} width={100} value={allocations} setValue={setAllocations} />
+              <CustomToggle title="Allocations" labels={["Fixed", "Glide Path"]} values={["fixed", "glidePath"]} sideView={false} width={100} value={formValues.rebalanceAllocation.type} setValue={(value) => handleInputChange("rebalanceAllocation.type", value)} />
 
               {/* Input Fields Below in Columns */}
               <Stack direction="row" spacing={4} alignItems="start">
-                {allocations === "fixed" && <CustomInput title="Value" type="number" adornment={""} value={fixedPercentage} setValue={setFixedPercentage} />}
+                {formValues.rebalanceAllocation.type === "fixed" && 
+                <CustomInput title="Value" type="number" adornment={""} value={formValues.rebalanceAllocation.fixedPercentages} setValue={(value) => handleInputChange("rebalanceAllocation.fixedPercentages", value)} />}
 
-                {allocations === "glidePath" && (
+                {formValues.rebalanceAllocation.type === "glidePath" && (
                   <Stack direction="row" spacing={4} alignItems="start">
-                    <CustomInput title="Initial Percentage" type="number" adornment={""} value={initialPercentage} setValue={setInitialPercentage} />
-                    <CustomInput title="Final Percentage" type="number" adornment={""} value={finalPercentage} setValue={setFinalPercentage} />
+                    <CustomInput title="Initial Percentage" type="number" adornment={""} value={formValues.rebalanceAllocation.initialPercentages} setValue={(value) => handleInputChange("rebalanceAllocation.initialPercentages", value)} />
+                    <CustomInput title="Final Percentage" type="number" adornment={""} value={formValues.rebalanceAllocation.finalPercentages} setValue={(value) => handleInputChange("rebalanceAllocation.finalPercentages", value)} />
                   </Stack>
                 )}
               </Stack>
