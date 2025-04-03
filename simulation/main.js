@@ -1,8 +1,12 @@
 
 
 //zoe figure out year factor
-function performRMDs(scenario, RMDStrategyInvestOrder, currYearIncome, currYear){
+async function performRMDs(scenario, investments, currYearIncome, currYear){
   userAge = currYear - scenario.birthYearUser
+  console.log("zoe",investments);
+  // RMDStrategyInvestOrder = await Investment.find({
+  //         _id: { $in: scenario.setOfInvestments },
+  // });
   if(userAge>=73 && RMDStrategyInvestOrder!=null){ //at least one pretax investment in previous year
       distributionPeriod = rmdTable({"age": userAge}).distributionPeriod
       allInvestmentsPreTax = db.investments.query({"scenario_id": scenario.id, "accountTaxStatus": "pre-tax retirement"})
@@ -183,7 +187,7 @@ function runInvestStrategy(scenario, cashInvestment, IRSLimits){ //run invest ev
   }
 }
 
-buyNonRetirement(investStrategy, excessCash){
+function buyNonRetirement(investStrategy, excessCash){
   for(let investment in investStrategy){
     buyAmt = 0
     if(investment.accountTaxStatus=="non-retirement"){
@@ -233,3 +237,7 @@ function rebalance(scenario, curYearGains){
   }
 
 }
+
+module.exports = {
+  performRMDs
+};

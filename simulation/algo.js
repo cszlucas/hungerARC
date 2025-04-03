@@ -1,9 +1,10 @@
-const axios = require("axios");
-const {Tax, StateTax}= require("../server/models/tax");
+const mongoose = require("mongoose");
+const StateTax = require("../server/importStateYaml.js");
+const Tax = require("../server/models/tax.js");
 const Scenario = require("../server/models/scenario");
 const Investment = require("../server/models/investment");
-const {Income, Expense, Invest, Rebalance} = require("../server/models/eventSeries");
-
+const { IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent } = require("../server/models/eventSeries");
+const { performRMDs } = require('./main.js');
 
 function calculateNormalDist(std, mean) {
   const u = 1 - Math.random();
@@ -122,33 +123,51 @@ class DataStore {
     this.taxData = this.stateTax = this.scenario = this.investment = this.income = this.expense = this.rebalance = this.invest = {};
   }
   async populateData(scenarioId) {
-    const query = { id: scenarioId };
-    this.taxData.data = await Tax.findOne();
-    this.scenario.data = await Scenario.findOne(query);
-    this.stateTax.data = await StateTax.findOne();
-    this.investment.data = await Investment.findAll(query);
-    this.income.data = await Income.findAll(query);
-    this.expense.data = await Expense.findAll(query);
-    this.invest.data = await Invest.findAll(query);
-    this.rebalance.data = await Rebalance.findAll(query);
+    const query = { _id: new mongoose.Types.ObjectId(scenarioId) };
+    try {
+      const scenario = await Scenario.findOne(query);
+      if (!scenario) {
+        console.log("Scenario not found");
+        return;
+      }
+      this.scenario = scenario;
+      const investment = await Investment.find({
+        _id: { $in: scenario.setOfInvestments },
+      });
+      this.investment = investment;
+      const income = await IncomeEvent.find({
+        _id: { $in: scenario.incomeEventSeries },
+      });
+      this.income = income;
+      const expense = await ExpenseEvent.find({
+        _id: { $in: scenario.expenseEventSeries },
+      });
+      this.expense = expense;
+      const invest = await InvestEvent.find({
+        _id: { $in: scenario.investEventSeries },
+      });
+      this.invest = invest;
+      const rebalance = await RebalanceEvent.find({
+        _id: { $in: scenario.rebalanceEventSeries },
+      });
+      this.rebalance = rebalance;
+      const tax = await Tax.find();
+      this.taxData = tax;
+      const stateTax = await StateTax.find();
+      this.stateTax = stateTax;
+    } catch (err) {
+      console.log("Error while populating data:", err);
+    }
   }
+
   getData(property) {
     return this[property];
   }
 }
 
-function runSimulation(scenario, tax, statetax, prevYear, lifeExpectancyUser, investment, income, expense, invest, rebalance) {
-  console.log("SCENARIO", scenario);
-  console.log(tax);
-  console.log(statetax);
-  console.log(investment);
-  console.log(income);
-  console.log(expense);
-  console.log(invest);
-  console.log(rebalance);
-  return;
-
+function runSimulation(scenario, tax, statetax, prevYear, lifeExpectancyUser, investments, incomeEvent, expenseEvent, investEvent, rebalanceEvent) {
   // previous year
+  //console.log("statetax: ", statetax.taxDetails);
   let irsLimit = scenario.irsLimits.initialAfterTax;
   let filingStatus = scenario.filingStatus;
   let state = scenario.stateResident;
@@ -173,7 +192,7 @@ function runSimulation(scenario, tax, statetax, prevYear, lifeExpectancyUser, in
   let incomeEvents = scenario.incomeEventSeries;
   let userEndYear = scenario.birthYearUser + lifeExpectancyUser;
   // //save initial value and purchase price of investments
-  for (let invest of investment) {
+  for (let invest of investments) {
     invest.purchasePrice = invest.value;
   }
 
@@ -204,7 +223,8 @@ function runSimulation(scenario, tax, statetax, prevYear, lifeExpectancyUser, in
     // console.log('cashInvestment :>> ', cashInvestment);
 
     //   // PERFORM RMD FOR PREVIOUS YEAR
-    //   performRMDs(scenario, RMDStrategyInvestOrder, currYearIncome, currYear);
+    const currYearIncome = 100;
+      performRMDs(scenario, investments, currYearIncome, year);
     //   // UPDATE INVESTMENT VALUES
 
     //   // RUN ROTH CONVERSION IF ENABLED
@@ -244,14 +264,12 @@ function calculateLifeExpectancy(scenario) {
   return { lifeExpectancyUser, lifeExpectancySpouse };
 }
 
-
-
-async function main(numScenarioTimes) {
+async function main(numScenarioTimes, scenarioId) {
   // not sure how to get a value using this, not needed
   var distributions = require("distributions");
   const dataStore = new DataStore();
-  await Promise.all([dataStore.populateData('67df22db4996aba7bb6e8d73')]);
-
+  await Promise.all([dataStore.populateData(scenarioId)]);
+  
   const { taxData, scenario, stateTax, invest, income, expense, rebalance, investment } = {
     taxData: dataStore.getData("taxData"),
     scenario: dataStore.getData("scenario"),
@@ -260,14 +278,13 @@ async function main(numScenarioTimes) {
     income: dataStore.getData("income"),
     expense: dataStore.getData("expense"),
     rebalance: dataStore.getData("rebalance"),
-    investment: dataStore.getData("investment")
-  };
-  
-  // const investment = dataStore.getInvestment();
+    investment: dataStore.getData("investment"),
+  };  
+  console.log("scenario: ", scenario);
+  console.log('stateTax :>> ', stateTax);
   const prevYear = (new Date().getFullYear() - 1).toString();
-
   //calculate life expectancy
-  const { lifeExpectancyUser, lifeExpectancySpouse } = calculateLifeExpectancy(scenario);
+  //const { lifeExpectancyUser, lifeExpectancySpouse } = calculateLifeExpectancy(scenario);
   for (let x = 0; x < numScenarioTimes; x++) {
     const clonedData = {
       scenario: JSON.parse(JSON.stringify(scenario)),
@@ -277,15 +294,16 @@ async function main(numScenarioTimes) {
       income: JSON.parse(JSON.stringify(income)),
       invest: JSON.parse(JSON.stringify(invest)),
       rebalance: JSON.parse(JSON.stringify(rebalance)),
-      investmentType: JSON.parse(JSON.stringify(investmentType)),
+      taxData: JSON.parse(JSON.stringify(taxData)),
+      //investmentType: JSON.parse(JSON.stringify(investmentType)),
     };
 
     runSimulation(
       clonedData.scenario,
-      clonedData.stateTax,
-      clonedData.tax,
+      clonedData.taxData[0],
+      clonedData.stateTax[0],
       prevYear,
-      lifeExpectancyUser,
+      // lifeExpectancyUser,
       clonedData.investment,
       clonedData.income,
       clonedData.expense,
@@ -296,4 +314,4 @@ async function main(numScenarioTimes) {
 }
 
 // Call the main function to execute everything
-main(1);
+main(1, "67df22db4996aba7bb6e8d73");
