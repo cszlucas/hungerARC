@@ -13,6 +13,7 @@ import CustomInput from "../../../components/customInputBox";
 import CustomToggle from "../../../components/customToggle";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
+import { AuthContext } from "../../../context/authContext";
 import axios from "axios";
 
 const Expense = () => {
@@ -20,6 +21,7 @@ const Expense = () => {
     const {eventEditMode, setEventEditMode} = useContext(AppContext);
     const {currScenario, setCurrScenario} = useContext(AppContext);
     const {editMode, setEditMode} = useContext(AppContext);
+    const { user } = useContext(AuthContext);
 
     const getExpenseById = (id) => {
         for (let i = 0; i < currExpense.length; i++) {
@@ -50,7 +52,7 @@ const Expense = () => {
         },
         duration:
         {
-            type: "",
+            type: "fixedAmt",
             value: "",
             mean: "",
             stdDev: "",
@@ -60,8 +62,8 @@ const Expense = () => {
         initialAmount: "",
         annualChange: 
         {
-            distribution: "",
-            type: "",
+            distribution: "none",
+            type: "fixed",
             // value: "",
             mean: "",
             stdDev: "",
@@ -106,21 +108,26 @@ const Expense = () => {
                 }, [eventEditMode]);
     const handleSave = async () =>
     {
-        console.log("HANDLER");
-        console.log(formValues);
-        console.log(eventEditMode);
+        // console.log("HANDLER");
+        // console.log(formValues);
+        // console.log(eventEditMode);
         if (eventEditMode.id == "new")
         {
-            let response = await axios.post("http://localhost:8080/expenseEvent", formValues);
-            let id = response.data._id;
+            let id;
 
-            console.log(id);
+            if (!user.guest) {
+              const response = await axios.post(`http://localhost:8080/scenario/${editMode}/expenseEvent`, formValues);
+              id = response.data._id;
+            } else {
+              id = currExpense.length;
+            }
+            // console.log(id);
             handleInputChange("_id", id);
             setCurrExpense((prev) => [...prev, { ...formValues, _id: id }]);
-            console.log(formValues);
+            // console.log(formValues);
 
             setEventEditMode({type:"Expense", id: id});
-           
+            
 
             setCurrScenario((prevScenario) => {
                 const updatedScenario = {
@@ -128,11 +135,10 @@ const Expense = () => {
                     expenseEventSeries: [...(prevScenario?.expenseEventSeries || []), id],
                     spendingStrategy: [...(prevScenario?.spendingStrategy || []), id]
                 };
-
                 // Send POST request with the updated scenario after state update
-                axios.post(`http://localhost:8080/updateScenario/${editMode}`, updatedScenario)
-                    .then(() => console.log("Scenario updated successfully"))
-                    .catch((error) => console.error("Error updating scenario:", error));
+                // axios.post(`http://localhost:8080/updateScenario/${editMode}`, updatedScenario)
+                //     .then(() => console.log("Scenario updated successfully"))
+                //     .catch((error) => console.error("Error updating scenario:", error));
 
                 return updatedScenario;
             });
@@ -304,7 +310,7 @@ const Expense = () => {
                             values={["none", "normal", "uniform"]}
                             sideView={true}
                             width={100}
-                            value={formValues.annualChange.distributionType}
+                            value={formValues.annualChange.distribution}
                             setValue={(value) => handleInputChange("annualChange.distribution", value)}
                         />
 
