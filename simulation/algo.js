@@ -1,10 +1,11 @@
 const mongoose = require("mongoose");
-const StateTax = require("../server/importStateYaml.js");
+// const StateTax = require("../server/importStateYaml.js");
+const StateTax = require("../server/models/stateTax.js");
 const Tax = require("../server/models/tax.js");
 const Scenario = require("../server/models/scenario");
 const Investment = require("../server/models/investment");
 const { IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent } = require("../server/models/eventSeries");
-const { performRMDs } = require('./main.js');
+const { performRMDs } = require("./main.js");
 
 function calculateNormalDist(std, mean) {
   const u = 1 - Math.random();
@@ -81,6 +82,7 @@ function rothConversion(scenario, year, curYearIncome, curYearSS, fedIncomeTaxBr
     curYearEarlyWithdrawals += rc;
   }
 }
+// incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment);
 
 function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment) {
   for (let incomeEvent of incomeEvents) {
@@ -165,9 +167,9 @@ class DataStore {
   }
 }
 
-function runSimulation(scenario, tax, statetax, prevYear, lifeExpectancyUser, investments, incomeEvent, expenseEvent, investEvent, rebalanceEvent) {
+function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUser, investments, incomeEvent, expenseEvent, investEvent, rebalanceEvent) {
   // previous year
-  //console.log("statetax: ", statetax.taxDetails);
+  //console.log("investments: ", investments);
   let irsLimit = scenario.irsLimits.initialAfterTax;
   let filingStatus = scenario.filingStatus;
   let state = scenario.stateResident;
@@ -176,16 +178,16 @@ function runSimulation(scenario, tax, statetax, prevYear, lifeExpectancyUser, in
   if (filingStatus == "single") {
     fedIncomeTaxBracket = tax.single.federalIncomeTaxRatesBrackets;
     fedDeduction = tax.single.standardDeductions;
-    if (statetax) {
-      stateIncomeTaxBracket = statetax.taxDetails[prevYear].single.stateIncomeTaxRatesBrackets;
-      stateDeduction = statetax.taxDetails[prevYear].single.standardDeduction;
+    if (stateTax) {
+      stateIncomeTaxBracket = stateTax.taxDetails[prevYear].single.stateIncomeTaxRatesBrackets;
+      stateDeduction = stateTax.taxDetails[prevYear].single.standardDeduction;
     }
   } else {
     fedIncomeTaxBracket = tax.marriedFilingJointly.federalIncomeTaxRatesBrackets;
     fedDeduction = tax.marriedFilingJointly.standardDeduction;
-    if (statetax) {
-      stateIncomeTaxBracket = statetax.taxDetails[prevYear].single.stateIncomeTaxRatesBrackets;
-      stateDeduction = statetax.taxDetails[prevYear].single.standardDeduction;
+    if (stateTax) {
+      stateIncomeTaxBracket = stateTax.taxDetails[prevYear].single.stateIncomeTaxRatesBrackets;
+      stateDeduction = stateTax.taxDetails[prevYear].single.standardDeduction;
     }
   }
   let currentYear = new Date().getFullYear();
@@ -205,7 +207,7 @@ function runSimulation(scenario, tax, statetax, prevYear, lifeExpectancyUser, in
 
     fedDeduction = updateFedDeduction(fedDeduction, inflationRate);
 
-    if (statetax) {
+    if (stateTax) {
       updateStateIncomeTaxBracket(stateIncomeTaxBracket, inflationRate);
     }
     // retirement account limit - after tax
@@ -217,14 +219,14 @@ function runSimulation(scenario, tax, statetax, prevYear, lifeExpectancyUser, in
     // let curYearEarlyWithdrawals = 0;
     // let curYearGains = 0;
     // let cashInvestment = scenario.investments.cashInvestment;
-    // ({ curYearIncome, curYearSS, cashInvestment } = updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment));
+    // ({ curYearIncome, curYearSS, cashInvestment } = updateIncomeEvents(incomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment));
     // console.log('curYearIncome :>> ', curYearIncome);
     // console.log('curYearSS :>> ', curYearSS);
     // console.log('cashInvestment :>> ', cashInvestment);
 
     //   // PERFORM RMD FOR PREVIOUS YEAR
     const currYearIncome = 100;
-      performRMDs(scenario, investments, currYearIncome, year);
+    performRMDs(scenario, investments, currYearIncome, year);
     //   // UPDATE INVESTMENT VALUES
 
     //   // RUN ROTH CONVERSION IF ENABLED
@@ -269,7 +271,7 @@ async function main(numScenarioTimes, scenarioId) {
   var distributions = require("distributions");
   const dataStore = new DataStore();
   await Promise.all([dataStore.populateData(scenarioId)]);
-  
+
   const { taxData, scenario, stateTax, invest, income, expense, rebalance, investment } = {
     taxData: dataStore.getData("taxData"),
     scenario: dataStore.getData("scenario"),
@@ -279,12 +281,12 @@ async function main(numScenarioTimes, scenarioId) {
     expense: dataStore.getData("expense"),
     rebalance: dataStore.getData("rebalance"),
     investment: dataStore.getData("investment"),
-  };  
+  };
   console.log("scenario: ", scenario);
-  console.log('stateTax :>> ', stateTax);
+  console.log("stateTax :>> ", stateTax);
   const prevYear = (new Date().getFullYear() - 1).toString();
   //calculate life expectancy
-  //const { lifeExpectancyUser, lifeExpectancySpouse } = calculateLifeExpectancy(scenario);
+  const { lifeExpectancyUser, lifeExpectancySpouse } = calculateLifeExpectancy(scenario);
   for (let x = 0; x < numScenarioTimes; x++) {
     const clonedData = {
       scenario: JSON.parse(JSON.stringify(scenario)),
@@ -297,13 +299,12 @@ async function main(numScenarioTimes, scenarioId) {
       taxData: JSON.parse(JSON.stringify(taxData)),
       //investmentType: JSON.parse(JSON.stringify(investmentType)),
     };
-
     runSimulation(
       clonedData.scenario,
       clonedData.taxData[0],
       clonedData.stateTax[0],
       prevYear,
-      // lifeExpectancyUser,
+      lifeExpectancyUser,
       clonedData.investment,
       clonedData.income,
       clonedData.expense,

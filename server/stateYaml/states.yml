@@ -1,8 +1,7 @@
 states:
   - name: New York
     operation: add
-    year: 2024
-    taxDetails: 
+    taxDetails:
       2024:
         single:
           - stateIncomeTaxRatesBrackets:
@@ -66,7 +65,7 @@ states:
           - standardDeduction: 16050
   - name: New Jersey
     operation: subtract
-    taxDetails: 
+    taxDetails:
       2024:
         single:
           - stateIncomeTaxRatesBrackets:
