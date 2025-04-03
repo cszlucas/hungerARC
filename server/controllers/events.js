@@ -25,7 +25,7 @@ exports.createIncomeEvent = async (req, res) => {
         mean: annualChange.mean,
         stdDev: annualChange.stdDev,
         min: annualChange.min,
-        max: annualChange.max
+        max: annualChange.max,
       },
       userPercentage,
       inflationAdjustment,
@@ -228,7 +228,7 @@ exports.updateInvestStrategy = async (req, res) => {
 // add a new rebalance event to rebalanceevent collection
 exports.createRebalanceStrategy = async (req, res) => {
   const { id } = req.params;
-  const { eventSeriesName, description, startYear, duration, type, fixedPercentages, initialPercentages, finalPercentages } = req.body;
+  const { eventSeriesName, description, startYear, duration, taxStatus, type, fixedPercentages, initialPercentages, finalPercentages } = req.body;
 
   try {
     const rebalanceEvent = new RebalanceEvent({
@@ -236,10 +236,11 @@ exports.createRebalanceStrategy = async (req, res) => {
       description,
       startYear,
       duration,
-      type,
-      fixedPercentages,
-      initialPercentages,
-      finalPercentages,
+      taxStatus,
+      rebalanceAllocation: {
+        type,
+        ...(type === "fixed" ? { fixedPercentages } : { initialPercentages, finalPercentages }),
+      },
     });
 
     const savedRebalanceEvent = await rebalanceEvent.save();

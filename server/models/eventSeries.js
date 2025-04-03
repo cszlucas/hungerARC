@@ -21,7 +21,7 @@ var BaseEventSchema = new Schema({
   duration: {
     type: {
       type: String,
-      enum: ["fixedAmt", "normal", "uniform",""],
+      enum: ["fixedAmt", "normal", "uniform", ""],
     },
     value: { type: Number },
     mean: { type: Number },
@@ -32,23 +32,22 @@ var BaseEventSchema = new Schema({
 });
 
 var AnnualChange = new Schema({
-    type: {
-      type: String,
-      enum: ["fixed", "percentage",""], 
-    },
-    distribution: {
-      type: String,
-      enum: ["none", "normal", "uniform", ""]
-    },
-    amount: {
-      type: Number,
-    },
-    mean: { type: Number },
-    stdDev: { type: Number },
-    min: { type: Number },
-    max: { type: Number },
-  });
-  
+  type: {
+    type: String,
+    enum: ["fixed", "percentage", ""],
+  },
+  distribution: {
+    type: String,
+    enum: ["none", "normal", "uniform", ""],
+  },
+  amount: {
+    type: Number,
+  },
+  mean: { type: Number },
+  stdDev: { type: Number },
+  min: { type: Number },
+  max: { type: Number },
+});
 
 var IncomeEventSchema = new Schema({
   ...BaseEventSchema.obj, // populate the fields from base event schema
@@ -69,11 +68,53 @@ var ExpenseEventSchema = new Schema({
 });
 
 var AssetAllocationSchema = new Schema({
-  type: { type: String, enum: ["fixed", "glidePath",""] },
-  // eg: { 'objectIdBondInvestment': 30, 'objectIdStockInvestment': 70 }
-  fixedPercentages: { type: Map, of: Number }, // fixed
-  initialPercentages: { type: Map, of: Number }, // glidePath
-  finalPercentages: { type: Map, of: Number }, // glidePath
+  type: { type: String, enum: ["fixed", "glidePath"] },
+
+  fixedPercentages: {
+    type: Map,
+    of: Number,
+    validate: {
+      validator: function (value) {
+        if (this.type === "fixed") return value !== undefined; // Required for "fixed"
+        return value === undefined; // Must NOT exist for "glidePath"
+      },
+      message: "fixedPercentages is required for 'fixed' type and must NOT be used with 'glidePath'.",
+    },
+  },
+
+  initialPercentages: {
+    type: Map,
+    of: Number,
+    validate: [
+      {
+        validator: function (value) {
+          if (this.type === "glidePath" && value) {
+            const sum = [...value.values()].reduce((acc, num) => acc + num, 0);
+            return sum === 1;
+          }
+          return true;
+        },
+        message: "For 'glidePath', initialPercentages must sum to 1 (100%).",
+      },
+    ],
+  },
+
+  finalPercentages: {
+    type: Map,
+    of: Number,
+    validate: [
+      {
+        validator: function (value) {
+          if (this.type === "glidePath" && value) {
+            const sum = [...value.values()].reduce((acc, num) => acc + num, 0);
+            return sum === 1;
+          }
+          return true;
+        },
+        message: "For 'glidePath', finalPercentages must sum to 1 (100%).",
+      },
+    ],
+  },
 });
 
 var InvestEventSchema = new Schema({
@@ -84,6 +125,7 @@ var InvestEventSchema = new Schema({
 
 var RebalanceEventSchema = new Schema({
   ...BaseEventSchema.obj,
+  taxStatus: { type: String },
   rebalanceAllocation: { type: AssetAllocationSchema },
 });
 
@@ -94,5 +136,5 @@ module.exports = {
   ExpenseEvent: mongoose.model("ExpenseEvent", ExpenseEventSchema),
   InvestEvent: mongoose.model("InvestEvent", InvestEventSchema),
   RebalanceEvent: mongoose.model("RebalanceEvent", RebalanceEventSchema),
-  AnnualChange: mongoose.model("AnnualChange", AnnualChange)
+  AnnualChange: mongoose.model("AnnualChange", AnnualChange),
 };

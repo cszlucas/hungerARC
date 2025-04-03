@@ -53,14 +53,14 @@ const InvestmentType = () => {
       annualReturn: {
         unit: "fixed",
         type: "fixed",
-        fixed: "",
+        value: "",
         mean: "",
         stdDev: "",
       },
       annualIncome: {
         unit: "fixed",
         type: "fixed",
-        fixed: "",
+        value: "",
         mean: "",
         stdDev: "",
       },

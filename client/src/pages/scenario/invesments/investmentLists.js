@@ -6,6 +6,7 @@ import {
   ListItemText, IconButton, Backdrop, Fade, TextField,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 
 import theme from "../../../components/theme";
 import Navbar from "../../../components/navbar";
@@ -27,13 +28,17 @@ const InvestmentLists = () => {
 
   const [open, setOpen] = useState(false);
   const [newInvestment, setNewInvestment] = useState({
+    id: "new",
     investmentTypeId: "",
     taxType: "",
     value: "",
   });
   const navigate = useNavigate();
 
-  const handleOpen = () => setOpen(true);
+  const handleOpen = () => { 
+    setNewInvestment({ id: "new", investmentTypeId: "", taxType: "", value: "" }); 
+    setOpen(true); 
+  };
   const handleClose = () => setOpen(false);
 
   const handleInputChange = (field, value) => {  
@@ -62,27 +67,33 @@ const InvestmentLists = () => {
   };
 
   const handleAddInvestment = async () => {
-    console.log("Add investment");
-    console.log(newInvestment);
+    // console.log("Add investment");
+    // console.log(newInvestment);
 
     if (newInvestment.investmentTypeId) {
-      console.log("transform data");
+      // console.log("transform data");
       let transformedInvestment = transformInvestmentData(newInvestment);
       console.log(transformedInvestment);
 
       try {
-        let id;
+        let id = newInvestment.id;
         if (!user.guest) {
-          const response = await axios.post(`http://localhost:8080/scenario/${editMode}/investment`, transformedInvestment);
-          id = response.data._id;
+          if (id === "new") {
+            const response = await axios.post(`http://localhost:8080/scenario/${editMode}/investment`, transformedInvestment);
+            id = response.data._id;
+          } else {
+            await axios.post(`http://localhost:8080/updateInvestment/${id}`, transformedInvestment);
+            setCurrInvestments((prev) => prev.filter((item) => item._id !== id));
+          }
         } else {
-          id = currInvestments.length;
+          if (newInvestment.id === "new") id = currInvestments.length;
+          else setCurrInvestments((prev) => prev.filter((item) => item._id !== id));
         }
 
         transformedInvestment._id = id;
         setCurrInvestments((prev) => { return [...(Array.isArray(prev) ? prev : []), transformedInvestment]; });
         handleAppendInScenario("setOfInvestments", id);
-        setNewInvestment({ investmentTypeId: "", taxType: "", value: "" });
+        setNewInvestment({ id: "new", investmentTypeId: "", taxType: "", value: "" });
         
         if (transformedInvestment.accountTaxStatus == "pre-tax") {
           handleAppendInScenario("rothConversionStrategy", id);
@@ -98,66 +109,71 @@ const InvestmentLists = () => {
     }
   };
 
-  const handleDeleteInvestment = (index) => {
-    setCurrInvestments((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const getInvestmentTypeName = (id) => {
-    // console.log(currInvestmentTypes);
-    // console.log("the id ", investmentTypeId);
-    // console.log(currInvestmentTypes);
     for (let i = 0; i < currInvestmentTypes.length; i++) {
-      // console.log("the match", currInvestmentTypes[i]._id.toString(), id.toString());
       if (currInvestmentTypes[i]._id.toString() === id.toString()) {
-        // console.log("a match");
         return currInvestmentTypes[i].name; // Return the matching investment name
       }
     }
     return "Unknown Type"; // Default if not found
   };
 
+  const handleDeleteInvestment = (id) => {
+    setCurrInvestments((prev) => prev.filter((item) => item._id !== id));
+  };
+
+  const handleEditInvestment = (item) => {
+    setNewInvestment({
+      id: item._id,
+      investmentTypeId: item.investmentType,
+      taxType: item.accountTaxStatus,
+      value: item.value,
+    });
+    setOpen(true); // Open the modal
+  };
+  
   const InvestList = ({ list, taxType }) => {
     const filteredInvestments = Array.isArray(list) ? list.filter((item) => item.accountTaxStatus === taxType) : [];
-    
+  
     return (
       <List>
-      {filteredInvestments.map((item, index) => {
-        // Validate each item has required properties
-        if (!item || !item.investmentType || !item.value) {
-          console.error("Invalid investment data:", item); // Log an error in the console
+        {filteredInvestments.map((item, index) => {
+          if (!item || !item.investmentType || !item.value) {
+            console.error("Invalid investment data:", item);
+            return (
+              <ListItem key={`invalid-${index}`}>
+                <ListItemText primary="Invalid investment data" />
+              </ListItem>
+            );
+          }
+  
+          const investmentTypeName = getInvestmentTypeName(item.investmentType) || "Unknown Type";
           return (
-            <ListItem key={`invalid-${index}`}>
-              <ListItemText primary="Invalid investment data" />
+            <ListItem
+              key={item._id}
+              sx={{
+                backgroundColor: index % 2 === 0 ? "#BBBBBB" : "#D9D9D9",
+                "&:hover": { backgroundColor: "#B0B0B0" },
+              }}
+            >
+              <ListItemText
+                primary={<span style={{ fontWeight: "bold" }}>{investmentTypeName}</span>}
+                secondary={`Value: ${item.value} | ${item._id}`}
+              />
+  
+              {/* Edit Button */}
+              <IconButton edge="end" aria-label="edit" onClick={() => handleEditInvestment(item)}>
+                <EditIcon />
+              </IconButton>
+  
+              {/* Delete Button */}
+              <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteInvestment(item._id)}>
+                <DeleteIcon />
+              </IconButton>
             </ListItem>
           );
-        }
-        // Safely call getInvestmentTypeName in case of unexpected investmentType
-        const investmentTypeName = getInvestmentTypeName(item.investmentType) || "Unknown Type";
-
-        return (
-          <ListItem
-            key={`${item._id}`}
-            sx={{
-              backgroundColor: index % 2 === 0 ? "#BBBBBB" : "#D9D9D9",
-              "&:hover": { backgroundColor: "#B0B0B0" },
-            }}
-          >
-            <ListItemText
-              primary={<span style={{ fontWeight: "bold" }}>{investmentTypeName}</span>}
-              secondary={`Value: ${item.value} | ${item._id}`}
-            />
-
-            <IconButton
-              edge="end"
-              aria-label="delete"
-              onClick={() => handleDeleteInvestment(filteredInvestments.indexOf(item))} // Delete the selected row
-            >
-              <DeleteIcon />
-            </IconButton>
-          </ListItem>
-        );
-      })}
-    </List>
+        })}
+      </List>
     );
   };
 
