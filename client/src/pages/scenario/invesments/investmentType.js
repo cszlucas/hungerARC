@@ -150,13 +150,12 @@ const InvestmentType = () => {
             <CustomInput
               title="Expense Ratio"
               type="number"
-              adornment={"%"}
               value={formValues.expenseRatio}
               setValue={(value) => { handleInputChange("expenseRatio", value); }}
               inputProps={{
                 step: "any", // Allows decimal values
                 min: "0", // Prevents negative numbers (optional)
-                max: "100"
+                max: "1",
               }}
             />
             
@@ -214,6 +213,7 @@ const InvestmentType = () => {
                   setValue={(value) => {
                     handleInputChange("annualReturn.value", value);
                   }}
+                  inputProps={{ min: "0" }}
                 />
               )}
               {formValues.annualReturn.type === "normal" && (
@@ -226,6 +226,7 @@ const InvestmentType = () => {
                     setValue={(value) => {
                       handleInputChange("annualReturn.mean", value);
                     }}
+                    inputProps={{ min: "0" }}
                   />
                   <CustomInput
                     title="Variance"
@@ -235,6 +236,7 @@ const InvestmentType = () => {
                     setValue={(value) => {
                       handleInputChange("annualReturn.stdDev", value);
                     }}
+                    inputProps={{ min: "0" }}
                   />
                 </Box>
               )}
@@ -281,6 +283,7 @@ const InvestmentType = () => {
                   setValue={(value) => {
                     handleInputChange("annualIncome.value", value);
                   }}
+                  inputProps={{ min: "0" }}
                 />
               )}
               {formValues.annualIncome.type === "normal" && (
@@ -293,6 +296,7 @@ const InvestmentType = () => {
                     setValue={(value) => {
                       handleInputChange("annualIncome.mean", value);
                     }}
+                    inputProps={{ min: "0" }}
                   />
                   <CustomInput
                     title="Variance"
@@ -302,6 +306,7 @@ const InvestmentType = () => {
                     setValue={(value) => {
                       handleInputChange("annualIncome.stdDev", value);
                     }}
+                    inputProps={{ min: "0" }}
                   />
                 </Box>
               )}
