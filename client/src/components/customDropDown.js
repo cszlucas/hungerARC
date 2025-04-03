@@ -2,7 +2,7 @@ import { Box, Typography, TextField, MenuItem } from "@mui/material";
 import React from "react";
 import { textFieldStyles } from "./styles";
 
-const CustomDropdown = ({ label, value, setValue, menuLabels=[], menuItems=[] }) => {
+const CustomDropdown = ({ label, value, setValue, menuLabels=[], menuItems=[], width = "auto" }) => {
     if (menuLabels == [] || menuLabels.length != menuItems.length) {
         menuLabels = menuItems;
     }
@@ -22,7 +22,7 @@ const CustomDropdown = ({ label, value, setValue, menuLabels=[], menuItems=[] })
                 onChange={handleChange}
                 displayEmpty
                 fullWidth
-                sx={textFieldStyles}
+                sx={{...textFieldStyles, width: width}}
             >
                 <MenuItem value="" disabled>
                     Select
