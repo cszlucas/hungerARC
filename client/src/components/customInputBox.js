@@ -13,6 +13,20 @@ const CustomInput = ({
 }) => {
     
     const handleChange = (event, newValue) => {
+        // If it's a number field, enforce min and max constraints
+        if (type === "number") {
+            const min = inputProps.min !== undefined ? Number(inputProps.min) : -Infinity;
+            const max = inputProps.max !== undefined ? Number(inputProps.max) : Infinity;
+            
+            if (event.target.value !== "" && !isNaN(event.target.value)) {
+                const numericValue = Number(event.target.value);
+
+                if (numericValue < min || numericValue > max) {
+                    return; // Prevent the change
+                }
+            }
+        }
+
         if (newValue !== null) {
             setValue(event.target.value);
         }
@@ -50,6 +64,11 @@ const CustomInput = ({
                 sx={{ ...getFieldStyles(), ...{width: width}}}
                 value={value}
                 onChange={handleChange}
+                onKeyDown={(e) => {
+                    if (type === "number" && (e.key === "-" || e.key === "+" || e.key === "e")) {
+                        e.preventDefault();
+                    }
+                }}
                 InputProps={{...{ 
                     startAdornment: adornment !== "none" && adornment !== "%" ? getAdornment() : null,
                     endAdornment: adornment === "%" ? getAdornment() : null

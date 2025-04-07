@@ -159,6 +159,7 @@ const Basics = () => {
               type="number"
               value={currScenario.lifeExpectancy.fixedAge}
               setValue={(value) => handleInputChange("lifeExpectancy.fixedAge", value)}
+              inputProps={{ min: "0" }}
             />
           ) : (
             <>
@@ -167,12 +168,14 @@ const Basics = () => {
                 type="number"
                 value={currScenario.lifeExpectancy.mean}
                 setValue={(value) => handleInputChange("lifeExpectancy.mean", value)}
+                inputProps={{ min: "0" }}
               />
               <CustomInput
                 title="Standard Deviation"
                 type="number"
                 value={currScenario.lifeExpectancy.stdDev}
                 setValue={(value) => handleInputChange("lifeExpectancy.stdDev", value)}
+                inputProps={{ min: "0" }}
               />
             </>
           )}
@@ -186,6 +189,7 @@ const Basics = () => {
               type="number"
               value={currScenario.spouseBirthYear}
               setValue={(value) => handleInputChange("spouseBirthYear", value)}
+              inputProps={{ min: "0" }}
             />
 
             <CustomToggle
@@ -204,6 +208,7 @@ const Basics = () => {
                 type="number"
                 value={currScenario.spouseLifeExpectancy}
                 setValue={(value) => handleInputChange("spouseLifeExpectancy", value)}
+                inputProps={{ min: "0" }}
               />
             ) : (
               <>
@@ -212,12 +217,14 @@ const Basics = () => {
                   type="number"
                   value={currScenario.spouseMean}
                   setValue={(value) => handleInputChange("spouseMean", value)}
+                  inputProps={{ min: "0" }}
                 />
                 <CustomInput
                   title="Standard Deviation"
                   type="number"
                   value={currScenario.spouseStdDev}
                   setValue={(value) => handleInputChange("spouseStdDev", value)}
+                  inputProps={{ min: "0" }}
                 />
               </>
             )}
@@ -248,6 +255,7 @@ const Basics = () => {
                 adornment="%"
                 value={currScenario.inflationAssumption.fixedRate}
                 setValue={(value) => handleInputChange("inflationAssumption.fixedRate", value)}
+                inputProps={{ min: "0" }}
             />
           )}
           {currScenario.inflationAssumption.type === "uniform" && (
@@ -258,6 +266,7 @@ const Basics = () => {
                   adornment="%"
                   value={currScenario.inflationAssumption.min}
                   setValue={(value) => handleInputChange("inflationAssumption.min", value)}
+                  inputProps={{ min: "0" }}
               />
               <CustomInput 
                   title="Max"
@@ -265,6 +274,7 @@ const Basics = () => {
                   adornment="%"
                   value={currScenario.inflationAssumption.max}
                   setValue={(value) => handleInputChange("inflationAssumption.max", value)}
+                  inputProps={{ min: "0" }}
               />
             </>
           )}
@@ -276,6 +286,7 @@ const Basics = () => {
                   adornment="%"
                   value={currScenario.inflationAssumption.mean}
                   setValue={(value) => handleInputChange("inflationAssumption.mean", value)}
+                  inputProps={{ min: "0" }}
               />
               <CustomInput 
                   title="Standard Deviation"
@@ -283,6 +294,7 @@ const Basics = () => {
                   adornment="%"
                   value={currScenario.inflationAssumption.stdDev}
                   setValue={(value) => handleInputChange("inflationAssumption.stdDev", value)}
+                  inputProps={{ min: "0" }}
               />
             </>
           )}

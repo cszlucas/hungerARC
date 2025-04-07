@@ -20,8 +20,9 @@ import {
 const mongoose = require("mongoose");
 
 const InvestmentType = () => {
-  const { editMode, eventEditMode, currInvestmentTypes, setCurrInvestmentTypes, setCurrScenario } = useContext(AppContext);
+  const { editMode, eventEditMode, setEventEditMode, currInvestmentTypes, setCurrInvestmentTypes, setCurrScenario } = useContext(AppContext);
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const getInvestmentTypeById = (id) => {
     if (id == null) return null;
@@ -36,14 +37,6 @@ const InvestmentType = () => {
     return null; // Return null if not found
   };
 
-  const handleAppendInScenario = (key, newValue) => {
-    setCurrScenario((prev) => ({
-      ...prev,
-      [key]: [...(prev[key] || []), newValue]  // Append to the specified key
-    }));
-  };
-
-  const navigate = useNavigate();
   const [formValues, setFormValues] = useState(getInvestmentTypeById(eventEditMode) || 
     {
       name: "",
@@ -92,20 +85,40 @@ const InvestmentType = () => {
   };
 
   const handleSave = async () => {
-    try {
-      let id;
+    const handleAppendInScenario = (key, newValue) => {
+      setCurrScenario((prev) => ({
+        ...prev,
+        [key]: [...(prev[key] || []), newValue]  // Append to the specified key
+      }));
+    };
 
-      if (!user.guest) {
-        const response = await axios.post(`http://localhost:8080/scenario/${editMode}/investmentType`, formValues);
-        id = response.data._id;
-      } else {
-        id = currInvestmentTypes.length;
-      }
-
+    const handleUpdateLocalStorageForNewInvestmentType = (id) => {
       handleInputChange("_id", id);
-      setCurrInvestmentTypes((prev) => { return [...(Array.isArray(prev) ? prev : []), formValues];});
       handleAppendInScenario("setOfInvestmentTypes", id);
-      
+    }; 
+
+    try {
+      let id = eventEditMode;
+      console.log(id);
+      if (!user.guest) {
+        if (id === "new") {
+          const response = await axios.post(`http://localhost:8080/scenario/${editMode}/investmentType`, formValues);
+          id = response.data._id;
+          handleUpdateLocalStorageForNewInvestmentType(id);
+        } else {
+          await axios.post(`http://localhost:8080/updateInvestmentType/${id}`, formValues);
+          setCurrInvestmentTypes((prev) => prev.filter((item) => item._id !== id));
+        }
+      } else {
+        if (id === "new") {
+          id = currInvestmentTypes.length;
+          handleUpdateLocalStorageForNewInvestmentType(id);
+        } else {
+          setCurrInvestmentTypes((prev) => prev.filter((item) => item._id !== id));
+        }
+      }
+      setCurrInvestmentTypes((prev) => { return [...(Array.isArray(prev) ? prev : []), formValues];});
+      setEventEditMode(null);
       // console.log("Data successfully saved:", response.data);
       // alert("Investment Type has been added");
     } catch (error) {
@@ -137,13 +150,12 @@ const InvestmentType = () => {
             <CustomInput
               title="Expense Ratio"
               type="number"
-              adornment={"%"}
               value={formValues.expenseRatio}
               setValue={(value) => { handleInputChange("expenseRatio", value); }}
               inputProps={{
                 step: "any", // Allows decimal values
                 min: "0", // Prevents negative numbers (optional)
-                max: "100"
+                max: "1",
               }}
             />
             
@@ -201,6 +213,7 @@ const InvestmentType = () => {
                   setValue={(value) => {
                     handleInputChange("annualReturn.value", value);
                   }}
+                  inputProps={{ min: "0" }}
                 />
               )}
               {formValues.annualReturn.type === "normal" && (
@@ -213,6 +226,7 @@ const InvestmentType = () => {
                     setValue={(value) => {
                       handleInputChange("annualReturn.mean", value);
                     }}
+                    inputProps={{ min: "0" }}
                   />
                   <CustomInput
                     title="Variance"
@@ -222,6 +236,7 @@ const InvestmentType = () => {
                     setValue={(value) => {
                       handleInputChange("annualReturn.stdDev", value);
                     }}
+                    inputProps={{ min: "0" }}
                   />
                 </Box>
               )}
@@ -268,6 +283,7 @@ const InvestmentType = () => {
                   setValue={(value) => {
                     handleInputChange("annualIncome.value", value);
                   }}
+                  inputProps={{ min: "0" }}
                 />
               )}
               {formValues.annualIncome.type === "normal" && (
@@ -280,6 +296,7 @@ const InvestmentType = () => {
                     setValue={(value) => {
                       handleInputChange("annualIncome.mean", value);
                     }}
+                    inputProps={{ min: "0" }}
                   />
                   <CustomInput
                     title="Variance"
@@ -289,6 +306,7 @@ const InvestmentType = () => {
                     setValue={(value) => {
                       handleInputChange("annualIncome.stdDev", value);
                     }}
+                    inputProps={{ min: "0" }}
                   />
                 </Box>
               )}

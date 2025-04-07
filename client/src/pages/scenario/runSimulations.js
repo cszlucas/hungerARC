@@ -169,6 +169,7 @@ const EventSeries = () => {
               type='number'
               value={numSimulations}
               setValue={setNumSimulations}
+              inputProps={{ min: "1" }}
             />
          </Box>
         </Box>

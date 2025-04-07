@@ -4,6 +4,7 @@ const StateTax = require("../server/models/stateTax.js");
 const Tax = require("../server/models/tax.js");
 const Scenario = require("../server/models/scenario");
 const Investment = require("../server/models/investment");
+const InvestmentType = require("../server/models/investmentType");
 const { IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent } = require("../server/models/eventSeries");
 const { performRMDs, payNonDiscretionaryExpenses } = require("./main.js");
 
@@ -14,9 +15,13 @@ function calculateNormalDist(std, mean) {
   return z * std + mean;
 }
 
+function calculateUniformDist(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
 function findInflation(inflationAssumption) {
   if (inflationAssumption.type == "fixed") return inflationAssumption.fixedRate;
-  else if (inflationAssumption.type == "uniform") return Math.random() * (inflationAssumption.max - inflationAssumption.min) + inflationAssumption.min;
+  else if (inflationAssumption.type == "uniform") return calculateUniformDist(inflationAssumption.min, inflationAssumption.max);
   else {
     return calculateNormalDist(inflationAssumption.std, inflationAssumption.mean);
   }
@@ -86,33 +91,42 @@ function rothConversion(scenario, year, curYearIncome, curYearSS, fedIncomeTaxBr
 
 function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment) {
   for (let incomeEvent of incomeEvents) {
-    if (incomeEvent.startYear >= year && incomeEvent.endYear <= userEndYear) {
-      let annualChange = incomeEvent.annualChange;
-      let incomeValue = incomeEvent.value;
+    // console.log('incomeEvent.initialAmt IS HERE :>> ', incomeEvent.initialAmount);
 
-      // update by annual change in amount
-      if (annualChange.type == "fixed") {
-        incomeValue += annualChange.amount;
-      } else if (annualChange.type == "percentage") {
-        incomeValue *= 1 + annualChange.amount;
-      } else if (annualChange.type == "uniform") {
-        incomeValue += Math.random() * (annualChange.max - annualChange.min) + annualChange.min;
-        // normal distribution
+    startYear = incomeEvent.startYearCalc;
+    endYear = incomeEvent.startYearCalc + incomeEvent.durationCalc;
+    if (year >= startYear && year <= endYear && endYear <= userEndYear) {
+      let annualChange = incomeEvent.annualChange;
+      let incomeValue = incomeEvent.initialAmount;
+      // console.log('incomeValue :>> ', incomeValue);
+      // console.log('inflationRate :>> ', inflationRate);
+      let amt = 0;
+      if (annualChange.distribution == "none") {
+        amt = annualChange.amount;
+      } else if (annualChange.distribution == "uniform") {
+        amt = calculateUniformDist(annualChange.min, annualChange.max);
       } else {
-        const u = 1 - Math.random();
-        const v = Math.random();
-        const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-        incomeValue += z * annualChange.mean.std + annualChange.mean;
+        amt = calculateNormalDist(annualChange.stdDev, annualChange.mean);
       }
-      if (incomeEvent.inflationAdjustment) incomeValue *= 1 + inflationRate;
-      // spouse is dead :(
+      
+      if (annualChange.type == "fixed") {
+        incomeValue += amt;
+      } else if (annualChange.type == "percentage") {
+        incomeValue *= (1 + (amt * 0.01));
+      }
+      if (incomeEvent.inflationAdjustment)
+        incomeValue *= (1 + (inflationRate));
+
+      // is this set before or after inflation adjustment?
+      incomeEvent.initialAmount = incomeValue;
+
       if (filingStatus == "marriedFilingJointly" && year > scenario.birthYearSpouse + scenario.lifeExpectancySpouse) {
-        incomeValue *= incomeEvent.userPercentage;
+        incomeValue *= (incomeEvent.userPercentage*0.01);
       }
-      // is this right?
+
       cashInvestment += incomeValue;
       curYearIncome += cashInvestment;
-      if (incomeEvent.incomeType == "socialSecurity") {
+      if (incomeEvent.isSocialSecurity) {
         curYearSS += incomeValue; // incomeValue because social security does not apply to cash investments
       }
     }
@@ -122,7 +136,7 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
 
 class DataStore {
   constructor() {
-    this.taxData = this.stateTax = this.scenario = this.investment = this.income = this.expense = this.rebalance = this.invest = {};
+    this.taxData = this.stateTax = this.scenario = this.investment = this.income = this.expense = this.rebalance = this.invest = this.investmentType = {};
   }
   async populateData(scenarioId) {
     const query = { _id: new mongoose.Types.ObjectId(scenarioId) };
@@ -157,6 +171,11 @@ class DataStore {
       this.taxData = tax;
       const stateTax = await StateTax.find();
       this.stateTax = stateTax;
+      const investmentType = await InvestmentType.find({
+        _id: { $in: scenario.setOfInvestmentTypes },
+      })
+      this.investmentType = investmentType;
+
     } catch (err) {
       console.log("Error while populating data:", err);
     }
@@ -167,7 +186,7 @@ class DataStore {
   }
 }
 
-async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUser, investments, incomeEvent, expenseEvent, investEvent, rebalanceEvent) {
+async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUser, investments, incomeEvent, expenseEvent, investEvent, rebalanceEvent, investmentTypes) {
   // previous year
   //console.log("investments: ", investments);
   let irsLimit = scenario.irsLimits.initialAfterTax;
@@ -191,15 +210,40 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     }
   }
   let currentYear = new Date().getFullYear();
-  let incomeEvents = scenario.incomeEventSeries;
+  // let incomeEvents = scenario.incomeEventSeries;
   let userEndYear = scenario.birthYearUser + lifeExpectancyUser;
+  console.log("user end year: ", userEndYear);
   // //save initial value and purchase price of investments
   for (let invest of investments) {
     invest.purchasePrice = invest.value;
   }
 
-  for (let year = currentYear; year <= 2025; year++) {
-    // for (let year = currentYear; year <= userEndYear; year++) {
+  // calculate the start year and duration of each income event
+  for (let income of incomeEvent) {
+    let startYear, duration;
+    if (income.startYear.type == "fixedAmt") {
+      startYear = income.startYear.value;
+    } else if (income.startYear.type == "uniform") {
+      startYear = calculateUniformDist(income.startYear.min, income.startYear.max);
+    } else if (income.startYear.type == "normal") {
+      startYear = calculateNormalDist(income.startYear.stdDev, income.startYear.mean);
+    } else {
+      startYear = year;
+    }
+
+    if (income.duration.type == "fixedAmt") {
+      duration = income.duration.value;
+    } else if (income.duration.type == "uniform") {
+      duration = calculateUniformDist(income.duration.min, income.duration.max);
+    } else {
+      duration = calculateNormalDist(income.duration.stdDev, income.duration.mean);
+    }
+    income.startYearCalc = startYear;
+    income.durationCalc = duration;
+  }
+  
+  // manually adjusted for testing, should be year <= userEndYear
+  for (let year = currentYear; year <= 2026; year++) {
     // PRELIMINARIES
     // can differ each year if sampled from distribution
     inflationRate = findInflation(scenario.inflationAssumption) * 0.01;
@@ -218,11 +262,19 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     let curYearSS = 0;
     let curYearEarlyWithdrawals = 0;
     let curYearGains = 0;
-    let cashInvestment = 100;
-    // ({ curYearIncome, curYearSS, cashInvestment } = updateIncomeEvents(incomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment));
-    // console.log('curYearIncome :>> ', curYearIncome);
-    // console.log('curYearSS :>> ', curYearSS);
-    // console.log('cashInvestment :>> ', cashInvestment);
+
+    let cashInvestmentType = investmentTypes.find(inv => inv.name === "Cash");
+    let cashInvestment = 0;
+    if (cashInvestmentType) {
+      let cashId = cashInvestmentType._id;
+      let foundById = investments.find(inv => inv.investmentType === cashId);
+      cashInvestment = foundById.value;
+    }
+
+    ({ curYearIncome, curYearSS, cashInvestment } = updateIncomeEvents(incomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment));
+    console.log('curYearIncome :>> ', curYearIncome);
+    console.log('curYearSS :>> ', curYearSS);
+    console.log('cashInvestment :>> ', cashInvestment);
 
     //   // PERFORM RMD FOR PREVIOUS YEAR
     const currYearIncome = 100;
@@ -273,7 +325,7 @@ async function main(numScenarioTimes, scenarioId) {
   const dataStore = new DataStore();
   await Promise.all([dataStore.populateData(scenarioId)]);
 
-  const { taxData, scenario, stateTax, invest, income, expense, rebalance, investment } = {
+  const { taxData, scenario, stateTax, invest, income, expense, rebalance, investment, investmentType } = {
     taxData: dataStore.getData("taxData"),
     scenario: dataStore.getData("scenario"),
     stateTax: dataStore.getData("stateTax"),
@@ -282,6 +334,7 @@ async function main(numScenarioTimes, scenarioId) {
     expense: dataStore.getData("expense"),
     rebalance: dataStore.getData("rebalance"),
     investment: dataStore.getData("investment"),
+    investmentType: dataStore.getData("investmentType")
   };
   // console.log("scenario: ", scenario);
   // console.log("stateTax :>> ", stateTax);
@@ -298,7 +351,7 @@ async function main(numScenarioTimes, scenarioId) {
       invest: JSON.parse(JSON.stringify(invest)),
       rebalance: JSON.parse(JSON.stringify(rebalance)),
       taxData: JSON.parse(JSON.stringify(taxData)),
-      //investmentType: JSON.parse(JSON.stringify(investmentType)),
+      investmentType: JSON.parse(JSON.stringify(investmentType)),
     };
     runSimulation(
       clonedData.scenario,
@@ -310,10 +363,11 @@ async function main(numScenarioTimes, scenarioId) {
       clonedData.income,
       clonedData.expense,
       clonedData.invest,
-      clonedData.rebalance
+      clonedData.rebalance,
+      clonedData.investmentType
     );
   }
 }
 
 // Call the main function to execute everything
-main(1, "67df22db4996aba7bb6e8d73");
+main(1, "67e084385ca2a5376ad2efd2");
