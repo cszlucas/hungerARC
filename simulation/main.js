@@ -2,49 +2,62 @@ const Investment = require("../server/models/investment");
 const RMD = require("../server/models/rmd-schema");
 
 //zoe figure out year factor
+//RMDStrategyInvestOrder is an ordering on investments in pre-tax retirement accounts.
 async function performRMDs(scenario, investments, currYearIncome, currYear) {
   userAge = currYear - scenario.birthYearUser;
+  // console.log("my scenario rmd: ", scenario.rmdStrategy);
+  //console.log("my investments ", investments);
   const RMDStrategyInvestOrder = scenario.rmdStrategy.map((id) => {
     return investments.find((investment) => investment._id === id);
   });
+  //console.log("RMDStrategyInvestOrder: ", RMDStrategyInvestOrder);
   if (userAge >= 73 && RMDStrategyInvestOrder != null) {
     //at least one pretax investment in previous year
-    const rmdMatch = await RMD.findOne({ age: userAge });
-    const distributionPeriod = rmdMatch ? rmdMatch.distributionPeriod : null;
-    console.log("Me", distributionPeriod);
-    allInvestmentsPreTax = investments.filter(investment => investment.accountTaxStatus === 'pre-tax');
-    allInvestmentsAfterTax = investments.filter(investment => investment.accountTaxStatus === 'after-tax');
+    const match = await RMD.findOne({ "rmd.age": userAge }, { "rmd.$": 1 });
+    const distributionPeriod = match.rmd[0].distributionPeriod;
+    allInvestmentsPreTax = investments.filter((investment) => investment.accountTaxStatus.trim().toLowerCase() === "pre-tax");
+    allInvestmentsAfterTax = investments.filter((investment) => investment.accountTaxStatus.trim().toLowerCase() === "after-tax");
     sumInvestmentsPreTax = 0;
-    for (let preTaxInvestment in allInvestmentsPreTax) {
+    for (let preTaxInvestment of allInvestmentsPreTax) {
       sumInvestmentsPreTax += preTaxInvestment.value;
     }
     rmd = sumInvestmentsPreTax / distributionPeriod;
     currYearIncome += rmd;
-
+    rmd = 5; // just for testing
     rmdCount = rmd;
-    for (let preTaxInvest in RMDStrategyInvestOrder) {
+    for (let preTaxInvest of RMDStrategyInvestOrder) {
+      console.log("The rmd count: ", rmdCount);
+      console.log("The pretax investment", preTaxInvest);
       if (rmdCount > 0) {
         if (preTaxInvest.value - rmdCount >= 0) {
           //able to accomplish rmd with this investment, keep some of old investment and transfer new
-          transferInvestment(preTaxInvest, RMDStrategyInvestOrder, rmdCount);
+          transferInvestment(preTaxInvest, allInvestmentsAfterTax, rmdCount, investments);
           preTaxInvest.value -= rmdCount;
+          console.log("can pay all this round. pretax investment", preTaxInvest);
           break;
         } else {
           //not able to accomplish rmd with this investment, transfer all of old investment and go to next investment in strategy order
-          transferInvestment(preTaxInvest, RMDStrategyInvestOrder, preTaxInvest.value);
+          transferInvestment(preTaxInvest, allInvestmentsAfterTax, preTaxInvest.value, investments);
           rmdCount -= preTaxInvest.value;
-          remove(preTaxInvest);
+          preTaxInvest.value = 0;
+          console.log("cant pay all this round.", preTaxInvest);
+          //remove(preTaxInvest);
         }
       }
     }
   }
+  return investments;
+  //console.log("my investments ", investments);
 }
 
-function transferInvestment(preTaxInvest, allInvestmentsAfterTax, amountTransfer) {
+//from the pretax account to non-retirement accounts
+function transferInvestment(preTaxInvest, allInvestmentsAfterTax, amountTransfer, investments) {
   foundMatch = false;
-  for (let afterTaxInvestment in allInvestmentsAfterTax) {
-    if (afterTaxInvestment.investmentType == preTaxInvest.investmentType && afterTaxInvestment.accountTaxStatus == preTaxInvest.accountTaxStatus) {
+  for (let afterTaxInvestment of allInvestmentsAfterTax) {
+    //find a name match
+    if (afterTaxInvestment.investmentType === preTaxInvest.investmentType && afterTaxInvestment.accountTaxStatus === preTaxInvest.accountTaxStatus) {
       //able to add to a current afterTaxInvestment
+      console.log("able to add to a current afterTaxInvestment", afterTaxInvestment);
       foundMatch = true;
       afterTaxInvestment.value += amountTransfer;
     }
@@ -52,18 +65,42 @@ function transferInvestment(preTaxInvest, allInvestmentsAfterTax, amountTransfer
 
   if (!foundMatch) {
     //create new after tax investment in memory with transferred amount
-    investment = {
-      investmentType: invest.investmentType,
+    console.log("create new after tax investment");
+    let investment = {
+      ...preTaxInvest,
+      investmentType: preTaxInvest.investmentType,
       value: amountTransfer,
-      accountTaxStatus: "after-tax retirement",
+      accountTaxStatus: "after-tax",
     };
+    investments.push(investment);
   }
 }
 
-function payNonDiscretionaryExpenses(scenario, cashInvestment, currYearIncome, currYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, ssRange) {
-  nonDiscretionaryExpenses = db.scenario.query({ _id: scenario.id, "expenseEvents.discretionary": false });
-  withdrawalStrategy = db.scenario.query({ _id: scenario.id }).expenseWithdrawalStrategy;
-  withdrawalAmt = sumAmt(nonDiscretionaryExpenses) + getTaxes(currYearIncome, currYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, ssRange);
+//ordering on a set of investments that specifies the order in which
+//investments are sold to generate cash.
+function payNonDiscretionaryExpenses(
+  scenario,
+  expenseEvents,
+  investments,
+  cashInvestment,
+  currYearIncome,
+  currYearSS,
+  curYearGains,
+  curYearEarlyWithdrawals,
+  federalIncomeRange,
+  stateIncomeRange,
+  ssRange
+) {
+  nonDiscretionaryExpenses = expenseEvents.filter((expenseEvent) => expenseEvent.isDiscretionary === false);
+  const withdrawalStrategy = scenario.expenseWithdrawalStrategy.map((id) => {
+    return investments.find((investment) => investment._id === id);
+  });
+  console.log("nonDiscretionaryExpenses ", nonDiscretionaryExpenses);
+  const expenseAmt = sumAmt(nonDiscretionaryExpenses, 2023);
+  const taxes = getTaxes(currYearIncome, currYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, ssRange);
+  withdrawalAmt = expenseAmt + taxes;
+  console.log("expenseAmt ", expenseAmt);
+  console.log("taxes ", taxes);
 
   if (cashInvestment - withdrawalAmt >= 0) {
     //can pay from cash investment
@@ -135,10 +172,17 @@ function payFromInvestment(withdrawalAmt, investment, userAge, curYearGains, cur
   }
 }
 
-function sumAmt(events) {
+function sumAmt(events, year) {
   sum = 0;
-  for (let event in events) {
-    sum += event.value;
+  for (let event of events) {
+    if (year >= event.startYear.year  && year <= (event.startYear.year + event.duration.value)) {
+      //more glide paths
+      if (year === event.startYear.year) {
+        sum += event.initialAmount;
+      } else {
+        sum += event.annualChange.amount; //need to figure out how to handle glide path for this.
+      }
+    }
   }
   return sum;
 }
@@ -147,6 +191,7 @@ function sumAmt(events) {
 function getTaxes(currYearIncome, currYearSS, curYearGains, currYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, ssRange) {
   //federal income tax
   federalTax = taxAmt(currYearIncome, federalIncomeRange);
+  console.log("federalTax: , currYearIncome: , federalIncomeRange:", federalTax, currYearIncome, federalIncomeRange);
   //state income tax
   stateTax = taxAmt(currYearIncome, stateIncomeRange);
   //social security (ss) income tax
@@ -249,4 +294,5 @@ function rebalance(scenario, curYearGains) {
 
 module.exports = {
   performRMDs,
+  payNonDiscretionaryExpenses,
 };

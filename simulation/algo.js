@@ -5,7 +5,7 @@ const Tax = require("../server/models/tax.js");
 const Scenario = require("../server/models/scenario");
 const Investment = require("../server/models/investment");
 const { IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent } = require("../server/models/eventSeries");
-const { performRMDs } = require("./main.js");
+const { performRMDs, payNonDiscretionaryExpenses } = require("./main.js");
 
 function calculateNormalDist(std, mean) {
   const u = 1 - Math.random();
@@ -167,7 +167,7 @@ class DataStore {
   }
 }
 
-function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUser, investments, incomeEvent, expenseEvent, investEvent, rebalanceEvent) {
+async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUser, investments, incomeEvent, expenseEvent, investEvent, rebalanceEvent) {
   // previous year
   //console.log("investments: ", investments);
   let irsLimit = scenario.irsLimits.initialAfterTax;
@@ -198,7 +198,7 @@ function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUser, in
     invest.purchasePrice = invest.value;
   }
 
-  for (let year = currentYear; year <= 2027; year++) {
+  for (let year = currentYear; year <= 2025; year++) {
     // for (let year = currentYear; year <= userEndYear; year++) {
     // PRELIMINARIES
     // can differ each year if sampled from distribution
@@ -214,11 +214,11 @@ function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUser, in
     irsLimit *= 1 + inflationRate;
 
     // RUN INCOME EVENTS
-    // let curYearIncome = 0;
-    // let curYearSS = 0;
-    // let curYearEarlyWithdrawals = 0;
-    // let curYearGains = 0;
-    // let cashInvestment = scenario.investments.cashInvestment;
+    let curYearIncome = 0;
+    let curYearSS = 0;
+    let curYearEarlyWithdrawals = 0;
+    let curYearGains = 0;
+    let cashInvestment = 100;
     // ({ curYearIncome, curYearSS, cashInvestment } = updateIncomeEvents(incomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment));
     // console.log('curYearIncome :>> ', curYearIncome);
     // console.log('curYearSS :>> ', curYearSS);
@@ -226,7 +226,8 @@ function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUser, in
 
     //   // PERFORM RMD FOR PREVIOUS YEAR
     const currYearIncome = 100;
-    performRMDs(scenario, investments, currYearIncome, year);
+    investments = await performRMDs(scenario, investments, currYearIncome, year);
+    console.log("in algo investments: ", investments);
     //   // UPDATE INVESTMENT VALUES
 
     //   // RUN ROTH CONVERSION IF ENABLED
@@ -235,7 +236,7 @@ function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUser, in
     //   }
 
     //   // PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
-    //   payNonDiscretionaryExpenses(scenario, cashInvestment, currYearIncome, currYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, ssRange);
+    payNonDiscretionaryExpenses(scenario, expenseEvent, investments, cashInvestment, currYearIncome, curYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, ssRange); //do i need ss range?
     //   // PAY DISCRETIONARY EXPENSES
     //   payDiscretionaryExpenses(scenario, cashInvestment);
     //   // RUN INVEST EVENT
@@ -282,8 +283,8 @@ async function main(numScenarioTimes, scenarioId) {
     rebalance: dataStore.getData("rebalance"),
     investment: dataStore.getData("investment"),
   };
-  console.log("scenario: ", scenario);
-  console.log("stateTax :>> ", stateTax);
+  // console.log("scenario: ", scenario);
+  // console.log("stateTax :>> ", stateTax);
   const prevYear = (new Date().getFullYear() - 1).toString();
   //calculate life expectancy
   const { lifeExpectancyUser, lifeExpectancySpouse } = calculateLifeExpectancy(scenario);
