@@ -3,9 +3,7 @@ const RMD = require("../server/models/rmd-schema");
 
 //zoe figure out year factor
 //RMDStrategyInvestOrder is an ordering on investments in pre-tax retirement accounts.
-async function performRMDs(scenario, investments, currYearIncome, currYear) {
-  userAge = currYear - scenario.birthYearUser;
-  // console.log("my scenario rmd: ", scenario.rmdStrategy);
+async function performRMDs(scenario, investments, currYearIncome, currYear, userAge) {
   //console.log("my investments ", investments);
   const RMDStrategyInvestOrder = scenario.rmdStrategy.map((id) => {
     return investments.find((investment) => investment._id === id);
@@ -83,64 +81,84 @@ function payNonDiscretionaryExpenses(
   expenseEvents,
   investments,
   cashInvestment,
-  currYearIncome,
-  currYearSS,
+  curYearIncome,
+  curYearSS,
   curYearGains,
   curYearEarlyWithdrawals,
   federalIncomeRange,
   stateIncomeRange,
-  ssRange
+  year,
+  userAge
 ) {
+  // console.log("federalIncomeRange", federalIncomeRange);
+  // console.log("stateIncomeRange", stateIncomeRange);
   nonDiscretionaryExpenses = expenseEvents.filter((expenseEvent) => expenseEvent.isDiscretionary === false);
   const withdrawalStrategy = scenario.expenseWithdrawalStrategy.map((id) => {
     return investments.find((investment) => investment._id === id);
   });
   console.log("nonDiscretionaryExpenses ", nonDiscretionaryExpenses);
-  const expenseAmt = sumAmt(nonDiscretionaryExpenses, 2023);
-  const taxes = getTaxes(currYearIncome, currYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, ssRange);
-  withdrawalAmt = expenseAmt + taxes;
+  const expenseAmt = sumAmt(nonDiscretionaryExpenses, year);
+  const taxes = getTaxes(curYearIncome, curYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange);
+  withdrawalAmt = expenseAmt + taxes - cashInvestment;
+  cashInvestment = 0; //use up cash
   console.log("expenseAmt ", expenseAmt);
   console.log("taxes ", taxes);
-
-  if (cashInvestment - withdrawalAmt >= 0) {
-    //can pay from cash investment
-    cashInvestment -= withdrawalAmt;
-  } else {
+  if (withdrawalAmt > 0) {
     //get money from investments
-    expense.value -= cashInvestment;
-    cashInvestment = 0; //use up cash
-    for (let investment in withdrawalStrategy) {
+    for (let investment of withdrawalStrategy) {
       if (withdrawalAmt > 0) {
-        withdrawalAmt -= payFromInvestment(withdrawalAmt, investment, userAge);
+        console.log("withdrawalAmt: ", withdrawalAmt);
+        console.log("investment to withdraw from: ", investment);
+        const payAmt = payFromInvestment(withdrawalAmt, investment, userAge, curYearGains, curYearIncome, curYearEarlyWithdrawals);
+        withdrawalAmt -= payAmt;
+        if (payAmt == investment.value) {
+          investment.value = 0;
+        }
+      } else {
+        break;
       }
+    }
+    if (withdrawalAmt > 0) {
+      console.log("You can't pay your non-discretionary expenses ;A;");
     }
   }
 }
 
-function payDiscretionaryExpenses(scenario, cashInvestment) {
-  spendingStrategy = db.scenario.query({ _id: scenario.id }).spendingStrategy;
-  withdrawalStrategy = db.scenario.query({ _id: scenario.id }).expenseWithdrawalStrategy;
+//spendingStrategy is an ordering on expenses
+//withdrawalStrategy is an ordering on investments
+function payDiscretionaryExpenses(scenario, cashInvestment, investments, expenses, year, userAge) {
+  const spendingStrategy = scenario.spendingStrategy.map((id) => {
+    return expenses.find((expense) => expense._id === id);
+  });
+  const withdrawalStrategy = scenario.expenseWithdrawalStrategy.map((id) => {
+    return investments.find((investment) => investment._id === id);
+  });
+  console.log("spendingStrategy: ", spendingStrategy);
+  console.log("withdrawalStrategy: ", withdrawalStrategy);
+  console.log("cashInvestment: ", cashInvestment);
   //pay expenses in order given from cashInvestment
-  for (let expense in spendingStrategy) {
-    if (cashInvestment - expense.value >= 0) {
+  for (let expense of spendingStrategy) {
+    expenseVal = sumAmt([expense], year);
+
+    if (cashInvestment - expenseVal >= 0) {
       //can pay from cash investment
-      cashInvestment -= expense.value;
-      expense.value = 0;
+      cashInvestment -= expenseVal;
+      expenseVal = 0;
       continue;
     }
-    expense.value -= cashInvestment;
+    expenseVal -= cashInvestment;
     cashInvestment = 0; //use up cash
     //Can't pay from cash have to withdraw from investments
-    for (let investment in withdrawalStrategy) {
-      if (expense.value > 0 && scenario.financialGoal - expense.value >= 0) {
+    for (let investment of withdrawalStrategy) {
+      if (expenseVal > 0 && scenario.financialGoal - expenseVal >= 0) {
         //does not violate financial goal
-        expense.value -= payFromInvestment(expense.value, investment, userAge);
-      } else if (expense.value > 0 && scenario.financialGoal - expense.value < 0) {
+        expenseVal -= payFromInvestment(expenseVal, investment, userAge);
+      } else if (expenseVal > 0 && scenario.financialGoal - expenseVal < 0) {
         //only pay as much as does not violate financial goal
-        expense.value -= payFromInvestment(expense.value - scenario.financialGoal, investment, userAge);
+        expenseVal -= payFromInvestment(expenseVal - scenario.financialGoal, investment, userAge);
       }
     }
-    if (expense.value > 0) {
+    if (expenseVal > 0) {
       console.log("You were not able to pay all your discretionary expenses.");
     }
   }
@@ -157,17 +175,17 @@ function payFromInvestment(withdrawalAmt, investment, userAge, curYearGains, cur
     return withdrawalAmt;
   } else {
     //use up this investment "sell" and move onto next
-    if (investment.accountTaxStatus != "pre-tax retirement") {
+    if (investment.accountTaxStatus != "pre-tax") {
       capitalGain = investment.value - investment.purchasePrice;
       curYearGains += capitalGain;
     }
-    if (investment.accountTaxStatus == "pre-tax retirement") {
+    if (investment.accountTaxStatus == "pre-tax") {
       curYearIncome -= investment.value;
     }
-    if ((investment.accountTaxStatus == "pre-tax retirement" || investment.accountTaxStatus == "after-tax retirement") && userAge < 59) {
+    if ((investment.accountTaxStatus == "pre-tax" || investment.accountTaxStatus == "after-tax") && userAge < 59) {
       curYearEarlyWithdrawals += investment.value;
     }
-    remove(investment);
+    //remove(investment);
     return investment.value;
   }
 }
@@ -175,7 +193,7 @@ function payFromInvestment(withdrawalAmt, investment, userAge, curYearGains, cur
 function sumAmt(events, year) {
   sum = 0;
   for (let event of events) {
-    if (year >= event.startYear.year  && year <= (event.startYear.year + event.duration.value)) {
+    if (year >= event.startYear.year && year <= event.startYear.year + event.duration.value) {
       //more glide paths
       if (year === event.startYear.year) {
         sum += event.initialAmount;
@@ -188,25 +206,29 @@ function sumAmt(events, year) {
 }
 
 //calculate tax income and ss prices
-function getTaxes(currYearIncome, currYearSS, curYearGains, currYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, ssRange) {
+function getTaxes(currYearIncome, currYearSS, curYearGains, currYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGainsRange, userAge) {
+  console.log("in get taxes my income ", currYearIncome);
   //federal income tax
-  federalTax = taxAmt(currYearIncome, federalIncomeRange);
-  console.log("federalTax: , currYearIncome: , federalIncomeRange:", federalTax, currYearIncome, federalIncomeRange);
+  const federalTax = taxAmt(currYearIncome, federalIncomeRange);
   //state income tax
-  stateTax = taxAmt(currYearIncome, stateIncomeRange);
+  const stateTax = taxAmt(currYearIncome, stateIncomeRange);
   //social security (ss) income tax
-  ssTax = taxAmt(currYearSS * 0.85, ssRange);
-  //capital gains tax
-  capitalGainsTax = taxAmt(curYearGains);
-  //early withdrawal tax
-  earlyWithdrawalTax = taxAmt(currYearEarlyWithdrawals);
-  return federalTax + stateTax + ssTax + capitalGainsTax + earlyWithdrawalTax;
+  const ssTax = taxAmt(currYearSS * 0.85, federalIncomeRange);
+  //early withdrawal tax - Withdrawals from retirement accounts (pre-tax or after-tax) taken before age 59 ½ incur a 10% tax.
+  const earlyWithdrawalTax = 0;
+  if(userAge<59.5){
+    earlyWithdrawalTax = currYearEarlyWithdrawals*.10;
+  }
+   //capital gains tax
+  //capitalGainsTax = taxAmt(curYearGains, capitalGainsRange);
+  return federalTax + stateTax + ssTax + earlyWithdrawalTax; //+ capitalGainsTax;
 }
 
-function taxAmt(income, ranges) {
-  for (let range in ranges) {
-    if (income >= range[0] && income <= range[1]) {
-      return income * range.rate;
+function taxAmt(income, taxBracket) {
+  for (let range of taxBracket) {
+    console.log("range ", range);
+    if (income >= range.incomeRange[0] && income <= range.incomeRange[1]) {
+      return (income * range.taxRate) / 100;
     }
   }
 }
@@ -221,7 +243,7 @@ function runInvestStrategy(scenario, cashInvestment, IRSLimits) {
     preTaxRatio = scaleDownRatio("pre-tax retirement", investStrategy, preTaxLimits, excessCash);
     afterTaxRatio = scaleDownRatio("after-tax retirement", investStrategy, afterTaxLimits, excessCash);
 
-    for (let investment in investStrategy) {
+    for (let investment of investStrategy) {
       buyAmt = 0;
       if (investment.accountTaxStatus == "pre-tax retirement") {
         buyAmt = excessCash * investment.value * preTaxRatio;
@@ -239,7 +261,7 @@ function runInvestStrategy(scenario, cashInvestment, IRSLimits) {
 }
 
 function buyNonRetirement(investStrategy, excessCash) {
-  for (let investment in investStrategy) {
+  for (let investment of investStrategy) {
     buyAmt = 0;
     if (investment.accountTaxStatus == "non-retirement") {
       buyAmt = excessCash * (investment.percentage / excessCash);
@@ -250,7 +272,7 @@ function buyNonRetirement(investStrategy, excessCash) {
 
 function scaleDownRatio(type, investStrategy, limit, excessCash) {
   sum = 0;
-  for (let investment in investStrategy) {
+  for (let investment of investStrategy) {
     if (investment.accountTaxStatus == type) {
       sum += investment.percentage * excessCash;
     }
@@ -265,7 +287,7 @@ function scaleDownRatio(type, investStrategy, limit, excessCash) {
 function rebalance(scenario, curYearGains) {
   rebalanceStrategy = db.rebalance.assetAllocation.query({ _scenario_id: scenario.id });
 
-  for (let investment in rebalanceStrategy) {
+  for (let investment of rebalanceStrategy) {
     sum = sumAmt(investment);
     target = sum * investment.percentage;
     if (investment.value > target) {
@@ -295,4 +317,5 @@ function rebalance(scenario, curYearGains) {
 module.exports = {
   performRMDs,
   payNonDiscretionaryExpenses,
+  payDiscretionaryExpenses,
 };

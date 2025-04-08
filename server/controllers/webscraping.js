@@ -17,8 +17,8 @@ exports.handleAllRoutes = async (req, res) => {
         ],
         standardDeductions: 0,
         capitalGainsTaxRates: [
-          { incomeRange: [0, 0], gainsRate: 0 },
-          { incomeRange: [0, 0], gainsRate: 0 },
+          // { incomeRange: [0, 0], gainsRate: 0 },
+          // { incomeRange: [0, 0], gainsRate: 0 },
         ],
       },
     });
@@ -278,6 +278,10 @@ exports.capitalGains = async (req, res) => {
         if (matches && stats != null) {
           // Clean the ranges and push them into the incomeRanges array
           const cleanedRanges = matches.map((match) => match.replace(/[\,\$]/g, ""));
+          if (cleanedRanges.length == 1) {
+            cleanedRanges[1] = cleanedRanges[0];
+            cleanedRanges[0] = 0;
+          }
           console.log("Income Range: ", cleanedRanges); // Log the income ranges
           incomeRanges.push({
             rate: rateNum,
@@ -291,13 +295,12 @@ exports.capitalGains = async (req, res) => {
     console.log("Rates and Income Ranges: ", incomeRanges);
 
     incomeRanges.forEach((range) => {
-      console.log(range);
       Tax.updateOne(
         {
           _id: new ObjectId(taxId),
-          [`${range.status}.capitalGainsTaxRates`]: {
-            $not: { $elemMatch: { gainsRate: range.rate } },
-          }, // Check if rate doesn't exist
+          // [`${range.status}.capitalGainsTaxRates`]: {
+          //   $not: { $elemMatch: { gainsRate: range.rate } },
+          // }, // Check if rate doesn't exist
         },
         {
           $push: {
