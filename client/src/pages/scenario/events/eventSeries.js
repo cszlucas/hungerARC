@@ -28,11 +28,24 @@ import { AuthContext } from "../../../context/authContext";
 const EventSeries = () => {
   const { editMode, eventEditMode, setEventEditMode, currIncome, setCurrIncome, currExpense, currInvest, currRebalance } = useContext(AppContext);
   
-  let safeCurrIncome = Array.isArray(currIncome) ? currIncome : [];
-  let safeCurrExpense = Array.isArray(currExpense) ? currExpense : [];
-  let safeCurrInvest = Array.isArray(currInvest) ? currInvest : [];
-  let safeCurrRebalance = Array.isArray(currRebalance) ? currRebalance : [];
-  const currEventSeries = [...safeCurrIncome, ...safeCurrExpense, ...safeCurrInvest, ...safeCurrRebalance];
+  const eventSeriesMap = {};
+  function addToMap(arr, source) {
+    if (Array.isArray(arr)) {
+      for (const event of arr) {
+        if (event?._id) {
+          eventSeriesMap[event._id] = {
+            source,
+            eventSeriesName: event.eventSeriesName,
+            startYear: event.startYear
+          };
+        }
+      }
+    }
+  }
+  addToMap(currIncome, 'income');
+  addToMap(currExpense, 'expense');
+  addToMap(currInvest, 'invest');
+  addToMap(currRebalance, 'rebalance');
 
   const [formValues, setFormValues] = useState({
     _id:"",
