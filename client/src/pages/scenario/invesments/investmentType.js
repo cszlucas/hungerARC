@@ -166,7 +166,7 @@ const InvestmentType = () => {
                 <Checkbox 
                   checked={formValues.taxability} 
                   onChange={(value) => {
-                    console.log(formValues.taxability);
+                    // console.log(formValues.taxability);
                     handleInputChange("taxability", value.target.checked);
                   }}/>
             </Stack>
