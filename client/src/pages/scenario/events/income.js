@@ -190,12 +190,58 @@ const Income = () => {
                         />
 
                         <Stack direction="column" spacing={2}>
-                            <CustomInput 
-                                title="Start Year" 
-                                type="number" 
-                                value={formValues.startYear.value} 
-                                setValue={(value) => handleInputChange("startYear.value", value)} 
-                            />
+                            <Stack direction="row" spacing={1} alignItems="start">
+                                <CustomToggle
+                                    title="Start Year"
+                                    labels={["Fixed", "Normal", "Uniform"]}
+                                    values={["fixedAmt", "normal", "uniform"]}
+                                    value={formValues.startYear.type}
+                                    setValue={(value) => handleInputChange("startYear.type", value)}
+                                />
+
+                                {formValues.startYear.type === "fixedAmt" && (
+                                    <Stack direction="row" spacing={1} alignItems="start">
+                                        <CustomInput 
+                                            title="Value"
+                                            type="number"
+                                            value={formValues.startYear.value}
+                                            setValue={(value) => handleInputChange("startYear.value", value)}
+                                        />
+                                    </Stack>
+                                )}
+                                {formValues.startYear.type === "normal" && (
+                                    <Stack direction="row" spacing={1} alignItems="start">
+                                        <CustomInput 
+                                            title="Mean"
+                                            type="number"
+                                            value={formValues.startYear.mean}
+                                            setValue={(value) => handleInputChange("startYear.mean", value)}
+                                        />
+                                        <CustomInput 
+                                            title="Standard Deviation"
+                                            type="number"
+                                            value={formValues.startYear.stdDev}
+                                            setValue={(value) => handleInputChange("startYear.stdDev", value)}
+                                        />
+                                    </Stack>
+                                )}
+                                {formValues.startYear.type === "uniform" && (
+                                    <Stack direction="row" spacing={1} alignItems="start">
+                                        <CustomInput 
+                                            title="Min"
+                                            type="number"
+                                            value={formValues.startYear.min}
+                                            setValue={(value) => handleInputChange("startYear.min", value)}
+                                        />
+                                        <CustomInput 
+                                            title="Max"
+                                            type="number"
+                                            value={formValues.startYear.max}
+                                            setValue={(value) => handleInputChange("startYear.max", value)}
+                                        />
+                                    </Stack>
+                                )}
+                            </Stack>
 
                             <Stack spacing={2}>
                                 {/* Toggle on Top */}

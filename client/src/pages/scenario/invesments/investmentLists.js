@@ -266,7 +266,7 @@ const InvestmentLists = () => {
           <Button variant="contained" color="primary" sx={buttonStyles} onClick={() => navigate("/scenario/basics")}>
             Back
           </Button>
-          <CustomSave label={"Continue"} routeTo={"/scenario/event_series"}/>
+          <CustomSave label={"Continue"} routeTo={"/scenario/event_series_list"}/>
         </Box>
 
         {/* Backdrop + Modal */}
