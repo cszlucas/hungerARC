@@ -372,7 +372,13 @@ const InvestmentLists = () => {
                 <Button variant="contained" color="primary" onClick={handleClose} sx={{ textTransform: "none" }}>
                   Cancel
                 </Button>
-                <Button variant="contained" color="secondary" onClick={handleAddInvestment} sx={{ textTransform: "none" }}>
+                <Button 
+                  variant="contained" 
+                  color="secondary" 
+                  onClick={handleAddInvestment} 
+                  sx={{ textTransform: "none" }}
+                  disabled={newInvestment.taxType == "" || newInvestment.value == ""}
+                >
                   Save
                 </Button>
               </Box>
