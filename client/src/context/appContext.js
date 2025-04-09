@@ -84,6 +84,7 @@ const retrieveScenarioData = async (scenarioId, dataType) => {
       const response = await axios.get(`http://localhost:8080/scenario/${scenarioId}/${dataType}`);
       const data = response.data || [];
       localStorage.setItem(`current${capitalizeFirstLetter(dataType)}`, JSON.stringify(data));
+      console.log(data);
 
       console.log(`Data for ${dataType} stored in localStorage.`);
       return data;
@@ -150,6 +151,7 @@ export const AppProvider = ({ children }) => {
         // console.log(expenses);
         // console.log(rebalance);
         // console.log(invest);
+        // console.log(investmentTypes);
 
         setCurrInvestments(investments);
         setCurrIncome(income);
@@ -199,6 +201,7 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     if (eventEditMode) localStorage.setItem("editEvent", JSON.stringify(eventEditMode));
+    console.log(eventEditMode);
   }, [eventEditMode]);
 
   // console.log("Current scenarios:", scenarioData);
