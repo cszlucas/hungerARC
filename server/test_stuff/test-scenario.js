@@ -15,13 +15,15 @@ mongoose
   .catch((err) => console.error("Could not connect to MongoDB", err));
 
 const expectedAnnualData = {
-  type: "normalPercent",
+  type: "normal",
+  unit: "percentage",
   mean: 3,
   stdDev: 5,
 };
 
 const expectedAnnualPercentage = {
-  type: "fixedPercent",
+  type: "fixed",
+  unit: "percentage",
   fixed: 10,
   mean: 0.08,
   stdDev: 0.1,
@@ -34,13 +36,15 @@ async function createScenario() {
       name: "Bond Fund",
       description: "A conservative investment type focused on bonds.",
       annualReturn: {
-        type: "normalPercent",
+        type: "normal",
+        unit: "percentage",
         mean: 0.05,
         stdDev: 0.1,
       },
       expenseRatio: 0.01,
       annualIncome: {
-        type: "fixedPercent",
+        type: "fixed",
+        unit: "percentage",
         fixed: 5,
         mean: 0.04,
         stdDev: 0.05,
@@ -230,6 +234,7 @@ async function createScenario() {
         type: "fixed",
         fixedAge: 80,
       },
+      setOfInvestmentTypes: [savedInvestmentType1._id, savedInvestmentType2._id],
       setOfInvestments: [investment1._id, investment2._id],
       incomeEventSeries: [incomeEvent._id, incomeEvent2._id],
       expenseEventSeries: [expenseEvent._id],
