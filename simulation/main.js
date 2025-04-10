@@ -88,17 +88,16 @@ function payNonDiscretionaryExpenses(
   federalIncomeRange,
   stateIncomeRange,
   year,
-  userAge
+  userAge,
+  capitalGains
 ) {
-  // console.log("federalIncomeRange", federalIncomeRange);
-  // console.log("stateIncomeRange", stateIncomeRange);
   nonDiscretionaryExpenses = expenseEvents.filter((expenseEvent) => expenseEvent.isDiscretionary === false);
   const withdrawalStrategy = scenario.expenseWithdrawalStrategy.map((id) => {
     return investments.find((investment) => investment._id === id);
   });
   console.log("nonDiscretionaryExpenses ", nonDiscretionaryExpenses);
   const expenseAmt = sumAmt(nonDiscretionaryExpenses, year);
-  const taxes = getTaxes(curYearIncome, curYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange);
+  const taxes = getTaxes(curYearIncome, curYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGains, userAge);
   withdrawalAmt = expenseAmt + taxes - cashInvestment;
   cashInvestment = 0; //use up cash
   console.log("expenseAmt ", expenseAmt);
@@ -108,7 +107,7 @@ function payNonDiscretionaryExpenses(
     for (let investment of withdrawalStrategy) {
       if (withdrawalAmt > 0) {
         console.log("withdrawalAmt: ", withdrawalAmt);
-        console.log("investment to withdraw from: ", investment);
+        console.log("investment to withdraw from ID:", investment._id, ",type:", investment.accountTaxStatus, ",value:", investment.value);
         const payAmt = payFromInvestment(withdrawalAmt, investment, userAge, curYearGains, curYearIncome, curYearEarlyWithdrawals);
         withdrawalAmt -= payAmt;
         if (payAmt == investment.value) {
@@ -133,8 +132,8 @@ function payDiscretionaryExpenses(scenario, cashInvestment, investments, expense
   const withdrawalStrategy = scenario.expenseWithdrawalStrategy.map((id) => {
     return investments.find((investment) => investment._id === id);
   });
-  console.log("spendingStrategy: ", spendingStrategy);
-  console.log("withdrawalStrategy: ", withdrawalStrategy);
+  // console.log("spendingStrategy: ", spendingStrategy);
+  // console.log("withdrawalStrategy", withdrawalStrategy);
   console.log("cashInvestment: ", cashInvestment);
   //pay expenses in order given from cashInvestment
   for (let expense of spendingStrategy) {
@@ -206,81 +205,130 @@ function sumAmt(events, year) {
 }
 
 //calculate tax income and ss prices
-function getTaxes(currYearIncome, currYearSS, curYearGains, currYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGainsRange, userAge) {
-  console.log("in get taxes my income ", currYearIncome);
-  //federal income tax
-  const federalTax = taxAmt(currYearIncome, federalIncomeRange);
-  //state income tax
-  const stateTax = taxAmt(currYearIncome, stateIncomeRange);
+function getTaxes(curYearIncome, curYearSS, curYearGains, currYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGains, userAge) {
+  console.log("in get taxes my income ", curYearIncome);
+  const federalTax = taxAmt(curYearIncome, federalIncomeRange);
+  const stateTax = taxAmt(curYearIncome, stateIncomeRange);
   //social security (ss) income tax
-  const ssTax = taxAmt(currYearSS * 0.85, federalIncomeRange);
+  const ssTax = taxAmt(curYearSS * 0.85, federalIncomeRange);
   //early withdrawal tax - Withdrawals from retirement accounts (pre-tax or after-tax) taken before age 59 ½ incur a 10% tax.
   const earlyWithdrawalTax = 0;
-  if(userAge<59.5){
-    earlyWithdrawalTax = currYearEarlyWithdrawals*.10;
+  if (userAge < 59.5) {
+    earlyWithdrawalTax = currYearEarlyWithdrawals * 0.1;
   }
-   //capital gains tax
-  //capitalGainsTax = taxAmt(curYearGains, capitalGainsRange);
-  return federalTax + stateTax + ssTax + earlyWithdrawalTax; //+ capitalGainsTax;
+  //capital gains tax
+  capitalGainsTax = taxAmt(curYearGains, capitalGains, "capitalGains");
+  return federalTax + stateTax + ssTax + earlyWithdrawalTax + capitalGainsTax;
 }
 
-function taxAmt(income, taxBracket) {
+function taxAmt(income, taxBracket, type) {
   for (let range of taxBracket) {
-    console.log("range ", range);
-    if (income >= range.incomeRange[0] && income <= range.incomeRange[1]) {
-      return (income * range.taxRate) / 100;
+    if (income >= range.incomeRange[0] && income <= range.incomeRange[1] && type != "capitalGains") {
+      return income * (range.taxRate / 100);
+    } else if (income >= range.incomeRange[0] && income <= range.incomeRange[1] && type == "capitalGains") {
+      //console.log("capitalGains", range);
+      return income * (range.gainsRate / 100);
     }
   }
 }
 
-function runInvestStrategy(scenario, cashInvestment, IRSLimits) {
-  //run invest event strategy for current year
-  investStrategy = db.invest_strategy.assetAllocation.query({ _scenario_id: scenario.id });
-  excessCash = investStrategy.maxCash - cashInvestment;
+//Use up excess cash with invest strategy
+function runInvestStrategy(scenario, cashInvestment, irsLimit, investEvent, year, investments) {
+  //find investEvent for current year
+  const investStrategy = investEvent.filter((invest) => scenario.investEventSeries.includes(invest._id) && invest.startYear.year == 2020);
+  console.log("investStrategy", investStrategy);
+  console.log("excessCash: ", investStrategy[0].maxCash - cashInvestment);
+  const excessCash = investStrategy[0].maxCash - cashInvestment;
+  const allocations = [];
   if (excessCash > 0) {
-    preTaxLimits = taxAmt(excessCash, IRSLimits);
-    afterTaxLimits = taxAmt();
-    preTaxRatio = scaleDownRatio("pre-tax retirement", investStrategy, preTaxLimits, excessCash);
-    afterTaxRatio = scaleDownRatio("after-tax retirement", investStrategy, afterTaxLimits, excessCash);
+    if (investStrategy[0].assetAllocation.type === "glidePath") {
+      // Example: allocation in year 2025 between 2020 and 2030
+      //allocation has list of map [{investmentId: value}, ...]
+      allocations = getGlidePathAllocation(
+        year,
+        investStrategy.startYear.year,
+        investStrategy.startYear.year + investStrategy.duration.value,
+        investStrategy.initialPercentages,
+        investStrategy.finalPercentages
+      );
+    }
 
-    for (let investment of investStrategy) {
-      buyAmt = 0;
-      if (investment.accountTaxStatus == "pre-tax retirement") {
-        buyAmt = excessCash * investment.value * preTaxRatio;
-      } else if (investment.accountTaxStatus == "after-tax retirement") {
-        buyAmt = excessCash * investment.value * afterTaxRatio;
+    // Translate assetIds to actual investment objects based on the IDs and value is percentage of allocation
+    const investmentsWithAllocations = allocations
+      .map(({ assetId, percentage }) => {
+        const investAllocation = investments.find((investment) => investment._id === assetId);
+
+        if (investAllocation) {
+          // You can now work with both the investment object and the percentage
+          return {
+            investment: investAllocation,
+            percentage: percentage,
+          };
+        }
+
+        // If investment not found, handle it (e.g., log or return null)
+        return null;
+      })
+      .filter((item) => item !== null); // Remove any null entries (if the investment wasn't found)
+    
+    const afterTaxRatio = scaleDownRatio("after-tax", investmentsWithAllocations, irsLimit, excessCash);
+    console.log("in invest, the investments: ", investmentsWithAllocations);
+
+    for (const { investment, percentage } of investmentsWithAllocations) {
+      let buyAmt = 0;
+
+      if (investment.accountTaxStatus === "after-tax") {
+        buyAmt = excessCash * percentage * afterTaxRatio;
+      } else {
+        // no scaling needed for non-retirement accounts
+        buyAmt = excessCash * percentage;
       }
+
+      // Safely update the correct investment object
       investment.purchasePrice += buyAmt;
     }
 
     if (excessCash - buyAmt > 0) {
       //everything else in non-retirement
-      buyNonRetirement(investStrategy, excessCash - buyAmt);
+      buyNonRetirement(investmentsWithAllocations, excessCash - buyAmt);
     }
   }
 }
 
-function buyNonRetirement(investStrategy, excessCash) {
-  for (let investment of investStrategy) {
+function getGlidePathAllocation(year, startYear, endYear, initial, final) {
+  const t = (year - startYear) / (endYear - startYear);
+  const allocation = {};
+
+  for (const asset in initial) {
+    allocation[asset] = initial[asset] + t * (final[asset] - initial[asset]);
+  }
+
+  return allocation;
+}
+
+function buyNonRetirement(investmentsWithAllocations, excessCash) {
+  for (const { investment, percentage } of investmentsWithAllocations) {
     buyAmt = 0;
     if (investment.accountTaxStatus == "non-retirement") {
-      buyAmt = excessCash * (investment.percentage / excessCash);
+      buyAmt = excessCash * (percentage / excessCash);
       investment.purchasePrice += buyAmt;
     }
   }
 }
 
-function scaleDownRatio(type, investStrategy, limit, excessCash) {
-  sum = 0;
-  for (let investment of investStrategy) {
-    if (investment.accountTaxStatus == type) {
-      sum += investment.percentage * excessCash;
+function scaleDownRatio(type, investmentsWithAllocations, limit, excessCash) {
+  let sum = 0;
+
+  for (const { investment, percentage } of investmentsWithAllocations) {
+    if (investment.accountTaxStatus === type) {
+      sum += percentage * excessCash;
     }
   }
+
   if (sum > limit) {
-    return limit / sum;
+    return limit / sum; // scale down if over limit
   } else {
-    return investment.percentage;
+    return 1; // no scaling needed
   }
 }
 
@@ -318,4 +366,5 @@ module.exports = {
   performRMDs,
   payNonDiscretionaryExpenses,
   payDiscretionaryExpenses,
+  runInvestStrategy,
 };

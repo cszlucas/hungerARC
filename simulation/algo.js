@@ -6,7 +6,7 @@ const Scenario = require("../server/models/scenario");
 const Investment = require("../server/models/investment");
 const InvestmentType = require("../server/models/investmentType");
 const { IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent } = require("../server/models/eventSeries");
-const { performRMDs, payNonDiscretionaryExpenses, payDiscretionaryExpenses } = require("./main.js");
+const { performRMDs, payNonDiscretionaryExpenses, payDiscretionaryExpenses, runInvestStrategy } = require("./main.js");
 
 function calculateNormalDist(std, mean) {
   const u = 1 - Math.random();
@@ -29,8 +29,8 @@ function findInflation(inflationAssumption) {
 
 function updateFedIncomeTaxBracket(fedIncomeTaxBracket, inflationRate) {
   fedIncomeTaxBracket.forEach((bracket) => {
-    bracket.incomeRange[0] *= (1 + inflationRate);
-    bracket.incomeRange[1] *= (1 + inflationRate);
+    bracket.incomeRange[0] *= 1 + inflationRate;
+    bracket.incomeRange[1] *= 1 + inflationRate;
   });
   return fedIncomeTaxBracket;
 }
@@ -45,8 +45,8 @@ function updateStateIncomeTaxBracket(stateIncomeTaxBracket, inflationRate) {
 
 function updateCapitalGains(capitalGains, inflationRate) {
   capitalGains.forEach((bracket) => {
-    bracket.incomeRange[0] *= (1 + inflationRate);
-    bracket.incomeRange[1] *= (1 + inflationRate);
+    bracket.incomeRange[0] *= 1 + inflationRate;
+    bracket.incomeRange[1] *= 1 + inflationRate;
   });
   return capitalGains;
 }
@@ -61,8 +61,6 @@ function updateStateDeduction(stateDeduction, inflationRate) {
   return stateDeduction;
 }
 
-
-
 function findUpperFedTaxBracket(curYearFedTaxableIncome, fedIncomeTaxBracket) {
   for (let taxBracket of fedIncomeTaxBracket) {
     if (curYearFedTaxableIncome <= taxBracket.incomeRange[1]) return taxBracket.incomeRange[1];
@@ -73,13 +71,13 @@ function findUpperFedTaxBracket(curYearFedTaxableIncome, fedIncomeTaxBracket) {
 function rothConversion(scenario, year, curYearIncome, curYearSS, fedIncomeTaxBracket) {
   let curYearFedTaxableIncome = curYearIncome - 0.15 * curYearSS;
   // upper limit of the tax bracket user is in
-  console.log('curYearFedTaxableIncome :>> ', curYearFedTaxableIncome);
-  console.log('fedIncomeTaxBracket :>> ', fedIncomeTaxBracket);
+  console.log("curYearFedTaxableIncome :>> ", curYearFedTaxableIncome);
+  console.log("fedIncomeTaxBracket :>> ", fedIncomeTaxBracket);
   let u = findUpperFedTaxBracket(curYearFedTaxableIncome, fedIncomeTaxBracket);
   // roth conversation amount
   rc = u - curYearFedTaxableIncome;
-  console.log('u :>> ', u);
-  console.log('rc :>> ', rc);
+  console.log("u :>> ", u);
+  console.log("rc :>> ", rc);
   // transfer from pre-tax to after-tax retirement
   // for (let investment of scenario.rothConversionStrategy) {
   //   if (investment.accountTaxStatus == "pre-tax" && rc > 0) {
@@ -124,20 +122,19 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
       } else {
         amt = calculateNormalDist(annualChange.stdDev, annualChange.mean);
       }
-      
+
       if (annualChange.type == "fixed") {
         incomeValue += amt;
       } else if (annualChange.type == "percentage") {
-        incomeValue *= (1 + (amt * 0.01));
+        incomeValue *= 1 + amt * 0.01;
       }
-      if (incomeEvent.inflationAdjustment)
-        incomeValue *= (1 + (inflationRate));
+      if (incomeEvent.inflationAdjustment) incomeValue *= 1 + inflationRate;
 
       // is this set before or after inflation adjustment?
       incomeEvent.initialAmount = incomeValue;
 
       if (filingStatus == "marriedFilingJointly" && year > scenario.birthYearSpouse + scenario.lifeExpectancySpouse) {
-        incomeValue *= (incomeEvent.userPercentage*0.01);
+        incomeValue *= incomeEvent.userPercentage * 0.01;
       }
 
       cashInvestment += incomeValue;
@@ -166,6 +163,7 @@ class DataStore {
       const investment = await Investment.find({
         _id: { $in: scenario.setOfInvestments },
       });
+      investment.purchasePrice = 0;
       this.investment = investment;
       const income = await IncomeEvent.find({
         _id: { $in: scenario.incomeEventSeries },
@@ -189,9 +187,8 @@ class DataStore {
       this.stateTax = stateTax;
       const investmentType = await InvestmentType.find({
         _id: { $in: scenario.setOfInvestmentTypes },
-      })
+      });
       this.investmentType = investmentType;
-
     } catch (err) {
       console.log("Error while populating data:", err);
     }
@@ -205,7 +202,7 @@ class DataStore {
 async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUser, investments, incomeEvent, expenseEvent, investEvent, rebalanceEvent, investmentTypes) {
   // previous year
   console.log("expenseEvent: ", expenseEvent);
-  let irsLimit = scenario.irsLimits.initialAfterTax;
+  let irsLimit = scenario.IRSLimit;
   let filingStatus = scenario.filingStatus;
   let state = scenario.stateResident;
   let fedIncomeTaxBracket, stateIncomeTaxBracket, fedDeduction, stateDeduction, capitalGains;
@@ -227,7 +224,7 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
       stateDeduction = stateTax.taxDetails[prevYear].single.standardDeduction;
     }
   }
-  console.log('capitalGains :>> ', capitalGains);
+  console.log("capitalGains :>> ", capitalGains);
   let currentYear = new Date().getFullYear();
   // let incomeEvents = scenario.incomeEventSeries;
   let userEndYear = scenario.birthYearUser + lifeExpectancyUser;
@@ -260,7 +257,7 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     income.startYearCalc = startYear;
     income.durationCalc = duration;
   }
-  
+
   // manually adjusted for testing, should be year <= userEndYear
   for (let year = currentYear; year <= 2025; year++) {
     // PRELIMINARIES
@@ -269,11 +266,11 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     // console.log('fedIncomeTaxBracket :>> ', fedIncomeTaxBracket);
     // console.log('inflationRate :>> ', inflationRate);
     federalIncomeTax = updateFedIncomeTaxBracket(fedIncomeTaxBracket, inflationRate);
-    console.log('fedIncomeTaxBracket :>> ', fedIncomeTaxBracket);
+    console.log("fedIncomeTaxBracket :>> ", fedIncomeTaxBracket);
     // console.log('federalIncomeTax HERE  :>> ', federalIncomeTax);
     fedDeduction = updateFedDeduction(fedDeduction, inflationRate);
     capitalGains = updateCapitalGains(capitalGains, inflationRate);
-    console.log('UPDATED capitalGains :>> ', capitalGains);
+    console.log("UPDATED capitalGains :>> ", capitalGains);
     if (stateTax) {
       updateStateIncomeTaxBracket(stateIncomeTaxBracket, inflationRate);
     }
@@ -286,18 +283,18 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     let curYearEarlyWithdrawals = 0;
     let curYearGains = 0;
 
-    let cashInvestmentType = investmentTypes.find(inv => inv.name === "Cash");
+    let cashInvestmentType = investmentTypes.find((inv) => inv.name === "Cash");
     let cashInvestment = 0;
     if (cashInvestmentType) {
       let cashId = cashInvestmentType._id;
-      let foundById = investments.find(inv => inv.investmentType === cashId);
+      let foundById = investments.find((inv) => inv.investmentType === cashId);
       cashInvestment = foundById.value;
     }
 
     ({ curYearIncome, curYearSS, cashInvestment } = updateIncomeEvents(incomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment));
-    console.log('curYearIncome :>> ', curYearIncome);
-    console.log('curYearSS :>> ', curYearSS);
-    console.log('cashInvestment :>> ', cashInvestment);
+    console.log("curYearIncome :>> ", curYearIncome);
+    console.log("curYearSS :>> ", curYearSS);
+    console.log("cashInvestment :>> ", cashInvestment);
 
     //   // PERFORM RMD FOR PREVIOUS YEAR
     const userAge = year - scenario.birthYearUser;
@@ -305,23 +302,40 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     console.log("in algo investments: ", investments);
     //   // UPDATE INVESTMENT VALUES
 
-
-
-      // RUN ROTH CONVERSION IF ENABLED
-      if (scenario.optimizerSettings.enabled && year >= scenario.optimizerSettings.startYear && year <= scenario.optimizerSettings.endYear) {
-        rothConversion(scenario, year, curYearIncome, curYearSS, fedIncomeTaxBracket);
-      }
+    // RUN ROTH CONVERSION IF ENABLED
+    if (scenario.optimizerSettings.enabled && year >= scenario.optimizerSettings.startYear && year <= scenario.optimizerSettings.endYear) {
+      rothConversion(scenario, year, curYearIncome, curYearSS, fedIncomeTaxBracket);
+    }
 
     //   // PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
-    curYearSS=20;
-    curYearGains=30;
-    curYearEarlyWithdrawals=30;
-    curYearIncome=200;
-    payNonDiscretionaryExpenses(scenario, expenseEvent, investments, cashInvestment, curYearIncome, curYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, year, userAge);
+    curYearSS = 20;
+    curYearGains = 30;
+    curYearEarlyWithdrawals = 30;
+    curYearIncome = 200;
+    payNonDiscretionaryExpenses(
+      scenario,
+      expenseEvent,
+      investments,
+      cashInvestment,
+      curYearIncome,
+      curYearSS,
+      curYearGains,
+      curYearEarlyWithdrawals,
+      federalIncomeTax,
+      stateIncomeTaxBracket,
+      year,
+      userAge,
+      capitalGains
+    );
+
     //   // PAY DISCRETIONARY EXPENSES
     payDiscretionaryExpenses(scenario, cashInvestment, investments, expenseEvent, year, userAge);
+
+
     //   // RUN INVEST EVENT
-    //   runInvestStrategy(scenario, cashInvestment, IRSLimits);
+    runInvestStrategy(scenario, cashInvestment, irsLimit, investEvent, year, investments);
+
+
     //   // RUN REBALANCE EVENT
     //   rebalance(scenario, curYearGains);
 
@@ -363,7 +377,7 @@ async function main(numScenarioTimes, scenarioId) {
     expense: dataStore.getData("expense"),
     rebalance: dataStore.getData("rebalance"),
     investment: dataStore.getData("investment"),
-    investmentType: dataStore.getData("investmentType")
+    investmentType: dataStore.getData("investmentType"),
   };
   // console.log("scenario: ", scenario);
   // console.log("stateTax :>> ", stateTax);
