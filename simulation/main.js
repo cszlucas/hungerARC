@@ -167,16 +167,15 @@ function payFromInvestment(withdrawalAmt, investment, userAge, curYearGains, cur
   if (investment.value - withdrawalAmt > 0) {
     //subtract needed and keep investment
     if (investment.accountTaxStatus != "pre-tax retirement") {
-      capitalGain = withdrawalAmt * (investment.value - investment.purchasePrice);
-      curYearGains += capitalGain;
+      const fractionSold = withdrawalAmt / investment.value;
+      curYearGains += (fractionSold * (investment.value - investment.purchasePrice));
     }
     investment.value -= withdrawalAmt;
     return withdrawalAmt;
   } else {
     //use up this investment "sell" and move onto next
     if (investment.accountTaxStatus != "pre-tax") {
-      capitalGain = investment.value - investment.purchasePrice;
-      curYearGains += capitalGain;
+      curYearGains+= (investment.value - investment.purchasePrice);
     }
     if (investment.accountTaxStatus == "pre-tax") {
       curYearIncome -= investment.value;
@@ -184,7 +183,6 @@ function payFromInvestment(withdrawalAmt, investment, userAge, curYearGains, cur
     if ((investment.accountTaxStatus == "pre-tax" || investment.accountTaxStatus == "after-tax") && userAge < 59) {
       curYearEarlyWithdrawals += investment.value;
     }
-    //remove(investment);
     return investment.value;
   }
 }
@@ -235,47 +233,36 @@ function taxAmt(income, taxBracket, type) {
 //Use up excess cash with invest strategy
 function runInvestStrategy(scenario, cashInvestment, irsLimit, investEvent, year, investments) {
   //find investEvent for current year
-  const investStrategy = investEvent.filter((invest) => scenario.investEventSeries.includes(invest._id) && invest.startYear.year == 2020);
+  let investStrategy = investEvent.filter((invest) => scenario.investEventSeries.includes(invest._id) && invest.startYear.year == 2024);
+  investStrategy = investStrategy[0];
   console.log("investStrategy", investStrategy);
-  console.log("excessCash: ", investStrategy[0].maxCash - cashInvestment);
-  const excessCash = investStrategy[0].maxCash - cashInvestment;
-  const allocations = [];
+  console.log("excessCash: ", cashInvestment - investStrategy.maxCash, "year: ", year);
+  let excessCash = cashInvestment - investStrategy.maxCash;
+  let allocations = [];
+  console.log("cash to burn? ", excessCash);
   if (excessCash > 0) {
-    if (investStrategy[0].assetAllocation.type === "glidePath") {
+    if (investStrategy.assetAllocation.type === "glidePath") {
+      console.log("you choose glide path");
       // Example: allocation in year 2025 between 2020 and 2030
       //allocation has list of map [{investmentId: value}, ...]
       allocations = getGlidePathAllocation(
         year,
         investStrategy.startYear.year,
         investStrategy.startYear.year + investStrategy.duration.value,
-        investStrategy.initialPercentages,
-        investStrategy.finalPercentages
+        investStrategy.assetAllocation.initialPercentages,
+        investStrategy.assetAllocation.finalPercentages
       );
     }
-
+    //console.log("allocations: ", allocations);
+    //console.log("investments: ", investments);
     // Translate assetIds to actual investment objects based on the IDs and value is percentage of allocation
-    const investmentsWithAllocations = allocations
-      .map(({ assetId, percentage }) => {
-        const investAllocation = investments.find((investment) => investment._id === assetId);
-
-        if (investAllocation) {
-          // You can now work with both the investment object and the percentage
-          return {
-            investment: investAllocation,
-            percentage: percentage,
-          };
-        }
-
-        // If investment not found, handle it (e.g., log or return null)
-        return null;
-      })
-      .filter((item) => item !== null); // Remove any null entries (if the investment wasn't found)
-    
-    const afterTaxRatio = scaleDownRatio("after-tax", investmentsWithAllocations, irsLimit, excessCash);
+    const investmentsWithAllocations = allocationIDToObject(allocations, investments);
     console.log("in invest, the investments: ", investmentsWithAllocations);
-
+    const afterTaxRatio = scaleDownRatio("after-tax", investmentsWithAllocations, irsLimit, excessCash);
+    console.log("afterTaxRatio: ", afterTaxRatio);
+    let buyAmt = 0;
     for (const { investment, percentage } of investmentsWithAllocations) {
-      let buyAmt = 0;
+      buyAmt = 0;
 
       if (investment.accountTaxStatus === "after-tax") {
         buyAmt = excessCash * percentage * afterTaxRatio;
@@ -292,14 +279,35 @@ function runInvestStrategy(scenario, cashInvestment, irsLimit, investEvent, year
       //everything else in non-retirement
       buyNonRetirement(investmentsWithAllocations, excessCash - buyAmt);
     }
+    console.log("the purchase price of investments after getting excess cash: ", investmentsWithAllocations);
   }
+}
+
+function allocationIDToObject(allocations, investments) {
+  const investmentsWithAllocations = Object.entries(allocations)
+    .map(([assetId, percentage]) => {
+      const investAllocation = investments.find((investment) => investment._id === assetId);
+
+      if (investAllocation) {
+        // You can now work with both the investment object and the percentage
+        return {
+          investment: investAllocation,
+          percentage: percentage,
+        };
+      }
+
+      // If investment not found, handle it (e.g., log or return null)
+      return null;
+    })
+    .filter((item) => item !== null); // Remove any null entries (if the investment wasn't found)
+  return investmentsWithAllocations;
 }
 
 function getGlidePathAllocation(year, startYear, endYear, initial, final) {
   const t = (year - startYear) / (endYear - startYear);
   const allocation = {};
-
   for (const asset in initial) {
+    console.log("asset: ", asset);
     allocation[asset] = initial[asset] + t * (final[asset] - initial[asset]);
   }
 
@@ -316,7 +324,7 @@ function buyNonRetirement(investmentsWithAllocations, excessCash) {
   }
 }
 
-function scaleDownRatio(type, investmentsWithAllocations, limit, excessCash) {
+function scaleDownRatio(type, investmentsWithAllocations, irsLimit, excessCash) {
   let sum = 0;
 
   for (const { investment, percentage } of investmentsWithAllocations) {
@@ -324,39 +332,63 @@ function scaleDownRatio(type, investmentsWithAllocations, limit, excessCash) {
       sum += percentage * excessCash;
     }
   }
-
-  if (sum > limit) {
-    return limit / sum; // scale down if over limit
+  console.log("the sum of investments with type after-tax is: ", sum, "and the limit is: ", irsLimit);
+  if (sum > irsLimit) {
+    return irsLimit / sum; // scale down if over irsLimit
   } else {
     return 1; // no scaling needed
   }
 }
 
-function rebalance(scenario, curYearGains) {
-  rebalanceStrategy = db.rebalance.assetAllocation.query({ _scenario_id: scenario.id });
-
-  for (let investment of rebalanceStrategy) {
-    sum = sumAmt(investment);
-    target = sum * investment.percentage;
+//rebalance investment allocations of same account tax status based on desired targets specified in rebalance strategy.
+function rebalance(scenario, curYearGains, investments, rebalanceEvent, year) {
+  //find rebalanceEvent that matches current year (Zoe can move this to beginning of simulation)
+  let rebalanceStrategy = rebalanceEvent.filter((rebStrategy) => scenario.rebalanceEventSeries.includes(rebStrategy._id) && rebStrategy.startYear.year == 2024);
+  rebalanceStrategy = rebalanceStrategy[0];
+  console.log("rebalanceStrategy: ", rebalanceStrategy);
+  let allocations = [];
+  if (rebalanceStrategy.rebalanceAllocation.type === "glidePath") {
+    console.log("you choose glide path");
+    // Example: allocation in year 2025 between 2020 and 2030
+    //allocation has list of map [{investmentId: value}, ...]
+    allocations = getGlidePathAllocation(
+      year,
+      rebalanceStrategy.startYear.year,
+      rebalanceStrategy.startYear.year + rebalanceStrategy.duration.value,
+      rebalanceStrategy.rebalanceAllocation.initialPercentages,
+      rebalanceStrategy.rebalanceAllocation.finalPercentages
+    );
+  }
+  console.log("allocations: ", allocations);
+  const investmentsWithAllocations = allocationIDToObject(allocations, investments);
+  //console.log("investmentsWithAllocations: ", investmentsWithAllocations);
+  let sum = 0;
+  for (const { investment, percentage } of investmentsWithAllocations) {
+    sum += investment.value;
+  }
+  for (const { investment, percentage } of investmentsWithAllocations) {
+    const target = sum * percentage;
+    console.log("The investment value: ", investment.value, "and the desired target is: ", target);
     if (investment.value > target) {
       //sell
-      sellAmt = investment.value - target;
+      let sellAmt = investment.value - target;
       if (investment.value - sellAmt <= 0) {
-        //sell entire investment
+        //sell entire investment. investment.value is how much money got when sold. investment.purchasePrice
         if (investment.taxAccountStatus == "non-retirement") {
           curYearGains += investment.value - investment.purchasePrice;
         }
-        remove(investment);
+        //remove(investment);
       } else {
         //sell part of investment
         if (investment.taxAccountStatus == "non-retirement") {
-          curYearGains += sellAmt * (investment.value - investment.purchasePrice);
+          const fractionSold = sellAmt / investment.value;
+          curYearGains += fractionSold * (investment.value - investment.purchasePrice);
         }
       }
       investment.value -= sellAmt;
     } else if (investment.value < target) {
       //buy some of investment
-      buyAmt = target - investment.value;
+      let buyAmt = target - investment.value;
       investment.purchasePrice += buyAmt;
     }
   }
@@ -367,4 +399,5 @@ module.exports = {
   payNonDiscretionaryExpenses,
   payDiscretionaryExpenses,
   runInvestStrategy,
+  rebalance,
 };

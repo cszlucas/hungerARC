@@ -6,7 +6,7 @@ const Scenario = require("../server/models/scenario");
 const Investment = require("../server/models/investment");
 const InvestmentType = require("../server/models/investmentType");
 const { IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent } = require("../server/models/eventSeries");
-const { performRMDs, payNonDiscretionaryExpenses, payDiscretionaryExpenses, runInvestStrategy } = require("./main.js");
+const { performRMDs, payNonDiscretionaryExpenses, payDiscretionaryExpenses, runInvestStrategy, rebalance } = require("./main.js");
 
 function calculateNormalDist(std, mean) {
   const u = 1 - Math.random();
@@ -202,7 +202,7 @@ class DataStore {
 async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUser, investments, incomeEvent, expenseEvent, investEvent, rebalanceEvent, investmentTypes) {
   // previous year
   console.log("expenseEvent: ", expenseEvent);
-  let irsLimit = scenario.IRSLimit;
+  let irsLimit = scenario.irsLimit;
   let filingStatus = scenario.filingStatus;
   let state = scenario.stateResident;
   let fedIncomeTaxBracket, stateIncomeTaxBracket, fedDeduction, stateDeduction, capitalGains;
@@ -312,6 +312,7 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     curYearGains = 30;
     curYearEarlyWithdrawals = 30;
     curYearIncome = 200;
+    cashInvestment = 5000;
     payNonDiscretionaryExpenses(
       scenario,
       expenseEvent,
@@ -337,7 +338,7 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
 
 
     //   // RUN REBALANCE EVENT
-    //   rebalance(scenario, curYearGains);
+    rebalance(scenario, curYearGains, investments, rebalanceEvent, year);
 
     prevYear += 1;
   }
