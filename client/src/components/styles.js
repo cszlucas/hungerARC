@@ -62,7 +62,6 @@ export const numFieldStyles = {
 };
 
 export const toggleButtonGroupStyles = {
-  maxWidth: "250px",
   minHeight: "40px",
   "& .MuiToggleButton-root": {
     backgroundColor: "grey.400",

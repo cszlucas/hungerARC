@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useState, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ThemeProvider, CssBaseline, Container, Typography, Button, Stack, InputAdornment, Box, List, MenuItem, ListItem, 
@@ -24,15 +24,43 @@ import { AuthContext } from "../../../context/authContext";
 const mongoose = require("mongoose");
 
 const InvestmentLists = () => {
-  const { editMode, setEventEditMode, currInvestments, setCurrInvestments, currInvestmentTypes, setCurrScenario } = useContext(AppContext);
+  const { editMode, setEventEditMode, currInvestments, setCurrInvestments, currInvestmentTypes, setCurrScenario, takenTaxStatusAccounts, setTakenTaxStatusAccounts } = useContext(AppContext);
   const { user } = useContext(AuthContext);
 
   const [open, setOpen] = useState(false);
+  const [availableTaxTypes, setAvailableTaxTypes] = useState([[], []]);
+
   const [newInvestment, setNewInvestment] = useState({ id: "new", investmentTypeId: "", taxType: "", value: "" });
   const navigate = useNavigate();
 
+  useEffect(() => {
+    let taxStatus = [[], []];
+    if (newInvestment.investmentTypeId) { 
+
+      if (!takenTaxStatusAccounts[newInvestment.investmentTypeId]) {
+        taxStatus = [["Taxable", "Tax-Deferred", "Tax-Free"], ["non-tax", "pre-tax", "after-tax"]];
+      } else {
+        if (!takenTaxStatusAccounts[newInvestment.investmentTypeId].includes("non-tax")) {
+          taxStatus[0].push("Taxable");
+          taxStatus[1].push("non-tax");
+        }
+        if (!takenTaxStatusAccounts[newInvestment.investmentTypeId].includes("pre-tax")) {
+          taxStatus[0].push("Tax-Deferred");
+          taxStatus[1].push("pre-tax");
+        }
+        if (!takenTaxStatusAccounts[newInvestment.investmentTypeId].includes("after-tax")) {
+          taxStatus[0].push("Tax-Free");
+          taxStatus[1].push("after-tax");
+        }
+      }
+    }
+
+    setAvailableTaxTypes(taxStatus);
+    handleInputChange("taxType", "");
+  }, [newInvestment.investmentTypeId]);
+
   const handleOpen = () => { 
-    setNewInvestment({ id: "new", investmentTypeId: "", taxType: "", value: "" }); 
+    setNewInvestment({ id: "new", investmentTypeId: "", taxType: "", value: "0" }); 
     setOpen(true); 
   };
   const handleClose = () => setOpen(false);
@@ -53,6 +81,12 @@ const InvestmentLists = () => {
         [key]: [...(prev[key] || []), newValue]  // Append to the specified key
       }));
     };
+    const handleAppendInTakenTaxStatusAccounts = (key, newValue) => {
+      setTakenTaxStatusAccounts((prev) => ({
+        ...prev,
+        [key]: [...(prev[key] || []), newValue]  // Append to the specified key
+      }));
+    };
 
     const transformInvestmentData = (investment) => {
       return {
@@ -64,6 +98,7 @@ const InvestmentLists = () => {
 
     const handleUpdatingLocalStorageForNewInvestments = (investment, id) => {
       handleAppendInScenario("setOfInvestments", id);
+      handleAppendInTakenTaxStatusAccounts(investment.investmentType, investment.accountTaxStatus);
       if (investment.accountTaxStatus == "pre-tax") {
         handleAppendInScenario("rothConversionStrategy", id);
         handleAppendInScenario("rmdStrategy", id);
@@ -73,9 +108,12 @@ const InvestmentLists = () => {
     };
 
     if (newInvestment.investmentTypeId) {
-      // console.log("transform data");
+      // if (takenTaxStatusAccounts[newInvestment.investmentTypeId].includes(newInvestment.taxType)) {
+      //   alert("Selected Tax Status Account is already taken!!!");
+      //   return;
+      // }
+
       let transformedInvestment = transformInvestmentData(newInvestment);
-      // console.log(transformedInvestment);
 
       try {
         let id = newInvestment.id;
@@ -102,7 +140,7 @@ const InvestmentLists = () => {
         }
 
         setCurrInvestments((prev) => { return [...(Array.isArray(prev) ? prev : []), transformedInvestment]; });
-        setNewInvestment({ id: "new", investmentTypeId: "", taxType: "", value: "" });
+        setNewInvestment({ id: "new", investmentTypeId: "", taxType: "", value: "0" });
         
         handleClose();
       } catch (error) {
@@ -136,8 +174,7 @@ const InvestmentLists = () => {
     };
 
     const filteredInvestments = Array.isArray(list) ? list.filter((item) => item.accountTaxStatus === taxType) : [];
-    // console.log(taxType);
-    // console.log(filteredInvestments);
+
     return (
       <List>
         {filteredInvestments.map((item, index) => {
@@ -229,7 +266,7 @@ const InvestmentLists = () => {
           <Button variant="contained" color="primary" sx={buttonStyles} onClick={() => navigate("/scenario/basics")}>
             Back
           </Button>
-          <CustomSave label={"Continue"} routeTo={"/scenario/event_series"}/>
+          <CustomSave label={"Continue"} routeTo={"/scenario/event_series_list"}/>
         </Box>
 
         {/* Backdrop + Modal */}
@@ -314,8 +351,8 @@ const InvestmentLists = () => {
                     label={"Tax Status of account"}
                     value={newInvestment.taxType || ""}
                     setValue={(value) => handleInputChange("taxType", value)}
-                    menuLabels={["Taxable", "Tax-Deferred", "Tax-Free"]}
-                    menuItems={["non-tax", "pre-tax", "after-tax"]}
+                    menuLabels={availableTaxTypes[0]}
+                    menuItems={availableTaxTypes[1]}
                     width={250}
                   />
                 </Box>
@@ -335,7 +372,13 @@ const InvestmentLists = () => {
                 <Button variant="contained" color="primary" onClick={handleClose} sx={{ textTransform: "none" }}>
                   Cancel
                 </Button>
-                <Button variant="contained" color="secondary" onClick={handleAddInvestment} sx={{ textTransform: "none" }}>
+                <Button 
+                  variant="contained" 
+                  color="secondary" 
+                  onClick={handleAddInvestment} 
+                  sx={{ textTransform: "none" }}
+                  disabled={newInvestment.taxType == "" || newInvestment.value == ""}
+                >
                   Save
                 </Button>
               </Box>

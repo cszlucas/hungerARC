@@ -31,9 +31,6 @@ export const defaultInfo = {
   "_id": ""
 };
 
-// routes for getting user scenario ids 
-// routes for getting user scenario event series and if empty send an object for that event series back
-
 // Function to retrieve initial scenarios from localStorage or fetch from backend
 export const getInitialState = async (user) => {
   try {
@@ -103,14 +100,17 @@ export const AppProvider = ({ children }) => {
 
   const [editMode, setEditMode] = useState(readStateFromLS("edit"));
   const [currScenario, setCurrScenario] = useState(readStateFromLS("currentScenario"));
-  
   const [eventEditMode, setEventEditMode] = useState(readStateFromLS("editEvent")); // this will contain a tuple ex: (income, {some random id})
+
   const [currInvestments, setCurrInvestments] = useState(readStateFromLS("currentInvestments"));
+  const [currInvestmentTypes, setCurrInvestmentTypes] = useState(readStateFromLS("currentInvestmentType"));
+  const [takenTaxStatusAccounts, setTakenTaxStatusAccounts] = useState(readStateFromLS("takenTaxStatusAccounts"));
+
   const [currIncome, setCurrIncome] = useState(readStateFromLS("currentIncome"));  // incomeEvents[],    // income event series
   const [currExpense, setCurrExpense] = useState(readStateFromLS("currentExpense"));   // expenseEvents[],   // expense event series
   const [currInvest, setCurrInvest] = useState(readStateFromLS("currentInvest"));  // investEvents[],    // invest event series
   const [currRebalance, setCurrRebalance] = useState(readStateFromLS("currentRebalance"));   // rebalanceEvents[], // rebalance event series
-  const [currInvestmentTypes, setCurrInvestmentTypes] = useState(readStateFromLS("currentInvestmentType"));
+  
 
   const { user } = useContext(AuthContext);
   
@@ -147,11 +147,16 @@ export const AppProvider = ({ children }) => {
         const rebalance = await retrieveScenarioData(editMode, "rebalance");
         const investmentTypes = await retrieveScenarioData(editMode, "investmentType");
 
-        // console.log(income);
-        // console.log(expenses);
-        // console.log(rebalance);
-        // console.log(invest);
-        // console.log(investmentTypes);
+        const takenTaxStatusAccounts = {};
+
+        for (let i = 0; i < investments.length; i++) {
+          const type = investments[i].investmentType;
+          const status = investments[i].accountTaxStatus;
+
+          if (takenTaxStatusAccounts[type]) { takenTaxStatusAccounts[type].push(status); } 
+          else { takenTaxStatusAccounts[type] = [status]; }
+        }
+
 
         setCurrInvestments(investments);
         setCurrIncome(income);
@@ -159,6 +164,7 @@ export const AppProvider = ({ children }) => {
         setCurrInvest(invest);
         setCurrRebalance(rebalance);
         setCurrInvestmentTypes(investmentTypes);
+        setTakenTaxStatusAccounts(takenTaxStatusAccounts);
       } 
     };
 
@@ -204,6 +210,10 @@ export const AppProvider = ({ children }) => {
     console.log(eventEditMode);
   }, [eventEditMode]);
 
+  useEffect(() => {
+    if (takenTaxStatusAccounts) localStorage.setItem("takenTaxStatusAccounts", JSON.stringify(takenTaxStatusAccounts));
+  }, [takenTaxStatusAccounts]);
+
   // console.log("Current scenarios:", scenarioData);
 
   return (
@@ -217,7 +227,8 @@ export const AppProvider = ({ children }) => {
       currExpense, setCurrExpense,
       currInvest, setCurrInvest,
       currRebalance, setCurrRebalance,
-      currInvestmentTypes, setCurrInvestmentTypes
+      currInvestmentTypes, setCurrInvestmentTypes,
+      takenTaxStatusAccounts, setTakenTaxStatusAccounts,
     }}>
         {children}
     </AppContext.Provider>

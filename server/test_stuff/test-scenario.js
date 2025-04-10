@@ -235,6 +235,7 @@ async function createScenario() {
         type: "fixed",
         fixedAge: 80,
       },
+      setOfInvestmentTypes: [savedInvestmentType1._id, savedInvestmentType2._id],
       setOfInvestments: [investment1._id, investment2._id],
       incomeEventSeries: [incomeEvent._id, incomeEvent2._id],
       expenseEventSeries: [expenseEvent._id],

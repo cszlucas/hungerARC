@@ -23,6 +23,7 @@ const CustomDropdown = ({ label, value, setValue, menuLabels=[], menuItems=[], w
                 displayEmpty
                 fullWidth
                 sx={{...textFieldStyles, width: width}}
+                disabled={menuLabels.length == 0}
             >
                 <MenuItem value="" disabled>
                     Select

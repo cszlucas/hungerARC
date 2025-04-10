@@ -103,7 +103,7 @@ const Invest = () => {
                 finalPercentages: {},
             },
         };
-      };
+    };
     
     let investId = eventEditMode ? eventEditMode.id : "new";
     let indieInvest = getInvestById(investId);
@@ -321,11 +321,6 @@ const Invest = () => {
                     ...prevScenario,
                     investEventSeries: [...(prevScenario?.investEventSeries || []), id]
                 };
-
-                // Send POST request with the updated scenario after state update
-                // axios.post(`http://localhost:8080/updateScenario/${editMode}`, updatedScenario)
-                //     .then(() => console.log("Scenario updated successfully"))
-                //     .catch((error) => console.error("Error updating scenario:", error));
 
                 return updatedScenario;
             });

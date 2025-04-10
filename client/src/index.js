@@ -7,6 +7,7 @@ import Login from "./pages/login";
 import ScenarioList from "./pages/scenario/scenarioList";
 import Basics from "./pages/scenario/basics";
 import InvestmentLists from "./pages/scenario/invesments/investmentLists";
+import EventSeriesList from "./pages/scenario/events/eventSeriesList";
 import EventSeries from "./pages/scenario/events/eventSeries";
 import InvestmentType from "./pages/scenario/invesments/investmentType";
 import Income from "./pages/scenario/events/income";
@@ -34,7 +35,8 @@ const router = createBrowserRouter([
       { index: true, element: <Basics /> }, // ✅ Defaults to Basics if no subpath
       { path: "basics", element: <Basics /> },
       { path: "investment_lists", element: <InvestmentLists /> },
-      { path: "event_series", element: <EventSeries /> },
+      { path: "event_series_list", element: <EventSeriesList /> },
+      { path: "test", element: <EventSeries /> },
       { path: "investment_type", element: <InvestmentType /> },
       { path: "income", element: <Income /> },
       { path: "expense", element: <Expense /> },
