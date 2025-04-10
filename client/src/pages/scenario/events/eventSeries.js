@@ -26,28 +26,69 @@ import { AuthContext } from "../../../context/authContext";
 
 //const EventSeries = ({ formValues, handleInputChange }) => {
 const EventSeries = () => {
-    const { editMode, eventEditMode, setEventEditMode, currIncome, setCurrIncome, currExpense, currInvest, currRebalance } = useContext(AppContext);
+    const { eventEditMode, currIncome, currExpense, currInvest, currRebalance } = useContext(AppContext);
     
-    const eventSeriesMap = [];
-    function addToMap(arr, source) {
-        if (Array.isArray(arr)) {
-            for (const event of arr) {
-                if (event?._id) {
-                    eventSeriesMap[event._id] = {
-                        type: source,
-                        eventSeriesName: event.eventSeriesName,
-                        startYear: event.startYear
-                    };
-                }
+    const menuLabels = [];
+    const menuItems = [];
+    const eventSeriesMap = {};
+
+    const buildOutList = () => {
+        function buildMap(arr, source) {
+            if (!Array.isArray(arr)) return; 
+            for (const eventSeries of arr) {
+                eventSeriesMap[eventSeries._id] = {
+                    name: eventSeries.eventSeriesName,
+                    startYear: eventSeries.startYear
+                };
             }
         }
-    }
-    addToMap(currIncome, "Income");
-    addToMap(currExpense, "Expense");
-    addToMap(currInvest, "Invest");
-    addToMap(currRebalance, "Rebalance");
-    
 
+        buildMap(currIncome, "Income");
+        buildMap(currExpense, "Expense");
+        buildMap(currInvest, "Invest");
+        buildMap(currRebalance, "Rebalance");
+
+        const id = eventEditMode;
+        let validSet = new Set();
+        let notValidSet = new Set([id]);
+        let buildingSet = new Set();
+
+        function resolveValue(key) {
+            if (notValidSet.has(key)) {
+                buildingSet.forEach(item => notValidSet.add(item));
+                return;
+            }
+            if (validSet.has(key)) {
+                buildingSet.forEach(item => validSet.add(item));
+                return;
+            }
+
+            buildingSet.add(key);
+
+            const entry = eventSeriesMap[key];
+            if (entry) {
+                if (entry.startYear.type !== "same" && entry.startYear.type !== "after") {
+                    buildingSet.forEach(item => validSet.add(item));
+                    return;
+                }
+
+                const value = entry.startYear.refer;
+
+                if (eventSeriesMap.hasOwnProperty(value)) {
+                    return resolveValue(value);
+                }
+            }
+
+            buildingSet.forEach(item => validSet.add(item));
+            return;
+        }
+
+        for (const key of Object.keys(eventSeriesMap)) {
+            buildingSet = new Set(); // Reset for each traversal
+            resolveValue(key);
+        }
+    }
+    
     const [formValues, setFormValues] = useState({
         _id:"",
         eventSeriesName: "",
@@ -59,7 +100,7 @@ const EventSeries = () => {
             stdDev: "",
             min: "",
             max: "",
-            eventSeriesId: ""
+            refer: "", 
         },
         duration: {
             type: "fixedAmt",
@@ -188,36 +229,14 @@ const EventSeries = () => {
             )}
             {formValues.startYear.type === "same" && (
                 <Stack direction="row" spacing={1} alignItems="start">
-                    <CustomInput 
-                        title="Min"
-                        type="number"
-                        value={formValues.startYear.min}
-                        setValue={(value) => handleInputChange("startYear.min", value)}
-                    />
-                    <CustomInput 
-                        title="Max"
-                        type="number"
-                        value={formValues.startYear.max}
-                        setValue={(value) => handleInputChange("startYear.max", value)}
-                    />
                 </Stack>
             )}
             {formValues.startYear.type === "after" && (
                 <Stack direction="row" spacing={1} alignItems="start">
-                    <CustomInput 
-                        title="Min"
-                        type="number"
-                        value={formValues.startYear.min}
-                        setValue={(value) => handleInputChange("startYear.min", value)}
-                    />
-                    <CustomInput 
-                        title="Max"
-                        type="number"
-                        value={formValues.startYear.max}
-                        setValue={(value) => handleInputChange("startYear.max", value)}
-                    />
                 </Stack>
             )}
+
+            <Box sx={{mt:2}}></Box>
 
             {/* Input Fields Below in Columns */}
             <Stack direction="row" spacing={1} alignItems="start">
