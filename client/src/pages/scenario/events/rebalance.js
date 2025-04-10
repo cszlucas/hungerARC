@@ -12,6 +12,7 @@ import {
   ListItem,
   ListItemText,
   TextField,
+  IconButton
 } from "@mui/material";
 import theme from "../../../components/theme";
 import Navbar from "../../../components/navbar";
@@ -56,7 +57,47 @@ const Rebalance = () => {
     return null; // Return null if not found
   };
   
-  const InvestList = ({ rebalanceAllocation, handleMoveInvestment, getInvestmentNameById }) => {
+  const handleDeleteInvestment = (investmentId) => {
+    console.log(investmentId);
+    setFormValues((prev) => {
+      const updated = { ...prev };
+      const type = updated.rebalanceAllocation.type;
+  
+      if (type === "fixed") {
+        const updatedFixed = { ...updated.rebalanceAllocation.fixedPercentages };
+        delete updatedFixed[investmentId];
+        updated.rebalanceAllocation.fixedPercentages = updatedFixed;
+      } else if (type === "glidePath") {
+        const updatedInitial = { ...updated.rebalanceAllocation.initialPercentages };
+        const updatedFinal = { ...updated.rebalanceAllocation.finalPercentages };
+        delete updatedInitial[investmentId];
+        delete updatedFinal[investmentId];
+        updated.rebalanceAllocation.initialPercentages = updatedInitial;
+        updated.rebalanceAllocation.finalPercentages = updatedFinal;
+      }
+
+      console.log(formValues.rebalanceAllocation);
+  
+      return updated;
+    });
+  };
+  
+  const handleEditInvestment = (investmentId) => {
+    console.log(investmentId);
+    setSelectedInvestment(investmentId);
+  
+    const { type, fixedPercentages, initialPercentages, finalPercentages } = formValues.rebalanceAllocation;
+  
+    if (type === "fixed") {
+      setPendingPercentage(fixedPercentages[investmentId] ?? "");
+    } else if (type === "glidePath") {
+      setPendingInitial(initialPercentages[investmentId] ?? "");
+      setPendingFinal(finalPercentages[investmentId] ?? "");
+    }
+  };
+  
+
+  const InvestList = ({ rebalanceAllocation, getInvestmentNameById }) => {
     const displayList = [];
 
     if (!rebalanceAllocation || !rebalanceAllocation.type) {
@@ -70,6 +111,7 @@ const Rebalance = () => {
         const investment = getInvestmentNameById(id); // should return full investment object
         const typeObj = getInvesmentTypeById(investment?.investmentType);
         displayList.push({
+          _id: id,
           investmentTypeName: typeObj?.name || "Unknown Investment",
           initial: initialPercentages[id] * 100,
           final: finalPercentages[id] * 100,
@@ -80,6 +122,7 @@ const Rebalance = () => {
         const investment = getInvestmentNameById(id); // full object
         const typeObj = getInvesmentTypeById(investment?.investmentType);
         displayList.push({
+          _id: id,
           investmentTypeName: typeObj?.name || "Unknown Investment",
           percent: fixedPercentages[id] * 100,
         });
@@ -96,6 +139,19 @@ const Rebalance = () => {
               backgroundColor: index % 2 === 0 ? "#BBBBBB" : "#D9D9D9",
               "&:hover": { backgroundColor: "#B0B0B0" },
             }}
+            secondaryAction={
+              <>
+                 <IconButton edge="end" onClick={() => handleEditInvestment(item._id)}>
+                  <EditIcon />
+                </IconButton>
+                <IconButton edge="end" onClick={() => {
+                  // console.log(item);
+                  handleDeleteInvestment(item._id);
+                }}>
+                  <DeleteIcon />
+                </IconButton>
+              </>
+            }
           >
             <ListItemText
               primary={<span style={{ fontWeight: "bold" }}>{item.investmentTypeName || "Unknown Investment"}</span>}
@@ -238,9 +294,6 @@ const Rebalance = () => {
     return {_id: "NULL", name: "Unknown Type"};
 };
 
-  // const [eventName, setEventName] = useState("");
-  // const [description, setDescription] = useState("");
-  // const [startYear, setStartYear] = useState("");
 
   const [selectedTaxType, setSelectedTaxType] = useState(""); //keep
   const [selectedInvestment, setSelectedInvestment] = useState(""); //keep
@@ -248,23 +301,10 @@ const Rebalance = () => {
   const [pendingInitial, setPendingInitial] = useState("");
   const [pendingFinal, setPendingFinal] = useState("");
 
-
   const [taxableInvestments, setTaxableInvestments] = useState([]); //keep
   const [taxDeferredInvestments, setTaxDeferredInvestments] = useState([]); //keep
   const [taxFreeInvestments, setTaxFreeInvestments] = useState([]); //keep
 
-  // const [duration, setDuration] = useState("Fixed");
-  // const [durationValue, setDurationValue] = useState("");
-  // const [durationMin, setDurationMin] = useState("");
-  // const [durationMax, setDurationMax] = useState("");
-  // const [durationMean, setDurationMean] = useState("");
-  // const [durationVariance, setDurationVariance] = useState("");
-
-  // const [allocations, setAllocations] = useState("fixed");
-  // const [fixedPercentage, setFixedPercentage] = useState("");
-  // const [initialPercentage, setInitialPercentage] = useState("");
-  // const [finalPercentage, setFinalPercentage] = useState("");
-  // const [investmentMappings, setInvestmentMappings] = useState({});
 
   const navigate = useNavigate();
   // console.log(currInvestments);
@@ -525,7 +565,7 @@ const Rebalance = () => {
                       type="number"
                       adornment="%"
                       value={
-                        pendingPercentage
+                        pendingPercentage ?? ""
                       }
                       setValue={
                         setPendingPercentage
@@ -540,7 +580,7 @@ const Rebalance = () => {
                         type="number"
                         adornment="%"
                         value={
-                          pendingInitial
+                          pendingInitial ?? ""
                         }
                         setValue={
                           setPendingInitial
@@ -551,7 +591,7 @@ const Rebalance = () => {
                         type="number"
                         adornment="%"
                         value={
-                          pendingFinal
+                          pendingFinal ?? ""
                         }
                         setValue={
                           setPendingFinal

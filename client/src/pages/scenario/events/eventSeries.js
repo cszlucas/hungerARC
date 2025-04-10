@@ -42,10 +42,10 @@ const EventSeries = () => {
       }
     }
   }
-  addToMap(currIncome, 'income');
-  addToMap(currExpense, 'expense');
-  addToMap(currInvest, 'invest');
-  addToMap(currRebalance, 'rebalance');
+  addToMap(currIncome, "income");
+  addToMap(currExpense, "expense");
+  addToMap(currInvest, "invest");
+  addToMap(currRebalance, "rebalance");
 
   const [formValues, setFormValues] = useState({
     _id:"",
