@@ -295,7 +295,6 @@ exports.capitalGains = async (req, res) => {
     console.log("Rates and Income Ranges: ", incomeRanges);
 
     incomeRanges.forEach((range) => {
-      console.log(range);
       Tax.updateOne(
         {
           _id: new ObjectId(taxId),

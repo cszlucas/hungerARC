@@ -37,9 +37,7 @@ var scenarioSchema = new Schema({
     min: { type: Number },
     max: { type: Number },
   },
-  irsLimits: {
-    initialAfterTax: { type: Number },
-  },
+  irsLimit: { type: Number },
   spendingStrategy: [{ type: Schema.Types.ObjectId, ref: "ExpenseEvent" }],
   expenseWithdrawalStrategy: [{ type: Schema.Types.ObjectId, ref: "Investment" }],
   rothConversionStrategy: [{ type: Schema.Types.ObjectId, ref: "Investment" }],
