@@ -193,7 +193,7 @@ const Rebalance = () => {
       min: "",
       max: ""
     },
-    taxStatus: "non-tax",
+    taxStatus: "",
     rebalanceAllocation: {
       type: "fixed",
       fixedPercentages: {
