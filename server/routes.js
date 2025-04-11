@@ -26,6 +26,10 @@ router.post("/scenario/:id/investStrategy", events.createInvestStrategy);
 router.post("/updateInvestStrategy/:id", events.updateInvestStrategy);
 router.post("/scenario/:id/rebalanceStrategy", events.createRebalanceStrategy);
 router.post("/updateRebalanceStrategy/:id", events.updateRebalanceStrategy);
+router.post("/deleteIncome/:id", events.deleteIncomeEvent);
+router.post("/deleteExpense/:id", events.deleteExpenseEvent);
+router.post("/deleteInvest/:id", events.deleteInvestEvent);
+router.post("/deleteRebalance/:id", events.deleteRebalanceEvent);
 
 // investments
 router.get("/getInvestment/:id", investments.getInvestment);
@@ -35,14 +39,15 @@ router.post("/scenario/:id/investmentType", investments.createInvestmentType);
 router.post("/updateInvestmentType/:id", investments.updateInvestmentType);
 router.post("/scenario/:id/investment", investments.createInvestment);
 router.post("/updateInvestment/:id", investments.updateInvestment);
-
+router.post("/deleteInvestment/:id", investments.deleteInvestment);
+router.post("/deleteInvestmentType/:id", investments.deleteInvestmentType);
 
 // scenario
 router.get("/scenario/:id", scenario.scenario);
 router.post("/basicInfo/user/:id", scenario.basicInfo);
 router.post("/updateScenario/:id", scenario.updateScenario);
 router.post("/scenarioInvestments", scenario.scenarioInvestments);
-
+router.post("/deleteScenario/:id", scenario.deleteScenario);
 
 //tax
 router.get("/tax", tax.tax);

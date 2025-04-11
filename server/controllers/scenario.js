@@ -81,3 +81,16 @@ exports.scenarioInvestments = async (req, res) => {
     res.status(500).json({ error: "Failed to retrieve investments", message: err.message });
   }
 };
+
+exports.deleteScenario = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deletedScenario = await Scenario.findByIdAndDelete(id);
+    if (!deletedScenario) {
+      return res.status(404).json({ message: "Scenario not found" });
+    }
+    res.status(200).json({ message: "Scenario deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete scenario" });
+  }
+}

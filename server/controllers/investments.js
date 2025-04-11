@@ -156,3 +156,28 @@ exports.getInvestment = async (req, res) => {
   }
 };
 
+exports.deleteInvestment = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deletedInvestment = await Investment.findByIdAndDelete(id);
+    if (!deletedInvestment) {
+      return res.status(404).json({ message: "Investment not found" });
+    }
+    res.status(200).json({ message: "Investment deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete investment" });
+  }
+}
+
+exports.deleteInvestmentType = async (req, res) => {  
+  const { id } = req.params;
+  try {
+    const deletedInvestmentType = await InvestmentType.findByIdAndDelete(id);
+    if (!deletedInvestmentType) {
+      return res.status(404).json({ message: "Investment type not found" });
+    }
+    res.status(200).json({ message: "Investment type deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete investment type" });
+  }
+}

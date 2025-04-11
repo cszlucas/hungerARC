@@ -321,6 +321,37 @@ function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUser, in
     // performRMDs(scenario, investments, currYearIncome, year);
     //   // UPDATE INVESTMENT VALUES
 
+    function updateInvestmentValues(investments) {
+      // Calculate the generated income, using the given fixed amount or percentage, or sampling from the specified probability distribution.  
+      for(let investment in investments){
+        let investmentType = investmentTypes.find(type => type._id === investment.investmentType);
+        let annualIncome = investmentType.annualIncome;
+        let incomeValue = 0;
+        if (annualIncome.distribution == "none") {
+          incomeValue = annualIncome.value;
+        } else if (annualIncome.distribution == "uniform") {
+          incomeValue = calculateUniformDist(annualIncome.min, annualIncome.max);
+        } else {
+          incomeValue = calculateNormalDist(annualIncome.stdDev, annualIncome.mean);
+        }
+        if (annualIncome.type == "fixed") {
+          incomeValue += amt;
+        } else if (annualIncome.type == "percentage") {
+          incomeValue *= (1 + (amt * 0.01));
+        }
+      }
+      // Add the income to curYearIncome, if the investment’s tax status is ‘non-retirement’ and the investment type’s taxability is ‘taxable’. 
+
+      // Calculate the change in value, using the given fixed amount or percentage, or sampling from the specified probability distribution.
+
+      // Add the income to the value of the investment
+
+      // Calculate this year’s expenses, by multiplying the expense ratio and the average value of the investment (i.e., the average of its value at the beginning and end of the year).  Subtract the expenses from the value.
+
+    }
+    updateInvestmentValues();
+
+
     // find all the investment objects by the roth conversion strategy ids
     let rothConversionStrategyInvestments=[]
     console.log('scenario.rothConversionStrategy :>> ', scenario.rothConversionStrategy);
