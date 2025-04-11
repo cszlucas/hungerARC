@@ -23,6 +23,7 @@ import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
 import { AuthContext } from "../../../context/authContext";
+import EventSeries from "./eventSeries";
 
 import axios from "axios";
 
@@ -351,23 +352,16 @@ const Invest = () => {
             </Stack>
 
             <PageHeader />
+            
+            <EventSeries formValues={formValues} setFormValues={setFormValues}/>
 
             <Box sx={rowBoxStyles}>
                 {/* First Column - Input Fields */}
+                
                 <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, width: 400 }}>
-                    <CustomInput 
-                        title="Event name" 
-                        value={formValues.eventSeriesName} 
-                        setValue={(value) => handleInputChange("eventSeriesName", value)} 
-                    />
+                    
 
-                    <CustomInput 
-                        title="Description (Optional)" 
-                        type="multiline" 
-                        value={formValues.eventSeriesDescription} 
-                        setValue={(value) => handleInputChange("eventSeriesDescription", value)} 
-                    />
-                     <CustomInput
+                    <CustomInput
                         title="Maximum Cash"
                         type="number"
                         adornment="$"
@@ -375,116 +369,6 @@ const Invest = () => {
                         setValue={(value) => handleInputChange("maxCash", value)}
                         inputProps={{ min: 0 }}
                     /> 
-
-                    <Stack direction="row" spacing={1} alignItems="start">
-                        <CustomToggle
-                            title="Start Year"
-                            labels={["Fixed", "Normal", "Uniform"]}
-                            values={["fixedAmt", "normal", "uniform"]}
-                            value={formValues.startYear.type}
-                            setValue={(value) => handleInputChange("startYear.type", value)}
-                        />
-
-                        {formValues.startYear.type === "fixedAmt" && (
-                            <Stack direction="row" spacing={1} alignItems="start">
-                                <CustomInput 
-                                    title="Value"
-                                    type="number"
-                                    value={formValues.startYear.value}
-                                    setValue={(value) => handleInputChange("startYear.value", value)}
-                                />
-                            </Stack>
-                        )}
-                        {formValues.startYear.type === "normal" && (
-                            <Stack direction="row" spacing={1} alignItems="start">
-                                <CustomInput 
-                                    title="Mean"
-                                    type="number"
-                                    value={formValues.startYear.mean}
-                                    setValue={(value) => handleInputChange("startYear.mean", value)}
-                                />
-                                <CustomInput 
-                                    title="Standard Deviation"
-                                    type="number"
-                                    value={formValues.startYear.stdDev}
-                                    setValue={(value) => handleInputChange("startYear.stdDev", value)}
-                                />
-                            </Stack>
-                        )}
-                        {formValues.startYear.type === "uniform" && (
-                            <Stack direction="row" spacing={1} alignItems="start">
-                                <CustomInput 
-                                    title="Min"
-                                    type="number"
-                                    value={formValues.startYear.min}
-                                    setValue={(value) => handleInputChange("startYear.min", value)}
-                                />
-                                <CustomInput 
-                                    title="Max"
-                                    type="number"
-                                    value={formValues.startYear.max}
-                                    setValue={(value) => handleInputChange("startYear.max", value)}
-                                />
-                            </Stack>
-                        )}
-                    </Stack>
-                   
-                    {/* Input Fields Below in Columns */}
-                    <Stack direction="row" spacing={1} alignItems="start">
-                        <CustomToggle
-                            title="Duration"
-                            labels={["Fixed", "Normal", "Uniform"]}
-                            values={["fixedAmt", "normal", "uniform"]}
-                            width={100}
-                            value={formValues.duration.type}
-                            setValue={(value) => handleInputChange("duration.type", value)}
-                        />
-
-                        {formValues.duration.type === "fixedAmt" && (
-                            <Stack direction="row" spacing={1} alignItems="start">
-                            <CustomInput 
-                                title="Value"
-                                type="number"
-                                value={formValues.duration.value}
-                                setValue={(value) => handleInputChange("duration.value", value)}
-                            />
-                            </Stack>
-                        )}
-
-                        {formValues.duration.type === "normal" && (
-                            <Stack direction="row" spacing={1} alignItems="start">
-                                <CustomInput 
-                                    title="Mean"
-                                    type="number"
-                                    value={formValues.duration.mean}
-                                    setValue={(value) => handleInputChange("duration.mean", value)}
-                                />
-                                <CustomInput 
-                                    title="Standard Deviation"
-                                    type="number"
-                                    value={formValues.duration.stdDev}
-                                    setValue={(value) => handleInputChange("duration.stdDev", value)}
-                                />
-                            </Stack>
-                        )}
-
-                        {formValues.duration.type === "uniform" && (
-                            <Stack direction="row" spacing={1} alignItems="start">
-                                <CustomInput 
-                                    title="Min"
-                                    type="number"
-                                    value={formValues.duration.min}
-                                    setValue={(value) => handleInputChange("duration.min", value)}
-                                />
-                                <CustomInput 
-                                    title="Max"
-                                    type="number"
-                                    value={formValues.duration.max}
-                                    setValue={(value) => handleInputChange("duration.max", value)}
-                                />
-                            </Stack>
-                        )}
-                    </Stack>
 
                     <Typography variant="h6" sx={{ fontWeight: "bold", marginTop: 2, marginBottom: 1 }}>
                         Add Asset Allocation
@@ -573,7 +457,7 @@ const Invest = () => {
             {/* Back and Continue buttons */}
             <Box sx={backContinueContainerStyles}>
             <Button variant="contained" color="primary" sx={buttonStyles}
-                onClick={() => navigate("/scenario/event_series")}
+                onClick={() => navigate("/scenario/event_series_list")}
             >
                 Cancel
             </Button>
