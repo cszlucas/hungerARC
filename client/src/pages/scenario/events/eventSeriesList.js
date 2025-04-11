@@ -39,6 +39,7 @@ const EventSeriesList = () => {
   safeCurrInvest = Array.isArray(currInvest) ? currInvest.map(event => ({ ...event, type: "Invest" })) : []; 
   safeCurrRebalance = Array.isArray(currRebalance) ? currRebalance.map(event => ({ ...event, type: "Rebalance" })) : [];
 
+  console.log(safeCurrRebalance);
 
   const currEventSeries = [...safeCurrIncome, ...safeCurrExpense, ...safeCurrInvest, ...safeCurrRebalance];
   console.log(currEventSeries);
