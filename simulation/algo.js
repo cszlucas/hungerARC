@@ -6,6 +6,7 @@ const Scenario = require("../server/models/scenario");
 const Investment = require("../server/models/investment");
 const InvestmentType = require("../server/models/investmentType");
 const { IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent } = require("../server/models/eventSeries");
+const { v4: uuidv4 } = require('uuid');
 const { performRMDs, payNonDiscretionaryExpenses, payDiscretionaryExpenses, runInvestStrategy, rebalance } = require("./main.js");
 
 function calculateNormalDist(std, mean) {
@@ -68,7 +69,7 @@ function findUpperFedTaxBracket(curYearFedTaxableIncome, fedIncomeTaxBracket) {
   return -1;
 }
 
-function rothConversion(scenario, year, curYearIncome, curYearSS, fedIncomeTaxBracket) {
+function rothConversion(scenario, year, curYearIncome, curYearSS, fedIncomeTaxBracket, investmentTypes, investments, curYearEarlyWithdrawals, rothConversionStrategyInvestments) {
   let curYearFedTaxableIncome = curYearIncome - 0.15 * curYearSS;
   // upper limit of the tax bracket user is in
   console.log("curYearFedTaxableIncome :>> ", curYearFedTaxableIncome);
@@ -79,33 +80,50 @@ function rothConversion(scenario, year, curYearIncome, curYearSS, fedIncomeTaxBr
   console.log("u :>> ", u);
   console.log("rc :>> ", rc);
   // transfer from pre-tax to after-tax retirement
-  // for (let investment of scenario.rothConversionStrategy) {
-  //   if (investment.accountTaxStatus == "pre-tax" && rc > 0) {
-  //     if (rc >= investment.value) {
-  //       rc -= investment.value;
-  //       investment.accountTaxStatus = "after-tax";
-  //     } else {
-  //       investment.value -= rc;
-  //       // create new after tax investment in memory with transferred amount
-  //       scenario.investments.push({
-  //         investmentType: investment.investmentType,
-  //         value: rc,
-  //         accountTaxStatus: "after-tax",
-  //       });
-  //       rc = 0;
-  //     }
-  //   }
-  // }
-  // curYearIncome += rc;
-  // if (year - user.birthYearUser < 59) {
-  //   curYearEarlyWithdrawals += rc;
-  // }
+  for (let investment of rothConversionStrategyInvestments) {
+    if (rc > 0) {
+      console.log("inside of for investent loop");
+      console.log('rc :>> ', rc);
+      console.log('investment.value :>> ', investment.value);
+      // if (investment.accountTaxStatus == "pre-tax" && rc > 0) {
+      if (rc >= investment.value) {
+        rc -= investment.value;
+        investment.accountTaxStatus = "after-tax";
+      } else {
+        investment.value -= rc;
+        console.log("hellooo");
+        const newInvestmentObject = {
+          _id: uuidv4(),
+          investmentType: investment.investmentType,
+          // investmentType: investmentTypes.find(type => type._id === investment.investmentType),
+          value: rc,
+          accountTaxStatus: "after-tax",
+          // is this needed?
+          purchasePrice: rc
+        };
+                
+        // save or process the object (e.g., store in another array or database)
+        investments.push(newInvestmentObject); // optional, depending on your context
+        
+        // push only the ID to the scenario
+        scenario.setOfInvestments.push(newInvestmentObject._id);
+     
+        rc = 0;
+      }
+        //  console.log('scenario.investments :>> ', scenario.setOfInvestments);
+        // console.log('investments :>> ', investments);
+    }
+    
+  }
+  // console.log('scenario.investments :>> ', scenario.setOfInvestments);
+  // console.log('investments :>> ', investments);
+  curYearIncome += rc;
+  return curYearIncome;
 }
 // incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment);
 
 function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment) {
   for (let incomeEvent of incomeEvents) {
-    // console.log('incomeEvent.initialAmt IS HERE :>> ', incomeEvent.initialAmount);
 
     startYear = incomeEvent.startYearCalc;
     endYear = incomeEvent.startYearCalc + incomeEvent.durationCalc;
@@ -128,17 +146,17 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
       } else if (annualChange.type == "percentage") {
         incomeValue *= 1 + amt * 0.01;
       }
-      if (incomeEvent.inflationAdjustment) incomeValue *= 1 + inflationRate;
-
-      // is this set before or after inflation adjustment?
-      incomeEvent.initialAmount = incomeValue;
+      if (incomeEvent.inflationAdjustment)
+        incomeValue *= (1 + (inflationRate));      
 
       if (filingStatus == "marriedFilingJointly" && year > scenario.birthYearSpouse + scenario.lifeExpectancySpouse) {
         incomeValue *= incomeEvent.userPercentage * 0.01;
       }
 
+      incomeEvent.initialAmount = incomeValue;
+
       cashInvestment += incomeValue;
-      curYearIncome += cashInvestment;
+      curYearIncome += incomeValue; 
       if (incomeEvent.isSocialSecurity) {
         curYearSS += incomeValue; // incomeValue because social security does not apply to cash investments
       }
@@ -276,7 +294,7 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     }
     // retirement account limit - after tax
     irsLimit *= 1 + inflationRate;
-
+    console.log("IRS LIMTIT", irsLimit);
     // RUN INCOME EVENTS
     let curYearIncome = 0;
     let curYearSS = 0;
@@ -302,10 +320,56 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     console.log("in algo investments: ", investments);
     //   // UPDATE INVESTMENT VALUES
 
-    // RUN ROTH CONVERSION IF ENABLED
-    if (scenario.optimizerSettings.enabled && year >= scenario.optimizerSettings.startYear && year <= scenario.optimizerSettings.endYear) {
-      rothConversion(scenario, year, curYearIncome, curYearSS, fedIncomeTaxBracket);
+    // function updateInvestmentValues(investments) {
+    //   // Calculate the generated income, using the given fixed amount or percentage, or sampling from the specified probability distribution.  
+    //   for(let investment in investments){
+    //     let investmentType = investmentTypes.find(type => type._id === investment.investmentType);
+    //     let annualIncome = investmentType.annualIncome;
+    //     let incomeValue = 0;
+    //     if (annualIncome.distribution == "none") {
+    //       incomeValue = annualIncome.value;
+    //     } else if (annualIncome.distribution == "uniform") {
+    //       incomeValue = calculateUniformDist(annualIncome.min, annualIncome.max);
+    //     } else {
+    //       incomeValue = calculateNormalDist(annualIncome.stdDev, annualIncome.mean);
+    //     }
+    //     if (annualIncome.type == "fixed") {
+    //       incomeValue += amt;
+    //     } else if (annualIncome.type == "percentage") {
+    //       incomeValue *= (1 + (amt * 0.01));
+    //     }
+    //   }
+    //   // Add the income to curYearIncome, if the investment’s tax status is ‘non-retirement’ and the investment type’s taxability is ‘taxable’. 
+
+    //   // Calculate the change in value, using the given fixed amount or percentage, or sampling from the specified probability distribution.
+
+    //   // Add the income to the value of the investment
+
+    //   // Calculate this year’s expenses, by multiplying the expense ratio and the average value of the investment (i.e., the average of its value at the beginning and end of the year).  Subtract the expenses from the value.
+
+    // }
+    // updateInvestmentValues();
+
+
+    // find all the investment objects by the roth conversion strategy ids
+    let rothConversionStrategyInvestments=[]
+    console.log('scenario.rothConversionStrategy :>> ', scenario.rothConversionStrategy);
+    console.log('invest :>> ', investments);
+    for (let investment of scenario.rothConversionStrategy) {
+      let foundInvestment = investments.find(inv => inv._id === investment);
+      console.log('foundInvestment :>> ', foundInvestment);
+      if (foundInvestment) {
+        rothConversionStrategyInvestments.push(foundInvestment);
+      }
     }
+    console.log('rothConversionStrategyInvestments :>> ', rothConversionStrategyInvestments);
+
+      // RUN ROTH CONVERSION IF ENABLED
+      if (scenario.optimizerSettings.enabled && year >= scenario.optimizerSettings.startYear && year <= scenario.optimizerSettings.endYear) {
+        curYearIncome = rothConversion(scenario, year, curYearIncome, curYearSS, fedIncomeTaxBracket, investmentTypes, investments, curYearEarlyWithdrawals, rothConversionStrategyInvestments);
+      }
+  console.log('scenario.investments :>> ', scenario.setOfInvestments);
+  console.log('investments :>> ', investments);
 
     //   // PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
     curYearSS = 20;
@@ -330,15 +394,15 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     );
 
     //   // PAY DISCRETIONARY EXPENSES
-    payDiscretionaryExpenses(scenario, cashInvestment, investments, expenseEvent, year, userAge);
+    // payDiscretionaryExpenses(scenario, cashInvestment, investments, expenseEvent, year, userAge);
 
 
     //   // RUN INVEST EVENT
-    runInvestStrategy(scenario, cashInvestment, irsLimit, investEvent, year, investments);
+    // runInvestStrategy(scenario, cashInvestment, irsLimit, investEvent, year, investments);
 
 
     //   // RUN REBALANCE EVENT
-    rebalance(scenario, curYearGains, investments, rebalanceEvent, year);
+    // rebalance(scenario, curYearGains, investments, rebalanceEvent, year);
 
     prevYear += 1;
   }
@@ -414,4 +478,5 @@ async function main(numScenarioTimes, scenarioId) {
 }
 
 // Call the main function to execute everything
-main(1, "67df22db4996aba7bb6e8d73");
+// main(1, "67df22db4996aba7bb6e8d73");
+main(1, "67e084385ca2a5376ad2efd2");
