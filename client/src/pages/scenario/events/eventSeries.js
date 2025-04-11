@@ -1,117 +1,120 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useContext } from "react";
 import {
-  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, 
-  Box, List, ListItem, ListItemText, 
-  IconButton,
+  ThemeProvider, CssBaseline, Container, Stack, Box,
 } from "@mui/material";
 import theme from "../../../components/theme";
 import Navbar from "../../../components/navbar";
-import PageHeader from "../../../components/pageHeader";
+
 import {
-  stackStyles, titleStyles, buttonStyles, rowBoxStyles, 
-  backContinueContainerStyles, textFieldStyles, toggleButtonGroupStyles
+    backContinueContainerStyles,
+    buttonStyles,
+    rowBoxStyles,
 } from "../../../components/styles";
 
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete"; 
 import CustomDropdown from "../../../components/customDropDown"; 
 import CustomInput from "../../../components/customInputBox";
 import CustomToggle from "../../../components/customToggle";
 
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
-import { AuthContext } from "../../../context/authContext";
 
-//const EventSeries = ({ formValues, handleInputChange }) => {
-const EventSeries = () => {
+const EventSeries = ({ formValues, setFormValues }) => {
+// const EventSeries = () => {
     const { eventEditMode, currIncome, currExpense, currInvest, currRebalance } = useContext(AppContext);
     
     const menuLabels = [];
     const menuItems = [];
-    const eventSeriesMap = {};
+
+    const eventSeriesMap = new Map();
+    const validSet = new Set();
+
+    const buildMap = (arr) => {
+        if (!Array.isArray(arr)) return;
+        for (const { _id, eventSeriesName, startYear } of arr) {
+            eventSeriesMap.set(_id, { name: eventSeriesName, startYear });
+        }
+    };
 
     const buildOutList = () => {
-        function buildMap(arr, source) {
-            if (!Array.isArray(arr)) return; 
-            for (const eventSeries of arr) {
-                eventSeriesMap[eventSeries._id] = {
-                    name: eventSeries.eventSeriesName,
-                    startYear: eventSeries.startYear
-                };
+        buildMap(currIncome);
+        buildMap(currExpense);
+        buildMap(currInvest);
+        buildMap(currRebalance);
+
+        if (eventEditMode === "new") {
+            for (const key of eventSeriesMap.keys()) {
+                validSet.add(key);
             }
-        }
-
-        buildMap(currIncome, "Income");
-        buildMap(currExpense, "Expense");
-        buildMap(currInvest, "Invest");
-        buildMap(currRebalance, "Rebalance");
-
-        const id = eventEditMode;
-        let validSet = new Set();
-        let notValidSet = new Set([id]);
-        let buildingSet = new Set();
-
-        function resolveValue(key) {
-            if (notValidSet.has(key)) {
-                buildingSet.forEach(item => notValidSet.add(item));
-                return;
-            }
-            if (validSet.has(key)) {
-                buildingSet.forEach(item => validSet.add(item));
-                return;
-            }
-
-            buildingSet.add(key);
-
-            const entry = eventSeriesMap[key];
-            if (entry) {
-                if (entry.startYear.type !== "same" && entry.startYear.type !== "after") {
-                    buildingSet.forEach(item => validSet.add(item));
-                    return;
-                }
-
-                const value = entry.startYear.refer;
-
-                if (eventSeriesMap.hasOwnProperty(value)) {
-                    return resolveValue(value);
-                }
-            }
-
-            buildingSet.forEach(item => validSet.add(item));
             return;
         }
 
-        for (const key of Object.keys(eventSeriesMap)) {
-            buildingSet = new Set(); // Reset for each traversal
+        const notValidSet = new Set([eventEditMode]);
+
+        const resolveValue = (key, path = new Set()) => {
+            if (notValidSet.has(key)) {
+                path.forEach(id => notValidSet.add(id));
+                return;
+            }
+
+            if (validSet.has(key)) {
+                path.forEach(id => validSet.add(id));
+                return;
+            }
+
+            path.add(key);
+
+            const entry = eventSeriesMap.get(key);
+            if (entry) {
+                const { type, refer } = entry.startYear || {};
+                if (type !== "same" && type !== "after") {
+                    path.forEach(id => validSet.add(id));
+                    return;
+                }
+
+                if (eventSeriesMap.has(refer)) {
+                    resolveValue(refer, new Set(path)); // Pass a copy
+                    return;
+                }
+            }
+
+            path.forEach(id => validSet.add(id));
+        };
+
+        for (const key of eventSeriesMap.keys()) {
             resolveValue(key);
         }
+    };
+
+    // Run build and populate menu
+    buildOutList();
+
+    for (const id of validSet) {
+        menuLabels.push((eventSeriesMap.get(id)).name);
+        menuItems.push(id);
     }
     
-    const [formValues, setFormValues] = useState({
-        _id:"",
-        eventSeriesName: "",
-        description: "",
-        startYear: {
-            type: "fixedAmt",
-            value: "",
-            mean: "",
-            stdDev: "",
-            min: "",
-            max: "",
-            refer: "", 
-        },
-        duration: {
-            type: "fixedAmt",
-            value: "",
-            mean: "",
-            stdDev: "",
-            min: "",
-            max: ""
-        },});
+    // const [formValues, setFormValues] = useState({
+    //     _id:"",
+    //     eventSeriesName: "",
+    //     description: "",
+    //     startYear: {
+    //         type: "fixedAmt",
+    //         value: "",
+    //         mean: "",
+    //         stdDev: "",
+    //         min: "",
+    //         max: "",
+    //         refer: "", 
+    //     },
+    //     duration: {
+    //         type: "fixedAmt",
+    //         value: "",
+    //         mean: "",
+    //         stdDev: "",
+    //         min: "",
+    //         max: ""
+    // },});
         
-        const handleInputChange = (field, value) => {
+    const handleInputChange = (field, value) => {
         const fieldParts = field.split("."); // Split the field into parts (e.g., "lifeExpectancy.mean")
         
         setFormValues((prev) => {
@@ -148,12 +151,9 @@ const EventSeries = () => {
         });
     };
 
-    return (<>
-        <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Navbar currentPage={""} />
-        <Container>
-
+    return (
+        <>
+            <Box sx={{width: "100%"}}>
             <CustomInput 
                 title="Event name" 
                 value={formValues.eventSeriesName} 
@@ -166,138 +166,151 @@ const EventSeries = () => {
                 value={formValues.eventSeriesDescription} 
                 setValue={(value) => handleInputChange("eventSeriesDescription", value)} 
             />
-            <CustomInput
-                title="Maximum Cash"
-                type="number"
-                adornment="$"
-                value={formValues.maxCash}
-                setValue={(value) => handleInputChange("maxCash", value)}
-                inputProps={{ min: 0 }}
-            /> 
+            </Box>
 
-            <CustomToggle
-                title="Start Year"
-                labels={["Fixed", "Normal", "Uniform", "Same as", "After"]}
-                values={["fixedAmt", "normal", "uniform", "same", "after"]}
-                value={formValues.startYear.type}
-                setValue={(value) => handleInputChange("startYear.type", value)}
-            />
-
-            <Box sx={{mt:2}}></Box>
-
-            {formValues.startYear.type === "fixedAmt" && (
-                <Stack direction="row" spacing={1} alignItems="start">
-                    <CustomInput 
-                        title="Value"
-                        type="number"
-                        value={formValues.startYear.value}
-                        setValue={(value) => handleInputChange("startYear.value", value)}
-                    />
-                </Stack>
-            )}
-            {formValues.startYear.type === "normal" && (
-                <Stack direction="row" spacing={1} alignItems="start">
-                    <CustomInput 
-                        title="Mean"
-                        type="number"
-                        value={formValues.startYear.mean}
-                        setValue={(value) => handleInputChange("startYear.mean", value)}
-                    />
-                    <CustomInput 
-                        title="Standard Deviation"
-                        type="number"
-                        value={formValues.startYear.stdDev}
-                        setValue={(value) => handleInputChange("startYear.stdDev", value)}
-                    />
-                </Stack>
-            )}
-            {formValues.startYear.type === "uniform" && (
-                <Stack direction="row" spacing={1} alignItems="start">
-                    <CustomInput 
-                        title="Min"
-                        type="number"
-                        value={formValues.startYear.min}
-                        setValue={(value) => handleInputChange("startYear.min", value)}
-                    />
-                    <CustomInput 
-                        title="Max"
-                        type="number"
-                        value={formValues.startYear.max}
-                        setValue={(value) => handleInputChange("startYear.max", value)}
-                    />
-                </Stack>
-            )}
-            {formValues.startYear.type === "same" && (
-                <Stack direction="row" spacing={1} alignItems="start">
-                </Stack>
-            )}
-            {formValues.startYear.type === "after" && (
-                <Stack direction="row" spacing={1} alignItems="start">
-                </Stack>
-            )}
-
-            <Box sx={{mt:2}}></Box>
-
-            {/* Input Fields Below in Columns */}
-            <Stack direction="row" spacing={1} alignItems="start">
+            <Box sx={rowBoxStyles}>
+            <Box width={{width: 400}}>
                 <CustomToggle
-                    title="Duration"
-                    labels={["Fixed", "Normal", "Uniform"]}
-                    values={["fixedAmt", "normal", "uniform"]}
-                    width={100}
-                    value={formValues.duration.type}
-                    setValue={(value) => handleInputChange("duration.type", value)}
+                    title="Start Year"
+                    labels={["Fixed", "Normal", "Uniform", "Same as", "After"]}
+                    values={["fixedAmt", "normal", "uniform", "same", "after"]}
+                    value={formValues.startYear.type}
+                    setValue={(value) => handleInputChange("startYear.type", value)}
                 />
 
-                {formValues.duration.type === "fixedAmt" && (
+                <Box sx={{mt:2}}></Box>
+
+                {formValues.startYear.type === "fixedAmt" && (
                     <Stack direction="row" spacing={1} alignItems="start">
-                    <CustomInput 
-                        title="Value"
-                        type="number"
-                        value={formValues.duration.value}
-                        setValue={(value) => handleInputChange("duration.value", value)}
-                    />
+                        <CustomInput 
+                            title="Value"
+                            type="number"
+                            value={formValues.startYear.value}
+                            setValue={(value) => handleInputChange("startYear.value", value)}
+                        />
                     </Stack>
                 )}
-
-                {formValues.duration.type === "normal" && (
+                {formValues.startYear.type === "normal" && (
                     <Stack direction="row" spacing={1} alignItems="start">
                         <CustomInput 
                             title="Mean"
                             type="number"
-                            value={formValues.duration.mean}
-                            setValue={(value) => handleInputChange("duration.mean", value)}
+                            value={formValues.startYear.mean}
+                            setValue={(value) => handleInputChange("startYear.mean", value)}
                         />
                         <CustomInput 
                             title="Standard Deviation"
                             type="number"
-                            value={formValues.duration.stdDev}
-                            setValue={(value) => handleInputChange("duration.stdDev", value)}
+                            value={formValues.startYear.stdDev}
+                            setValue={(value) => handleInputChange("startYear.stdDev", value)}
                         />
                     </Stack>
                 )}
-
-                {formValues.duration.type === "uniform" && (
+                {formValues.startYear.type === "uniform" && (
                     <Stack direction="row" spacing={1} alignItems="start">
                         <CustomInput 
                             title="Min"
                             type="number"
-                            value={formValues.duration.min}
-                            setValue={(value) => handleInputChange("duration.min", value)}
+                            value={formValues.startYear.min}
+                            setValue={(value) => handleInputChange("startYear.min", value)}
                         />
                         <CustomInput 
                             title="Max"
                             type="number"
-                            value={formValues.duration.max}
-                            setValue={(value) => handleInputChange("duration.max", value)}
+                            value={formValues.startYear.max}
+                            setValue={(value) => handleInputChange("startYear.max", value)}
                         />
                     </Stack>
                 )}
-            </Stack>
-        
-        </Container>
-    </ThemeProvider>
-  </>);
+                {formValues.startYear.type === "same" && (
+                    <Stack direction="row" spacing={1} alignItems="start">
+                        <CustomDropdown 
+                            label={"Event Series"}
+                            value={formValues.startYear.refer}
+                            setValue={(value) => handleInputChange("startYear.refer", value)}
+                            menuLabels={menuLabels}
+                            menuItems={menuItems}
+                            width={250}
+                        />
+                    </Stack>
+                )}
+                {formValues.startYear.type === "after" && (
+                    <Stack direction="row" spacing={1} alignItems="start">
+                        <CustomDropdown 
+                            label={"Event Series"}
+                            value={formValues.startYear.refer}
+                            setValue={(value) => handleInputChange("startYear.refer", value)}
+                            menuLabels={menuLabels}
+                            menuItems={menuItems}
+                            width={250}
+                        />
+                    </Stack>
+                )}
+            </Box>
+
+            <Box sx={{mt:2}}></Box>
+
+            {/* Input Fields Below in Columns */}
+            <Box>
+            <CustomToggle
+                title="Duration"
+                labels={["Fixed", "Normal", "Uniform"]}
+                values={["fixedAmt", "normal", "uniform"]}
+                width={100}
+                value={formValues.duration.type}
+                setValue={(value) => handleInputChange("duration.type", value)}
+            />
+
+            <Box sx={{mt:2}}></Box>
+
+            {formValues.duration.type === "fixedAmt" && (
+                <Stack direction="row" spacing={1} alignItems="start">
+                <CustomInput 
+                    title="Value"
+                    type="number"
+                    value={formValues.duration.value}
+                    setValue={(value) => handleInputChange("duration.value", value)}
+                />
+                </Stack>
+            )}
+
+            {formValues.duration.type === "normal" && (
+                <Stack direction="row" spacing={1} alignItems="start">
+                    <CustomInput 
+                        title="Mean"
+                        type="number"
+                        value={formValues.duration.mean}
+                        setValue={(value) => handleInputChange("duration.mean", value)}
+                    />
+                    <CustomInput 
+                        title="Standard Deviation"
+                        type="number"
+                        value={formValues.duration.stdDev}
+                        setValue={(value) => handleInputChange("duration.stdDev", value)}
+                    />
+                </Stack>
+            )}
+
+            {formValues.duration.type === "uniform" && (
+                <Stack direction="row" spacing={1} alignItems="start">
+                    <CustomInput 
+                        title="Min"
+                        type="number"
+                        value={formValues.duration.min}
+                        setValue={(value) => handleInputChange("duration.min", value)}
+                    />
+                    <CustomInput 
+                        title="Max"
+                        type="number"
+                        value={formValues.duration.max}
+                        setValue={(value) => handleInputChange("duration.max", value)}
+                    />
+                </Stack>
+            )}
+            </Box>
+            </Box>
+        </>
+    );
 };
 
 export default EventSeries;

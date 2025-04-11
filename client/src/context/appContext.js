@@ -134,7 +134,7 @@ export const AppProvider = ({ children }) => {
 
     const loadScenarioData = async () => {
       // console.log(scenarioData);
-      localStorage.setItem("edit", JSON.stringify(editMode));
+      
 
       if (editMode !== "new" && editMode !== null) {
         setCurrScenario(getScenarioById(editMode));
@@ -166,6 +166,8 @@ export const AppProvider = ({ children }) => {
         setCurrInvestmentTypes(investmentTypes);
         setTakenTaxStatusAccounts(takenTaxStatusAccounts);
       } 
+
+      localStorage.setItem("edit", JSON.stringify(editMode));
     };
 
     loadScenarioData();
