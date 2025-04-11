@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Scenario = require("../models/scenario.js");
 const Investment = require("../models/investment.js");
+const User = require("../models/user.js");
 const { ObjectId } = mongoose.Types;
 
 exports.scenario = async (req, res) => {
@@ -19,7 +20,7 @@ exports.scenario = async (req, res) => {
 exports.basicInfo = async (req, res) => {
   const { id } = req.params; //user id
   try {
-    const { name, filingStatus, financialGoal, inflationAssumption, birthYearUser, lifeExpectancy, stateResident } = req.body;
+    const { name, filingStatus, financialGoal, inflationAssumption, birthYearUser, lifeExpectancy, stateResident, birthYearSpouse, lifeExpectancySpouse } = req.body;
     console.log("why");
     const newBasicInfo = new Scenario({
       name,
@@ -39,6 +40,13 @@ exports.basicInfo = async (req, res) => {
         fixedAge: lifeExpectancy.fixedAge,
         mean: lifeExpectancy.mean,
         stdDev: lifeExpectancy.stdDev,
+      },
+      birthYearSpouse,
+      lifeExpectancySpouse: {
+        type: lifeExpectancySpouse.lifeExpectancyType,
+        fixedAge: lifeExpectancySpouse.fixedAge,
+        mean: lifeExpectancySpouse.mean,
+        stdDev: lifeExpectancySpouse.stdDev,
       },
       stateResident,
     });

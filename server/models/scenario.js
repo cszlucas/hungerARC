@@ -1,15 +1,22 @@
 var mongoose = require("mongoose");
 var Schema = mongoose.Schema;
 
-
-
-
-
 var scenarioSchema = new Schema({
   name: { type: String },
   filingStatus: { type: String },
   birthYearUser: { type: Number },
   lifeExpectancy: {
+    type: {
+      type: String,
+      // percentage
+      enum: ["fixed", "normal", ""],
+    },
+    fixedAge: { type: Number },
+    mean: { type: Number },
+    stdDev: { type: Number },
+  },
+  birthYearSpouse: { type: Number },
+  lifeExpectancySpouse: {
     type: {
       type: String,
       // percentage
