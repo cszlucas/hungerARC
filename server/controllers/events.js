@@ -76,6 +76,19 @@ exports.updateIncome = async (req, res) => {
   }
 };
 
+exports.deleteIncomeEvent = async (req, res) => { 
+  const { id } = req.params; // income event id
+  try {
+    const incomeEvent = await IncomeEvent.findByIdAndDelete(id); // delete the income event based on its id
+    if (!incomeEvent) {
+      return res.status(404).json({ message: "Income event not found" });
+    }
+    res.status(200).json({ message: "Income event deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: "Error deleting income event", message: err.message });
+  }
+};
+
 //get all income events based on the scenario id
 exports.getAllIncomeEventsByScenario = async (req, res) => {
   const { id } = req.params;
@@ -151,6 +164,19 @@ exports.updateExpense = async (req, res) => {
   }
 };
 
+exports.deleteExpenseEvent = async (req, res) => {
+  const { id } = req.params; // expense event id
+  try {
+    const expenseEvent = await ExpenseEvent.findByIdAndDelete(id); // delete the expense event based on its id
+    if (!expenseEvent) {
+      return res.status(404).json({ message: "Expense event not found" });
+    }
+    res.status(200).json({ message: "Expense event deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: "Error deleting expense event", message: err.message });
+  }
+};
+
 // INVEST STRATEGY EVENTS
 
 // add a new invest event to investevent collection
@@ -169,7 +195,7 @@ exports.createInvestStrategy = async (req, res) => {
         fixedPercentages: assetAllocation.fixedPercentages,
         initialPercentages: assetAllocation.initialPercentages,
         finalPercentages: assetAllocation.finalPercentages,
-      },
+      },  
       maxCash,
     });
 
@@ -220,6 +246,19 @@ exports.updateInvestStrategy = async (req, res) => {
     return res.status(200).json({ message: "Document updated successfully", result });
   } catch (err) {
     res.status(500).json({ error: "Failed to retrieve strategy data", message: err.message });
+  }
+};
+
+exports.deleteInvestEvent = async (req, res) => { 
+  const { id } = req.params; // invest event id
+  try {
+    const investEvent = await InvestEvent.findByIdAndDelete(id); // delete the invest event based on its id
+    if (!investEvent) {
+      return res.status(404).json({ message: "Invest event not found" });
+    }
+    res.status(200).json({ message: "Invest event deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: "Error deleting invest event", message: err.message });
   }
 };
 
@@ -292,6 +331,19 @@ exports.updateRebalanceStrategy = async (req, res) => {
     return res.status(200).json({ message: "Document updated successfully", result });
   } catch (err) {
     res.status(500).json({ error: "Failed to retrieve Rebalance strategy data", message: err.message });
+  }
+};
+
+exports.deleteRebalanceEvent = async (req, res) => {
+  const { id } = req.params; // rebalance event id
+  try {
+    const rebalanceEvent = await RebalanceEvent.findByIdAndDelete(id); // delete the rebalance event based on its id
+    if (!rebalanceEvent) {
+      return res.status(404).json({ message: "Rebalance event not found" });
+    }
+    res.status(200).json({ message: "Rebalance event deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: "Error deleting rebalance event", message: err.message });
   }
 };
 
