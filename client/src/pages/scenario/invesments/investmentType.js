@@ -93,21 +93,25 @@ const InvestmentType = () => {
     };
 
     const handleUpdateLocalStorageForNewInvestmentType = (id) => {
-      handleInputChange("_id", id);
-      handleAppendInScenario("setOfInvestmentTypes", id);
-    }; 
+      const updatedForm = { ...formValues, _id: id }; // Create a copy with new _id
+      setFormValues(updatedForm); // Update the form state
+      handleAppendInScenario("setOfInvestmentTypes", id); // Append to scenario
+      setCurrInvestmentTypes((prev) => [...(Array.isArray(prev) ? prev : []), updatedForm]); // Use updated object
+    };    
 
     try {
       let id = eventEditMode;
       console.log(id);
       if (!user.guest) {
         if (id === "new") {
+          console.log("Reached here");
           const response = await axios.post(`http://localhost:8080/scenario/${editMode}/investmentType`, formValues);
           id = response.data._id;
           handleUpdateLocalStorageForNewInvestmentType(id);
         } else {
           await axios.post(`http://localhost:8080/updateInvestmentType/${id}`, formValues);
           setCurrInvestmentTypes((prev) => prev.filter((item) => item._id !== id));
+          setCurrInvestmentTypes((prev) => { return [...(Array.isArray(prev) ? prev : []), formValues];});
         }
       } else {
         if (id === "new") {
@@ -115,12 +119,10 @@ const InvestmentType = () => {
           handleUpdateLocalStorageForNewInvestmentType(id);
         } else {
           setCurrInvestmentTypes((prev) => prev.filter((item) => item._id !== id));
+          setCurrInvestmentTypes((prev) => { return [...(Array.isArray(prev) ? prev : []), formValues];});
         }
       }
-      setCurrInvestmentTypes((prev) => { return [...(Array.isArray(prev) ? prev : []), formValues];});
       setEventEditMode(null);
-      // console.log("Data successfully saved:", response.data);
-      // alert("Investment Type has been added");
     } catch (error) {
       console.error("Error saving data:", error);
       alert("Failed to save data!");

@@ -252,7 +252,7 @@ const Strategies = () => {
         </Box> 
           <Box sx={backContinueContainerStyles}>
                   <Button variant="contained" color="primary" sx={buttonStyles}
-                      onClick={() => navigate("/scenario/event_series")}
+                      onClick={() => navigate("/scenario/event_series_list")}
                   >
                       Back
                   </Button>

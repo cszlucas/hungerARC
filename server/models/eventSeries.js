@@ -9,14 +9,14 @@ var BaseEventSchema = new Schema({
     type: {
       type: String,
       // will be either one of these fields
-      enum: ["fixedAmt", "normal", "uniform", "year", ""],
+      enum: ["fixedAmt", "normal", "uniform", "same", "after", ""],
     },
     value: { type: Number },
     mean: { type: Number },
     stdDev: { type: Number },
     min: { type: Number },
     max: { type: Number },
-    year: { type: Number },
+    refer:  [{ type: Schema.Types.ObjectId}],
   },
   duration: {
     type: {

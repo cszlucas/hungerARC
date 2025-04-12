@@ -12,6 +12,8 @@ export const defaultInfo = {
   "residence": "",
   "birthYear": "",
   "lifeExpectancy": { "type": "fixed", "fixedAge": "" },
+  "birthYearSpouse": "",
+  "lifeExpectancySpouse": { "type": "fixed", "fixedAge": "" },
   "startYear": "",
   "endYear": "",
   "expenseEventSeries": [],
@@ -81,6 +83,7 @@ const retrieveScenarioData = async (scenarioId, dataType) => {
       const response = await axios.get(`http://localhost:8080/scenario/${scenarioId}/${dataType}`);
       const data = response.data || [];
       localStorage.setItem(`current${capitalizeFirstLetter(dataType)}`, JSON.stringify(data));
+      console.log(data);
 
       console.log(`Data for ${dataType} stored in localStorage.`);
       return data;
@@ -133,7 +136,7 @@ export const AppProvider = ({ children }) => {
 
     const loadScenarioData = async () => {
       // console.log(scenarioData);
-      localStorage.setItem("edit", JSON.stringify(editMode));
+      
 
       if (editMode !== "new" && editMode !== null) {
         setCurrScenario(getScenarioById(editMode));
@@ -156,6 +159,7 @@ export const AppProvider = ({ children }) => {
           else { takenTaxStatusAccounts[type] = [status]; }
         }
 
+
         setCurrInvestments(investments);
         setCurrIncome(income);
         setCurrExpense(expenses);
@@ -164,6 +168,8 @@ export const AppProvider = ({ children }) => {
         setCurrInvestmentTypes(investmentTypes);
         setTakenTaxStatusAccounts(takenTaxStatusAccounts);
       } 
+
+      localStorage.setItem("edit", JSON.stringify(editMode));
     };
 
     loadScenarioData();
@@ -205,6 +211,7 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     if (eventEditMode) localStorage.setItem("editEvent", JSON.stringify(eventEditMode));
+    console.log(eventEditMode);
   }, [eventEditMode]);
 
   useEffect(() => {

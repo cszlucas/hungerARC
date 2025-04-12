@@ -187,8 +187,8 @@ const Basics = () => {
             <CustomInput
               title="Spouse's Birth Year"
               type="number"
-              value={currScenario.spouseBirthYear}
-              setValue={(value) => handleInputChange("spouseBirthYear", value)}
+              value={currScenario.birthYearSpouse}
+              setValue={(value) => handleInputChange("birthYearSpouse", value)}
               inputProps={{ min: "0" }}
             />
 
@@ -198,16 +198,16 @@ const Basics = () => {
               values={["fixed", "normal"]}
               sideView={false}
               width={100}
-              value={currScenario.spouseSampleAge}
-              setValue={(value) => handleInputChange("spouseSampleAge", value)}
+              value={currScenario.lifeExpectancySpouse.type}
+              setValue={(value) => handleInputChange("lifeExpectancySpouse.type", value)}
             />
 
-            {currScenario.spouseSampleAge === "fixed" ? (
+            {currScenario.lifeExpectancySpouse.type === "fixed" ? (
               <CustomInput
                 title="Spouse's Life Expectancy"
                 type="number"
-                value={currScenario.spouseLifeExpectancy}
-                setValue={(value) => handleInputChange("spouseLifeExpectancy", value)}
+                value={currScenario.lifeExpectancySpouse.fixedAge}
+                setValue={(value) => handleInputChange("lifeExpectancySpouse.fixedAge", value)}
                 inputProps={{ min: "0" }}
               />
             ) : (
@@ -215,15 +215,15 @@ const Basics = () => {
                 <CustomInput
                   title="Mean"
                   type="number"
-                  value={currScenario.spouseMean}
-                  setValue={(value) => handleInputChange("spouseMean", value)}
+                  value={currScenario.lifeExpectancySpouse.mean}
+                  setValue={(value) => handleInputChange("lifeExpectancySpouse.mean", value)}
                   inputProps={{ min: "0" }}
                 />
                 <CustomInput
                   title="Standard Deviation"
                   type="number"
-                  value={currScenario.spouseStdDev}
-                  setValue={(value) => handleInputChange("spouseStdDev", value)}
+                  value={currScenario.lifeExpectancySpouse.stdDev}
+                  setValue={(value) => handleInputChange("lifeExpectancySpouse.stdDev", value)}
                   inputProps={{ min: "0" }}
                 />
               </>

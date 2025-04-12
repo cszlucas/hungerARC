@@ -16,14 +16,12 @@ mongoose
 
 const expectedAnnualData = {
   type: "normal",
-  unit: "percentage",
   mean: 3,
   stdDev: 5,
 };
 
 const expectedAnnualPercentage = {
   type: "fixed",
-  unit: "percentage",
   fixed: 10,
   mean: 0.08,
   stdDev: 0.1,
@@ -37,14 +35,12 @@ async function createScenario() {
       description: "A conservative investment type focused on bonds.",
       annualReturn: {
         type: "normal",
-        unit: "percentage",
         mean: 0.05,
         stdDev: 0.1,
       },
       expenseRatio: 0.01,
       annualIncome: {
         type: "fixed",
-        unit: "percentage",
         fixed: 5,
         mean: 0.04,
         stdDev: 0.05,
@@ -202,7 +198,7 @@ async function createScenario() {
 
     const rebalanceEventSeries = new RebalanceEvent({
       eventSeriesName: "Rebalance 2023-2025",
-      description: "Rebalance event series 2023-2025",
+      eventSeriesDescription: "Rebalance event series 2023-2025",
       startYear: {
         type: "year",
         year: 2023,
@@ -211,20 +207,25 @@ async function createScenario() {
         type: "fixedAmt",
         value: 2,
       },
-      type: "glidePath",
-      initialPercentages: {
-        [investment1._id]: 60,
-        [investment2._id]: 40,
-      },
-      finalPercentages: {
-        [investment1._id]: 30,
-        [investment2._id]: 70,
-      },
+      taxStatus: "non-tax",
+      rebalanceAllocation: {
+        type: "glidePath",
+        initialPercentages: {
+          [investment1._id]: .6,
+          [investment2._id]: .4,
+        },
+        finalPercentages: {
+          [investment1._id]: .3,
+          [investment2._id]: .7,
+        },
+      }
     });
 
     const investStr1 = await investStrat1.save();
     const investStr2 = await investStrat2.save();
     const rebalance = await rebalanceEventSeries.save();
+
+    console.log(rebalance);
 
     const test_scenario = new Scenario({
       name: "My first scenario.",

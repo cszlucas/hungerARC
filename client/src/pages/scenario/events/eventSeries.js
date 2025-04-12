@@ -1,231 +1,316 @@
-import React, { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
-import { 
-  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, 
-  List, ListItem, ListItemText, IconButton, Backdrop, Dialog, DialogActions, DialogContent, DialogTitle 
+import React, { useContext } from "react";
+import {
+  ThemeProvider, CssBaseline, Container, Stack, Box,
 } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
-import PaymentsIcon from "@mui/icons-material/Payments";
-import SellIcon from "@mui/icons-material/Sell";
-import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
-import BalanceIcon from "@mui/icons-material/Balance";
-
-import { AppContext } from "../../../context/appContext";
 import theme from "../../../components/theme";
 import Navbar from "../../../components/navbar";
-import PageHeader from "../../../components/pageHeader";
-import CustomSave from "../../../components/customSaveBtn";
+
 import {
-  stackStyles,titleStyles, backContinueContainerStyles, buttonStyles, rowBoxStyles,
+    backContinueContainerStyles,
+    buttonStyles,
+    rowBoxStyles,
 } from "../../../components/styles";
 
+import CustomDropdown from "../../../components/customDropDown"; 
+import CustomInput from "../../../components/customInputBox";
+import CustomToggle from "../../../components/customToggle";
 
-const EventSeries = () => {
-  const [openBackdrop, setOpenBackdrop] = useState(false);
-  const {currIncome, setCurrIncome} = useContext(AppContext);
-  const {currExpense, setCurrExpense} = useContext(AppContext);
-  const {currInvest, setCurrInvest} = useContext(AppContext);
-  const {currRebalance, setCurrRebalance} = useContext(AppContext);
-  const {eventEditMode, setEventEditMode} = useContext(AppContext);
+import { AppContext } from "../../../context/appContext";
 
-  let safeCurrIncome = Array.isArray(currIncome) ? currIncome : [];
-  let safeCurrExpense = Array.isArray(currExpense) ? currExpense : [];
-  let safeCurrInvest = Array.isArray(currInvest) ? currInvest : [];
-  let safeCurrRebalance = Array.isArray(currRebalance) ? currRebalance : [];
-  
-  // 🔹 Ensure all states are arrays before merging, and add an event type label using `.map()` to add "type"
-  safeCurrIncome = Array.isArray(currIncome)  ? currIncome.map(event => ({ ...event, type: "Income" })) : [];
-  safeCurrExpense = Array.isArray(currExpense) ? currExpense.map(event => ({ ...event, type: "Expense" })) : []; 
-  safeCurrInvest = Array.isArray(currInvest) ? currInvest.map(event => ({ ...event, type: "Invest" })) : []; 
-  safeCurrRebalance = Array.isArray(currRebalance) ? currRebalance.map(event => ({ ...event, type: "Rebalance" })) : [];
-  // console.log("safety: " );
-  // console.log(safeCurrIncome);
-  // console.log(currIncome);
-  // console.log(currExpense);
-  // console.log(currInvest);
-  // console.log(currRebalance);
+const EventSeries = ({ formValues, setFormValues }) => {
+// const EventSeries = () => {
+    const { eventEditMode, currIncome, currExpense, currInvest, currRebalance } = useContext(AppContext);
+    
+    const menuLabels = [];
+    const menuItems = [];
 
-  const currEventSeries = [...safeCurrIncome, ...safeCurrExpense, ...safeCurrInvest, ...safeCurrRebalance];
-  console.log(currEventSeries);
+    const eventSeriesMap = new Map();
+    const validSet = new Set();
 
-  const navigate = useNavigate();
+    const buildMap = (arr) => {
+        if (!Array.isArray(arr)) return;
+        for (const { _id, eventSeriesName, startYear } of arr) {
+            eventSeriesMap.set(_id, { name: eventSeriesName, startYear });
+        }
+    };
 
-  // Example event series
-  const handleAddEvent = () => {
-    setOpenBackdrop(true);
-  };
+    const buildOutList = () => {
+        buildMap(currIncome);
+        buildMap(currExpense);
+        buildMap(currInvest);
+        buildMap(currRebalance);
 
-  const handleAddIncome = () => {
-    let editObject = {type: "Income", id: "new"};
-    localStorage.setItem("editEvent", JSON.stringify(editObject));
-    setEventEditMode(editObject);
-    navigate("/scenario/income");
-  };
+        if (eventEditMode === "new") {
+            for (const key of eventSeriesMap.keys()) {
+                validSet.add(key);
+            }
+            return;
+        }
 
-  const handleAddInvest = () => {
-    let editObject = {type: "Invest", id: "new"};
-    localStorage.setItem("editEvent", JSON.stringify(editObject ));
-    setEventEditMode(editObject );
-    navigate("/scenario/invest");
-  };
+        const notValidSet = new Set([eventEditMode]);
 
-  const handleAddExpense = () => {
-    let editObject = {type: "Expense", id: "new"};
-    localStorage.setItem("editEvent", JSON.stringify(editObject));
-    setEventEditMode(editObject);
-    navigate("/scenario/expense");
-  };
+        const resolveValue = (key, path = new Set()) => {
+            if (notValidSet.has(key)) {
+                path.forEach(id => notValidSet.add(id));
+                return;
+            }
 
-  const handleAddRebalance = () => {
-    let editObject = {type: "Rebalance", id: "new"};
-    localStorage.setItem("editEvent", JSON.stringify(editObject));
-    setEventEditMode(editObject);
-    navigate("/scenario/rebalance");
-  };
+            if (validSet.has(key)) {
+                path.forEach(id => validSet.add(id));
+                return;
+            }
 
-  const handleCloseBackdrop = () => {
-    setOpenBackdrop(false);
-  };
+            path.add(key);
 
-  // const handleSelectEventType = (type) => {
-  //   alert(`Selected Event: ${type}`);
-  //   setOpenBackdrop(false);
-  // };
+            const entry = eventSeriesMap.get(key);
+            if (entry) {
+                const { type, refer } = entry.startYear || {};
+                if (type !== "same" && type !== "after") {
+                    path.forEach(id => validSet.add(id));
+                    return;
+                }
 
-  const handleEditEvent = (event) => {
-    let editObject = { type: event.type, id: event._id};
-    localStorage.setItem("editEvent", JSON.stringify(editObject));
-    setEventEditMode(editObject); // 🔹 Store the event ID in context
-  
-    // 🔹 Determine the correct route based on event type
-    let route = "";
-    switch (event.type) {
-      case "Income":
-        route = "/scenario/income";
-        break;
-      case "Expense":
-        route = "/scenario/expense";
-        break;
-      case "Invest":
-        route = "/scenario/invest";
-        break;
-      case "Rebalance":
-        route = "/scenario/rebalance";
-        break;
-      default:
-        console.error("Unknown event type:", event.type);
-        return;
+                if (eventSeriesMap.has(refer)) {
+                    resolveValue(refer, new Set(path)); // Pass a copy
+                    return;
+                }
+            }
+
+            path.forEach(id => validSet.add(id));
+        };
+
+        for (const key of eventSeriesMap.keys()) {
+            resolveValue(key);
+        }
+    };
+
+    // Run build and populate menu
+    buildOutList();
+
+    for (const id of validSet) {
+        menuLabels.push((eventSeriesMap.get(id)).name);
+        menuItems.push(id);
     }
-  
-    navigate(route); // 🔹 Navigate to the correct page
-  };
+    
+    // const [formValues, setFormValues] = useState({
+    //     _id:"",
+    //     eventSeriesName: "",
+    //     description: "",
+    //     startYear: {
+    //         type: "fixedAmt",
+    //         value: "",
+    //         mean: "",
+    //         stdDev: "",
+    //         min: "",
+    //         max: "",
+    //         refer: "", 
+    //     },
+    //     duration: {
+    //         type: "fixedAmt",
+    //         value: "",
+    //         mean: "",
+    //         stdDev: "",
+    //         min: "",
+    //         max: ""
+    // },});
+        
+    const handleInputChange = (field, value) => {
+        const fieldParts = field.split("."); // Split the field into parts (e.g., "lifeExpectancy.mean")
+        
+        setFormValues((prev) => {
+            if (fieldParts.length === 3) {
+                const [grandparent, parent, child] = fieldParts; 
+                return {
+                    ...prev,
+                    [grandparent]: {
+                        ...prev[grandparent],
+                        [parent]: {
+                            ...prev[grandparent]?.[parent],
+                            [child]: value,
+                        }
+                    }
+                };
+            }
+    
+            if (fieldParts.length === 2) {
+                const [parent, child] = fieldParts; // 'lifeExpectancy' and 'mean'
+                return {
+                ...prev,
+                [parent]: { // Spread the parent object (lifeExpectancy)
+                    ...prev[parent],
+                    [child]: value, // Update the child property (mean)
+                },
+                };
+            }
+        
+            // For top-level fields (no dot notation)
+            return {
+                ...prev,
+                [field]: value,
+            };
+        });
+    };
 
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Navbar currentPage={""} />
-      <Container>
+    return (
+        <>
+            <Box sx={{width: "100%"}}>
+            <CustomInput 
+                title="Event name" 
+                value={formValues.eventSeriesName} 
+                setValue={(value) => handleInputChange("eventSeriesName", value)} 
+            />
 
-        {/* Stack for title and save button */}
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={stackStyles}>
-          <Typography variant="h2" component="h1" sx={titleStyles}>
-            Event Series
-          </Typography>
-          <CustomSave label={"Save"}/>
-        </Stack>
+            <CustomInput 
+                title="Description (Optional)" 
+                type="multiline" 
+                value={formValues.eventSeriesDescription} 
+                setValue={(value) => handleInputChange("eventSeriesDescription", value)} 
+            />
+            </Box>
 
-        <PageHeader />
+            <Box sx={rowBoxStyles}>
+            <Box width={{width: 400}}>
+                <CustomToggle
+                    title="Start Year"
+                    labels={["Fixed", "Normal", "Uniform", "Same as", "After"]}
+                    values={["fixedAmt", "normal", "uniform", "same", "after"]}
+                    value={formValues.startYear.type}
+                    setValue={(value) => handleInputChange("startYear.type", value)}
+                />
 
-        <Box sx={rowBoxStyles}>
-          {/* List of Event Series */}
-          <Box sx={{ flex: 1 }}>
-            
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <Typography variant="h6" sx={{ fontWeight: "bold", marginTop: 4, marginBottom: 2 }}>
-                List of Event Series
-              </Typography>
-              <Button variant="contained" color="primary" onClick={handleAddEvent} sx={{ textTransform: "none" }}>
-                Add
-              </Button>
-            </Stack>
-            <List>
-              {currEventSeries.map((event, index) => {
-                // const eventName = Object.keys(event)[0];
-                // const eventType = event[eventName];
-                return (
-                  <ListItem 
-                    key={index} 
-                    sx={{
-                      backgroundColor: index % 2 === 0 ? "#BBBBBB" : "#D9D9D9",
-                      "&:hover": {
-                        backgroundColor: "#B0B0B0",
-                      },
-                    }}
-                  >
-                    <ListItemText
-                      primary={<span style={{ fontWeight: "bold" }}>{event.eventSeriesName}</span>} 
-                      secondary={event.type} 
+                <Box sx={{mt:2}}></Box>
+
+                {formValues.startYear.type === "fixedAmt" && (
+                    <Stack direction="row" spacing={1} alignItems="start">
+                        <CustomInput 
+                            title="Value"
+                            type="number"
+                            value={formValues.startYear.value}
+                            setValue={(value) => handleInputChange("startYear.value", value)}
+                        />
+                    </Stack>
+                )}
+                {formValues.startYear.type === "normal" && (
+                    <Stack direction="row" spacing={1} alignItems="start">
+                        <CustomInput 
+                            title="Mean"
+                            type="number"
+                            value={formValues.startYear.mean}
+                            setValue={(value) => handleInputChange("startYear.mean", value)}
+                        />
+                        <CustomInput 
+                            title="Standard Deviation"
+                            type="number"
+                            value={formValues.startYear.stdDev}
+                            setValue={(value) => handleInputChange("startYear.stdDev", value)}
+                        />
+                    </Stack>
+                )}
+                {formValues.startYear.type === "uniform" && (
+                    <Stack direction="row" spacing={1} alignItems="start">
+                        <CustomInput 
+                            title="Min"
+                            type="number"
+                            value={formValues.startYear.min}
+                            setValue={(value) => handleInputChange("startYear.min", value)}
+                        />
+                        <CustomInput 
+                            title="Max"
+                            type="number"
+                            value={formValues.startYear.max}
+                            setValue={(value) => handleInputChange("startYear.max", value)}
+                        />
+                    </Stack>
+                )}
+                {formValues.startYear.type === "same" && (
+                    <Stack direction="row" spacing={1} alignItems="start">
+                        <CustomDropdown 
+                            label={"Event Series"}
+                            value={formValues.startYear.refer}
+                            setValue={(value) => handleInputChange("startYear.refer", value)}
+                            menuLabels={menuLabels}
+                            menuItems={menuItems}
+                            width={250}
+                        />
+                    </Stack>
+                )}
+                {formValues.startYear.type === "after" && (
+                    <Stack direction="row" spacing={1} alignItems="start">
+                        <CustomDropdown 
+                            label={"Event Series"}
+                            value={formValues.startYear.refer}
+                            setValue={(value) => handleInputChange("startYear.refer", value)}
+                            menuLabels={menuLabels}
+                            menuItems={menuItems}
+                            width={250}
+                        />
+                    </Stack>
+                )}
+            </Box>
+
+            <Box sx={{mt:2}}></Box>
+
+            {/* Input Fields Below in Columns */}
+            <Box>
+            <CustomToggle
+                title="Duration"
+                labels={["Fixed", "Normal", "Uniform"]}
+                values={["fixedAmt", "normal", "uniform"]}
+                width={100}
+                value={formValues.duration.type}
+                setValue={(value) => handleInputChange("duration.type", value)}
+            />
+
+            <Box sx={{mt:2}}></Box>
+
+            {formValues.duration.type === "fixedAmt" && (
+                <Stack direction="row" spacing={1} alignItems="start">
+                <CustomInput 
+                    title="Value"
+                    type="number"
+                    value={formValues.duration.value}
+                    setValue={(value) => handleInputChange("duration.value", value)}
+                />
+                </Stack>
+            )}
+
+            {formValues.duration.type === "normal" && (
+                <Stack direction="row" spacing={1} alignItems="start">
+                    <CustomInput 
+                        title="Mean"
+                        type="number"
+                        value={formValues.duration.mean}
+                        setValue={(value) => handleInputChange("duration.mean", value)}
                     />
-                    <IconButton edge="end" aria-label="edit" onClick={() => handleEditEvent(event)}>
-                      <EditIcon />
-                    </IconButton>
-                  </ListItem>
-                );
-              })}
-            </List>
-          </Box>
-        </Box>
+                    <CustomInput 
+                        title="Standard Deviation"
+                        type="number"
+                        value={formValues.duration.stdDev}
+                        setValue={(value) => handleInputChange("duration.stdDev", value)}
+                    />
+                </Stack>
+            )}
 
-        {/* Back and Continue buttons */}
-        <Box sx={backContinueContainerStyles}>
-          <Button variant="contained" color="primary" sx={buttonStyles}
-            onClick={() => navigate("/scenario/investment_lists")}
-          >
-            Back
-          </Button>
-          <CustomSave label={"Continue"} routeTo={"/scenario/strategies"}/>
-        </Box>
-
-        {/* Backdrop with Buttons for Event Type Selection */}
-        <Backdrop open={openBackdrop} onClick={handleCloseBackdrop} sx={{ zIndex: 1200, color: "#fff" }}>
-          <Dialog open={openBackdrop} onClose={handleCloseBackdrop} >
-            <DialogTitle>
-              <Typography variant="h5" sx={{ fontWeight: "bold", marginTop: 2, marginBottom: 1, minWidth: 400 }}>
-                Select a category
-              </Typography>
-            </DialogTitle>
-            <DialogContent>
-              <Stack direction="row" spacing={3} sx={{ justifyContent: "center" }}>
-                <Button variant="contained" onClick={handleAddIncome} 
-                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}>
-                  <PaymentsIcon sx={{ fontSize: 60, marginBottom: 1 }} />
-                  Income
-                </Button>
-                <Button variant="contained" onClick={handleAddExpense}
-                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}>
-                  <SellIcon sx={{ fontSize: 60, marginBottom: 1 }} />
-                  Expense
-                </Button>
-              </Stack>
-              <Stack direction="row" spacing={3} sx={{ justifyContent: "center", mt: 2 }}>
-                <Button variant="contained" onClick={handleAddInvest}
-                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}>
-                  <AccountBalanceIcon sx={{ fontSize: 60, marginBottom: 1 }} />
-                  Invest
-                </Button>
-                <Button variant="contained" onClick={handleAddRebalance}
-                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}>
-                  <BalanceIcon sx={{ fontSize: 60, marginBottom: 1 }} />
-                  Rebalance
-                </Button>
-              </Stack>
-            </DialogContent>
-          </Dialog>
-        </Backdrop>
-
-      </Container>
-    </ThemeProvider>
-  );
+            {formValues.duration.type === "uniform" && (
+                <Stack direction="row" spacing={1} alignItems="start">
+                    <CustomInput 
+                        title="Min"
+                        type="number"
+                        value={formValues.duration.min}
+                        setValue={(value) => handleInputChange("duration.min", value)}
+                    />
+                    <CustomInput 
+                        title="Max"
+                        type="number"
+                        value={formValues.duration.max}
+                        setValue={(value) => handleInputChange("duration.max", value)}
+                    />
+                </Stack>
+            )}
+            </Box>
+            </Box>
+        </>
+    );
 };
 
 export default EventSeries;
