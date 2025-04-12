@@ -3,13 +3,11 @@ const RMD = require("../server/models/rmd-schema");
 
 //zoe figure out year factor
 //RMDStrategyInvestOrder is an ordering on investments in pre-tax retirement accounts.
-async function performRMDs(scenario, investments, currYearIncome, currYear, userAge) {
-  //console.log("my investments ", investments);
-  const RMDStrategyInvestOrder = scenario.rmdStrategy.map((id) => {
-    return investments.find((investment) => investment._id === id);
-  });
+async function performRMDs(investments, curYearIncome, userAge, RMDStrategyInvestOrder) {
+  console.log("Perform RMDs");
   //console.log("RMDStrategyInvestOrder: ", RMDStrategyInvestOrder);
-  if (userAge >= 73 && RMDStrategyInvestOrder != null) {
+  if (userAge - 1 >= 73 && RMDStrategyInvestOrder != null) {
+    //-1 b/c prevYear
     //at least one pretax investment in previous year
     const match = await RMD.findOne({ "rmd.age": userAge }, { "rmd.$": 1 });
     const distributionPeriod = match.rmd[0].distributionPeriod;
@@ -20,32 +18,29 @@ async function performRMDs(scenario, investments, currYearIncome, currYear, user
       sumInvestmentsPreTax += preTaxInvestment.value;
     }
     rmd = sumInvestmentsPreTax / distributionPeriod;
-    currYearIncome += rmd;
-    rmd = 5; // just for testing
+    curYearIncome += rmd;
     rmdCount = rmd;
     for (let preTaxInvest of RMDStrategyInvestOrder) {
       console.log("The rmd count: ", rmdCount);
-      console.log("The pretax investment", preTaxInvest);
+      console.log("The pretax investment", preTaxInvest._id, "and value: ", preTaxInvest.value);
       if (rmdCount > 0) {
         if (preTaxInvest.value - rmdCount >= 0) {
           //able to accomplish rmd with this investment, keep some of old investment and transfer new
           transferInvestment(preTaxInvest, allInvestmentsAfterTax, rmdCount, investments);
           preTaxInvest.value -= rmdCount;
-          console.log("can pay all this round. pretax investment", preTaxInvest);
+          console.log("can perform rmd all this round. The old pretax investment", preTaxInvest._id, " now has", preTaxInvest.value);
           break;
         } else {
           //not able to accomplish rmd with this investment, transfer all of old investment and go to next investment in strategy order
           transferInvestment(preTaxInvest, allInvestmentsAfterTax, preTaxInvest.value, investments);
           rmdCount -= preTaxInvest.value;
           preTaxInvest.value = 0;
-          console.log("cant pay all this round.", preTaxInvest);
-          //remove(preTaxInvest);
+          console.log("cant pay all this round. The rmd amount left to transfer: ", rmdCount);
         }
       }
     }
   }
   return investments;
-  //console.log("my investments ", investments);
 }
 
 //from the pretax account to non-retirement accounts
@@ -55,7 +50,7 @@ function transferInvestment(preTaxInvest, allInvestmentsAfterTax, amountTransfer
     //find a name match
     if (afterTaxInvestment.investmentType === preTaxInvest.investmentType && afterTaxInvestment.accountTaxStatus === preTaxInvest.accountTaxStatus) {
       //able to add to a current afterTaxInvestment
-      console.log("able to add to a current afterTaxInvestment", afterTaxInvestment);
+      console.log("able to add value: ", amountTransfer, "to a current afterTaxInvestment of value", afterTaxInvestment.value);
       foundMatch = true;
       afterTaxInvestment.value += amountTransfer;
     }
@@ -63,10 +58,9 @@ function transferInvestment(preTaxInvest, allInvestmentsAfterTax, amountTransfer
 
   if (!foundMatch) {
     //create new after tax investment in memory with transferred amount
-    console.log("create new after tax investment");
+    console.log("create a new after tax investment with value: ", amountTransfer);
     let investment = {
       ...preTaxInvest,
-      investmentType: preTaxInvest.investmentType,
       value: amountTransfer,
       accountTaxStatus: "after-tax",
     };
@@ -77,42 +71,38 @@ function transferInvestment(preTaxInvest, allInvestmentsAfterTax, amountTransfer
 //ordering on a set of investments that specifies the order in which
 //investments are sold to generate cash.
 function payNonDiscretionaryExpenses(
-  scenario,
-  expenseEvents,
+  curExpenseEvent,
   investments,
   cashInvestment,
   curYearIncome,
   curYearSS,
   curYearGains,
   curYearEarlyWithdrawals,
-  federalIncomeRange,
-  stateIncomeRange,
+  federalIncomeTax,
+  stateIncomeTaxBracket,
   year,
   userAge,
-  capitalGains
+  capitalGains,
+  withdrawalStrategy
 ) {
-  nonDiscretionaryExpenses = expenseEvents.filter((expenseEvent) => expenseEvent.isDiscretionary === false);
-  const withdrawalStrategy = scenario.expenseWithdrawalStrategy.map((id) => {
-    return investments.find((investment) => investment._id === id);
-  });
-  console.log("nonDiscretionaryExpenses ", nonDiscretionaryExpenses);
+  console.log("In payNonDiscretionaryExpenses");
+  const nonDiscretionaryExpenses = curExpenseEvent.filter((expenseEvent) => expenseEvent.isDiscretionary === false);
+  //console.log("nonDiscretionaryExpenses ", nonDiscretionaryExpenses);
   const expenseAmt = sumAmt(nonDiscretionaryExpenses, year);
-  const taxes = getTaxes(curYearIncome, curYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGains, userAge);
-  withdrawalAmt = expenseAmt + taxes - cashInvestment;
-  cashInvestment = 0; //use up cash
-  console.log("expenseAmt ", expenseAmt);
-  console.log("taxes ", taxes);
-  if (withdrawalAmt > 0) {
+  const taxes = getTaxes(curYearIncome, curYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, capitalGains, userAge);
+  console.log("nonDiscretionaryExpenses Amt: ", expenseAmt, "and taxes: ", taxes);
+  let withdrawalAmt = expenseAmt + taxes;
+  console.log("My cash investment: ", cashInvestment, "so I need to withdraw: ", withdrawalAmt, "from investments");
+  cashInvestment -= withdrawalAmt; //use up cash
+  if (cashInvestment <= 0) {
+    cashInvestment = 0;
     //get money from investments
     for (let investment of withdrawalStrategy) {
       if (withdrawalAmt > 0) {
         console.log("withdrawalAmt: ", withdrawalAmt);
         console.log("investment to withdraw from ID:", investment._id, ",type:", investment.accountTaxStatus, ",value:", investment.value);
-        const payAmt = payFromInvestment(withdrawalAmt, investment, userAge, curYearGains, curYearIncome, curYearEarlyWithdrawals);
-        withdrawalAmt -= payAmt;
-        if (payAmt == investment.value) {
-          investment.value = 0;
-        }
+        const amtPaid = payFromInvestment(withdrawalAmt, investment, userAge, curYearGains, curYearIncome, curYearEarlyWithdrawals);
+        withdrawalAmt -= amtPaid;
       } else {
         break;
       }
@@ -125,19 +115,12 @@ function payNonDiscretionaryExpenses(
 
 //spendingStrategy is an ordering on expenses
 //withdrawalStrategy is an ordering on investments
-function payDiscretionaryExpenses(scenario, cashInvestment, investments, expenses, year, userAge) {
-  const spendingStrategy = scenario.spendingStrategy.map((id) => {
-    return expenses.find((expense) => expense._id === id);
-  });
-  const withdrawalStrategy = scenario.expenseWithdrawalStrategy.map((id) => {
-    return investments.find((investment) => investment._id === id);
-  });
-  // console.log("spendingStrategy: ", spendingStrategy);
-  // console.log("withdrawalStrategy", withdrawalStrategy);
-  console.log("cashInvestment: ", cashInvestment);
+function payDiscretionaryExpenses(scenario, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, curYearGains, curYearIncome, curYearEarlyWithdrawals) {
+  console.log("In payDiscretionaryExpenses");
   //pay expenses in order given from cashInvestment
   for (let expense of spendingStrategy) {
-    expenseVal = sumAmt([expense], year);
+    let expenseVal = sumAmt([expense], year); //trick to get init or annual change expense value for one event
+    console.log("The expense you want to pay: ", expense._id, " with value: ", expenseVal, ". Your cashInvestment: ", cashInvestment);
 
     if (cashInvestment - expenseVal >= 0) {
       //can pay from cash investment
@@ -149,12 +132,13 @@ function payDiscretionaryExpenses(scenario, cashInvestment, investments, expense
     cashInvestment = 0; //use up cash
     //Can't pay from cash have to withdraw from investments
     for (let investment of withdrawalStrategy) {
+      console.log("the value of investment ", investment._id, "to pay from is ", investment.value);
       if (expenseVal > 0 && scenario.financialGoal - expenseVal >= 0) {
         //does not violate financial goal
-        expenseVal -= payFromInvestment(expenseVal, investment, userAge);
+        expenseVal -= payFromInvestment(expenseVal, investment, userAge, curYearGains, curYearIncome, curYearEarlyWithdrawals);
       } else if (expenseVal > 0 && scenario.financialGoal - expenseVal < 0) {
         //only pay as much as does not violate financial goal
-        expenseVal -= payFromInvestment(expenseVal - scenario.financialGoal, investment, userAge);
+        expenseVal -= payFromInvestment(expenseVal - scenario.financialGoal, investment, userAge, curYearGains, curYearIncome, curYearEarlyWithdrawals);
       }
     }
     if (expenseVal > 0) {
@@ -168,14 +152,17 @@ function payFromInvestment(withdrawalAmt, investment, userAge, curYearGains, cur
     //subtract needed and keep investment
     if (investment.accountTaxStatus != "pre-tax retirement") {
       const fractionSold = withdrawalAmt / investment.value;
-      curYearGains += (fractionSold * (investment.value - investment.purchasePrice));
+      const gain = fractionSold * (investment.value - investment.purchasePrice);
+      curYearGains += gain;
+      console.log("update curYearGains by a fraction: ", gain, "the purchase price was: ", investment.purchasePrice);
     }
     investment.value -= withdrawalAmt;
-    return withdrawalAmt;
+    console.log("subtract needed and keep investment: ", investment._id, " type:", investment.accountTaxStatus, " now with value ", investment.value);
+    return withdrawalAmt; //amtPaid is full withdrawalAmt needed
   } else {
     //use up this investment "sell" and move onto next
     if (investment.accountTaxStatus != "pre-tax") {
-      curYearGains+= (investment.value - investment.purchasePrice);
+      curYearGains += investment.value - investment.purchasePrice;
     }
     if (investment.accountTaxStatus == "pre-tax") {
       curYearIncome -= investment.value;
@@ -183,20 +170,20 @@ function payFromInvestment(withdrawalAmt, investment, userAge, curYearGains, cur
     if ((investment.accountTaxStatus == "pre-tax" || investment.accountTaxStatus == "after-tax") && userAge < 59) {
       curYearEarlyWithdrawals += investment.value;
     }
-    return investment.value;
+    let amountPaid = investment.value;
+    investment.value = 0;
+    console.log("use up investment: ", investment._id, " now with value ", investment.value, "and move onto next");
+    return amountPaid;
   }
 }
 
 function sumAmt(events, year) {
   sum = 0;
   for (let event of events) {
-    if (year >= event.startYear.year && year <= event.startYear.year + event.duration.value) {
-      //more glide paths
-      if (year === event.startYear.year) {
-        sum += event.initialAmount;
-      } else {
-        sum += event.annualChange.amount; //need to figure out how to handle glide path for this.
-      }
+    if (year === event.startYear.year) {
+      sum += event.initialAmount;
+    } else {
+      sum += event.annualChange.amount; //need to figure out how to handle glide path for this.
     }
   }
   return sum;
@@ -231,12 +218,10 @@ function taxAmt(income, taxBracket, type) {
 }
 
 //Use up excess cash with invest strategy
-function runInvestStrategy(scenario, cashInvestment, irsLimit, investEvent, year, investments) {
-  //find investEvent for current year
-  let investStrategy = investEvent.filter((invest) => scenario.investEventSeries.includes(invest._id) && invest.startYear.year == 2024);
+function runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy) {
+  console.log("in invest strategy");
   investStrategy = investStrategy[0];
-  console.log("investStrategy", investStrategy);
-  console.log("excessCash: ", cashInvestment - investStrategy.maxCash, "year: ", year);
+  console.log("cashInvestment", cashInvestment, " maxCash to keep: ", investStrategy.maxCash);
   let excessCash = cashInvestment - investStrategy.maxCash;
   let allocations = [];
   console.log("cash to burn? ", excessCash);
@@ -252,34 +237,38 @@ function runInvestStrategy(scenario, cashInvestment, irsLimit, investEvent, year
         investStrategy.assetAllocation.initialPercentages,
         investStrategy.assetAllocation.finalPercentages
       );
+    } else if (investStrategy.assetAllocation.type === "fixed") {
+      allocations = investStrategy.assetAllocation.fixedPercentages;
     }
-    //console.log("allocations: ", allocations);
-    //console.log("investments: ", investments);
+
     // Translate assetIds to actual investment objects based on the IDs and value is percentage of allocation
     const investmentsWithAllocations = allocationIDToObject(allocations, investments);
-    console.log("in invest, the investments: ", investmentsWithAllocations);
+    //console.log("in invest, the investments: ", investmentsWithAllocations);
     const afterTaxRatio = scaleDownRatio("after-tax", investmentsWithAllocations, irsLimit, excessCash);
     console.log("afterTaxRatio: ", afterTaxRatio);
     let buyAmt = 0;
+    let excessDueToLimit = 0;
     for (const { investment, percentage } of investmentsWithAllocations) {
       buyAmt = 0;
 
       if (investment.accountTaxStatus === "after-tax") {
         buyAmt = excessCash * percentage * afterTaxRatio;
+        excessDueToLimit += excessCash * percentage - excessCash * percentage * afterTaxRatio;
       } else {
         // no scaling needed for non-retirement accounts
         buyAmt = excessCash * percentage;
       }
 
       // Safely update the correct investment object
+      console.log("investment", investment._id, "percentage", percentage, "type", investment.accountTaxStatus, "increase purchasePrice by: ", buyAmt);
       investment.purchasePrice += buyAmt;
     }
 
     if (excessCash - buyAmt > 0) {
       //everything else in non-retirement
-      buyNonRetirement(investmentsWithAllocations, excessCash - buyAmt);
+      console.log("everything else in non-retirement: ", excessDueToLimit);
+      buyNonRetirement(investmentsWithAllocations, excessDueToLimit);
     }
-    console.log("the purchase price of investments after getting excess cash: ", investmentsWithAllocations);
   }
 }
 
@@ -332,7 +321,7 @@ function scaleDownRatio(type, investmentsWithAllocations, irsLimit, excessCash) 
       sum += percentage * excessCash;
     }
   }
-  console.log("the sum of investments with type after-tax is: ", sum, "and the limit is: ", irsLimit);
+  console.log("the purchase price sum for investments with type after-tax is: ", sum, "and the limit is: ", irsLimit);
   if (sum > irsLimit) {
     return irsLimit / sum; // scale down if over irsLimit
   } else {
@@ -341,11 +330,9 @@ function scaleDownRatio(type, investmentsWithAllocations, irsLimit, excessCash) 
 }
 
 //rebalance investment allocations of same account tax status based on desired targets specified in rebalance strategy.
-function rebalance(scenario, curYearGains, investments, rebalanceEvent, year) {
-  //find rebalanceEvent that matches current year (Zoe can move this to beginning of simulation)
-  let rebalanceStrategy = rebalanceEvent.filter((rebStrategy) => scenario.rebalanceEventSeries.includes(rebStrategy._id) && rebStrategy.startYear.year == 2024);
+function rebalance(curYearGains, investments, year, rebalanceStrategy) {
+  console.log("rebalanceStrategy");
   rebalanceStrategy = rebalanceStrategy[0];
-  console.log("rebalanceStrategy: ", rebalanceStrategy);
   let allocations = [];
   if (rebalanceStrategy.rebalanceAllocation.type === "glidePath") {
     console.log("you choose glide path");
@@ -358,6 +345,8 @@ function rebalance(scenario, curYearGains, investments, rebalanceEvent, year) {
       rebalanceStrategy.rebalanceAllocation.initialPercentages,
       rebalanceStrategy.rebalanceAllocation.finalPercentages
     );
+  } else if (rebalanceStrategy.rebalanceAllocation.type === "fixed") {
+    allocations = rebalanceStrategy.rebalanceAllocation.fixedPercentages;
   }
   console.log("allocations: ", allocations);
   const investmentsWithAllocations = allocationIDToObject(allocations, investments);
@@ -368,28 +357,35 @@ function rebalance(scenario, curYearGains, investments, rebalanceEvent, year) {
   }
   for (const { investment, percentage } of investmentsWithAllocations) {
     const target = sum * percentage;
-    console.log("The investment value: ", investment.value, "and the desired target is: ", target);
+    console.log("The investment ", investment._id, "value: ", investment.value, "and the desired target is: ", target);
     if (investment.value > target) {
       //sell
       let sellAmt = investment.value - target;
       if (investment.value - sellAmt <= 0) {
         //sell entire investment. investment.value is how much money got when sold. investment.purchasePrice
         if (investment.taxAccountStatus == "non-retirement") {
-          curYearGains += investment.value - investment.purchasePrice;
+          let gain = investment.value - investment.purchasePrice;
+          curYearGains += gain;
+          console.log("Sell entire investment ", investment._id, "with gain: ", gain);
         }
-        //remove(investment);
+        investment.value = 0;
+        console.log("Entire investment sold.");
       } else {
         //sell part of investment
         if (investment.taxAccountStatus == "non-retirement") {
           const fractionSold = sellAmt / investment.value;
-          curYearGains += fractionSold * (investment.value - investment.purchasePrice);
+          let gain = fractionSold * (investment.value - investment.purchasePrice);
+          curYearGains += gain;
+          console.log("Sell some of investment ", investment._id, "with gain: ", gain);
         }
+        investment.value -= sellAmt;
+        console.log("The part of investment sold", investment._id, sellAmt);
       }
-      investment.value -= sellAmt;
     } else if (investment.value < target) {
       //buy some of investment
       let buyAmt = target - investment.value;
       investment.purchasePrice += buyAmt;
+      console.log("Buy some of investment", investment._id, buyAmt);
     }
   }
 }
