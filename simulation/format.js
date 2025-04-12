@@ -1,6 +1,23 @@
 //This file ensures objects delivered in correct format and for current year. Ex: uniform/normal
 
-function startYear(event, relatedEvents = {}) {
+function refEvents(event, relatedEvents) {
+  const refEventID = event.startYear.refer;
+  if (!refEventID) {
+    throw new Error("Missing reference event ID for 'same' startYear type.");
+  }
+  const refEvent = relatedEvents.find((e) => e._id === refEventID);
+  if (!refEvent) {
+    throw new Error(`Referenced event with ID "${refEventID}" not found.`);
+  }
+  if (refEvent.startYear.calculated !== undefined) {
+    return refEvent.startYear.calculated;
+  }
+  // If the referenced event hasn't been assigned yet, recursively calculate it
+  refEvent.startYear.calculated = startYear(refEvent, relatedEvents);
+  return refEvent.startYear.calculated;
+}
+
+function startYear(event, relatedEvents) {
   const type = event.startYear.type;
 
   if (type === "fixedAmt") {
@@ -11,20 +28,19 @@ function startYear(event, relatedEvents = {}) {
   } else if (type === "uniform") {
     const { min, max } = event.startYear;
     return Math.floor(randomUniform(min, max));
-  } else if (type === "matchStart") {
-    const refEvent = relatedEvents[event.startYear.ref];
-    return refEvent ? refEvent.startYear : null;
-  } else if (type === "afterEnd") {
-    const refEvent = relatedEvents[event.startYear.ref];
-    return refEvent ? refEvent.endYear + 1 : null;
+  } else if (type === "same") {
+    return refEvents(event, relatedEvents);
+  } else if (type === "after") {
+    return refEvents(event, relatedEvents) + 1;
   }
 
   return null; // fallback if type is not recognized
 }
 
-function setValues(events) { //run once per simulation
+function setValues(events) {
+  //run once per simulation
   for (let event of events) {
-    let startYr = startYear(event);
+    let startYr = startYear(event, events);
     event.startYear.calculated = startYr;
     let dur = duration(event);
     event.duration.calculated = dur;
@@ -142,5 +158,7 @@ module.exports = {
   getCurrentEvent,
   getStrategy,
   getRebalanceStrategy,
-  setValues
+  setValues,
+  randomNormal,
+  randomUniform,
 };
