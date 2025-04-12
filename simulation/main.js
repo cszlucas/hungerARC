@@ -1,42 +1,40 @@
 const Investment = require("../server/models/investment");
 const RMD = require("../server/models/rmd-schema");
+const {getExpenseAmountInYear} = require("./helper.js");
 
-//zoe figure out year factor
 //RMDStrategyInvestOrder is an ordering on investments in pre-tax retirement accounts.
-async function performRMDs(investments, curYearIncome, userAge, RMDStrategyInvestOrder) {
-  console.log("Perform RMDs");
+async function performRMDs(investments, curYearIncome, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD) {
   //console.log("RMDStrategyInvestOrder: ", RMDStrategyInvestOrder);
-  if (userAge - 1 >= 73 && RMDStrategyInvestOrder != null) {
-    //-1 b/c prevYear
+  if ((userAge) >= 74 && RMDStrategyInvestOrder != null) {
+    console.log("Perform RMDs, user age", userAge);
     //at least one pretax investment in previous year
     const match = await RMD.findOne({ "rmd.age": userAge }, { "rmd.$": 1 });
     const distributionPeriod = match.rmd[0].distributionPeriod;
     allInvestmentsPreTax = investments.filter((investment) => investment.accountTaxStatus.trim().toLowerCase() === "pre-tax");
-    allInvestmentsAfterTax = investments.filter((investment) => investment.accountTaxStatus.trim().toLowerCase() === "after-tax");
-    sumInvestmentsPreTax = 0;
-    for (let preTaxInvestment of allInvestmentsPreTax) {
-      sumInvestmentsPreTax += preTaxInvestment.value;
-    }
-    rmd = sumInvestmentsPreTax / distributionPeriod;
+    allInvestmentsNonRetirement = investments.filter((investment) => investment.accountTaxStatus.trim().toLowerCase() === "non-retirement");
+    let rmd = sumInvestmentsPreTaxRMD / distributionPeriod;
     curYearIncome += rmd;
     rmdCount = rmd;
     for (let preTaxInvest of RMDStrategyInvestOrder) {
       console.log("The rmd count: ", rmdCount);
-      console.log("The pretax investment", preTaxInvest._id, "and value: ", preTaxInvest.value);
       if (rmdCount > 0) {
+        console.log("The pretax investment", preTaxInvest._id, "and value: ", preTaxInvest.value);
         if (preTaxInvest.value - rmdCount >= 0) {
           //able to accomplish rmd with this investment, keep some of old investment and transfer new
-          transferInvestment(preTaxInvest, allInvestmentsAfterTax, rmdCount, investments);
+          transferInvestment(preTaxInvest, allInvestmentsNonRetirement, rmdCount, investments);
           preTaxInvest.value -= rmdCount;
           console.log("can perform rmd all this round. The old pretax investment", preTaxInvest._id, " now has", preTaxInvest.value);
           break;
         } else {
           //not able to accomplish rmd with this investment, transfer all of old investment and go to next investment in strategy order
-          transferInvestment(preTaxInvest, allInvestmentsAfterTax, preTaxInvest.value, investments);
+          transferInvestment(preTaxInvest, allInvestmentsNonRetirement, preTaxInvest.value, investments);
           rmdCount -= preTaxInvest.value;
           preTaxInvest.value = 0;
           console.log("cant pay all this round. The rmd amount left to transfer: ", rmdCount);
         }
+      } else {
+        console.log("RMD transferred");
+        break;
       }
     }
   }
@@ -44,15 +42,15 @@ async function performRMDs(investments, curYearIncome, userAge, RMDStrategyInves
 }
 
 //from the pretax account to non-retirement accounts
-function transferInvestment(preTaxInvest, allInvestmentsAfterTax, amountTransfer, investments) {
+function transferInvestment(preTaxInvest, allInvestmentsNonRetirement, amountTransfer, investments) {
   foundMatch = false;
-  for (let afterTaxInvestment of allInvestmentsAfterTax) {
+  for (let nonRetirementInvestment of allInvestmentsNonRetirement) {
     //find a name match
-    if (afterTaxInvestment.investmentType === preTaxInvest.investmentType && afterTaxInvestment.accountTaxStatus === preTaxInvest.accountTaxStatus) {
-      //able to add to a current afterTaxInvestment
-      console.log("able to add value: ", amountTransfer, "to a current afterTaxInvestment of value", afterTaxInvestment.value);
+    if (nonRetirementInvestment.investmentType === preTaxInvest.investmentType) {
+      //able to add to a current nonRetirementInvestment
+      console.log("able to add value: ", amountTransfer, "to a current afterTaxInvestment of value", nonRetirementInvestment.value);
       foundMatch = true;
-      afterTaxInvestment.value += amountTransfer;
+      nonRetirementInvestment.value += amountTransfer;
     }
   }
 
@@ -62,7 +60,7 @@ function transferInvestment(preTaxInvest, allInvestmentsAfterTax, amountTransfer
     let investment = {
       ...preTaxInvest,
       value: amountTransfer,
-      accountTaxStatus: "after-tax",
+      accountTaxStatus: "non-retirement",
     };
     investments.push(investment);
   }
@@ -70,26 +68,16 @@ function transferInvestment(preTaxInvest, allInvestmentsAfterTax, amountTransfer
 
 //ordering on a set of investments that specifies the order in which
 //investments are sold to generate cash.
-function payNonDiscretionaryExpenses(
-  curExpenseEvent,
-  investments,
-  cashInvestment,
-  curYearIncome,
-  curYearSS,
-  curYearGains,
-  curYearEarlyWithdrawals,
-  federalIncomeTax,
-  stateIncomeTaxBracket,
-  year,
-  userAge,
-  capitalGains,
-  withdrawalStrategy
-) {
+function payNonDiscretionaryExpenses(curExpenseEvent, investments, cashInvestment, prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, year, userAge, capitalGains, withdrawalStrategy, curYearGains, curYearIncome, curYearEarlyWithdrawals) {
+
   console.log("In payNonDiscretionaryExpenses");
   const nonDiscretionaryExpenses = curExpenseEvent.filter((expenseEvent) => expenseEvent.isDiscretionary === false);
   //console.log("nonDiscretionaryExpenses ", nonDiscretionaryExpenses);
-  const expenseAmt = sumAmt(nonDiscretionaryExpenses, year);
-  const taxes = getTaxes(curYearIncome, curYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, capitalGains, userAge);
+  let expenseAmt = 0;
+  for(let expense of nonDiscretionaryExpenses){
+    expenseAmt+=getExpenseAmountInYear(expense, year, inflationRate = 0.02);
+  }
+  const taxes = getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, capitalGains, userAge);
   console.log("nonDiscretionaryExpenses Amt: ", expenseAmt, "and taxes: ", taxes);
   let withdrawalAmt = expenseAmt + taxes;
   console.log("My cash investment: ", cashInvestment, "so I need to withdraw: ", withdrawalAmt, "from investments");
@@ -119,7 +107,7 @@ function payDiscretionaryExpenses(scenario, cashInvestment, year, userAge, spend
   console.log("In payDiscretionaryExpenses");
   //pay expenses in order given from cashInvestment
   for (let expense of spendingStrategy) {
-    let expenseVal = sumAmt([expense], year); //trick to get init or annual change expense value for one event
+    let expenseVal = getExpenseAmountInYear(expense, year, inflationRate = 0.02);
     console.log("The expense you want to pay: ", expense._id, " with value: ", expenseVal, ". Your cashInvestment: ", cashInvestment);
 
     if (cashInvestment - expenseVal >= 0) {
@@ -177,32 +165,20 @@ function payFromInvestment(withdrawalAmt, investment, userAge, curYearGains, cur
   }
 }
 
-function sumAmt(events, year) {
-  sum = 0;
-  for (let event of events) {
-    if (year === event.startYear.year) {
-      sum += event.initialAmount;
-    } else {
-      sum += event.annualChange.amount; //need to figure out how to handle glide path for this.
-    }
-  }
-  return sum;
-}
-
 //calculate tax income and ss prices
-function getTaxes(curYearIncome, curYearSS, curYearGains, currYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGains, userAge) {
-  console.log("in get taxes my income ", curYearIncome);
-  const federalTax = taxAmt(curYearIncome, federalIncomeRange);
-  const stateTax = taxAmt(curYearIncome, stateIncomeRange);
+function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGains, userAge) {
+  console.log("in get taxes my income ", prevYearIncome);
+  const federalTax = taxAmt(prevYearIncome, federalIncomeRange);
+  const stateTax = taxAmt(prevYearIncome, stateIncomeRange);
   //social security (ss) income tax
-  const ssTax = taxAmt(curYearSS * 0.85, federalIncomeRange);
+  const ssTax = taxAmt(prevYearSS * 0.85, federalIncomeRange);
   //early withdrawal tax - Withdrawals from retirement accounts (pre-tax or after-tax) taken before age 59 ½ incur a 10% tax.
   const earlyWithdrawalTax = 0;
   if (userAge < 59.5) {
-    earlyWithdrawalTax = currYearEarlyWithdrawals * 0.1;
+    earlyWithdrawalTax = prevYearEarlyWithdrawals * 0.1;
   }
   //capital gains tax
-  capitalGainsTax = taxAmt(curYearGains, capitalGains, "capitalGains");
+  const capitalGainsTax = taxAmt(prevYearGains, capitalGains, "capitalGains");
   return federalTax + stateTax + ssTax + earlyWithdrawalTax + capitalGainsTax;
 }
 
