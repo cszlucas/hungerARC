@@ -206,8 +206,7 @@ function taxAmt(income, taxBracket, type) {
 function runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy) {
   console.log("in invest strategy");
   investStrategy = investStrategy[0];
-  console.log("investStrategy", investStrategy);
-  console.log("excessCash: ", cashInvestment - investStrategy.maxCash, "year: ", year);
+  console.log("cashInvestment", cashInvestment, " maxCash to keep: ", investStrategy.maxCash);
   let excessCash = cashInvestment - investStrategy.maxCash;
   let allocations = [];
   console.log("cash to burn? ", excessCash);
@@ -226,33 +225,35 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
     } else if(investStrategy.assetAllocation.type === "fixed"){
       allocations = investStrategy.assetAllocation.fixedPercentages;
     }
-    //console.log("allocations: ", allocations);
-    //console.log("investments: ", investments);
+    
     // Translate assetIds to actual investment objects based on the IDs and value is percentage of allocation
     const investmentsWithAllocations = allocationIDToObject(allocations, investments);
-    console.log("in invest, the investments: ", investmentsWithAllocations);
+    //console.log("in invest, the investments: ", investmentsWithAllocations);
     const afterTaxRatio = scaleDownRatio("after-tax", investmentsWithAllocations, irsLimit, excessCash);
     console.log("afterTaxRatio: ", afterTaxRatio);
     let buyAmt = 0;
+    let excessDueToLimit = 0;
     for (const { investment, percentage } of investmentsWithAllocations) {
       buyAmt = 0;
 
       if (investment.accountTaxStatus === "after-tax") {
         buyAmt = excessCash * percentage * afterTaxRatio;
+        excessDueToLimit += (excessCash * percentage) - (excessCash * percentage * afterTaxRatio)
       } else {
         // no scaling needed for non-retirement accounts
         buyAmt = excessCash * percentage;
       }
 
       // Safely update the correct investment object
+      console.log("investment", investment._id, "percentage", percentage, "type", investment.accountTaxStatus, "increase purchasePrice by: ", buyAmt);
       investment.purchasePrice += buyAmt;
     }
 
     if (excessCash - buyAmt > 0) {
       //everything else in non-retirement
-      buyNonRetirement(investmentsWithAllocations, excessCash - buyAmt);
+      console.log("everything else in non-retirement: ", excessDueToLimit);
+      buyNonRetirement(investmentsWithAllocations, excessDueToLimit);
     }
-    console.log("the purchase price of investments after getting excess cash: ", investmentsWithAllocations);
   }
 }
 
@@ -305,7 +306,7 @@ function scaleDownRatio(type, investmentsWithAllocations, irsLimit, excessCash) 
       sum += percentage * excessCash;
     }
   }
-  console.log("the sum of investments with type after-tax is: ", sum, "and the limit is: ", irsLimit);
+  console.log("the purchase price sum for investments with type after-tax is: ", sum, "and the limit is: ", irsLimit);
   if (sum > irsLimit) {
     return irsLimit / sum; // scale down if over irsLimit
   } else {

@@ -323,7 +323,7 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
 
 
     //   // RUN INVEST EVENT
-    runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
+    //runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
 
 
     //   // RUN REBALANCE EVENT

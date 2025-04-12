@@ -122,10 +122,10 @@ function getStrategy(scenario, investments, expenses, investEvent, rebalanceEven
   const withdrawalStrategy = safeMapById(scenario.expenseWithdrawalStrategy, investments, "Withdrawal Strategy Investment");
   const spendingStrategy = safeMapById(scenario.spendingStrategy, expenses, "Spending Strategy Expense");
 
-  const investStrategy = investEvent.filter((invest) => scenario.investEventSeries.includes(invest._id) && invest.startYear?.calculated === year);
+  const investStrategy = investEvent.filter((invest) => scenario.investEventSeries.includes(invest._id) && invest.startYear?.calculated <= year && year<= invest.startYear?.calculated+invest.duration?.calculated);
 
   const rebalanceStrategy = rebalanceEvent.filter(
-    (rebStrategy) => scenario.rebalanceEventSeries.includes(rebStrategy._id) && rebStrategy.startYear?.calculated === year && rebStrategy.taxStatus === type
+    (rebStrategy) => scenario.rebalanceEventSeries.includes(rebStrategy._id) && rebStrategy.startYear?.calculated <= year && rebStrategy.startYear?.calculated+rebStrategy.duration?.calculated && year<= rebStrategy.taxStatus === type
   );
 
   return {
