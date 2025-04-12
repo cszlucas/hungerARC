@@ -8,6 +8,7 @@ const InvestmentType = require("../server/models/investmentType");
 const { IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent } = require("../server/models/eventSeries");
 const { v4: uuidv4 } = require('uuid');
 const { performRMDs, payNonDiscretionaryExpenses, payDiscretionaryExpenses, runInvestStrategy, rebalance } = require("./main.js");
+const { capitalGains } = require("../server/controllers/webscraping.js");
 
 function calculateNormalDist(std, mean) {
   const u = 1 - Math.random();
@@ -165,6 +166,50 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
   return { curYearIncome, curYearSS, cashInvestment };
 }
 
+
+function updateInvestmentValues(investments, investmentTypes, curYearIncome, curYearGains) {
+  for(let investment of investments){
+  // Calculate the generated income, using the given fixed amount or percentage, or sampling from the specified probability distribution.  
+    let initialValue = investment.value;
+    let investmentType = investmentTypes.find(type => type._id === investment.investmentType);
+    let annualIncome = investmentType.annualIncome;
+    let income = 0;
+    if (annualIncome.type == "normal") {
+      income = calculateNormalDist(annualIncome.stdDev, annualIncome.mean);
+    } else if (annualIncome.type == "fixed") {
+      income = annualIncome.value;
+    }
+
+    if (annualIncome.unit == "percentage") {
+      income = investment.value * (1 + (income * 0.01));
+    }
+  
+  // Add the income to curYearIncome, if the investment’s tax status is ‘non-retirement’ and the investment type’s taxability is ‘taxable’. 
+    if (investment.accountTaxStatus == "non-tax" && investmentType.taxability == "taxable") {
+      curYearIncome += income;
+    } 
+
+  // Calculate the change in value, using the given fixed amount or percentage, or sampling from the specified probability distribution.
+    let annualReturn = investmentType.annualReturn; 
+    let change = 0;
+    if (annualReturn.type == "normal") {
+      change = calculateNormalDist(annualReturn.stdDev, annualReturn.mean);
+    } else if (annualReturn.type == "fixed") {
+      change = annualReturn.value;
+    }
+    if (annualReturn.unit == "percentage") {
+      change = investment.value * ((change * 0.01));
+    } 
+  // Add the income to the value of the investment
+    investment.value += change;
+    curYearGains += change;
+  // Calculate this year’s expenses, by multiplying the expense ratio and the average value of the investment
+    let expenses = investmentType.expenseRatio * ((initialValue + investment.value) / 2);
+    investment.value -= expenses;
+  }
+  return {curYearIncome, curYearGains};
+}
+
 class DataStore {
   constructor() {
     this.taxData = this.stateTax = this.scenario = this.investment = this.income = this.expense = this.rebalance = this.invest = this.investmentType = {};
@@ -217,10 +262,11 @@ class DataStore {
   }
 }
 
+
 async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUser, investments, incomeEvent, expenseEvent, investEvent, rebalanceEvent, investmentTypes) {
   // previous year
   console.log("expenseEvent: ", expenseEvent);
-  let irsLimit = scenario.irsLimit;
+  let irsLimit = scenario.irsLimits;
   let filingStatus = scenario.filingStatus;
   let state = scenario.stateResident;
   let fedIncomeTaxBracket, stateIncomeTaxBracket, fedDeduction, stateDeduction, capitalGains;
@@ -281,20 +327,16 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     // PRELIMINARIES
     // can differ each year if sampled from distribution
     inflationRate = findInflation(scenario.inflationAssumption) * 0.01;
-    // console.log('fedIncomeTaxBracket :>> ', fedIncomeTaxBracket);
     // console.log('inflationRate :>> ', inflationRate);
-    federalIncomeTax = updateFedIncomeTaxBracket(fedIncomeTaxBracket, inflationRate);
-    console.log("fedIncomeTaxBracket :>> ", fedIncomeTaxBracket);
-    // console.log('federalIncomeTax HERE  :>> ', federalIncomeTax);
+    updateFedIncomeTaxBracket(fedIncomeTaxBracket, inflationRate);
+    // federalIncomeTax = updateFedIncomeTaxBracket(fedIncomeTaxBracket, inflationRate);
     fedDeduction = updateFedDeduction(fedDeduction, inflationRate);
     capitalGains = updateCapitalGains(capitalGains, inflationRate);
-    console.log("UPDATED capitalGains :>> ", capitalGains);
     if (stateTax) {
       updateStateIncomeTaxBracket(stateIncomeTaxBracket, inflationRate);
     }
     // retirement account limit - after tax
     irsLimit *= 1 + inflationRate;
-    console.log("IRS LIMTIT", irsLimit);
     // RUN INCOME EVENTS
     let curYearIncome = 0;
     let curYearSS = 0;
@@ -310,88 +352,60 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     }
 
     ({ curYearIncome, curYearSS, cashInvestment } = updateIncomeEvents(incomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment));
-    console.log("curYearIncome :>> ", curYearIncome);
-    console.log("curYearSS :>> ", curYearSS);
-    console.log("cashInvestment :>> ", cashInvestment);
+    // console.log("curYearIncome :>> ", curYearIncome);
+    // console.log("curYearSS :>> ", curYearSS);
+    // console.log("cashInvestment :>> ", cashInvestment);
 
     //   // PERFORM RMD FOR PREVIOUS YEAR
     const userAge = year - scenario.birthYearUser;
     investments = await performRMDs(scenario, investments, curYearIncome, year, userAge);
-    console.log("in algo investments: ", investments);
-    //   // UPDATE INVESTMENT VALUES
 
-    // function updateInvestmentValues(investments) {
-    //   // Calculate the generated income, using the given fixed amount or percentage, or sampling from the specified probability distribution.  
-    //   for(let investment in investments){
-    //     let investmentType = investmentTypes.find(type => type._id === investment.investmentType);
-    //     let annualIncome = investmentType.annualIncome;
-    //     let incomeValue = 0;
-    //     if (annualIncome.distribution == "none") {
-    //       incomeValue = annualIncome.value;
-    //     } else if (annualIncome.distribution == "uniform") {
-    //       incomeValue = calculateUniformDist(annualIncome.min, annualIncome.max);
-    //     } else {
-    //       incomeValue = calculateNormalDist(annualIncome.stdDev, annualIncome.mean);
-    //     }
-    //     if (annualIncome.type == "fixed") {
-    //       incomeValue += amt;
-    //     } else if (annualIncome.type == "percentage") {
-    //       incomeValue *= (1 + (amt * 0.01));
-    //     }
-    //   }
-    //   // Add the income to curYearIncome, if the investment’s tax status is ‘non-retirement’ and the investment type’s taxability is ‘taxable’. 
-
-    //   // Calculate the change in value, using the given fixed amount or percentage, or sampling from the specified probability distribution.
-
-    //   // Add the income to the value of the investment
-
-    //   // Calculate this year’s expenses, by multiplying the expense ratio and the average value of the investment (i.e., the average of its value at the beginning and end of the year).  Subtract the expenses from the value.
-
-    // }
-    // updateInvestmentValues();
-
+    // UPDATE INVESTMENT VALUES
+    ({ curYearIncome, curYearGains } = updateInvestmentValues(investments, investmentTypes, curYearIncome, curYearGains));
+    // console.log('curYearIncome :>> ', curYearIncome);
+    // console.log('curYearGains :>> ', curYearGains);
 
     // find all the investment objects by the roth conversion strategy ids
     let rothConversionStrategyInvestments=[]
-    console.log('scenario.rothConversionStrategy :>> ', scenario.rothConversionStrategy);
-    console.log('invest :>> ', investments);
+    // console.log('scenario.rothConversionStrategy :>> ', scenario.rothConversionStrategy);
+    // console.log('invest :>> ', investments);
     for (let investment of scenario.rothConversionStrategy) {
       let foundInvestment = investments.find(inv => inv._id === investment);
-      console.log('foundInvestment :>> ', foundInvestment);
+      // console.log('foundInvestment :>> ', foundInvestment);
       if (foundInvestment) {
         rothConversionStrategyInvestments.push(foundInvestment);
       }
     }
-    console.log('rothConversionStrategyInvestments :>> ', rothConversionStrategyInvestments);
+    // console.log('rothConversionStrategyInvestments :>> ', rothConversionStrategyInvestments);
 
-      // RUN ROTH CONVERSION IF ENABLED
+    //  RUN ROTH CONVERSION IF ENABLED
       if (scenario.optimizerSettings.enabled && year >= scenario.optimizerSettings.startYear && year <= scenario.optimizerSettings.endYear) {
         curYearIncome = rothConversion(scenario, year, curYearIncome, curYearSS, fedIncomeTaxBracket, investmentTypes, investments, curYearEarlyWithdrawals, rothConversionStrategyInvestments);
       }
-  console.log('scenario.investments :>> ', scenario.setOfInvestments);
-  console.log('investments :>> ', investments);
+    console.log('scenario.investments :>> ', scenario.setOfInvestments);
+    console.log('investments :>> ', investments);
 
     //   // PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
-    curYearSS = 20;
-    curYearGains = 30;
-    curYearEarlyWithdrawals = 30;
-    curYearIncome = 200;
-    cashInvestment = 5000;
-    payNonDiscretionaryExpenses(
-      scenario,
-      expenseEvent,
-      investments,
-      cashInvestment,
-      curYearIncome,
-      curYearSS,
-      curYearGains,
-      curYearEarlyWithdrawals,
-      federalIncomeTax,
-      stateIncomeTaxBracket,
-      year,
-      userAge,
-      capitalGains
-    );
+    // curYearSS = 20;
+    // curYearGains = 30;
+    // curYearEarlyWithdrawals = 30;
+    // curYearIncome = 200;
+    // cashInvestment = 5000;
+    // payNonDiscretionaryExpenses(
+    //   scenario,
+    //   expenseEvent,
+    //   investments,
+    //   cashInvestment,
+    //   curYearIncome,
+    //   curYearSS,
+    //   curYearGains,
+    //   curYearEarlyWithdrawals,
+    //   federalIncomeTax,
+    //   stateIncomeTaxBracket,
+    //   year,
+    //   userAge,
+    //   capitalGains
+    // );
 
     //   // PAY DISCRETIONARY EXPENSES
     // payDiscretionaryExpenses(scenario, cashInvestment, investments, expenseEvent, year, userAge);
