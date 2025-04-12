@@ -12,6 +12,8 @@ export const defaultInfo = {
   "residence": "",
   "birthYear": "",
   "lifeExpectancy": { "type": "fixed", "fixedAge": "" },
+  "birthYearSpouse": "",
+  "lifeExpectancySpouse": { "type": "fixed", "fixedAge": "" },
   "startYear": "",
   "endYear": "",
   "expenseEventSeries": [],
