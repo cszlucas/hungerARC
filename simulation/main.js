@@ -6,7 +6,7 @@ const {getExpenseAmountInYear} = require("./helper.js");
 async function performRMDs(investments, curYearIncome, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD) {
   //console.log("RMDStrategyInvestOrder: ", RMDStrategyInvestOrder);
   if ((userAge) >= 74 && RMDStrategyInvestOrder != null) {
-    console.log("Perform RMDs, user age", userAge);
+    console.log("\nPerform RMDs, user age", userAge);
     //at least one pretax investment in previous year
     const match = await RMD.findOne({ "rmd.age": userAge }, { "rmd.$": 1 });
     const distributionPeriod = match.rmd[0].distributionPeriod;
@@ -70,7 +70,7 @@ function transferInvestment(preTaxInvest, allInvestmentsNonRetirement, amountTra
 //investments are sold to generate cash.
 function payNonDiscretionaryExpenses(curExpenseEvent, investments, cashInvestment, prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, year, userAge, capitalGains, withdrawalStrategy, curYearGains, curYearIncome, curYearEarlyWithdrawals) {
 
-  console.log("In payNonDiscretionaryExpenses");
+  console.log("\nPAY NON-DISCRETIONARY EXPENSES");
   const nonDiscretionaryExpenses = curExpenseEvent.filter((expenseEvent) => expenseEvent.isDiscretionary === false);
   //console.log("nonDiscretionaryExpenses ", nonDiscretionaryExpenses);
   let expenseAmt = 0;
@@ -104,7 +104,7 @@ function payNonDiscretionaryExpenses(curExpenseEvent, investments, cashInvestmen
 //spendingStrategy is an ordering on expenses
 //withdrawalStrategy is an ordering on investments
 function payDiscretionaryExpenses(scenario, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, curYearGains, curYearIncome, curYearEarlyWithdrawals) {
-  console.log("In payDiscretionaryExpenses");
+  console.log("\nPAY DISCRETIONARY EXPENSES");
   //pay expenses in order given from cashInvestment
   for (let expense of spendingStrategy) {
     let expenseVal = getExpenseAmountInYear(expense, year, inflationRate = 0.02);
@@ -188,14 +188,14 @@ function taxAmt(income, taxBracket, type) {
       return income * (range.taxRate / 100);
     } else if (income >= range.incomeRange[0] && income <= range.incomeRange[1] && type == "capitalGains") {
       //console.log("capitalGains", range);
-      return income * (range.gainsRate / 100);
+      return income > 0 ? income * (range.gainsRate / 100) : 0;
     }
   }
 }
 
 //Use up excess cash with invest strategy
 function runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy) {
-  console.log("in invest strategy");
+  console.log("\nINVEST STRATEGY");
   investStrategy = investStrategy[0];
   console.log("cashInvestment", cashInvestment, " maxCash to keep: ", investStrategy.maxCash);
   let excessCash = cashInvestment - investStrategy.maxCash;
@@ -307,7 +307,7 @@ function scaleDownRatio(type, investmentsWithAllocations, irsLimit, excessCash) 
 
 //rebalance investment allocations of same account tax status based on desired targets specified in rebalance strategy.
 function rebalance(curYearGains, investments, year, rebalanceStrategy) {
-  console.log("rebalanceStrategy");
+  console.log("\nREBALANCE STRATEGY");
   rebalanceStrategy = rebalanceStrategy[0];
   let allocations = [];
   if (rebalanceStrategy.rebalanceAllocation.type === "glidePath") {

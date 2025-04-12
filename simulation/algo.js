@@ -288,6 +288,7 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
   //  // SIMULATION LOOP  
   // manually adjusted for testing, should be year <= userEndYear !!
   for (let year = currentYear; year <= 2025; year++) {
+    console.log("\nSIMULATION YEAR ", year);
     inflationRate = findInflation(scenario.inflationAssumption) * 0.01;
     let { curIncomeEvent, curExpenseEvent, curInvestEvent, curRebalanceEvent } = getCurrentEvent(year, incomeEvent, expenseEvent, investEvent, rebalanceEvent);
     let { RMDStrategyInvestOrder, withdrawalStrategy, spendingStrategy, investStrategy } = getStrategy(scenario, investments, curExpenseEvent, curInvestEvent, year);
@@ -303,9 +304,6 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     }
 
     ({ curYearIncome, curYearSS, cashInvestment } = updateIncomeEvents(incomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment));
-    console.log("curYearIncome :>> ", curYearIncome);
-    console.log("curYearSS :>> ", curYearSS);
-    console.log("cashInvestment :>> ", cashInvestment);
 
     //   // PERFORM RMD FOR PREVIOUS YEAR
     const userAge = year - scenario.birthYearUser;
