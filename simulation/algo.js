@@ -7,7 +7,7 @@ const Investment = require("../server/models/investment");
 const InvestmentType = require("../server/models/investmentType");
 const { IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent } = require("../server/models/eventSeries");
 const { performRMDs, payNonDiscretionaryExpenses, payDiscretionaryExpenses, runInvestStrategy, rebalance } = require("./main.js");
-const {getCurrentEvent, getStrategy} = require("./format.js");
+const { getCurrentEvent, getStrategy, getRebalanceStrategy, setValues } = require("./format.js");
 
 function calculateNormalDist(std, mean) {
   const u = 1 - Math.random();
@@ -257,11 +257,14 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     income.startYearCalc = startYear;
     income.durationCalc = duration;
   }
+  for (let event of [incomeEvent, expenseEvent, investEvent, rebalanceEvent]) {
+    setValues(event);
+  }  
 
   // manually adjusted for testing, should be year <= userEndYear !!
   for (let year = currentYear; year <= 2025; year++) {
     let { curIncomeEvent, curExpenseEvent, curInvestEvent, curRebalanceEvent } = getCurrentEvent(year, incomeEvent, expenseEvent, investEvent, rebalanceEvent);
-    let { RMDStrategyInvestOrder, withdrawalStrategy, spendingStrategy, investStrategy, rebalanceStrategy } = getStrategy(scenario, investments, curExpenseEvent, curInvestEvent, curRebalanceEvent, year);
+    let { RMDStrategyInvestOrder, withdrawalStrategy, spendingStrategy, investStrategy } = getStrategy(scenario, investments, curExpenseEvent, curInvestEvent, year);
 
     // PRELIMINARIES
     // can differ each year if sampled from distribution
@@ -317,23 +320,24 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     //cashInvestment = 5000;
     //payNonDiscretionaryExpenses(curExpenseEvent, investments, cashInvestment, curYearIncome, curYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, year, userAge, capitalGains, withdrawalStrategy);
 
-
     //   // PAY DISCRETIONARY EXPENSES
     //payDiscretionaryExpenses(scenario, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, curYearGains, curYearIncome, curYearEarlyWithdrawals);
-
 
     //   // RUN INVEST EVENT
     //runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
 
-
     //   // RUN REBALANCE EVENT
-    //let rebalanceStrategy = getRebalanceStrategy(type)
-    //rebalance(curYearGains, investments, year, rebalanceStrategy); //get strategy for each type
+    let types = ["pre-tax", "after-tax", "non-retirement"];
+    for (let type of types) {
+      let rebalanceStrategy = getRebalanceStrategy(scenario, rebalanceEvent, type, year);
+      if (rebalanceStrategy.length != 0) {
+        rebalance(curYearGains, investments, year, rebalanceStrategy);
+      }
+    }
 
     prevYear += 1;
   }
 }
-
 
 function calculateLifeExpectancy(scenario) {
   let lifeExpectancyUser, lifeExpectancySpouse;

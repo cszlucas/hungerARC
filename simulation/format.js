@@ -22,6 +22,15 @@ function startYear(event, relatedEvents = {}) {
   return null; // fallback if type is not recognized
 }
 
+function setValues(events) { //run once per simulation
+  for (let event of events) {
+    let startYr = startYear(event);
+    event.startYear.calculated = startYr;
+    let dur = duration(event);
+    event.duration.calculated = dur;
+  }
+}
+
 function getCurrentEvent(year, incomeEvent = [], expenseEvent = [], investEvent = [], rebalanceEvent = []) {
   let curIncomeEvent = [];
   let curExpenseEvent = [];
@@ -29,41 +38,25 @@ function getCurrentEvent(year, incomeEvent = [], expenseEvent = [], investEvent 
   let curRebalanceEvent = [];
 
   for (let event of incomeEvent) {
-    let startYr = startYear(event);
-    event.startYear.calculated = startYr;
-    let dur = duration(event);
-    event.duration.calculated = dur;
-    if (year >= startYr && year <= startYr + dur) {
+    if (year >= event.startYear.calculated && year <= event.startYear.calculated + event.duration.calculated) {
       curIncomeEvent.push(event);
     }
   }
 
   for (let event of expenseEvent) {
-    let startYr = startYear(event);
-    event.startYear.calculated = startYr;
-    let dur = duration(event);
-    event.duration.calculated = dur;
-    if (year >= startYr && year <= startYr + dur) {
+    if (year >= event.startYear.calculated && year <= event.startYear.calculated + event.duration.calculated) {
       curExpenseEvent.push(event);
     }
   }
 
   for (let event of investEvent) {
-    let startYr = startYear(event);
-    event.startYear.calculated = startYr;
-    let dur = duration(event);
-    event.duration.calculated = dur;
-    if (year >= startYr && year <= startYr + dur) {
+    if (year >= event.startYear.calculated && year <= event.startYear.calculated + event.duration.calculated) {
       curInvestEvent.push(event);
     }
   }
 
   for (let event of rebalanceEvent) {
-    let startYr = startYear(event);
-    event.startYear.calculated = startYr;
-    let dur = duration(event);
-    event.duration.calculated = dur;
-    if (year >= startYr && year <= startYr + dur) {
+    if (year >= event.startYear.calculated && year <= event.startYear.calculated + event.duration.calculated) {
       curRebalanceEvent.push(event);
     }
   }
@@ -104,7 +97,7 @@ function duration(event) {
   return null; // unknown duration type
 }
 
-function getStrategy(scenario, investments, expenses, investEvent, rebalanceEvent, year, type) {
+function getStrategy(scenario, investments, expenses, investEvent, year, type) {
   // Helper: safely map by ID and filter out unfound items
   const safeMapById = (ids, collection, label) => {
     return ids
@@ -122,10 +115,8 @@ function getStrategy(scenario, investments, expenses, investEvent, rebalanceEven
   const withdrawalStrategy = safeMapById(scenario.expenseWithdrawalStrategy, investments, "Withdrawal Strategy Investment");
   const spendingStrategy = safeMapById(scenario.spendingStrategy, expenses, "Spending Strategy Expense");
 
-  const investStrategy = investEvent.filter((invest) => scenario.investEventSeries.includes(invest._id) && invest.startYear?.calculated <= year && year<= invest.startYear?.calculated+invest.duration?.calculated);
-
-  const rebalanceStrategy = rebalanceEvent.filter(
-    (rebStrategy) => scenario.rebalanceEventSeries.includes(rebStrategy._id) && rebStrategy.startYear?.calculated <= year && rebStrategy.startYear?.calculated+rebStrategy.duration?.calculated && year<= rebStrategy.taxStatus === type
+  const investStrategy = investEvent.filter(
+    (invest) => scenario.investEventSeries.includes(invest._id) && invest.startYear?.calculated <= year && year <= invest.startYear?.calculated + invest.duration?.calculated
   );
 
   return {
@@ -133,11 +124,23 @@ function getStrategy(scenario, investments, expenses, investEvent, rebalanceEven
     withdrawalStrategy,
     spendingStrategy,
     investStrategy,
-    rebalanceStrategy,
   };
+}
+
+function getRebalanceStrategy(scenario, rebalanceEvent, type, year) {
+  const rebalanceStrategy = rebalanceEvent.filter(
+    (rebStrategy) =>
+      scenario.rebalanceEventSeries.includes(rebStrategy._id) &&
+      rebStrategy.startYear?.calculated <= year &&
+      rebStrategy.startYear?.calculated + rebStrategy.duration?.calculated &&
+      rebStrategy.taxStatus === type
+  );
+  return rebalanceStrategy;
 }
 
 module.exports = {
   getCurrentEvent,
-  getStrategy
+  getStrategy,
+  getRebalanceStrategy,
+  setValues
 };
