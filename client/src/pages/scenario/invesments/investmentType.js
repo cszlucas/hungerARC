@@ -104,7 +104,6 @@ const InvestmentType = () => {
       console.log(id);
       if (!user.guest) {
         if (id === "new") {
-          console.log("Reached here");
           const response = await axios.post(`http://localhost:8080/scenario/${editMode}/investmentType`, formValues);
           id = response.data._id;
           handleUpdateLocalStorageForNewInvestmentType(id);
