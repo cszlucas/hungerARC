@@ -77,9 +77,12 @@ function rothConversion(scenario, year, curYearIncome, curYearSS, federalIncomeT
   let u = findUpperFedTaxBracket(curYearFedTaxableIncome, federalIncomeTax);
   // roth conversation amount
   rc = u - curYearFedTaxableIncome;
+  let rcCopy = rc;
   //console.log("u :>> ", u);
   //console.log("rc :>> ", rc);
   // transfer from pre-tax to after-tax retirement
+  // console.log('curYearIncome before :>> ', curYearIncome);
+
   for (let investment of rothConversionStrategyInvestments) {
     if (rc > 0) {
       //console.log("rc :>> ", rc);
@@ -115,16 +118,20 @@ function rothConversion(scenario, year, curYearIncome, curYearSS, federalIncomeT
   // console.log('scenario.investments :>> ', scenario.setOfInvestments);
   // console.log('investments :>> ', investments);
   curYearIncome += rc;
+  // console.log('curYearIncome after :>> ', curYearIncome);
   return curYearIncome;
 }
 // incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment);
 
-function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment) {
+function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment, curIncomeEvent) {
   for (let incomeEvent of incomeEvents) {
+    // console.log("incomeEvent :>> ", incomeEvent);
+    // console.log('curIncomeEvent :>> ', curIncomeEvent);
+    if (curIncomeEvent.includes(incomeEvent)) {
       let annualChange = incomeEvent.annualChange;
       let incomeValue = incomeEvent.initialAmount;
-      console.log('incomeValue :>> ', incomeValue);
-      console.log('inflationRate :>> ', inflationRate);
+      // console.log('incomeValue :>> ', incomeValue);
+      // console.log('inflationRate :>> ', inflationRate);
       let amt = 0;
       if (annualChange.distribution == "none") {
         amt = annualChange.amount;
@@ -147,11 +154,17 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
 
       incomeEvent.initialAmount = incomeValue;
 
-      cashInvestment += incomeValue;
+      cashInvestment.value += incomeValue;
       curYearIncome += incomeValue;
       if (incomeEvent.isSocialSecurity) {
         curYearSS += incomeValue; // incomeValue because social security does not apply to cash investments
       }
+    } else {
+      // console.log("Income event not found in current year: ", incomeEvent.eventSeriesName);
+      // console.log('incomeEvent.value before :>> ', incomeEvent.initialAmount);
+      incomeEvent.initialAmount *= 1 + inflationRate;
+      // console.log('incomeEvent.value after :>> ', incomeEvent.initialAmount);
+    }
   }
   return { curYearIncome, curYearSS, cashInvestment };
 }
@@ -338,14 +351,16 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
 
     // RUN INCOME EVENTS
     let cashInvestmentType = investmentTypes.find((inv) => inv.name === "Cash");
-    let cashInvestment = 0;
+    let cashInvestment;
     if (cashInvestmentType) {
       let cashId = cashInvestmentType._id;
-      let foundById = investments.find((inv) => inv.investmentType === cashId);
-      cashInvestment = foundById.value;
+      cashInvestment = investments.find((inv) => inv.investmentType === cashId);
+      // cashInvestment = foundById.value;
     }
     // console.log('curIncomeEvent :>> ', curIncomeEvent);
-    ({ curYearIncome, curYearSS, cashInvestment } = updateIncomeEvents(curIncomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment));
+    // console.log('cashInvestment :>> ', cashInvestment);
+
+    ({ curYearIncome, curYearSS, cashInvestment } = updateIncomeEvents(incomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment, curIncomeEvent));
     // console.log("curYearIncome :>> ", curYearIncome);
     // console.log("curYearSS :>> ", curYearSS);
     // console.log("cashInvestment :>> ", cashInvestment);
