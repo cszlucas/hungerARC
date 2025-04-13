@@ -1,6 +1,6 @@
 const {randomNormal,randomUniform } = require("./format.js");
 
-function getExpenseAmountInYear(event, year, inflationRate = 0.02) {
+function getExpenseAmountInYear(event, year, inflationRate) {
   const { initialAmount, annualChange, inflationAdjustment, startYear, duration } = event;
   let startSimYear = new Date().getFullYear();
   const yearsSinceStart = year-startSimYear;

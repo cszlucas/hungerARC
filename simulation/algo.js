@@ -287,39 +287,15 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     invest.purchasePrice = invest.value;
   }
 
-  // calculate the start year and duration of each income event
-  // for (let income of incomeEvent) {
-  //   let startYear, duration;
-  //   if (income.startYear.type == "fixedAmt") {
-  //     startYear = income.startYear.value;
-  //   } else if (income.startYear.type == "uniform") {
-  //     startYear = calculateUniformDist(income.startYear.min, income.startYear.max);
-  //   } else if (income.startYear.type == "normal") {
-  //     startYear = calculateNormalDist(income.startYear.stdDev, income.startYear.mean);
-  //   } else {
-  //     startYear = year;
-  //   }
-
-  //   if (income.duration.type == "fixedAmt") {
-  //     duration = income.duration.value;
-  //   } else if (income.duration.type == "uniform") {
-  //     duration = calculateUniformDist(income.duration.min, income.duration.max);
-  //   } else {
-  //     duration = calculateNormalDist(income.duration.stdDev, income.duration.mean);
-  //   }
-  //   income.startYearCalc = startYear;
-  //   income.durationCalc = duration;
-  // }
-  // for (let event of [incomeEvent, expenseEvent, investEvent, rebalanceEvent]) {
-  //   setValues(event);
-  // }
   setValues([...incomeEvent, ...expenseEvent, ...investEvent, ...rebalanceEvent]);
   // console.log("incomeEvent :>> ", incomeEvent);
   let sumInvestmentsPreTaxRMD = 0;
-  let curYearIncome = 0;
-  let curYearSS = 0;
-  let curYearEarlyWithdrawals = 0;
-  let curYearGains = 0;
+  let yearTotals = {
+    curYearGains: 0,
+    curYearSS: 0,
+    curYearIncome: 0,
+    curYearEarlyWithdrawals: 0
+  };  
   let prevYearIncome = 0;
   let prevYearSS = 0;
   let prevYearEarlyWithdrawals = 0;
@@ -327,7 +303,8 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
 
   //  // SIMULATION LOOP  
   // manually adjusted for testing, should be year <= userEndYear !!
-  for (let year = currentYear; year <= 2025; year++) {
+  for (let year = currentYear; year <= 2026; year++) {
+    console.log("\nSIMULATION YEAR", year);
     inflationRate = findInflation(scenario.inflationAssumption) * 0.01;
     let { curIncomeEvent, curExpenseEvent, curInvestEvent, curRebalanceEvent } = getCurrentEvent(year, incomeEvent, expenseEvent, investEvent, rebalanceEvent);
     let { RMDStrategyInvestOrder, withdrawalStrategy, spendingStrategy, investStrategy } = getStrategy(scenario, investments, curExpenseEvent, curInvestEvent, year);
@@ -345,17 +322,17 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
       cashInvestment = foundById.value;
     }
     // console.log('curIncomeEvent :>> ', curIncomeEvent);
-    ({ curYearIncome, curYearSS, cashInvestment } = updateIncomeEvents(curIncomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment));
+    ({ curYearIncome, curYearSS, cashInvestment } = updateIncomeEvents(curIncomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, yearTotals.curYearIncome, yearTotals.curYearSS, cashInvestment));
     // console.log("curYearIncome :>> ", curYearIncome);
     // console.log("curYearSS :>> ", curYearSS);
     // console.log("cashInvestment :>> ", cashInvestment);
     //   // PERFORM RMD FOR PREVIOUS YEAR
     const userAge = year - scenario.birthYearUser;
-    investments = await performRMDs(investments, curYearIncome, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD);
+    investments = await performRMDs(investments, yearTotals.curYearIncome, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD);
     sumInvestmentsPreTaxRMD = 0;
    
     //   // UPDATE INVESTMENT VALUES
-    ({ curYearIncome, curYearGains } = updateInvestmentValues(investments, investmentTypes, curYearIncome, curYearGains));
+    ({ curYearIncome, curYearGains } = updateInvestmentValues(investments, investmentTypes, yearTotals.curYearIncome, yearTotals.curYearGains));
 
     // find all the investment objects by the roth conversion strategy ids
     let rothConversionStrategyInvestments = [];
@@ -368,15 +345,15 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
 
     // RUN ROTH CONVERSION IF ENABLED
     if (scenario.optimizerSettings.enabled && year >= scenario.optimizerSettings.startYear && year <= scenario.optimizerSettings.endYear) {
-      curYearIncome = rothConversion(scenario, year, curYearIncome, curYearSS, federalIncomeTax, investmentTypes, investments, curYearEarlyWithdrawals, rothConversionStrategyInvestments);
+      curYearIncome = rothConversion(scenario, year, yearTotals.curYearIncome, yearTotals.curYearSS, federalIncomeTax, investmentTypes, investments, yearTotals.curYearEarlyWithdrawals, rothConversionStrategyInvestments);
     }
 
     //   // PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
-    // payNonDiscretionaryExpenses(curExpenseEvent, investments, cashInvestment, prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, year, userAge, capitalGains, withdrawalStrategy, curYearGains, curYearIncome, curYearEarlyWithdrawals);
+    payNonDiscretionaryExpenses(curExpenseEvent, cashInvestment, prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, fedDeduction, year, userAge, capitalGains, withdrawalStrategy, yearTotals, inflationRate);
 
     //   // PAY DISCRETIONARY EXPENSES
 
-    // payDiscretionaryExpenses(scenario, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, curYearGains, curYearIncome, curYearEarlyWithdrawals);
+    payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate);
 
     //   // RUN INVEST EVENT
     // runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
@@ -408,14 +385,14 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     }
     console.log("The sum of investments with value pretax (to use in RMD) is: ", sumInvestmentsPreTaxRMD, "as of year: ", year);
     
-    prevYearIncome = curYearIncome;
-    prevYearSS = curYearSS;
-    prevYearEarlyWithdrawals = curYearEarlyWithdrawals;
-    prevYearGains = curYearGains;
-    curYearIncome = 0;
-    curYearSS = 0;
-    curYearEarlyWithdrawals = 0;
-    curYearGains = 0;
+    prevYearIncome = yearTotals.curYearIncome;
+    prevYearSS = yearTotals.curYearSS;
+    prevYearEarlyWithdrawals = yearTotals.curYearEarlyWithdrawals;
+    prevYearGains = yearTotals.curYearGains;
+    yearTotals.curYearIncome = 0;
+    yearTotals.curYearSS = 0;
+    yearTotals.curYearEarlyWithdrawals = 0;
+    yearTotals.curYearGains = 0;
     prevYear += 1;
   }
 }
@@ -492,4 +469,4 @@ async function main(numScenarioTimes, scenarioId) {
 // Call the main function to execute everything
 // main(1, "67df22db4996aba7bb6e8d73");
 //67e084385ca2a5376ad2efd2
-main(1, "67e084385ca2a5376ad2efd2");
+main(1, "67df22db4996aba7bb6e8d73");

@@ -1,12 +1,12 @@
 const Investment = require("../server/models/investment");
 const RMD = require("../server/models/rmd-schema");
-const {getExpenseAmountInYear} = require("./helper.js");
+const { getExpenseAmountInYear } = require("./helper.js");
 
 //RMDStrategyInvestOrder is an ordering on investments in pre-tax retirement accounts.
 async function performRMDs(investments, curYearIncome, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD) {
   //console.log("RMDStrategyInvestOrder: ", RMDStrategyInvestOrder);
-  if ((userAge) >= 74 && RMDStrategyInvestOrder != null) {
-    console.log("\nPerform RMDs, user age", userAge);
+  if (userAge >= 74 && RMDStrategyInvestOrder != null) {
+    console.log("\nRMDs\nUser age", userAge, "and sum of pre-tax values from prev year is", sumInvestmentsPreTaxRMD);
     //at least one pretax investment in previous year
     const match = await RMD.findOne({ "rmd.age": userAge }, { "rmd.$": 1 });
     const distributionPeriod = match.rmd[0].distributionPeriod;
@@ -68,130 +68,152 @@ function transferInvestment(preTaxInvest, allInvestmentsNonRetirement, amountTra
 
 //ordering on a set of investments that specifies the order in which
 //investments are sold to generate cash.
-function payNonDiscretionaryExpenses(curExpenseEvent, investments, cashInvestment, prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, year, userAge, capitalGains, withdrawalStrategy, curYearGains, curYearIncome, curYearEarlyWithdrawals) {
-
+function payNonDiscretionaryExpenses(curExpenseEvent, cashInvestment, prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, fedDeduction, year, userAge, capitalGains, withdrawalStrategy, yearTotals, inflationRate) {
   console.log("\nPAY NON-DISCRETIONARY EXPENSES");
   const nonDiscretionaryExpenses = curExpenseEvent.filter((expenseEvent) => expenseEvent.isDiscretionary === false);
   //console.log("nonDiscretionaryExpenses ", nonDiscretionaryExpenses);
   let expenseAmt = 0;
-  for(let expense of nonDiscretionaryExpenses){
-    expenseAmt+=getExpenseAmountInYear(expense, year, inflationRate = 0.02);
+  for (let expense of nonDiscretionaryExpenses) {
+    expenseAmt += getExpenseAmountInYear(expense, year, inflationRate);
   }
-  const taxes = getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, capitalGains, userAge);
+  const taxes = getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, capitalGains, userAge, fedDeduction);
   console.log("nonDiscretionaryExpenses Amt: ", expenseAmt, "and taxes: ", taxes);
   let withdrawalAmt = expenseAmt + taxes;
   console.log("My cash investment: ", cashInvestment, "so I need to withdraw: ", withdrawalAmt, "from investments");
-  cashInvestment -= withdrawalAmt; //use up cash
-  if (cashInvestment <= 0) {
-    cashInvestment = 0;
-    //get money from investments
+  if (cashInvestment >= withdrawalAmt) {
+    cashInvestment -= withdrawalAmt; //use up cash needed
+    withdrawalAmt = 0;
+  } else {
+    withdrawalAmt -= cashInvestment;
+    cashInvestment = 0; //use up cash
     for (let investment of withdrawalStrategy) {
       if (withdrawalAmt > 0) {
         console.log("withdrawalAmt: ", withdrawalAmt);
         console.log("investment to withdraw from ID:", investment._id, ",type:", investment.accountTaxStatus, ",value:", investment.value);
-        const amtPaid = payFromInvestment(withdrawalAmt, investment, userAge, curYearGains, curYearIncome, curYearEarlyWithdrawals);
+        const amtPaid = payFromInvestment(withdrawalAmt, investment, userAge, yearTotals);
         withdrawalAmt -= amtPaid;
       } else {
         break;
       }
     }
     if (withdrawalAmt > 0) {
-      console.log("You can't pay your non-discretionary expenses ;A;");
+      console.log("You CAN NOT pay your non-discretionary expenses SAD...;A;");
     }
   }
 }
 
+//calculate TAX
+function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGains, userAge, fedDeduction) {
+  console.log("CALCULATING TAXES, my income: ", prevYearIncome);
+  const adjustedIncome = Math.max(0, prevYearIncome - fedDeduction - prevYearSS);
+  const federalTax = taxAmt(adjustedIncome, federalIncomeRange);
+  const stateTax = taxAmt(adjustedIncome, stateIncomeRange);
+
+  const ssTax = taxAmt(prevYearSS * 0.85, federalIncomeRange);
+
+  let earlyWithdrawalTax = 0;
+  if (userAge < 59) {
+    earlyWithdrawalTax = prevYearEarlyWithdrawals * 0.1;
+  }
+
+  const capitalGainsTax = taxAmt(prevYearGains, capitalGains, "capitalGains");
+
+  return federalTax + stateTax + ssTax + earlyWithdrawalTax + capitalGainsTax;
+}
+
+function taxAmt(income, taxBracket, type) {
+  for (let range of taxBracket) {
+    if (income >= range.incomeRange[0] && income <= range.incomeRange[1]) {
+      if (type === "capitalGains") {
+        return income > 0 ? income * (range.gainsRate / 100) : 0;
+      } else {
+        return income * (range.taxRate / 100);
+      }
+    }
+  }
+  return 0;
+}
+
 //spendingStrategy is an ordering on expenses
 //withdrawalStrategy is an ordering on investments
-function payDiscretionaryExpenses(scenario, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, curYearGains, curYearIncome, curYearEarlyWithdrawals) {
+function payDiscretionaryExpenses(
+  financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate) {
   console.log("\nPAY DISCRETIONARY EXPENSES");
-  //pay expenses in order given from cashInvestment
-  for (let expense of spendingStrategy) {
-    let expenseVal = getExpenseAmountInYear(expense, year, inflationRate = 0.02);
-    console.log("The expense you want to pay: ", expense._id, " with value: ", expenseVal, ". Your cashInvestment: ", cashInvestment);
+  let goalRemaining = financialGoal;
 
-    if (cashInvestment - expenseVal >= 0) {
-      //can pay from cash investment
+  for (let expense of spendingStrategy) {
+    let expenseVal = getExpenseAmountInYear(expense, year, inflationRate);
+    console.log("Expense:", expense._id, "Amount:", expenseVal, "Cash available:", cashInvestment);
+
+    if (cashInvestment >= expenseVal) {
       cashInvestment -= expenseVal;
       expenseVal = 0;
       continue;
     }
+
     expenseVal -= cashInvestment;
-    cashInvestment = 0; //use up cash
-    //Can't pay from cash have to withdraw from investments
+    cashInvestment = 0;
+
     for (let investment of withdrawalStrategy) {
-      console.log("the value of investment ", investment._id, "to pay from is ", investment.value);
-      if (expenseVal > 0 && scenario.financialGoal - expenseVal >= 0) {
-        //does not violate financial goal
-        expenseVal -= payFromInvestment(expenseVal, investment, userAge, curYearGains, curYearIncome, curYearEarlyWithdrawals);
-      } else if (expenseVal > 0 && scenario.financialGoal - expenseVal < 0) {
-        //only pay as much as does not violate financial goal
-        expenseVal -= payFromInvestment(expenseVal - scenario.financialGoal, investment, userAge, curYearGains, curYearIncome, curYearEarlyWithdrawals);
+      if (expenseVal <= 0) break;
+
+      if (goalRemaining >= expenseVal) {
+        let amtPaid = payFromInvestment(expenseVal, investment, userAge, yearTotals);
+        expenseVal -= amtPaid;
+        goalRemaining -= amtPaid;
+      } else if (goalRemaining > 0) {
+        let partialAmt = Math.min(expenseVal, goalRemaining);
+        let amtPaid = payFromInvestment(partialAmt, investment, userAge, yearTotals);
+        expenseVal -= amtPaid;
+        goalRemaining -= amtPaid;
       }
     }
+
     if (expenseVal > 0) {
       console.log("You were not able to pay all your discretionary expenses.");
     }
   }
 }
 
-function payFromInvestment(withdrawalAmt, investment, userAge, curYearGains, curYearIncome, curYearEarlyWithdrawals) {
+function payFromInvestment(withdrawalAmt, investment, userAge, yearTotals) {
   if (investment.value - withdrawalAmt > 0) {
-    //subtract needed and keep investment
-    if (investment.accountTaxStatus != "pre-tax retirement") {
-      const fractionSold = withdrawalAmt / investment.value;
-      const gain = fractionSold * (investment.value - investment.purchasePrice);
-      curYearGains += gain;
-      console.log("update curYearGains by a fraction: ", gain, "the purchase price was: ", investment.purchasePrice);
-    }
+    updateValues(investment, userAge, yearTotals, true, withdrawalAmt);
     investment.value -= withdrawalAmt;
-    console.log("subtract needed and keep investment: ", investment._id, " type:", investment.accountTaxStatus, " now with value ", investment.value);
-    return withdrawalAmt; //amtPaid is full withdrawalAmt needed
+    console.log("subtract needed and keep investment:", investment._id, "type:", investment.accountTaxStatus, "now with value", investment.value);
+    return withdrawalAmt;
   } else {
-    //use up this investment "sell" and move onto next
-    if (investment.accountTaxStatus != "pre-tax") {
-      curYearGains += investment.value - investment.purchasePrice;
-    }
-    if (investment.accountTaxStatus == "pre-tax") {
-      curYearIncome -= investment.value;
-    }
-    if ((investment.accountTaxStatus == "pre-tax" || investment.accountTaxStatus == "after-tax") && userAge < 59) {
-      curYearEarlyWithdrawals += investment.value;
-    }
     let amountPaid = investment.value;
+    updateValues(investment, userAge, yearTotals, false, amountPaid);
     investment.value = 0;
-    console.log("use up investment: ", investment._id, " now with value ", investment.value, "and move onto next");
+    console.log("use up investment:", investment._id, "now with value", investment.value, "and move onto next");
     return amountPaid;
   }
 }
 
-//calculate tax income and ss prices
-function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGains, userAge) {
-  console.log("in get taxes my income ", prevYearIncome);
-  const federalTax = taxAmt(prevYearIncome, federalIncomeRange);
-  const stateTax = taxAmt(prevYearIncome, stateIncomeRange);
-  //social security (ss) income tax
-  const ssTax = taxAmt(prevYearSS * 0.85, federalIncomeRange);
-  //early withdrawal tax - Withdrawals from retirement accounts (pre-tax or after-tax) taken before age 59 ½ incur a 10% tax.
-  const earlyWithdrawalTax = 0;
-  if (userAge < 59.5) {
-    earlyWithdrawalTax = prevYearEarlyWithdrawals * 0.1;
+function updateValues(investment, userAge, yearTotals, partial, amountPaid) {
+  if (investment.accountTaxStatus != "pre-tax" && partial === false) {
+    yearTotals.curYearGains += (investment.value - investment.purchasePrice);
   }
-  //capital gains tax
-  const capitalGainsTax = taxAmt(prevYearGains, capitalGains, "capitalGains");
-  return federalTax + stateTax + ssTax + earlyWithdrawalTax + capitalGainsTax;
+
+  if (investment.accountTaxStatus != "pre-tax" && partial === true) {
+    const fractionSold = amountPaid / investment.value;
+    const gain = fractionSold * (investment.value - investment.purchasePrice);
+    yearTotals.curYearGains += gain;
+    console.log("update curYearGains by a fraction:", gain, "purchase price:", investment.purchasePrice);
+  }
+
+  if (investment.accountTaxStatus === "pre-tax") {
+    yearTotals.curYearIncome += amountPaid;
+  }
+
+  if (
+    (investment.accountTaxStatus === "pre-tax" || investment.accountTaxStatus === "after-tax") &&
+    userAge < 59
+  ) {
+    yearTotals.curYearEarlyWithdrawals += amountPaid;
+  }
 }
 
-function taxAmt(income, taxBracket, type) {
-  for (let range of taxBracket) {
-    if (income >= range.incomeRange[0] && income <= range.incomeRange[1] && type != "capitalGains") {
-      return income * (range.taxRate / 100);
-    } else if (income >= range.incomeRange[0] && income <= range.incomeRange[1] && type == "capitalGains") {
-      //console.log("capitalGains", range);
-      return income > 0 ? income * (range.gainsRate / 100) : 0;
-    }
-  }
-}
 
 //Use up excess cash with invest strategy
 function runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy) {
