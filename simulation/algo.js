@@ -309,7 +309,7 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
 
   //  // SIMULATION LOOP
   // manually adjusted for testing, should be year <= userEndYear !!
-  for (let year = currentYear; year <= 2025; year++) {
+  for (let year = currentYear; year <= 2026; year++) {
     console.log("\nSIMULATION YEAR", year);
     inflationRate = findInflation(scenario.inflationAssumption) * 0.01;
     let { curIncomeEvent, curExpenseEvent, curInvestEvent, curRebalanceEvent } = getCurrentEvent(year, incomeEvent, expenseEvent, investEvent, rebalanceEvent);
