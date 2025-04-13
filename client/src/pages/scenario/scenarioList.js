@@ -5,16 +5,159 @@ import EditIcon from "@mui/icons-material/Edit";
 import theme from "../../components/theme";
 import Navbar from "../../components/navbar";
 import { useNavigate } from "react-router-dom";
+import yaml from "js-yaml";
 
 const ScenarioList = () => {
     const [ selectedScenario, setSelectedScenario] = useState(null); // Track selected scenario
-    const { scenarioData, setEditMode, setCurrScenario, setCurrInvestments, setCurrIncome, setCurrExpense, setCurrInvest, setCurrRebalance, setCurrInvestmentTypes } = useContext(AppContext);
+    const { scenarioData, setScenarioData, setEditMode, setCurrScenario, setCurrInvestments, setCurrIncome, setCurrExpense, setCurrInvest, setCurrRebalance, setCurrInvestmentTypes } = useContext(AppContext);
     const navigate = useNavigate();
 
-    // const handleSelectScenario = (scenarioKey) => {
-    //     return;
-    //     //setSelectedScenario(scenarioKey); // Update the selected scenario
-    // };
+    function parseScenarioYAML(yamlObject) {
+        const {
+          name,
+          maritalStatus,
+          birthYears,
+          lifeExpectancy,
+          investmentTypes,
+          investments,
+          eventSeries,
+          inflationAssumption,
+          afterTaxContributionLimit,
+          spendingStrategy,
+          expenseWithdrawalStrategy,
+          RMDStrategy,
+          RothConversionOpt,
+          RothConversionStart,
+          RothConversionEnd,
+          RothConversionStrategy,
+          financialGoal,
+          residenceState,
+        } = yamlObject;
+      
+        const frontendInvestmentTypes = investmentTypes.map(t => ({
+          name: t.name,
+          description: t.description,
+          expenseRatio: String(t.expenseRatio),
+          taxability: t.taxability,
+          annualReturn: {
+            unit: t.returnAmtOrPct,
+            type: t.returnDistribution.type,
+            value: t.returnDistribution.value ?? "",
+            mean: t.returnDistribution.mean ?? "",
+            stdDev: t.returnDistribution.stdev ?? "",
+          },
+          annualIncome: {
+            unit: t.incomeAmtOrPct,
+            type: t.incomeDistribution.type,
+            value: t.incomeDistribution.value ?? "",
+            mean: t.incomeDistribution.mean ?? "",
+            stdDev: t.incomeDistribution.stdev ?? "",
+          }
+        }));
+      
+        const frontendInvestments = investments.map(inv => ({
+          investmentType: inv.investmentType,
+          value: inv.value,
+          accountTaxStatus: inv.taxStatus,
+          id: inv.id,
+        }));
+      
+        const income = [], expense = [], invest = [], rebalance = [];
+      
+        for (const e of eventSeries) {
+          const base = {
+            eventSeriesName: e.name,
+            startYear: e.start,
+            duration: e.duration,
+          };
+      
+          if (e.type === "income") {
+            income.push({
+              ...base,
+              initialAmount: e.initialAmount,
+              annualChange: parseChange(e),
+              userPercentage: e.userFraction,
+              inflationAdjustment: e.inflationAdjusted,
+              isSocialSecurity: e.socialSecurity,
+            });
+          } else if (e.type === "expense") {
+            expense.push({
+              ...base,
+              initialAmount: e.initialAmount,
+              annualChange: parseChange(e),
+              userPercentage: e.userFraction,
+              inflationAdjustment: e.inflationAdjusted,
+              isDiscretionary: e.discretionary,
+            });
+          } else if (e.type === "invest") {
+            const allocType = e.glidePath ? "glidePath" : "fixed";
+            invest.push({
+              ...base,
+              maxCash: e.maxCash,
+              assetAllocation: {
+                type: allocType,
+                fixedPercentages: allocType === "fixed" ? e.assetAllocation : {},
+                initialPercentages: allocType === "glidePath" ? e.assetAllocation : {},
+                finalPercentages: allocType === "glidePath" ? e.assetAllocation2 : {},
+              }
+            });
+          } else if (e.type === "rebalance") {
+            const isGlide = !!e.glidePath;
+            rebalance.push({
+              ...base,
+              taxStatus: "", // not present in YAML
+              rebalanceAllocation: {
+                type: isGlide ? "glidePath" : "fixed",
+                fixedPercentages: !isGlide ? e.assetAllocation : {},
+                initialPercentages: isGlide ? e.assetAllocation : {},
+                finalPercentages: isGlide ? e.assetAllocation2 : {},
+              }
+            });
+          }
+        }
+      
+        return {
+          _id: `${name.replace(/\s/g, "-")}-${Date.now()}`, // fake unique ID
+          name,
+          filingStatus: maritalStatus === "couple" ? "couple" : "single",
+          birthYearUser: birthYears[0],
+          birthYearSpouse: birthYears[1] ?? null,
+          lifeExpectancy,
+          setOfinvestmentTypes: frontendInvestmentTypes,
+          setOfinvestments: frontendInvestments,
+          income,
+          expense,
+          invest,
+          rebalance,
+          inflationAssumption,
+          irsLimit: { initialAfterTax: afterTaxContributionLimit },
+          spendingStrategy,
+          expenseWithdrawalStrategy,
+          rmdStrategy: RMDStrategy,
+          optimizerSettings: {
+            enabled: RothConversionOpt,
+            startYear: RothConversionStart,
+            endYear: RothConversionEnd,
+          },
+          rothConversionStrategy: RothConversionStrategy,
+          financialGoal,
+          stateResident: residenceState,
+        };
+      }
+      
+      function parseChange(e) {
+        const dist = e.changeDistribution || {};
+        return {
+          type: e.changeAmtOrPct,
+          amount: dist.value ?? "",
+          distribution: dist.type === "fixed" ? "none" : dist.type,
+          mean: dist.mean ?? "",
+          stdDev: dist.stdev ?? "",
+          min: dist.lower ?? "",
+          max: dist.upper ?? "",
+        };
+      }
+      
 
     return (
         <ThemeProvider theme={theme}>
@@ -62,9 +205,39 @@ const ScenarioList = () => {
                     <Typography variant="h6" component="h5" sx={{ marginRight: 2 }}>
                         Existing Scenarios
                     </Typography>
-                    <Button variant="contained" sx={{ marginRight: 2, textTransform: "none" }}>
+                    <input
+                    type="file"
+                    accept=".yaml"
+                    id="yaml-upload"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                        try {
+                            const raw = yaml.load(ev.target.result);
+                            const parsed = parseScenarioYAML(raw);
+                            console.log("✅ Parsed YAML:", parsed);
+                            setScenarioData(prev => [...(prev || []), parsed]);
+                        } catch (err) {
+                            console.error("❌ YAML import failed:", err);
+                        }
+                        };
+                        reader.readAsText(file);
+                    }}
+                    />
+
+                    <label htmlFor="yaml-upload">
+                    <Button
+                        variant="contained"
+                        component="span"
+                        sx={{ marginRight: 2, textTransform: "none" }}
+                    >
                         Import
                     </Button>
+                    </label>
                     <Button 
                         variant="contained" 
                         color="secondary" // Uses the theme's secondary color
@@ -108,23 +281,6 @@ const ScenarioList = () => {
                             ))}
                         </List>
                     </Box>
-
-                    {/* Right Box for Selected Scenario Display */}
-                    {/* <Box 
-                        sx={{ 
-                            width: "45%", 
-                            backgroundColor: selectedScenario ? "#A2E7D2" : "transparent", // Only show colored box if a scenario is selected
-                            display: selectedScenario ? "block" : "none", // Only show the box when a scenario is selected
-                            padding: 2,
-                            marginLeft: 5
-                        }}
-                    >
-                        {selectedScenario && (
-                            <Typography variant="h6" component="h2">
-                                Selected Scenario: {selectedScenario} Chart
-                            </Typography>
-                        )}
-                    </Box> */}
                 </Box>
             </Container>
         </ThemeProvider>
