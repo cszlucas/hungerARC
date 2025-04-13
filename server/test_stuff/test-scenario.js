@@ -245,9 +245,7 @@ async function createScenario() {
         type: "fixed",
         fixedRate: 10, // Fixed inflation rate
       },
-      irsLimits: {
-        initialAfterTax: 250, // IRS limit for after-tax income
-      },
+      irsLimit: 100, // IRS limit for after-tax income
       spendingStrategy: [expenseEvent._id],
       expenseWithdrawalStrategy: [investment1._id, investment2._id],
       rothConversionStrategy: [investment1._id, investment2._id],
