@@ -21,7 +21,7 @@ export const defaultInfo = {
   "incomeEventSeries": [],
   "inflationAssumption": { "type": "fixed", "fixedRate": "" },
   "investEventSeries": [],
-  "irsLimits": { "initialAfterTax": "" },
+  "irsLimit": { "initialAfterTax": "" },
   "optimizerSettings": { "enabled": false, "startYear": "", "endYear": "" },
   "rebalanceEventSeries": [],
   "rmdStrategy": [],

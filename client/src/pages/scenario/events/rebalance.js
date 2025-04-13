@@ -17,11 +17,10 @@ import {
 import theme from "../../../components/theme";
 import Navbar from "../../../components/navbar";
 import PageHeader from "../../../components/pageHeader";
-import { stackStyles, titleStyles, buttonStyles, rowBoxStyles, backContinueContainerStyles, textFieldStyles, toggleButtonGroupStyles } from "../../../components/styles";
+import { stackStyles, titleStyles, buttonStyles, backContinueContainerStyles, textFieldStyles } from "../../../components/styles";
 
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import CustomDropdown from "../../../components/customDropDown";
 import CustomInput from "../../../components/customInputBox";
 import CustomToggle from "../../../components/customToggle";
 import { useNavigate } from "react-router-dom";
