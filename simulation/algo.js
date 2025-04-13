@@ -57,11 +57,6 @@ function updateFedDeduction(fedDeduction, inflationRate) {
   return fedDeduction;
 }
 
-function updateStateDeduction(stateDeduction, inflationRate) {
-  stateDeduction *= 1 + inflationRate;
-  return stateDeduction;
-}
-
 function findUpperFedTaxBracket(curYearFedTaxableIncome, federalIncomeTax) {
   for (let taxBracket of federalIncomeTax) {
     if (curYearFedTaxableIncome <= taxBracket.incomeRange[1]) return taxBracket.incomeRange[1];
@@ -141,19 +136,18 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
         amt = randomNormal(annualChange.mean, annualChange.stdDev);
       }
 
-      if (annualChange.type == "fixed") {
-        incomeValue += amt;
-      } else if (annualChange.type == "percentage") {
-        incomeValue *= 1 + amt * 0.01;
-      }
-      if (incomeEvent.inflationAdjustment) incomeValue *= 1 + inflationRate;
+    if (annualChange.type == "fixed") {
+      incomeValue += amt;
+    } else if (annualChange.type == "percentage") {
+      incomeValue *= 1 + amt * 0.01;
+    }
+    if (incomeEvent.inflationAdjustment) incomeValue *= 1 + inflationRate;
 
-      if (filingStatus == "marriedFilingJointly" && year > scenario.birthYearSpouse + scenario.lifeExpectancySpouse) {
-        incomeValue *= incomeEvent.userPercentage * 0.01;
-      }
+    if (filingStatus == "marriedFilingJointly" && year > scenario.birthYearSpouse + scenario.lifeExpectancySpouse) {
+      incomeValue *= incomeEvent.userPercentage * 0.01;
+    }
 
-      incomeEvent.initialAmount = incomeValue;
-
+    incomeEvent.initialAmount = incomeValue;
       cashInvestment.value += incomeValue;
       yearTotals.curYearIncome += incomeValue;
       if (incomeEvent.isSocialSecurity) {
@@ -174,7 +168,7 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals) {
   for(let investment of investments){
   // Calculate the generated income, using the given fixed amount or percentage, or sampling from the specified probability distribution.  
     let initialValue = investment.value;
-    let investmentType = investmentTypes.find(type => type._id === investment.investmentType);
+    let investmentType = investmentTypes.find((type) => type._id === investment.investmentType);
     let annualIncome = investmentType.annualIncome;
     let income = 0;
     if (annualIncome.type == "normal") {
@@ -184,16 +178,16 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals) {
     }
 
     if (annualIncome.unit == "percentage") {
-      income = investment.value * (1 + (income * 0.01));
+      income = investment.value * (1 + income * 0.01);
     }
-  
-  // Add the income to curYearIncome, if the investment’s tax status is ‘non-retirement’ and the investment type’s taxability is ‘taxable’. 
+
+    // Add the income to curYearIncome, if the investment’s tax status is ‘non-retirement’ and the investment type’s taxability is ‘taxable’.
     if (investment.accountTaxStatus == "non-tax" && investmentType.taxability == "taxable") {
       yearTotals.curYearIncome += income;
     } 
 
-  // Calculate the change in value, using the given fixed amount or percentage, or sampling from the specified probability distribution.
-    let annualReturn = investmentType.annualReturn; 
+    // Calculate the change in value, using the given fixed amount or percentage, or sampling from the specified probability distribution.
+    let annualReturn = investmentType.annualReturn;
     let change = 0;
     if (annualReturn.type == "normal") {
       change = randomNormal(annualReturn.mean, annualReturn.stdDev);
@@ -201,9 +195,9 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals) {
       change = annualReturn.value;
     }
     if (annualReturn.unit == "percentage") {
-      change = investment.value * ((change * 0.01));
-    } 
-  // Add the income to the value of the investment
+      change = investment.value * (change * 0.01);
+    }
+    // Add the income to the value of the investment
     investment.value += change;
     yearTotals.curYearGains += change;
   // Calculate this year’s expenses, by multiplying the expense ratio and the average value of the investment
@@ -265,7 +259,6 @@ class DataStore {
   }
 }
 
-
 async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUser, investments, incomeEvent, expenseEvent, investEvent, rebalanceEvent, investmentTypes) {
   // previous year
   let irsLimit = scenario.irsLimit;
@@ -307,14 +300,14 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     curYearGains: 0,
     curYearSS: 0,
     curYearIncome: 0,
-    curYearEarlyWithdrawals: 0
-  };  
+    curYearEarlyWithdrawals: 0,
+  };
   let prevYearIncome = 0;
   let prevYearSS = 0;
   let prevYearEarlyWithdrawals = 0;
   let prevYearGains = 0;
 
-  //  // SIMULATION LOOP  
+  //  // SIMULATION LOOP
   // manually adjusted for testing, should be year <= userEndYear !!
   for (let year = currentYear; year <= 2025; year++) {
     console.log("\nSIMULATION YEAR", year);
@@ -335,9 +328,9 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
 
     //   // PERFORM RMD FOR PREVIOUS YEAR
     const userAge = year - scenario.birthYearUser;
-    investments = await performRMDs(investments, yearTotals.curYearIncome, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD);
+    await performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD);
     sumInvestmentsPreTaxRMD = 0;
-   
+
     //   // UPDATE INVESTMENT VALUES
     // console.log(' investment yearTotals before :>> ', yearTotals);
     updateInvestmentValues(investments, investmentTypes, yearTotals);
@@ -360,25 +353,40 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     // console.log("yearTotals after :>> ", yearTotals);
 
     //   // PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
-    payNonDiscretionaryExpenses(curExpenseEvent, cashInvestment, prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, fedDeduction, year, userAge, capitalGains, withdrawalStrategy, yearTotals, inflationRate);
+    payNonDiscretionaryExpenses(
+      curExpenseEvent,
+      cashInvestment,
+      prevYearIncome,
+      prevYearSS,
+      prevYearGains,
+      prevYearEarlyWithdrawals,
+      federalIncomeTax,
+      stateIncomeTaxBracket,
+      fedDeduction,
+      year,
+      userAge,
+      capitalGains,
+      withdrawalStrategy,
+      yearTotals,
+      inflationRate
+    );
 
     //   // PAY DISCRETIONARY EXPENSES
-
     payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate);
 
     //   // RUN INVEST EVENT
-    // runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
+    runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
 
     //   // RUN REBALANCE EVENT
-    // let types = ["pre-tax", "after-tax", "non-retirement"];
-    // for (let type of types) {
-    //   let rebalanceStrategy = getRebalanceStrategy(scenario, curRebalanceEvent, type, year);
-    //   if (rebalanceStrategy.length != 0) {
-    //     rebalance(curYearGains, investments, year, rebalanceStrategy);
-    //   }
-    // }
+    let types = ["pre-tax", "after-tax", "non-retirement"];
+    for (let type of types) {
+      let rebalanceStrategy = getRebalanceStrategy(scenario, curRebalanceEvent, type, year);
+      if (rebalanceStrategy.length != 0) {
+        rebalance(investments, year, rebalanceStrategy, userAge, yearTotals);
+      }
+    }
 
-     // PRELIMINARIES
+    // PRELIMINARIES
     // can differ each year if sampled from distribution
     federalIncomeTax = updateFedIncomeTaxBracket(federalIncomeTax, inflationRate);
     fedDeduction = updateFedDeduction(fedDeduction, inflationRate);
@@ -395,7 +403,7 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
       sumInvestmentsPreTaxRMD += preTaxInvestment.value;
     }
     console.log("The sum of investments with value pretax (to use in RMD) is: ", sumInvestmentsPreTaxRMD, "as of year: ", year);
-    
+
     prevYearIncome = yearTotals.curYearIncome;
     prevYearSS = yearTotals.curYearSS;
     prevYearEarlyWithdrawals = yearTotals.curYearEarlyWithdrawals;
