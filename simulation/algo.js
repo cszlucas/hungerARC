@@ -82,7 +82,6 @@ function rothConversion(scenario, year, curYearIncome, curYearSS, federalIncomeT
   // transfer from pre-tax to after-tax retirement
   for (let investment of rothConversionStrategyInvestments) {
     if (rc > 0) {
-      console.log("inside of for investent loop");
       //console.log("rc :>> ", rc);
       //console.log("investment.value :>> ", investment.value);
       // if (investment.accountTaxStatus == "pre-tax" && rc > 0) {
@@ -91,7 +90,6 @@ function rothConversion(scenario, year, curYearIncome, curYearSS, federalIncomeT
         investment.accountTaxStatus = "after-tax";
       } else {
         investment.value -= rc;
-        console.log("hellooo");
         const newInvestmentObject = {
           _id: uuidv4(),
           investmentType: investment.investmentType,
@@ -123,13 +121,10 @@ function rothConversion(scenario, year, curYearIncome, curYearSS, federalIncomeT
 
 function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment) {
   for (let incomeEvent of incomeEvents) {
-    startYear = incomeEvent.startYearCalc;
-    endYear = incomeEvent.startYearCalc + incomeEvent.durationCalc;
-    if (year >= startYear && year <= endYear && endYear <= userEndYear) {
       let annualChange = incomeEvent.annualChange;
       let incomeValue = incomeEvent.initialAmount;
-      // console.log('incomeValue :>> ', incomeValue);
-      // console.log('inflationRate :>> ', inflationRate);
+      console.log('incomeValue :>> ', incomeValue);
+      console.log('inflationRate :>> ', inflationRate);
       let amt = 0;
       if (annualChange.distribution == "none") {
         amt = annualChange.amount;
@@ -157,7 +152,6 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
       if (incomeEvent.isSocialSecurity) {
         curYearSS += incomeValue; // incomeValue because social security does not apply to cash investments
       }
-    }
   }
   return { curYearIncome, curYearSS, cashInvestment };
 }
@@ -294,31 +288,33 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
   }
 
   // calculate the start year and duration of each income event
-  for (let income of incomeEvent) {
-    let startYear, duration;
-    if (income.startYear.type == "fixedAmt") {
-      startYear = income.startYear.value;
-    } else if (income.startYear.type == "uniform") {
-      startYear = calculateUniformDist(income.startYear.min, income.startYear.max);
-    } else if (income.startYear.type == "normal") {
-      startYear = calculateNormalDist(income.startYear.stdDev, income.startYear.mean);
-    } else {
-      startYear = year;
-    }
+  // for (let income of incomeEvent) {
+  //   let startYear, duration;
+  //   if (income.startYear.type == "fixedAmt") {
+  //     startYear = income.startYear.value;
+  //   } else if (income.startYear.type == "uniform") {
+  //     startYear = calculateUniformDist(income.startYear.min, income.startYear.max);
+  //   } else if (income.startYear.type == "normal") {
+  //     startYear = calculateNormalDist(income.startYear.stdDev, income.startYear.mean);
+  //   } else {
+  //     startYear = year;
+  //   }
 
-    if (income.duration.type == "fixedAmt") {
-      duration = income.duration.value;
-    } else if (income.duration.type == "uniform") {
-      duration = calculateUniformDist(income.duration.min, income.duration.max);
-    } else {
-      duration = calculateNormalDist(income.duration.stdDev, income.duration.mean);
-    }
-    income.startYearCalc = startYear;
-    income.durationCalc = duration;
-  }
-  for (let event of [incomeEvent, expenseEvent, investEvent, rebalanceEvent]) {
-    setValues(event);
-  }
+  //   if (income.duration.type == "fixedAmt") {
+  //     duration = income.duration.value;
+  //   } else if (income.duration.type == "uniform") {
+  //     duration = calculateUniformDist(income.duration.min, income.duration.max);
+  //   } else {
+  //     duration = calculateNormalDist(income.duration.stdDev, income.duration.mean);
+  //   }
+  //   income.startYearCalc = startYear;
+  //   income.durationCalc = duration;
+  // }
+  // for (let event of [incomeEvent, expenseEvent, investEvent, rebalanceEvent]) {
+  //   setValues(event);
+  // }
+  setValues([...incomeEvent, ...expenseEvent, ...investEvent, ...rebalanceEvent]);
+  // console.log("incomeEvent :>> ", incomeEvent);
   let sumInvestmentsPreTaxRMD = 0;
   let curYearIncome = 0;
   let curYearSS = 0;
@@ -328,18 +324,19 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
   let prevYearSS = 0;
   let prevYearEarlyWithdrawals = 0;
   let prevYearGains = 0;
-  let federalIncomeTax = fedIncomeTaxBracket;
 
   //  // SIMULATION LOOP  
   // manually adjusted for testing, should be year <= userEndYear !!
   for (let year = currentYear; year <= 2025; year++) {
-    console.log("\nSIMULATION YEAR ", year);
     inflationRate = findInflation(scenario.inflationAssumption) * 0.01;
     let { curIncomeEvent, curExpenseEvent, curInvestEvent, curRebalanceEvent } = getCurrentEvent(year, incomeEvent, expenseEvent, investEvent, rebalanceEvent);
     let { RMDStrategyInvestOrder, withdrawalStrategy, spendingStrategy, investStrategy } = getStrategy(scenario, investments, curExpenseEvent, curInvestEvent, year);
+    // console.log("curIncomeEvent :>> ", curIncomeEvent);
+    // console.log("curExpenseEvent :>> ", curExpenseEvent);
+    // console.log("curInvestEvent :>> ", curInvestEvent);
+    // console.log("curRebalanceEvent :>> ", curRebalanceEvent);
 
     // RUN INCOME EVENTS
-
     let cashInvestmentType = investmentTypes.find((inv) => inv.name === "Cash");
     let cashInvestment = 0;
     if (cashInvestmentType) {
@@ -347,148 +344,68 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
       let foundById = investments.find((inv) => inv.investmentType === cashId);
       cashInvestment = foundById.value;
     }
-
-    ({ curYearIncome, curYearSS, cashInvestment } = updateIncomeEvents(incomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment));
-
+    // console.log('curIncomeEvent :>> ', curIncomeEvent);
+    ({ curYearIncome, curYearSS, cashInvestment } = updateIncomeEvents(curIncomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment));
+    // console.log("curYearIncome :>> ", curYearIncome);
+    // console.log("curYearSS :>> ", curYearSS);
+    // console.log("cashInvestment :>> ", cashInvestment);
     //   // PERFORM RMD FOR PREVIOUS YEAR
     const userAge = year - scenario.birthYearUser;
     investments = await performRMDs(investments, curYearIncome, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD);
     sumInvestmentsPreTaxRMD = 0;
-
+   
     //   // UPDATE INVESTMENT VALUES
+    ({ curYearIncome, curYearGains } = updateInvestmentValues(investments, investmentTypes, curYearIncome, curYearGains));
 
     // find all the investment objects by the roth conversion strategy ids
     let rothConversionStrategyInvestments = [];
-    //console.log("scenario.rothConversionStrategy :>> ", scenario.rothConversionStrategy);
-    //console.log("invest :>> ", investments);
     for (let investment of scenario.rothConversionStrategy) {
       let foundInvestment = investments.find((inv) => inv._id === investment);
-      //console.log("foundInvestment :>> ", foundInvestment);
       if (foundInvestment) {
         rothConversionStrategyInvestments.push(foundInvestment);
       }
     }
-    //console.log("rothConversionStrategyInvestments :>> ", rothConversionStrategyInvestments);
 
     // RUN ROTH CONVERSION IF ENABLED
     if (scenario.optimizerSettings.enabled && year >= scenario.optimizerSettings.startYear && year <= scenario.optimizerSettings.endYear) {
-      curYearIncome = rothConversion(scenario, year, curYearIncome, curYearSS, fedIncomeTaxBracket, investmentTypes, investments, curYearEarlyWithdrawals, rothConversionStrategyInvestments);
+      curYearIncome = rothConversion(scenario, year, curYearIncome, curYearSS, federalIncomeTax, investmentTypes, investments, curYearEarlyWithdrawals, rothConversionStrategyInvestments);
     }
-    //console.log("scenario.investments :>> ", scenario.setOfInvestments);
-    //console.log("investments :>> ", investments);
 
     //   // PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
-    payNonDiscretionaryExpenses(curExpenseEvent, investments, cashInvestment, prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, year, userAge, capitalGains, withdrawalStrategy, curYearGains, curYearIncome, curYearEarlyWithdrawals);
+    // payNonDiscretionaryExpenses(curExpenseEvent, investments, cashInvestment, prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, year, userAge, capitalGains, withdrawalStrategy, curYearGains, curYearIncome, curYearEarlyWithdrawals);
 
     //   // PAY DISCRETIONARY EXPENSES
 
-    payDiscretionaryExpenses(scenario, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, curYearGains, curYearIncome, curYearEarlyWithdrawals);
+    // payDiscretionaryExpenses(scenario, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, curYearGains, curYearIncome, curYearEarlyWithdrawals);
 
     //   // RUN INVEST EVENT
-    runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
+    // runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
 
     //   // RUN REBALANCE EVENT
-    let types = ["pre-tax", "after-tax", "non-retirement"];
-    for (let type of types) {
-      let rebalanceStrategy = getRebalanceStrategy(scenario, curRebalanceEvent, type, year);
-      if (rebalanceStrategy.length != 0) {
-        rebalance(curYearGains, investments, year, rebalanceStrategy);
-      }
-    }
+    // let types = ["pre-tax", "after-tax", "non-retirement"];
+    // for (let type of types) {
+    //   let rebalanceStrategy = getRebalanceStrategy(scenario, curRebalanceEvent, type, year);
+    //   if (rebalanceStrategy.length != 0) {
+    //     rebalance(curYearGains, investments, year, rebalanceStrategy);
+    //   }
+    // }
 
      // PRELIMINARIES
     // can differ each year if sampled from distribution
-<<<<<<< HEAD
-    inflationRate = findInflation(scenario.inflationAssumption) * 0.01;
-=======
-    // console.log('fedIncomeTaxBracket :>> ', fedIncomeTaxBracket);
->>>>>>> main
-    // console.log('inflationRate :>> ', inflationRate);
     federalIncomeTax = updateFedIncomeTaxBracket(federalIncomeTax, inflationRate);
-    //console.log("fedIncomeTaxBracket :>> ", fedIncomeTaxBracket);
-    // console.log('federalIncomeTax HERE  :>> ', federalIncomeTax);
     fedDeduction = updateFedDeduction(fedDeduction, inflationRate);
     capitalGains = updateCapitalGains(capitalGains, inflationRate);
-    //console.log("UPDATED capitalGains :>> ", capitalGains);
     if (stateTax) {
       updateStateIncomeTaxBracket(stateIncomeTaxBracket, inflationRate);
     }
     // retirement account limit - after tax
     irsLimit *= 1 + inflationRate;
-<<<<<<< HEAD
-    // RUN INCOME EVENTS
-    let curYearIncome = 0;
-    let curYearSS = 0;
-    let curYearEarlyWithdrawals = 0;
-    let curYearGains = 0;
-=======
-    console.log("IRS LIMTIT", irsLimit);
->>>>>>> main
 
     //  // SAVE FOR PREV YEAR
     let allInvestmentsPreTax = investments.filter((investment) => investment.accountTaxStatus.trim().toLowerCase() === "pre-tax");
     for (let preTaxInvestment of allInvestmentsPreTax) {
       sumInvestmentsPreTaxRMD += preTaxInvestment.value;
     }
-<<<<<<< HEAD
-
-    ({ curYearIncome, curYearSS, cashInvestment } = updateIncomeEvents(incomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment));
-    // console.log("curYearIncome :>> ", curYearIncome);
-    // console.log("curYearSS :>> ", curYearSS);
-    // console.log("cashInvestment :>> ", cashInvestment);
-
-    //   // PERFORM RMD FOR PREVIOUS YEAR
-    const userAge = year - scenario.birthYearUser;
-    //investments = await performRMDs(investments, curYearIncome, userAge, RMDStrategyInvestOrder);
-
-    // UPDATE INVESTMENT VALUES
-    ({ curYearIncome, curYearGains } = updateInvestmentValues(investments, investmentTypes, curYearIncome, curYearGains));
-    // console.log('curYearIncome :>> ', curYearIncome);
-    // console.log('curYearGains :>> ', curYearGains);
-
-    // find all the investment objects by the roth conversion strategy ids
-    let rothConversionStrategyInvestments=[]
-    for (let investment of scenario.rothConversionStrategy) {
-      let foundInvestment = investments.find(inv => inv._id === investment);
-      // console.log('foundInvestment :>> ', foundInvestment);
-      if (foundInvestment) {
-        rothConversionStrategyInvestments.push(foundInvestment);
-      }
-    }
-    // console.log('rothConversionStrategyInvestments :>> ', rothConversionStrategyInvestments);
-
-    //  RUN ROTH CONVERSION IF ENABLED
-      if (scenario.optimizerSettings.enabled && year >= scenario.optimizerSettings.startYear && year <= scenario.optimizerSettings.endYear) {
-        curYearIncome = rothConversion(scenario, year, curYearIncome, curYearSS, federalIncomeTax, investmentTypes, investments, curYearEarlyWithdrawals, rothConversionStrategyInvestments);
-      }
-    console.log('scenario.investments :>> ', scenario.setOfInvestments);
-    console.log('investments :>> ', investments);
-
-    //   // PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
-    curYearSS = 20;
-    curYearGains = 30;
-    curYearEarlyWithdrawals = 30;
-    curYearIncome = 200;
-    //cashInvestment = 5000;
-    //payNonDiscretionaryExpenses(curExpenseEvent, investments, cashInvestment, curYearIncome, curYearSS, curYearGains, curYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, year, userAge, capitalGains, withdrawalStrategy);
-
-    //   // PAY DISCRETIONARY EXPENSES
-
-    //payDiscretionaryExpenses(scenario, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, curYearGains, curYearIncome, curYearEarlyWithdrawals);
-
-    //   // RUN INVEST EVENT
-    //runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
-
-    //   // RUN REBALANCE EVENT
-    let types = ["pre-tax", "after-tax", "non-retirement"];
-    for (let type of types) {
-      let rebalanceStrategy = getRebalanceStrategy(scenario, rebalanceEvent, type, year);
-      if (rebalanceStrategy.length != 0) {
-        rebalance(curYearGains, investments, year, rebalanceStrategy);
-      }
-    }
-
-=======
     console.log("The sum of investments with value pretax (to use in RMD) is: ", sumInvestmentsPreTaxRMD, "as of year: ", year);
     
     prevYearIncome = curYearIncome;
@@ -499,7 +416,6 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     curYearSS = 0;
     curYearEarlyWithdrawals = 0;
     curYearGains = 0;
->>>>>>> main
     prevYear += 1;
   }
 }
@@ -576,4 +492,4 @@ async function main(numScenarioTimes, scenarioId) {
 // Call the main function to execute everything
 // main(1, "67df22db4996aba7bb6e8d73");
 //67e084385ca2a5376ad2efd2
-main(1, "67df22db4996aba7bb6e8d73");
+main(1, "67e084385ca2a5376ad2efd2");

@@ -19,9 +19,8 @@ function refEvents(event, relatedEvents) {
 
 function startYear(event, relatedEvents) {
   const type = event.startYear.type;
-
   if (type === "fixedAmt") {
-    return event.startYear.year;
+    return event.startYear.value;
   } else if (type === "normal") {
     const { mean, stdDev } = event.startYear;
     return Math.round(randomNormal(mean, stdDev));
@@ -33,7 +32,6 @@ function startYear(event, relatedEvents) {
   } else if (type === "after") {
     return refEvents(event, relatedEvents) + 1;
   }
-
   return null; // fallback if type is not recognized
 }
 
@@ -99,7 +97,6 @@ function randomUniform(min, max) {
 
 function duration(event) {
   const type = event.duration.type;
-
   if (type === "fixedAmt") {
     return event.duration.value;
   } else if (type === "normal") {

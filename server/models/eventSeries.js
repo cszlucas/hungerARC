@@ -16,7 +16,7 @@ var BaseEventSchema = new Schema({
     stdDev: { type: Number },
     min: { type: Number },
     max: { type: Number },
-    refer:  [{ type: Schema.Types.ObjectId}],
+    refer:  { type: Schema.Types.ObjectId},
   },
   duration: {
     type: {
