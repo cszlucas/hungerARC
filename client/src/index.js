@@ -16,6 +16,7 @@ import Invest from "./pages/scenario/events/invest";
 import Rebalance from "./pages/scenario/events/rebalance";
 import RunSimulations from "./pages/scenario/runSimulations";
 import Strategies from "./pages/scenario/strategies";
+import Charts from "./pages/charts";
 
 import reportWebVitals from "./reportWebVitals";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
@@ -46,6 +47,7 @@ const router = createBrowserRouter([
       { path: "run_simulations", element: <RunSimulations /> },
     ],
   },
+  {path: "/charts", element: <Charts/>}
 ]);
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
