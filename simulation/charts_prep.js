@@ -37,67 +37,116 @@ function updateYearDataBucket(buckets, index, { investments, income, discretiona
   buckets[index].metGoal.push(metGoal); // 1 or 0
 }
 
-function mergeYearData(simulationRun) {
-  const merged = {
-    investments: [],
-    income: [],
-    discretionary: [],
-    nonDiscretionary: [],
-    taxes: [],
-    earlyWithdrawals: [],
-    metGoal: [],
-  };
 
-  for (const yearData of simulationRun) {
-    merged.investments.push(yearData.investments[0]);
-    merged.income.push(yearData.income[0]);
-    merged.discretionary.push(yearData.discretionary[0]);
-    merged.nonDiscretionary.push(yearData.nonDiscretionary[0]);
-    merged.taxes.push(yearData.taxes[0]);
-    merged.earlyWithdrawals.push(yearData.earlyWithdrawals[0]);
-    merged.metGoal.push(yearData.metGoal[0]);
+function formatGroupedStackedBarChart(mergedData, startYear) {
+
+  const chartData = [];
+  
+  // Define categories for the chart
+  const categories = [
+    { key: "investments", type: "investment" },
+    { key: "income", type: "income" },
+    { key: "discretionary", type: "expense", name: "Discretionary" },
+    { key: "nonDiscretionary", type: "expense", name: "Non-Discretionary" },
+    { key: "taxes", type: "expense", name: "Taxes" },
+    { key: "earlyWithdrawals", type: "income", name: "Early Withdrawals" },
+  ];
+
+  // Check if mergedData is correctly defined and has the required keys
+  if (!mergedData || !Array.isArray(mergedData.income)) {
+    console.error("Error: mergedData or mergedData.income is missing or not an array");
+    return [];  // Return an empty array or handle the error gracefully
   }
 
-  return merged;
+  const numYears = mergedData.income.length;  // Get the number of years (assumes mergedData is structured properly)
+
+  for (let i = 0; i < numYears; i++) {
+    const year = startYear + i;
+
+    for (const { key, type, name } of categories) {
+      const value = mergedData[key]?.[i] ?? 0;  // Safely access the value at index i
+
+      if (value !== 0) {  // Only add if value is non-zero
+        chartData.push({
+          year,
+          type,
+          name: name || key,  // Use custom name if available, else use the key
+          value,
+        });
+      }
+    }
+  }
+
+  return chartData;
 }
+
+
 
 //After All Simulations — Build Chart Data
 function buildChartDataFromBuckets(buckets, startYear) {
-  const shadedChart = {
-    startYear,
-    endYear: startYear + buckets.length - 1,
-    investments: [],
-    income: [],
-    medianDiscretionary: [],
-    medianNonDiscretionary: [],
-    taxes: [],
-    curYearEarlyWithdrawals: [],
-  };
+  const numYears = buckets.length;
+  const endYear = startYear + numYears - 1;
 
-  const lineChart = {
-    startYear,
-    endYear: startYear + buckets.length - 1,
-    probabilities: [],
+  const data = {
+    income: {
+      average: [],
+      median: [],
+    },
+    investments: {
+      average: [],
+      median: [],
+    },
+    discretionary: {
+      average: [],
+      median: [],
+    },
+    nonDiscretionary: {
+      average: [],
+      median: [],
+    },
+    taxes: {
+      average: [],
+      median: [],
+    },
+    earlyWithdrawals: {
+      average: [],
+      median: [],
+    },
+    metGoal: {
+      average: [],
+    },
   };
 
   for (const bucket of buckets) {
-    shadedChart.investments.push(average(bucket.investments));
-    shadedChart.income.push(average(bucket.income));
-    shadedChart.medianDiscretionary.push(median(bucket.discretionary));
-    shadedChart.medianNonDiscretionary.push(median(bucket.nonDiscretionary));
-    shadedChart.taxes.push(average(bucket.taxes));
-    shadedChart.curYearEarlyWithdrawals.push(average(bucket.earlyWithdrawals));
+    data.income.average.push(average(bucket.income));
+    data.income.median.push(median(bucket.income));
 
-    const successRate = average(bucket.metGoal); // between 0 and 1
-    lineChart.probabilities.push(successRate);
+    data.investments.average.push(average(bucket.investments));
+    data.investments.median.push(median(bucket.investments));
+
+    data.discretionary.average.push(average(bucket.discretionary));
+    data.discretionary.median.push(median(bucket.discretionary));
+
+    data.nonDiscretionary.average.push(average(bucket.nonDiscretionary));
+    data.nonDiscretionary.median.push(median(bucket.nonDiscretionary));
+
+    data.taxes.average.push(average(bucket.taxes));
+    data.taxes.median.push(median(bucket.taxes));
+
+    data.earlyWithdrawals.average.push(average(bucket.earlyWithdrawals));
+    data.earlyWithdrawals.median.push(median(bucket.earlyWithdrawals));
+
+    data.metGoal.average.push(average(bucket.metGoal));
   }
 
-  return { shadedChart, lineChart };
+  return { startYear, endYear, data };
 }
+
+
 
 module.exports = {
   buildChartDataFromBuckets,
   updateYearDataBucket,
   createYearDataBuckets,
-  mergeYearData
+  formatGroupedStackedBarChart
 };

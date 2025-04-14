@@ -79,14 +79,15 @@ function payNonDiscretionaryExpenses(
   capitalGains,
   withdrawalStrategy,
   yearTotals,
-  inflationRate
+  inflationRate,
+  spouseDeath
 ) {
   console.log("\nPAY NON-DISCRETIONARY EXPENSES");
   const nonDiscretionaryExpenses = curExpenseEvent.filter((expenseEvent) => expenseEvent.isDiscretionary === false);
   //console.log("nonDiscretionaryExpenses ", nonDiscretionaryExpenses);
   let expenseAmt = 0;
   for (let expense of nonDiscretionaryExpenses) {
-    expenseAmt += getExpenseAmountInYear(expense, year, inflationRate);
+    expenseAmt += getExpenseAmountInYear(expense, year, inflationRate, spouseDeath);
   }
   const nonDiscretionaryExpenseAmt = expenseAmt;
   const taxes = getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, capitalGains, userAge, fedDeduction);
@@ -155,12 +156,12 @@ function taxAmt(income, taxBracket, type) {
 
 //spendingStrategy is an ordering on expenses
 //withdrawalStrategy is an ordering on investments
-function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate) {
+function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath) {
   console.log("\nPAY DISCRETIONARY EXPENSES");
   let goalRemaining = financialGoal;
   let expensesPaid = 0;
   for (let expense of spendingStrategy) {
-    let expenseVal = getExpenseAmountInYear(expense, year, inflationRate);
+    let expenseVal = getExpenseAmountInYear(expense, year, inflationRate, spouseDeath);
     console.log("Expense:", expense._id, "Amount:", expenseVal, "Cash available:", cashInvestment.value);
 
     if (cashInvestment.value >= expenseVal) {
@@ -226,10 +227,12 @@ function updateValues(investment, userAge, yearTotals, partial, amountPaid) {
       const fractionSold = investment.value > 0 ? amountPaid / investment.value : 0;
       const gain = fractionSold * (investment.value - investment.purchasePrice);
       yearTotals.curYearGains += Math.max(gain, 0);
+      investment.purchasePrice -= (1-fractionSold)*investment.purchasePrice;
       console.log("By a fraction update curYearGains:", gain, "purchase price:", investment.purchasePrice);
     } else {
       const gain = investment.value - investment.purchasePrice;
       yearTotals.curYearGains += Math.max(gain, 0);
+      investment.purchasePrice -= 0;
       console.log("update curYearGains:", gain, "purchase price:", investment.purchasePrice);
     }
   }
@@ -285,6 +288,7 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
       }
 
       investment.purchasePrice += buyAmt;
+      investment.value += buyAmt;
       totalInvested += buyAmt;
 
       console.log("investment", investment._id, "percentage", percentage, "type", investment.accountTaxStatus, "increase purchasePrice by:", buyAmt);
@@ -342,6 +346,7 @@ function buyNonRetirement(investmentsWithAllocations, excessCash) {
     const adjustedPercentage = percentage / totalPercentage;
     const buyAmt = excessCash * adjustedPercentage;
     investment.purchasePrice += buyAmt;
+    investment.value += buyAmt;
     console.log("Buying into non-retirement:", investment._id, "purchase:", buyAmt);
   }
 }
