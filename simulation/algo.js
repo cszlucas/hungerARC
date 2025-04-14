@@ -251,6 +251,7 @@ class DataStore {
 }
 
 async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUser, investments, incomeEvent, expenseEvent, investEvent, rebalanceEvent, investmentTypes) {
+
   // previous year
   let irsLimit = scenario.irsLimit;
   let filingStatus = scenario.filingStatus;
@@ -316,9 +317,11 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
       let cashId = cashInvestmentType._id;
       cashInvestment = investments.find((inv) => inv.investmentType === cashId);
     }
+    console.log("BEFORE INCOME", yearTotals.curYearIncome);
     // console.log('income yearTotals before :>> ', yearTotals);
     updateIncomeEvents(incomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, yearTotals, cashInvestment, curIncomeEvent);
     // console.log("yearTotals after :>> ", yearTotals);
+    console.log("AFTER INCOME", yearTotals.curYearIncome);
 
     //   // PERFORM RMD FOR PREVIOUS YEAR
     const userAge = year - scenario.birthYearUser;
