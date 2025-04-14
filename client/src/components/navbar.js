@@ -30,6 +30,7 @@ export default function NavBar({ currentPage }) {
 
   const handleLogout = () => {
     localStorage.clear();
+    localStorage.setItem("edit", null);
     navigate("/login");
   };
 
@@ -53,36 +54,28 @@ export default function NavBar({ currentPage }) {
     >
       {/* Top Section */}
       <List>
-        {menuItems.map((text) => {
-          const isCurrent = currentPage.toLowerCase() === text.toLowerCase();
-          const routePath = `/${text.toLowerCase()}`;
+      {menuItems.map((text) => {
+        const isCurrent = currentPage.toLowerCase() === text.toLowerCase();
+        const routePath = `/${text.toLowerCase()}`;
 
-          return (
-            <ListItem key={text} disablePadding>
-              {isCurrent ? (
-                <Box
-                  sx={{
-                    backgroundColor: "#424242",
-                    color: "#fff",
-                    width: "100%",
-                    padding: "10px 16px",
-                  }}
-                >
-                  <ListItemText primary={text} />
-                </Box>
-              ) : (
-                <Link
-                  to={routePath}
-                  style={{ textDecoration: "none", color: "inherit", width: "100%" }}
-                >
-                  <ListItem button>
-                    <ListItemText primary={text} />
-                  </ListItem>
-                </Link>
-              )}
-            </ListItem>
-          );
-        })}
+        return (
+          <ListItem
+            key={text}
+            disablePadding
+            component={Link}
+            to={routePath}
+            sx={{
+              backgroundColor: isCurrent ? "#424242" : "inherit",
+              color: isCurrent ? "#fff" : "inherit",
+              px: 2,
+              py: 1.25,
+            }}
+          >
+            <ListItemText primary={text} />
+          </ListItem>
+        );
+      })}
+
       </List>
 
       {/* Bottom Section */}
@@ -102,10 +95,26 @@ export default function NavBar({ currentPage }) {
           </ListItem>
 
           {/* Logout */}
-          <ListItem disablePadding>
-            <ListItem button onClick={handleLogout}>
-              <ListItemText primary={"Logout"} />
-            </ListItem>
+          <ListItem
+            disablePadding
+            onClick={handleLogout}
+            sx={{
+              px: 2,
+              py: 1.25,
+              cursor: "pointer",
+              "&.MuiListItem-root": {
+                backgroundColor: "transparent",
+              },
+              "&:hover": {
+                backgroundColor: "transparent",
+              },
+              "&:focus": {
+                outline: "none",
+                backgroundColor: "transparent",
+              }
+            }}
+          >
+            <ListItemText primary="Logout" />
           </ListItem>
         </List>
       </Box>
