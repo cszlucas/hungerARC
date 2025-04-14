@@ -66,6 +66,7 @@ export const getInitialState = async (user) => {
 
 const readStateFromLS = (key_value) => {
   const storedState = localStorage.getItem(key_value);
+  if (key_value === "edit") console.log(JSON.parse(storedState));
   return storedState ? JSON.parse(storedState) : null;
 };
 
@@ -77,13 +78,10 @@ const retrieveScenarioData = async (scenarioId, dataType) => {
           console.error(`Invalid data type: ${dataType}`);
           return;
       }
-
       const response = await axios.get(`http://localhost:8080/scenario/${scenarioId}/${dataType}`);
       const data = response.data || [];
       localStorage.setItem(`current${capitalizeFirstLetter(dataType)}`, JSON.stringify(data));
-      // console.log(data);
-
-      // console.log(`Data for ${dataType} stored in localStorage.`);
+      
       return data;
   } catch (error) {
       console.error(`Error retrieving ${dataType}:`, error);
@@ -102,14 +100,14 @@ export const AppProvider = ({ children }) => {
   const [currScenario, setCurrScenario] = useState(readStateFromLS("currentScenario"));
   const [eventEditMode, setEventEditMode] = useState(readStateFromLS("editEvent")); // this will contain a tuple ex: (income, {some random id})
 
-  const [currInvestments, setCurrInvestments] = useState(readStateFromLS("currentInvestments"));
-  const [currInvestmentTypes, setCurrInvestmentTypes] = useState(readStateFromLS("currentInvestmentType"));
-  const [takenTaxStatusAccounts, setTakenTaxStatusAccounts] = useState(readStateFromLS("takenTaxStatusAccounts"));
+  const [currInvestments, setCurrInvestments] = useState(readStateFromLS("currentInvestments") || []);
+  const [currInvestmentTypes, setCurrInvestmentTypes] = useState(readStateFromLS("currentInvestmentType") || []);
+  const [takenTaxStatusAccounts, setTakenTaxStatusAccounts] = useState(readStateFromLS("takenTaxStatusAccounts") || []);
 
-  const [currIncome, setCurrIncome] = useState(readStateFromLS("currentIncome"));  // incomeEvents[],    // income event series
-  const [currExpense, setCurrExpense] = useState(readStateFromLS("currentExpense"));   // expenseEvents[],   // expense event series
-  const [currInvest, setCurrInvest] = useState(readStateFromLS("currentInvest"));  // investEvents[],    // invest event series
-  const [currRebalance, setCurrRebalance] = useState(readStateFromLS("currentRebalance"));   // rebalanceEvents[], // rebalance event series
+  const [currIncome, setCurrIncome] = useState(readStateFromLS("currentIncome") || []);  // incomeEvents[],    // income event series
+  const [currExpense, setCurrExpense] = useState(readStateFromLS("currentExpense") || []);   // expenseEvents[],   // expense event series
+  const [currInvest, setCurrInvest] = useState(readStateFromLS("currentInvest") || []);  // investEvents[],    // invest event series
+  const [currRebalance, setCurrRebalance] = useState(readStateFromLS("currentRebalance") || []);   // rebalanceEvents[], // rebalance event series
   
 
   const { user } = useContext(AuthContext);
@@ -123,59 +121,48 @@ export const AppProvider = ({ children }) => {
   }, [user]);  // Trigger a refetch when user changes
   
   useEffect(() => {
-    const getScenarioById = (id) => {
-      for (let i = 0; i < scenarioData.length; i++) {
-        if (scenarioData[i]._id == id) {
-          return scenarioData[i]; // Return the found scenario
-        }
-      }
-      return null; // Return null if not found
-    };
-
+    localStorage.setItem("edit", JSON.stringify(editMode));
+  
     const loadScenarioData = async () => {
-      // console.log(scenarioData);
-      
-
-      if (editMode !== "new" && editMode !== null) {
-        setCurrScenario(getScenarioById(editMode));
-
-        // Wait for each function to resolve before setting state
-        const investments = await retrieveScenarioData(editMode, "investments");
-        const income = await retrieveScenarioData(editMode, "incomeEvent");
-        const expenses = await retrieveScenarioData(editMode, "expenseEvent");
-        const invest = await retrieveScenarioData(editMode, "invest");
-        const rebalance = await retrieveScenarioData(editMode, "rebalance");
-        const investmentTypes = await retrieveScenarioData(editMode, "investmentType");
-
-        const takenTaxStatusAccounts = {};
-
-        for (let i = 0; i < investments.length; i++) {
-          const type = investments[i].investmentType;
-          const status = investments[i].accountTaxStatus;
-
-          if (takenTaxStatusAccounts[type]) { takenTaxStatusAccounts[type].push(status); } 
-          else { takenTaxStatusAccounts[type] = [status]; }
-        }
-
-
-        setCurrInvestments(investments);
-        setCurrIncome(income);
-        setCurrExpense(expenses);
-        setCurrInvest(invest);
-        setCurrRebalance(rebalance);
-        setCurrInvestmentTypes(investmentTypes);
-        setTakenTaxStatusAccounts(takenTaxStatusAccounts);
-      } 
-
-      localStorage.setItem("edit", JSON.stringify(editMode));
+      if (!editMode || editMode === "new" || user.guest) return;
+  
+      const getScenarioById = (id) => scenarioData?.find((scenario) => scenario._id === id) || null;
+  
+      const scenario = getScenarioById(editMode);
+      setCurrScenario(scenario);
+  
+      const dataTypes = [
+        { key: "investments", setter: setCurrInvestments },
+        { key: "incomeEvent", setter: setCurrIncome },
+        { key: "expenseEvent", setter: setCurrExpense },
+        { key: "invest", setter: setCurrInvest },
+        { key: "rebalance", setter: setCurrRebalance },
+        { key: "investmentType", setter: setCurrInvestmentTypes },
+      ];
+  
+      const results = await Promise.all(
+        dataTypes.map(({ key }) => retrieveScenarioData(editMode, key))
+      );
+  
+      results.forEach(({ key, setter }, i) => dataTypes[i].setter(results[i]));
+  
+      const investments = results[0];
+      console.log(investments);
+  
+      const takenTaxStatusAccounts = investments.reduce((acc, inv) => {
+        const { investmentType: type, accountTaxStatus: status } = inv;
+        if (!acc[type]) acc[type] = [];
+        acc[type].push(status);
+        return acc;
+      }, {});
+  
+      setTakenTaxStatusAccounts(takenTaxStatusAccounts);
     };
-
+  
     loadScenarioData();
-  }, [editMode]); // This triggers on reload even if editMode doesnt changes
+  }, [editMode]);  
 
   useEffect(() => {
-    // Load user data from localStorage
-    // console.log("oop this got all scenarios got changed");
     localStorage.setItem("scenarioData", JSON.stringify(scenarioData));
   }, [scenarioData]);
 
@@ -209,14 +196,11 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     if (eventEditMode) localStorage.setItem("editEvent", JSON.stringify(eventEditMode));
-    // console.log(eventEditMode);
   }, [eventEditMode]);
 
   useEffect(() => {
     if (takenTaxStatusAccounts) localStorage.setItem("takenTaxStatusAccounts", JSON.stringify(takenTaxStatusAccounts));
   }, [takenTaxStatusAccounts]);
-
-  // console.log("Current scenarios:", scenarioData);
 
   return (
     <AppContext.Provider value={{ 

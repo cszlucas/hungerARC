@@ -79,14 +79,15 @@ function payNonDiscretionaryExpenses(
   capitalGains,
   withdrawalStrategy,
   yearTotals,
-  inflationRate
+  inflationRate,
+  spouseDeath
 ) {
   console.log("\nPAY NON-DISCRETIONARY EXPENSES");
   const nonDiscretionaryExpenses = curExpenseEvent.filter((expenseEvent) => expenseEvent.isDiscretionary === false);
   //console.log("nonDiscretionaryExpenses ", nonDiscretionaryExpenses);
   let expenseAmt = 0;
   for (let expense of nonDiscretionaryExpenses) {
-    expenseAmt += getExpenseAmountInYear(expense, year, inflationRate);
+    expenseAmt += getExpenseAmountInYear(expense, year, inflationRate, spouseDeath);
   }
   const nonDiscretionaryExpenseAmt = expenseAmt;
   const taxes = getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, capitalGains, userAge, fedDeduction);
@@ -155,12 +156,12 @@ function taxAmt(income, taxBracket, type) {
 
 //spendingStrategy is an ordering on expenses
 //withdrawalStrategy is an ordering on investments
-function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate) {
+function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath) {
   console.log("\nPAY DISCRETIONARY EXPENSES");
   let goalRemaining = financialGoal;
   let expensesPaid = 0;
   for (let expense of spendingStrategy) {
-    let expenseVal = getExpenseAmountInYear(expense, year, inflationRate);
+    let expenseVal = getExpenseAmountInYear(expense, year, inflationRate, spouseDeath);
     console.log("Expense:", expense._id, "Amount:", expenseVal, "Cash available:", cashInvestment.value);
 
     if (cashInvestment.value >= expenseVal) {

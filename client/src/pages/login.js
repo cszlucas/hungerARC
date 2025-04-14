@@ -49,11 +49,6 @@ const GoogleAuth = () => {
             console.log("Formatted Data:", formattedData);
             setUser(formattedData);
         }
-        
-        // Store token in localStorage
-        // localStorage.setItem("token", data.token);
-        // localStorage.setItem("user", JSON.stringify(data.user));
-        // setScenarioData(getInitialState);
 
         // ✅ Redirect to homepage
         navigate("/profile");
@@ -68,9 +63,6 @@ const GoogleAuth = () => {
         };
 
         setUser(guestUser);
-
-        // localStorage.setItem("user", JSON.stringify(guestUser));
-        // console.log(localStorage.getItem("user"));
         navigate("/profile"); // Redirect guest users to profile
     };
 

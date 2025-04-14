@@ -10,7 +10,7 @@ import { buttonStyles } from "./styles";
 import { ObjectId } from "bson";
 
 const CustomSave = ({ label = "Save", routeTo, color = "secondary" }) => {
-  const { currScenario, setCurrScenario, scenarioData, setScenarioData, editMode, setEditMode } = useContext(AppContext);
+  const { currScenario, setCurrScenario, setScenarioData, editMode, setEditMode } = useContext(AppContext);
   const { setCurrInvestmentTypes, setCurrInvestments } = useContext(AppContext);
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -140,20 +140,17 @@ const CustomSave = ({ label = "Save", routeTo, color = "secondary" }) => {
         setCurrScenario((prev) => ({ ...prev, _id: id }));
         setScenarioData((prev) => [...prev, { ...scenario, _id: id }]);
         setEditMode(id);
+        
         await addCashInvestment(id);
       } else {
-        if (!user.guest) {
-          await axios.post(`http://localhost:8080/updateScenario/${editMode}`, scenario);
-        }
-
-        setScenarioData((prev) =>
-          prev.map((item) => (item._id === editMode ? scenario : item))
-        );
+        if (!user.guest) await axios.post(`http://localhost:8080/updateScenario/${editMode}`, scenario);
+        setScenarioData((prev) => prev.map((item) => (item._id === editMode ? scenario : item)));
       } 
     } catch (error) {
       console.error("Error:", error);
       alert("Something Went Wrong!");
     } finally {
+      console.log(editMode);
       if (routeTo) navigate(routeTo); // now safely done after all updates
     }
   };
