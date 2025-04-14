@@ -27,14 +27,13 @@ import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
 import axios from "axios";
 import { AuthContext } from "../../../context/authContext";
+import EventSeries from "./eventSeries";
+import { ObjectId } from "bson";
 
 const Rebalance = () => {
   const { currRebalance, setCurrRebalance, currInvestments, currInvestmentTypes, setCurrScenario, editMode } = useContext(AppContext);
   const { eventEditMode, setEventEditMode } = useContext(AppContext);
   const { user } = useContext(AuthContext);
-  
-  // console.log(currRebalance);
-  // console.log(eventEditMode);
   
   const getInvestmentById = (id) => {
     console.log(id);
@@ -95,7 +94,6 @@ const Rebalance = () => {
     }
   };
   
-
   const InvestList = ({ rebalanceAllocation, getInvestmentNameById }) => {
     const displayList = [];
 
@@ -176,13 +174,13 @@ const Rebalance = () => {
     eventSeriesName: "",
     eventSeriesDescription: "",
     startYear: {
-      type: "",
+      type: "fixedAmt",
       value: "",
       mean: "",
       stdDev: "",
       min: "",
       max: "",
-      year: ""
+      refer: ""
     },
     duration: {
       type: "fixedAmt",
@@ -195,15 +193,9 @@ const Rebalance = () => {
     taxStatus: "",
     rebalanceAllocation: {
       type: "fixed",
-      fixedPercentages: {
-
-      },
-      initialPercenatages: {
-
-      },
-      finalPercentages: {
-
-      }
+      fixedPercentages: {},
+      initialPercenatages: {},
+      finalPercentages: {}
     }
   });
   
@@ -281,7 +273,6 @@ const Rebalance = () => {
     setSelectedInvestment("");
   };
   
-
   const getInvesmentTypeById = (id) => {
     if (id != "new") {
         for (let i = 0; i < currInvestmentTypes.length; i++) {
@@ -348,16 +339,11 @@ const Rebalance = () => {
     setFormValues(cleanedFormValues);
 
     if (eventEditMode.id === "new") {
-      let id;
+      let id = new ObjectId().toHexString();
   
       if (!user.guest) {
-        const response = await axios.post(
-          `http://localhost:8080/scenario/${editMode}/rebalanceStrategy`,
-          cleanedFormValues
-        );
+        const response = await axios.post(`http://localhost:8080/scenario/${editMode}/rebalanceStrategy`, cleanedFormValues);
         id = response.data._id;
-      } else {
-        id = currRebalance.length;
       }
   
       handleInputChange("_id", id);
@@ -383,57 +369,53 @@ const Rebalance = () => {
     }
   };
   
+  const handleAddInvestment = () => {
+    if (!selectedInvestment) return;
   
-
-    const handleAddInvestment = () => {
-      if (!selectedInvestment) return;
-    
-      const investment = currInvestments.find((inv) => inv._id === selectedInvestment);
-      if (!investment) return;
-    
-      setFormValues((prev) => {
-        const updatedRebalance = { ...prev.rebalanceAllocation };
-        const allocationType = prev.rebalanceAllocation.type;
-    
-        if (allocationType === "fixed") {
-          if (!updatedRebalance.fixedPercentages) updatedRebalance.fixedPercentages = {};
-          updatedRebalance.fixedPercentages[selectedInvestment] = parseFloat(pendingPercentage);
-        } else if (allocationType === "glidePath") {
-          if (!updatedRebalance.initialPercentages) updatedRebalance.initialPercentages = {};
-          if (!updatedRebalance.finalPercentages) updatedRebalance.finalPercentages = {};
-    
-          updatedRebalance.initialPercentages[selectedInvestment] = parseFloat(pendingInitial);
-          updatedRebalance.finalPercentages[selectedInvestment] = parseFloat(pendingFinal);
-        }
-    
-        return {
-          ...prev,
-          rebalanceAllocation: updatedRebalance,
-        };
-      });
-    
-      // Categorize investment
-      const alreadyInList = (list) =>
-        list.some((inv) => inv.investmentTypeName === investment.investmentTypeName);
-    
-      if (formValues.taxStatus === "non-tax" && !alreadyInList(taxableInvestments)) {
-        setTaxableInvestments([...taxableInvestments, investment]);
-      } else if (formValues.taxStatus === "pre-tax" && !alreadyInList(taxDeferredInvestments)) {
-        setTaxDeferredInvestments([...taxDeferredInvestments, investment]);
-      } else if (formValues.taxStatus === "after-tax" && !alreadyInList(taxFreeInvestments)) {
-        setTaxFreeInvestments([...taxFreeInvestments, investment]);
+    const investment = currInvestments.find((inv) => inv._id === selectedInvestment);
+    if (!investment) return;
+  
+    setFormValues((prev) => {
+      const updatedRebalance = { ...prev.rebalanceAllocation };
+      const allocationType = prev.rebalanceAllocation.type;
+  
+      if (allocationType === "fixed") {
+        if (!updatedRebalance.fixedPercentages) updatedRebalance.fixedPercentages = {};
+        updatedRebalance.fixedPercentages[selectedInvestment] = parseFloat(pendingPercentage);
+      } else if (allocationType === "glidePath") {
+        if (!updatedRebalance.initialPercentages) updatedRebalance.initialPercentages = {};
+        if (!updatedRebalance.finalPercentages) updatedRebalance.finalPercentages = {};
+  
+        updatedRebalance.initialPercentages[selectedInvestment] = parseFloat(pendingInitial);
+        updatedRebalance.finalPercentages[selectedInvestment] = parseFloat(pendingFinal);
       }
-    
-      // Clear selection + pending inputs
-      setSelectedInvestment("");
-      setPendingPercentage("");
-      setPendingInitial("");
-      setPendingFinal("");
-    };
+  
+      return {
+        ...prev,
+        rebalanceAllocation: updatedRebalance,
+      };
+    });
+  
+    // Categorize investment
+    const alreadyInList = (list) =>
+      list.some((inv) => inv.investmentTypeName === investment.investmentTypeName);
+  
+    if (formValues.taxStatus === "non-tax" && !alreadyInList(taxableInvestments)) {
+      setTaxableInvestments([...taxableInvestments, investment]);
+    } else if (formValues.taxStatus === "pre-tax" && !alreadyInList(taxDeferredInvestments)) {
+      setTaxDeferredInvestments([...taxDeferredInvestments, investment]);
+    } else if (formValues.taxStatus === "after-tax" && !alreadyInList(taxFreeInvestments)) {
+      setTaxFreeInvestments([...taxFreeInvestments, investment]);
+    }
+  
+    // Clear selection + pending inputs
+    setSelectedInvestment("");
+    setPendingPercentage("");
+    setPendingInitial("");
+    setPendingFinal("");
+  };
     
   
-
-
   console.log(formValues.rebalanceAllocation);
   const displayedList = formValues.rebalanceAllocation;
   console.log(displayedList);
@@ -465,44 +447,7 @@ const Rebalance = () => {
           {/* Left Column - Tax Category & Investment Dropdowns */}
           <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
             {/* Tax Category Dropdown */}
-            <CustomInput title="Event name" value={formValues.eventSeriesName} setValue={(value) => handleInputChange("eventSeriesName", value)} />
-
-            <CustomInput title="Description (Optional)" type="multiline" value={formValues.eventSeriesDescription} setValue={(value) => handleInputChange("eventSeriesDescription", value)} />
-
-            <Stack direction="column" spacing={2}>
-              <CustomInput title="Start Year" type="number" value={formValues.startYear.year} setValue={(value) => handleInputChange("startYear.year", value)} />
-
-              <Stack spacing={2}>
-                {/* Toggle on Top */}
-                <CustomToggle 
-                  title="Duration" 
-                  labels={["Fixed", "Normal", "Uniform"]} 
-                  values={["fixedAmt", "normal", "uniform"]} 
-                  sideView={false} width={100} 
-                  value={formValues.duration.type} setValue={(value) => handleInputChange("duration.type", value)} />
-
-                {/* Input Fields Below in Columns */}
-                <Stack direction="row" spacing={4} alignItems="start">
-                  {formValues.duration.type === "fixedAmt" && 
-                  <CustomInput title="Value" type="number" adornment={""} value={formValues.duration.value} setValue={(value) => handleInputChange("duration.value", value)} />}
-
-                  {formValues.duration.type === "normal" && (
-                    <Stack direction="row" spacing={4} alignItems="start">
-                      <CustomInput title="Mean" type="number" adornment={""} value={formValues.duration.mean} setValue={(value) => handleInputChange("duration.mean", value)} />
-                      <CustomInput title="Variance" type="number" adornment={""} value={formValues.duration.stdDev} setValue={(value) => handleInputChange("duration.stdDev", value)} />
-                    </Stack>
-                  )}
-
-                  {formValues.duration.type === "uniform" && (
-                    <Stack direction="row" spacing={4} alignItems="start">
-                      <CustomInput title="Min" type="number" adornment={""} value={formValues.duration.min} setValue={(value) => handleInputChange("duration.min", value)} />
-                      <CustomInput title="Max" type="number" adornment={""} value={formValues.duration.max} setValue={(value) => handleInputChange("duration.max", value)} />
-                    </Stack>
-                  )}
-                </Stack>
-              </Stack>
-            </Stack>
-
+            <EventSeries formValues={formValues} setFormValues={setFormValues} />
             <Box sx={{ display: "inline-flex", flexDirection: "column", width: "auto" }}>
               <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium" }}>
                 Tax Category
