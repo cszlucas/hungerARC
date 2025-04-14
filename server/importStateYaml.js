@@ -1,5 +1,6 @@
 const fs = require("fs");
 const yaml = require("js-yaml");
+const StateTax = require("./models/StateTax");
 
 const mongoose = require("mongoose");
 
@@ -10,27 +11,6 @@ mongoose
   })
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("Could not connect to MongoDB", err));
-
-const stateTaxSchema = new mongoose.Schema({
-  state: String,
-  operation: String,
-  taxDetails: {
-    type: Map,
-    of: {
-      single: {
-        stateIncomeTaxRatesBrackets: Array,
-        standardDeduction: Number,
-      },
-      married: {
-        stateIncomeTaxRatesBrackets: Array,
-        standardDeduction: Number,
-      },
-    },
-  },
-});
-
-const StateTax = mongoose.model("StateTax", stateTaxSchema);
-module.exports = StateTax;
 
 const parseYaml = async (filePath) => {
   try {
@@ -58,15 +38,11 @@ const parseYaml = async (filePath) => {
       };
     });
 
-    //await StateTax.insertMany(stateTax);
+    // await StateTax.insertMany(stateTax);
     console.log("state tax is in db");
   } catch (error) {
     console.log("error in parsing yaml file: ", error);
   }
 };
 
-const path = require("path");
-const yamlPath = path.join(__dirname, "stateYaml/states.yml");
-parseYaml(yamlPath);
-
-// parseYaml("server/stateYaml/states.yml");
+module.exports = parseYaml;
