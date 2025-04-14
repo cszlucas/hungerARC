@@ -1,6 +1,7 @@
-const Investment = require("../server/models/investment");
-const RMD = require("../server/models/rmd-schema");
-const { getExpenseAmountInYear } = require("./helper.js");
+import RMD from "../server/models/rmd-schema.js";
+import { getExpenseAmountInYear } from "./helper.js";
+import structuredClone from 'structured-clone';
+import { v4 as uuidv4 } from 'uuid';
 
 //RMDStrategyInvestOrder is an ordering on investments in pre-tax retirement accounts.
 async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD) {
@@ -52,7 +53,8 @@ function transferInvestment(preTaxInvest, allInvestmentsNonRetirement, amountTra
   } else {
     console.log("create a new non-retirement investment with value: ", amountTransfer);
     let newInvestment = {
-      ...preTaxInvest,
+      _id: uuidv4(),
+      ...structuredClone(preTaxInvest),
       value: amountTransfer,
       accountTaxStatus: "non-retirement",
     };
@@ -86,16 +88,17 @@ function payNonDiscretionaryExpenses(
   for (let expense of nonDiscretionaryExpenses) {
     expenseAmt += getExpenseAmountInYear(expense, year, inflationRate);
   }
+  const nonDiscretionaryExpenseAmt = expenseAmt;
   const taxes = getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, capitalGains, userAge, fedDeduction);
   console.log("nonDiscretionaryExpenses Amt: ", expenseAmt, "and taxes: ", taxes);
   let withdrawalAmt = expenseAmt + taxes;
-  console.log("My cash investment: ", cashInvestment, "Amount I need to withdraw: ", withdrawalAmt);
-  if (cashInvestment >= withdrawalAmt) {
-    cashInvestment -= withdrawalAmt; //use up cash needed
+  console.log("My cash investment: ", cashInvestment.value, "Amount I need to withdraw: ", withdrawalAmt);
+  if (cashInvestment.value >= withdrawalAmt) {
+    cashInvestment.value -= withdrawalAmt; //use up cash needed
     withdrawalAmt = 0;
   } else {
-    withdrawalAmt -= cashInvestment;
-    cashInvestment = 0; //use up cash
+    withdrawalAmt -= cashInvestment.value;
+    cashInvestment.value = 0; //use up cash
     for (let investment of withdrawalStrategy) {
       if (withdrawalAmt > 0) {
         console.log("Still left to withdraw: ", withdrawalAmt);
@@ -107,16 +110,20 @@ function payNonDiscretionaryExpenses(
       }
     }
     if (withdrawalAmt > 0) {
-      console.log("You CAN NOT pay your non-discretionary expenses SAD...;A;");
+      console.log("You CAN NOT pay your non-discretionary expenses GO TO JAIL-Don't pass go...;A;");
     } else {
       console.log("You paid all your non-discretionary expenses...phew");
     }
   }
+  return {
+    sumNonDiscretionary: nonDiscretionaryExpenseAmt,
+    taxes: taxes
+  };
 }
 
 //calculate TAX
 function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGains, userAge, fedDeduction) {
-  console.log("CALCULATING TAXES, my income: ", prevYearIncome);
+  console.log("CALCULATING TAXES, my prev year income: ", prevYearIncome);
   const adjustedIncome = Math.max(0, prevYearIncome - fedDeduction - prevYearSS);
   const federalTax = taxAmt(adjustedIncome, federalIncomeRange);
   const stateTax = taxAmt(adjustedIncome, stateIncomeRange);
@@ -151,30 +158,33 @@ function taxAmt(income, taxBracket, type) {
 function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate) {
   console.log("\nPAY DISCRETIONARY EXPENSES");
   let goalRemaining = financialGoal;
-
+  let expensesPaid = 0;
   for (let expense of spendingStrategy) {
     let expenseVal = getExpenseAmountInYear(expense, year, inflationRate);
-    console.log("Expense:", expense._id, "Amount:", expenseVal, "Cash available:", cashInvestment);
+    console.log("Expense:", expense._id, "Amount:", expenseVal, "Cash available:", cashInvestment.value);
 
-    if (cashInvestment >= expenseVal) {
-      cashInvestment -= expenseVal;
+    if (cashInvestment.value >= expenseVal) {
+      cashInvestment.value -= expenseVal;
+      expensesPaid+=expenseVal;
       expenseVal = 0;
       console.log("You paid expense all with cash.");
       continue;
     }
 
-    expenseVal -= cashInvestment;
-    cashInvestment = 0;
+    expenseVal -= cashInvestment.value;
+    cashInvestment.value = 0;
 
     for (let investment of withdrawalStrategy) {
       if (expenseVal <= 0) break;
       console.log("Expense value now is: ", expenseVal);
       if (goalRemaining >= expenseVal) {
         let amtPaid = payFromInvestment(expenseVal, investment, userAge, yearTotals);
+        expensesPaid+=amtPaid;
         expenseVal -= amtPaid;
         goalRemaining -= amtPaid;
       } else if (goalRemaining > 0) {
         let partialAmt = Math.min(expenseVal, goalRemaining);
+        expensesPaid+=partialAmt;
         let amtPaid = payFromInvestment(partialAmt, investment, userAge, yearTotals);
         expenseVal -= amtPaid;
         goalRemaining -= amtPaid;
@@ -188,6 +198,7 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
       console.log("You were able to pay all your discretionary expenses without violating your financial goal.");
     }
   }
+  return expensesPaid;
 }
 
 function payFromInvestment(withdrawalAmt, investment, userAge, yearTotals) {
@@ -210,7 +221,7 @@ function payFromInvestment(withdrawalAmt, investment, userAge, yearTotals) {
 }
 
 function updateValues(investment, userAge, yearTotals, partial, amountPaid) {
-  if (investment.accountTaxStatus !== "pre-tax") {
+  if (investment.accountTaxStatus === "non-retirement") {
     if (partial) {
       const fractionSold = investment.value > 0 ? amountPaid / investment.value : 0;
       const gain = fractionSold * (investment.value - investment.purchasePrice);
@@ -236,12 +247,14 @@ function updateValues(investment, userAge, yearTotals, partial, amountPaid) {
 function runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy) {
   console.log("\nINVEST STRATEGY");
   const strategy = Array.isArray(investStrategy) ? investStrategy[0] : investStrategy;
-  console.log("cashInvestment", cashInvestment, " maxCash to keep: ", strategy.maxCash);
+  console.log("cashInvestment", cashInvestment.value, " maxCash to keep: ", strategy.maxCash);
 
-  const excessCash = cashInvestment - strategy.maxCash;
+  const excessCash = cashInvestment.value - strategy.maxCash;
+  console.log("The excess cash is (if <0 no money to invest)", excessCash);
   let allocations = [];
 
   if (excessCash > 0) {
+    console.log("The excess cash now is", excessCash);
     if (strategy.assetAllocation.type === "glidePath") {
       allocations = getGlidePathAllocation(
         year,
@@ -408,7 +421,7 @@ function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals) {
   }
 }
 
-module.exports = {
+export {
   performRMDs,
   payNonDiscretionaryExpenses,
   payDiscretionaryExpenses,
