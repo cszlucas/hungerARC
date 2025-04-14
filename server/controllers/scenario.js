@@ -105,7 +105,6 @@ exports.deleteScenario = async (req, res) => {
 };
 
 exports.importUserData = async (req, res) => {
-  
   const {
     name,
     maritalStatus,
@@ -178,7 +177,10 @@ exports.importUserData = async (req, res) => {
       optimizerSettings: optimizerSettings,
     });
 
-    res.status(200).json({ message: "User data imported successfully" });
+    res.status(200).json({
+      message: "User data imported successfully",
+      id: id,
+    });
   } catch (error) {
     console.error("Import failed:", error);
     res.status(500).json({ error: "Import failed" });
