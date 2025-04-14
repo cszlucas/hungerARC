@@ -1,6 +1,3 @@
-// ==============================
-// Imports
-// ==============================
 import axios from "axios";
 import React, { useState, useEffect, useContext, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
@@ -25,20 +22,16 @@ import { AppContext } from "../../../context/appContext";
 import { AuthContext } from "../../../context/authContext";
 import { ObjectId } from "bson";
 
-// ==============================
-// Constants
-// ==============================
+// ============================== Constants ==============================
 const NEW_ID = "new";
 const CASH_LABEL = "Cash";
-
 const TAX_STATUSES = [
   { label: "Taxable", value: "non-tax" },
   { label: "Tax-Deferred", value: "pre-tax" },
   { label: "Tax-Free", value: "after-tax" },
 ];
-
 // Map to quickly retrieve tax status labels
-const taxMap = TAX_STATUSES.reduce((acc, item) => {
+const TAX_STATUSES_REVERSE = TAX_STATUSES.reduce((acc, item) => {
   acc[item.value] = item.label;
   return acc;
 }, {});
@@ -46,9 +39,7 @@ const taxMap = TAX_STATUSES.reduce((acc, item) => {
 // Default structure for a new investment
 const defaultInvestment = { id: NEW_ID, investmentTypeId: "", taxType: "", value: "0" };
 
-// ==============================
-// Main Component
-// ==============================
+// ============================== Main Component ==============================
 const InvestmentLists = () => {
   // Global app and auth context
   const {
@@ -93,30 +84,24 @@ const InvestmentLists = () => {
     return map;
   }, [currInvestmentTypes]);
 
-  // Generate the list of valid tax types for the selected investment type
-  const generateListOfTaxTypes = (investmentTypeId) => {
-    const taxStatusItems = [[], []];
-    if (investmentTypeId) {
-      const taken = takenTaxStatusAccounts[investmentTypeId] || [];
+  // Update available tax types when a new investment or type changes
+  useEffect(() => {
+    const taxTypesList = [[], []]; // A list of valid tax types
+    if (newInvestment.investmentTypeId) {
+      const taken = takenTaxStatusAccounts[newInvestment.investmentTypeId] || [];
       TAX_STATUSES.forEach(({ label, value }) => {
         if (!taken.includes(value)) {
-          taxStatusItems[0].push(label);
-          taxStatusItems[1].push(value);
+          taxTypesList[0].push(label);
+          taxTypesList[1].push(value);
         }
       });
     }
-    return taxStatusItems;
-  };
-
-  // Update available tax types when a new investment or type changes
-  useEffect(() => {
-    const taxTypesList = generateListOfTaxTypes(newInvestment.investmentTypeId);
 
     if (editing && newInvestment.taxType && !taxTypesList[1].includes(newInvestment.taxType)) {
-      taxTypesList[0].push(taxMap[newInvestment.taxType]);
+      taxTypesList[0].push(TAX_STATUSES_REVERSE[newInvestment.taxType]);
       taxTypesList[1].push(newInvestment.taxType);
     }
-
+    console.log(taxTypesList);
     setAvailableTaxTypes(taxTypesList);
 
     if (!editing) {

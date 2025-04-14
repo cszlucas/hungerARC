@@ -17,6 +17,7 @@ import { AppContext } from "../../../context/appContext";
 import { AuthContext } from "../../../context/authContext";
 
 import axios from "axios";
+import { ObjectId } from "bson";
 
 const Income = () => {
     const {currIncome, setCurrIncome} = useContext(AppContext); // scenarios/:id/IncomeEvent
@@ -46,7 +47,7 @@ const Income = () => {
         eventSeriesName: "",
         description: "",
         startYear: {
-            type: "",
+            type: "fixedAmt",
             value: "",
             mean: "",
             stdDev: "",
@@ -115,9 +116,9 @@ const Income = () => {
             if (!user.guest) {
                 const response = await axios.post(`http://localhost:8080/scenario/${editMode}/incomeEvent`, formValues);
                 id = response.data._id;
-              } else {
-                id = currIncome.length;
-              }
+            } else {
+                id = new ObjectId().toHexString();
+            }
             handleInputChange("_id", id);
             setCurrIncome((prev) => [...prev, { ...formValues, _id: id }]);
             setEventEditMode({type:"Income", id: id});
@@ -147,12 +148,7 @@ const Income = () => {
             console.error("Error saving data:", error);
             alert("Failed to save data!");
         }
-      };
-
-    // const handleBackClick = () =>  {
-    //     handleSave();  
-    //     navigate("/scenario/event_series");
-    // };
+    };
 
     return (
         <ThemeProvider theme={theme}>
@@ -319,7 +315,7 @@ const Income = () => {
                     <Button variant="contained" color="success" sx={buttonStyles}
                         onClick={() => {
                             handleSave();
-                            navigate("/scenario/event_series");
+                            navigate("/scenario/event_series_list");
                           }}
                     >
                         Save & Continue
