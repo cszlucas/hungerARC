@@ -108,11 +108,12 @@ exports.importUserData = async (req, res) => {
   const {
     name,
     maritalStatus,
-    birthYears,
+    birthYearSpouse,
+    birthYearUser,
     lifeExpectancy,
     lifeExpectancySpouse,
-    setOfinvestmentTypes: frontendInvestmentTypes,
-    setOfinvestments: frontendInvestments,
+    setOfinvestmentTypes,
+    setOfinvestments,
     income,
     expense,
     invest,
@@ -121,24 +122,24 @@ exports.importUserData = async (req, res) => {
     irsLimit,
     spendingStrategy,
     expenseWithdrawalStrategy,
-    rmdStrategy: RMDStrategy,
+    rmdStrategy,
     optimizerSettings,
-    rothConversionStrategy: RothConversionStrategy,
+    rothConversionStrategy,
     financialGoal,
-    stateResident: residenceState,
+    stateResident,
   } = req.body;
 
   const basicInfoData = {
-    name,
+    name: name,
     filingStatus: maritalStatus === "couple" ? "couple" : "single",
-    financialGoal,
-    inflationAssumption,
-    birthYearUser: birthYears[0],
-    lifeExpectancy,
-    birthYearSpouse: birthYears[1] ?? null,
-    lifeExpectancySpouse,
-    stateResident: residenceState,
-    irsLimit,
+    financialGoal: financialGoal,
+    inflationAssumption: inflationAssumption,
+    birthYearUser: birthYearUser,
+    lifeExpectancy: lifeExpectancy,
+    birthYearSpouse: birthYearSpouse ?? null,
+    lifeExpectancySpouse: lifeExpectancySpouse,
+    stateResident: stateResident,
+    irsLimit: irsLimit,
   };
 
   try {
@@ -161,19 +162,19 @@ exports.importUserData = async (req, res) => {
       await createRebalanceStrategy(id, event);
     }
 
-    for (const investment of frontendInvestments ?? []) {
+    for (const investment of setOfinvestments ?? []) {
       await createInvestment(id, investment);
     }
 
-    for (const type of frontendInvestmentTypes ?? []) {
+    for (const type of setOfinvestmentTypes ?? []) {
       await createInvestmentType(id, type);
     }
 
     await updateScenario(id, {
       spendingStrategy: spendingStrategy,
       expenseWithdrawalStrategy: expenseWithdrawalStrategy,
-      rmdStrategy: RMDStrategy,
-      rothConversionStrategy: RothConversionStrategy,
+      rmdStrategy: rmdStrategy,
+      rothConversionStrategy: rothConversionStrategy,
       optimizerSettings: optimizerSettings,
     });
 

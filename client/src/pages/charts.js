@@ -256,6 +256,69 @@ const GroupedStackedBarChart = ({ data }) => {
   };
 
 const Charts = () => {
+    const testShadedChartData = {
+        startYear: 2025,
+        endYear: 2027,
+        median: [ 115125, 60010.49099224512, 65010.69870199156 ],
+        spread: 0.25
+    };
+    const testLineProbabilityData = { startYear: 2025, endYear: 2027, probabilities: [ 1, 1, 1 ] };
+    const testBarChartAverage = [
+        {
+          year: 2025,
+          type: "investment",
+          name: "investments",
+          value: 110886.13735500976
+        },
+        { year: 2025, type: "income", name: "income", value: 115125 },
+        { year: 2025, type: "expense", name: "Discretionary", value: 900 },
+        {
+          year: 2025,
+          type: "expense",
+          name: "Non-Discretionary",
+          value: 1200
+        },
+        {
+          year: 2026,
+          type: "investment",
+          name: "investments",
+          value: 223539.62023312083
+        },
+        {
+          year: 2026,
+          type: "income",
+          name: "income",
+          value: 60010.49099224512
+        },
+        {
+          year: 2026,
+          type: "expense",
+          name: "Discretionary",
+          value: 990.0000000000001
+        },
+        {
+          year: 2026,
+          type: "expense",
+          name: "Non-Discretionary",
+          value: 1320
+        },
+    ];
+    const testBarChartMedian = [
+        {
+          year: 2025,
+          type: "investment",
+          name: "investments",
+          value: 110886.13735500976
+        },
+        { year: 2025, type: "income", name: "income", value: 115125 },
+        { year: 2025, type: "expense", name: "Discretionary", value: 900 },
+        {
+          year: 2025,
+          type: "expense",
+          name: "Non-Discretionary",
+          value: 1200
+        },
+    ];
     const [currChart, setCurrChart] = useState("");
     const [currQuantity, setCurrQuantity] = useState("");
     const [currStat, setCurrStat] = useState("");
