@@ -179,7 +179,7 @@ exports.importUserData = async (req, res) => {
 
     res.status(200).json({
       message: "User data imported successfully",
-      id: id,
+      scenario: scenario,
     });
   } catch (error) {
     console.error("Import failed:", error);
