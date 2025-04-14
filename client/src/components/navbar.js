@@ -30,6 +30,7 @@ export default function NavBar({ currentPage }) {
 
   const handleLogout = () => {
     localStorage.clear();
+    localStorage.setItem("edit", null);
     navigate("/login");
   };
 

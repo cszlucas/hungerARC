@@ -16,8 +16,7 @@ import {
   backContinueContainerStyles, buttonStyles, rowBoxStyles 
 } from "../../../components/styles";
 
-
-const mongoose = require("mongoose");
+import { ObjectId } from "bson";
 
 const InvestmentType = () => {
   const { editMode, eventEditMode, setEventEditMode, currInvestmentTypes, setCurrInvestmentTypes, setCurrScenario } = useContext(AppContext);
@@ -114,7 +113,7 @@ const InvestmentType = () => {
         }
       } else {
         if (id === "new") {
-          id = currInvestmentTypes.length;
+          id = new ObjectId().toHexString();
           handleUpdateLocalStorageForNewInvestmentType(id);
         } else {
           setCurrInvestmentTypes((prev) => prev.filter((item) => item._id !== id));
