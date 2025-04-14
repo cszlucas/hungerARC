@@ -3,6 +3,7 @@
     "axios": "^1.8.4",
     "distributions": "^2.2.0",
     "mongoose": "^8.12.1",
+    "structured-clone": "^0.2.2",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
