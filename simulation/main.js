@@ -3,7 +3,7 @@ const RMD = require("../server/models/rmd-schema");
 const { getExpenseAmountInYear } = require("./helper.js");
 
 //RMDStrategyInvestOrder is an ordering on investments in pre-tax retirement accounts.
-async function performRMDs(investments, curYearIncome, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD) {
+async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD) {
   //console.log("RMDStrategyInvestOrder: ", RMDStrategyInvestOrder);
   if (userAge >= 74 && RMDStrategyInvestOrder != null) {
     console.log("\nRMDs\nUser age", userAge, "and sum of pre-tax values from prev year is", sumInvestmentsPreTaxRMD);
@@ -13,7 +13,7 @@ async function performRMDs(investments, curYearIncome, userAge, RMDStrategyInves
     allInvestmentsPreTax = investments.filter((investment) => investment.accountTaxStatus.trim().toLowerCase() === "pre-tax");
     allInvestmentsNonRetirement = investments.filter((investment) => investment.accountTaxStatus.trim().toLowerCase() === "non-retirement");
     let rmd = sumInvestmentsPreTaxRMD / distributionPeriod;
-    curYearIncome += rmd;
+    yearTotals.curYearIncome += rmd;
     rmdCount = rmd;
     for (let preTaxInvest of RMDStrategyInvestOrder) {
       console.log("The rmd count: ", rmdCount);
@@ -68,13 +68,13 @@ function transferInvestment(preTaxInvest, allInvestmentsNonRetirement, amountTra
 
 //ordering on a set of investments that specifies the order in which
 //investments are sold to generate cash.
-function payNonDiscretionaryExpenses(curExpenseEvent, cashInvestment, prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, fedDeduction, year, userAge, capitalGains, withdrawalStrategy, yearTotals, inflationRate) {
+function payNonDiscretionaryExpenses(curExpenseEvent, cashInvestment, prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, fedDeduction, year, userAge, capitalGains, withdrawalStrategy, yearTotals, inflationRate, spouseDeath) {
   console.log("\nPAY NON-DISCRETIONARY EXPENSES");
   const nonDiscretionaryExpenses = curExpenseEvent.filter((expenseEvent) => expenseEvent.isDiscretionary === false);
   //console.log("nonDiscretionaryExpenses ", nonDiscretionaryExpenses);
   let expenseAmt = 0;
   for (let expense of nonDiscretionaryExpenses) {
-    expenseAmt += getExpenseAmountInYear(expense, year, inflationRate);
+    expenseAmt += getExpenseAmountInYear(expense, year, inflationRate, spouseDeath);
   }
   const taxes = getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, capitalGains, userAge, fedDeduction);
   console.log("nonDiscretionaryExpenses Amt: ", expenseAmt, "and taxes: ", taxes);
@@ -137,12 +137,12 @@ function taxAmt(income, taxBracket, type) {
 //spendingStrategy is an ordering on expenses
 //withdrawalStrategy is an ordering on investments
 function payDiscretionaryExpenses(
-  financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate) {
+  financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath) {
   console.log("\nPAY DISCRETIONARY EXPENSES");
   let goalRemaining = financialGoal;
 
   for (let expense of spendingStrategy) {
-    let expenseVal = getExpenseAmountInYear(expense, year, inflationRate);
+    let expenseVal = getExpenseAmountInYear(expense, year, inflationRate, spouseDeath);
     console.log("Expense:", expense._id, "Amount:", expenseVal, "Cash available:", cashInvestment);
 
     if (cashInvestment >= expenseVal) {
