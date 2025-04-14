@@ -583,7 +583,7 @@ async function main(numScenarioTimes, scenarioId) {
 
   console.log("shadedChart", shadedChart);
   console.log("probabilityChart", probabilityChart);
-  console.log("barChart ave", barChartAverage);
+  console.log("barChart average", barChartAverage);
   console.log("barChart median", barChartMedian);
 }
 
