@@ -105,6 +105,7 @@ exports.deleteScenario = async (req, res) => {
 };
 
 exports.importUserData = async (req, res) => {
+  const { id } = req.params; //user id
   const {
     name,
     maritalStatus,
@@ -143,34 +144,32 @@ exports.importUserData = async (req, res) => {
   };
 
   try {
-    let scenario = await handleBasicInfo(id, basicInfoData);
-    let id = scenario._id;
+    const response = await axios.post(`http://localhost:3000/basicInfo/user/${id}`, {
+      basicInfoData: basicInfoData,
+    });
 
-    for (const event of income ?? []) {
-      await createIncomeEvent(id, event);
+    let scenarioId = response._id;
+
+    const eventMappings = [
+      { data: income, route: "incomeEvent" },
+      { data: expense, route: "expenseEvent" },
+      { data: invest, route: "investStrategy" },
+      { data: rebalance, route: "rebalanceStrategy" },
+      { data: setOfinvestments, route: "investment" },
+      { data: setOfinvestmentTypes, route: "investmentType" },
+    ];
+
+    for (const { data, route } of eventMappings) {
+      for (const event of data ?? []) {
+        try {
+          await createEvent(route, scenarioId, event);
+        } catch (error) {
+          console.error(`Error creating ${route}:`, error.message);
+        }
+      }
     }
 
-    for (const event of expense ?? []) {
-      await createExpenseEvent(id, event);
-    }
-
-    for (const event of invest ?? []) {
-      await createInvestStrategy(id, event);
-    }
-
-    for (const event of rebalance ?? []) {
-      await createRebalanceStrategy(id, event);
-    }
-
-    for (const investment of setOfinvestments ?? []) {
-      await createInvestment(id, investment);
-    }
-
-    for (const type of setOfinvestmentTypes ?? []) {
-      await createInvestmentType(id, type);
-    }
-
-    await updateScenario(id, {
+    await axios.post(`http://localhost:3000/scenario/${scenarioId}/update`, {
       spendingStrategy: spendingStrategy,
       expenseWithdrawalStrategy: expenseWithdrawalStrategy,
       rmdStrategy: rmdStrategy,
@@ -180,7 +179,7 @@ exports.importUserData = async (req, res) => {
 
     res.status(200).json({
       message: "User data imported successfully",
-      scenario: scenario,
+      scenario: response.data,
     });
   } catch (error) {
     console.error("Import failed:", error);
