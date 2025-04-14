@@ -20,7 +20,7 @@ exports.scenario = async (req, res) => {
 exports.basicInfo = async (req, res) => {
   const { id } = req.params; //user id
   try {
-    const { name, filingStatus, financialGoal, inflationAssumption, birthYearUser, lifeExpectancy, stateResident, birthYearSpouse, lifeExpectancySpouse } = req.body;
+    const { name, filingStatus, financialGoal, inflationAssumption, birthYearUser, lifeExpectancy, stateResident, birthYearSpouse, lifeExpectancySpouse, irsLimit } = req.body;
     console.log("why");
     const newBasicInfo = new Scenario({
       name,
@@ -49,6 +49,7 @@ exports.basicInfo = async (req, res) => {
         stdDev: lifeExpectancySpouse.stdDev,
       },
       stateResident,
+      irsLimit,
     });
 
     const savedBasicInfo = await newBasicInfo.save();
@@ -101,4 +102,85 @@ exports.deleteScenario = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: "Failed to delete scenario" });
   }
-}
+};
+
+exports.importUserData = async (req, res) => {
+  
+  const {
+    name,
+    maritalStatus,
+    birthYears,
+    lifeExpectancy,
+    lifeExpectancySpouse,
+    setOfinvestmentTypes: frontendInvestmentTypes,
+    setOfinvestments: frontendInvestments,
+    income,
+    expense,
+    invest,
+    rebalance,
+    inflationAssumption,
+    irsLimit,
+    spendingStrategy,
+    expenseWithdrawalStrategy,
+    rmdStrategy: RMDStrategy,
+    optimizerSettings,
+    rothConversionStrategy: RothConversionStrategy,
+    financialGoal,
+    stateResident: residenceState,
+  } = req.body;
+
+  const basicInfoData = {
+    name,
+    filingStatus: maritalStatus === "couple" ? "couple" : "single",
+    financialGoal,
+    inflationAssumption,
+    birthYearUser: birthYears[0],
+    lifeExpectancy,
+    birthYearSpouse: birthYears[1] ?? null,
+    lifeExpectancySpouse,
+    stateResident: residenceState,
+    irsLimit,
+  };
+
+  try {
+    let scenario = await handleBasicInfo(id, basicInfoData);
+    let id = scenario._id;
+
+    for (const event of income ?? []) {
+      await createIncomeEvent(id, event);
+    }
+
+    for (const event of expense ?? []) {
+      await createExpenseEvent(id, event);
+    }
+
+    for (const event of invest ?? []) {
+      await createInvestStrategy(id, event);
+    }
+
+    for (const event of rebalance ?? []) {
+      await createRebalanceStrategy(id, event);
+    }
+
+    for (const investment of frontendInvestments ?? []) {
+      await createInvestment(id, investment);
+    }
+
+    for (const type of frontendInvestmentTypes ?? []) {
+      await createInvestmentType(id, type);
+    }
+
+    await updateScenario(id, {
+      spendingStrategy: spendingStrategy,
+      expenseWithdrawalStrategy: expenseWithdrawalStrategy,
+      rmdStrategy: RMDStrategy,
+      rothConversionStrategy: RothConversionStrategy,
+      optimizerSettings: optimizerSettings,
+    });
+
+    res.status(200).json({ message: "User data imported successfully" });
+  } catch (error) {
+    console.error("Import failed:", error);
+    res.status(500).json({ error: "Import failed" });
+  }
+};

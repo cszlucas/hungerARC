@@ -344,10 +344,10 @@ async function runSimulation(scenario, tax, stateTax, startYearPrev, lifeExpecta
     let { RMDStrategyInvestOrder, withdrawalStrategy, spendingStrategy, investStrategy } = getStrategy(scenario, investments, curExpenseEvent, curInvestEvent, year);
 
     // RUN INCOME EVENTS
-  
     // console.log('income yearTotals before :>> ', yearTotals);
     updateIncomeEvents(incomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, yearTotals, cashInvestment, curIncomeEvent, spouseDeath);
     // console.log("yearTotals after :>> ", yearTotals);
+    console.log("AFTER INCOME", yearTotals.curYearIncome);
 
     //   // PERFORM RMD FOR PREVIOUS YEAR
     const userAge = year - scenario.birthYearUser;
