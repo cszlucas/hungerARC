@@ -11,6 +11,7 @@ const webscraping = require("./controllers/webscraping.js");
 router.get("/user/:id/scenarios", user.scenarios);
 router.post("/auth/google", user.auth);
 router.post("/uploadStateTaxYaml", user.uploadStateTaxYaml);
+
 // events
 router.get("/getInvestStrategy/:id", events.getInvestStrategy);
 router.get("/getRebalanceStrategy/:id", events.getRebalanceStrategy);

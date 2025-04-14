@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user.js");
 const multer = require("multer");
 const yaml = require("js-yaml");
-const StateTax = require("../models/StateTax");
+const StateTax = require("../models/stateTax");
 
 const upload = multer({ storage: multer.memoryStorage() });
 

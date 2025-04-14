@@ -1,6 +1,6 @@
 const fs = require("fs");
 const yaml = require("js-yaml");
-const StateTax = require("./models/StateTax");
+const StateTax = require("./models/stateTax");
 
 const mongoose = require("mongoose");
 

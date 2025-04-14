@@ -5,6 +5,7 @@ const Tax = require("../server/models/tax.js");
 const Scenario = require("../server/models/scenario");
 const Investment = require("../server/models/investment");
 const InvestmentType = require("../server/models/investmentType");
+const User = require("../server/models/user.js");
 const { IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent } = require("../server/models/eventSeries");
 const { performRMDs, payNonDiscretionaryExpenses, payDiscretionaryExpenses, runInvestStrategy, rebalance } = require("./main.js");
 const { getCurrentEvent, getStrategy, getRebalanceStrategy, setValues, randomNormal, randomUniform } = require("./format.js");
@@ -210,7 +211,7 @@ class DataStore {
   constructor() {
     this.taxData = this.stateTax = this.scenario = this.investment = this.income = this.expense = this.rebalance = this.invest = this.investmentType = {};
   }
-  async populateData(scenarioId) {
+  async populateData(scenarioId, userId) {
     const query = { _id: new mongoose.Types.ObjectId(scenarioId) };
     try {
       const scenario = await Scenario.findOne(query);
@@ -242,8 +243,27 @@ class DataStore {
       this.rebalance = rebalance;
       const tax = await Tax.find();
       this.taxData = tax;
-      const stateTax = await StateTax.find();
-      this.stateTax = stateTax;
+      const user = await User.findById(userId);
+
+      const stateTaxAll = await StateTax.find();
+
+      // const stateTaxDocs = await StateTax.find(); // get all for direct lookup
+      const residence = scenario.stateResident;
+
+      let matchedTax = null;
+
+      const triState = ["New York", "New Jersey", "Connecticut"];
+
+      if (triState.includes(residence)) {
+        // Search directly in StateTax collection
+        matchedTax = stateTaxAll.find((tax) => tax.state === residence);
+      } else {
+        // Search user's uploaded YAMLs
+        const userTaxDocs = await StateTax.find({ _id: { $in: user.stateYaml } });
+        matchedTax = userTaxDocs.find((tax) => tax.state === residence);
+      }
+      this.stateTax = matchedTax;
+
       const investmentType = await InvestmentType.find({
         _id: { $in: scenario.setOfInvestmentTypes },
       });
@@ -400,16 +420,16 @@ async function runSimulation(scenario, tax, stateTax, startYearPrev, lifeExpecta
     let sumDiscretionary = payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath);
 
     //   // RUN INVEST EVENT
-    runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
+    // runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
 
     //   // RUN REBALANCE EVENT
-    let types = ["pre-tax", "after-tax", "non-retirement"];
-    for (let type of types) {
-      let rebalanceStrategy = getRebalanceStrategy(scenario, curRebalanceEvent, type, year);
-      if (rebalanceStrategy.length != 0) {
-        rebalance(investments, year, rebalanceStrategy, userAge, yearTotals);
-      }
-    }
+    // let types = ["pre-tax", "after-tax", "non-retirement"];
+    // for (let type of types) {
+    //   let rebalanceStrategy = getRebalanceStrategy(scenario, curRebalanceEvent, type, year);
+    //   if (rebalanceStrategy.length != 0) {
+    //     rebalance(investments, year, rebalanceStrategy, userAge, yearTotals);
+    //   }
+    // }
 
     // PRELIMINARIES
     // can differ each year if sampled from distribution
@@ -488,11 +508,11 @@ function calculateLifeExpectancy(scenario) {
   return { lifeExpectancyUser, lifeExpectancySpouse };
 }
 
-async function main(numScenarioTimes, scenarioId) {
+async function main(numScenarioTimes, scenarioId, userId) {
   // not sure how to get a value using this, not needed
   var distributions = require("distributions");
   const dataStore = new DataStore();
-  await Promise.all([dataStore.populateData(scenarioId)]);
+  await Promise.all([dataStore.populateData(scenarioId, userId)]);
 
   const { taxData, scenario, stateTax, invest, income, expense, rebalance, investment, investmentType } = {
     taxData: dataStore.getData("taxData"),
@@ -506,12 +526,16 @@ async function main(numScenarioTimes, scenarioId) {
     investmentType: dataStore.getData("investmentType"),
   };
   // console.log("scenario: ", scenario);
-  // console.log("stateTax :>> ", stateTax);
+  // console.log("stateTax :>> ", dataStore.stateTax);
   const startYearPrev = (new Date().getFullYear() - 1).toString();
   //calculate life expectancy
   const { lifeExpectancyUser, lifeExpectancySpouse } = calculateLifeExpectancy(scenario);
   console.log('lifeExpectancySpouse here :>> ', lifeExpectancySpouse);
   let allYearDataBuckets = [];
+
+  // find the user's state tax data
+  // let stateTaxData = stateTax.find((state) => state.state === scenario.stateResident);
+
   for (let x = 0; x < numScenarioTimes; x++) {
     const clonedData = {
       scenario: JSON.parse(JSON.stringify(scenario)),
@@ -524,10 +548,12 @@ async function main(numScenarioTimes, scenarioId) {
       taxData: JSON.parse(JSON.stringify(taxData)),
       investmentType: JSON.parse(JSON.stringify(investmentType)),
     };
+    console.log('clonedData.stateTax :>> ', clonedData.stateTax);
+    console.log('clonedData.taxData :>> ', clonedData.taxData);
     const yearDataBuckets = await runSimulation(
       clonedData.scenario,
       clonedData.taxData[0],
-      clonedData.stateTax[0],
+      clonedData.stateTax,
       startYearPrev,
       lifeExpectancyUser,
       lifeExpectancySpouse,
@@ -550,4 +576,5 @@ async function main(numScenarioTimes, scenarioId) {
 // Call the main function to execute everything
 // main(1, "67df22db4996aba7bb6e8d73");
 //67e084385ca2a5376ad2efd2
-main(1, "67e084385ca2a5376ad2efd2");
+           // scenario id              user id
+main(1, "67e084385ca2a5376ad2efd2", "67e19c10a1325f92faf9f181");
