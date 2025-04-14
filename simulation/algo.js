@@ -8,17 +8,7 @@ const InvestmentType = require("../server/models/investmentType");
 const { IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent } = require("../server/models/eventSeries");
 const { performRMDs, payNonDiscretionaryExpenses, payDiscretionaryExpenses, runInvestStrategy, rebalance } = require("./main.js");
 const { getCurrentEvent, getStrategy, getRebalanceStrategy, setValues, randomNormal, randomUniform } = require("./format.js");
-
-// function calculateNormalDist(std, mean) {
-//   const u = 1 - Math.random();
-//   const v = Math.random();
-//   const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-//   return z * std + mean;
-// }
-
-// function calculateUniformDist(min, max) {
-//   return Math.random() * (max - min) + min;
-// }
+const { buildChartDataFromBuckets, updateYearDataBucket, createYearDataBuckets, mergeYearData } = require("./charts_prep.js");
 
 function findInflation(inflationAssumption) {
   if (inflationAssumption.type == "fixed") return inflationAssumption.fixedRate;
@@ -136,18 +126,18 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
         amt = randomNormal(annualChange.mean, annualChange.stdDev);
       }
 
-    if (annualChange.type == "fixed") {
-      incomeValue += amt;
-    } else if (annualChange.type == "percentage") {
-      incomeValue *= 1 + amt * 0.01;
-    }
-    if (incomeEvent.inflationAdjustment) incomeValue *= 1 + inflationRate;
+      if (annualChange.type == "fixed") {
+        incomeValue += amt;
+      } else if (annualChange.type == "percentage") {
+        incomeValue *= 1 + amt * 0.01;
+      }
+      if (incomeEvent.inflationAdjustment) incomeValue *= 1 + inflationRate;
 
-    if (filingStatus == "marriedFilingJointly" && year > scenario.birthYearSpouse + scenario.lifeExpectancySpouse) {
-      incomeValue *= incomeEvent.userPercentage * 0.01;
-    }
+      if (filingStatus == "marriedFilingJointly" && year > scenario.birthYearSpouse + scenario.lifeExpectancySpouse) {
+        incomeValue *= incomeEvent.userPercentage * 0.01;
+      }
 
-    incomeEvent.initialAmount = incomeValue;
+      incomeEvent.initialAmount = incomeValue;
       cashInvestment.value += incomeValue;
       yearTotals.curYearIncome += incomeValue;
       if (incomeEvent.isSocialSecurity) {
@@ -163,10 +153,9 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
   // return { curYearIncome, curYearSS, cashInvestment };
 }
 
-
 function updateInvestmentValues(investments, investmentTypes, yearTotals) {
-  for(let investment of investments){
-  // Calculate the generated income, using the given fixed amount or percentage, or sampling from the specified probability distribution.  
+  for (let investment of investments) {
+    // Calculate the generated income, using the given fixed amount or percentage, or sampling from the specified probability distribution.
     let initialValue = investment.value;
     let investmentType = investmentTypes.find((type) => type._id === investment.investmentType);
     let annualIncome = investmentType.annualIncome;
@@ -184,7 +173,7 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals) {
     // Add the income to curYearIncome, if the investment’s tax status is ‘non-retirement’ and the investment type’s taxability is ‘taxable’.
     if (investment.accountTaxStatus == "non-tax" && investmentType.taxability == "taxable") {
       yearTotals.curYearIncome += income;
-    } 
+    }
 
     // Calculate the change in value, using the given fixed amount or percentage, or sampling from the specified probability distribution.
     let annualReturn = investmentType.annualReturn;
@@ -198,11 +187,13 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals) {
       change = investment.value * (change * 0.01);
     }
     // Add the income to the value of the investment
+    //console.log("\ninvestment.value", investment.value, investment._id, "change:", change);
     investment.value += change;
     yearTotals.curYearGains += change;
-  // Calculate this year’s expenses, by multiplying the expense ratio and the average value of the investment
-    let expenses = (investmentType.expenseRatio * 0.01) * ((initialValue + investment.value) / 2);
+    // Calculate this year’s expenses, by multiplying the expense ratio and the average value of the investment
+    let expenses = investmentType.expenseRatio * 0.01 * ((initialValue + investment.value) / 2);
     investment.value -= expenses;
+    //console.log("now investment.value", investment.value, investment._id, "expenses", expenses);
   }
   // return {curYearIncome, curYearGains};
 }
@@ -307,9 +298,12 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
   let prevYearEarlyWithdrawals = 0;
   let prevYearGains = 0;
 
+  let yearDataBuckets = createYearDataBuckets(3); //2 is numYears
+  let yearIndex = 0;
+
   //  // SIMULATION LOOP
   // manually adjusted for testing, should be year <= userEndYear !!
-  for (let year = currentYear; year <= 2026; year++) {
+  for (let year = currentYear; year <= 2027; year++) {
     console.log("\nSIMULATION YEAR", year);
     inflationRate = findInflation(scenario.inflationAssumption) * 0.01;
     let { curIncomeEvent, curExpenseEvent, curInvestEvent, curRebalanceEvent } = getCurrentEvent(year, incomeEvent, expenseEvent, investEvent, rebalanceEvent);
@@ -353,7 +347,7 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     // console.log("yearTotals after :>> ", yearTotals);
 
     //   // PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
-    payNonDiscretionaryExpenses(
+    let { sumNonDiscretionary, taxes } = payNonDiscretionaryExpenses(
       curExpenseEvent,
       cashInvestment,
       prevYearIncome,
@@ -372,7 +366,7 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     );
 
     //   // PAY DISCRETIONARY EXPENSES
-    payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate);
+    let sumDiscretionary = payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate);
 
     //   // RUN INVEST EVENT
     runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
@@ -404,6 +398,21 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     }
     console.log("The sum of investments with value pretax (to use in RMD) is: ", sumInvestmentsPreTaxRMD, "as of year: ", year);
 
+    let totalInvestmentValue = 0;
+    for (let investment of investments) {
+      totalInvestmentValue += investment.value;
+    }
+
+    updateYearDataBucket(yearDataBuckets, yearIndex, {
+      investments: totalInvestmentValue,
+      income: yearTotals.curYearIncome,
+      discretionary: sumDiscretionary,
+      nonDiscretionary: sumNonDiscretionary,
+      taxes: taxes,
+      earlyWithdrawals: yearTotals.curYearEarlyWithdrawals,
+      metGoal: totalInvestmentValue >= scenario.financialGoal ? 1 : 0,
+    });
+
     prevYearIncome = yearTotals.curYearIncome;
     prevYearSS = yearTotals.curYearSS;
     prevYearEarlyWithdrawals = yearTotals.curYearEarlyWithdrawals;
@@ -412,8 +421,11 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     yearTotals.curYearSS = 0;
     yearTotals.curYearEarlyWithdrawals = 0;
     yearTotals.curYearGains = 0;
+
+    yearIndex++;
     prevYear += 1;
   }
+  return yearDataBuckets;
 }
 
 function calculateLifeExpectancy(scenario) {
@@ -457,6 +469,7 @@ async function main(numScenarioTimes, scenarioId) {
   const prevYear = (new Date().getFullYear() - 1).toString();
   //calculate life expectancy
   const { lifeExpectancyUser, lifeExpectancySpouse } = calculateLifeExpectancy(scenario);
+  let allYearDataBuckets = [];
   for (let x = 0; x < numScenarioTimes; x++) {
     const clonedData = {
       scenario: JSON.parse(JSON.stringify(scenario)),
@@ -469,7 +482,7 @@ async function main(numScenarioTimes, scenarioId) {
       taxData: JSON.parse(JSON.stringify(taxData)),
       investmentType: JSON.parse(JSON.stringify(investmentType)),
     };
-    runSimulation(
+    const yearDataBuckets = await runSimulation(
       clonedData.scenario,
       clonedData.taxData[0],
       clonedData.stateTax[0],
@@ -482,10 +495,17 @@ async function main(numScenarioTimes, scenarioId) {
       clonedData.rebalance,
       clonedData.investmentType
     );
+    allYearDataBuckets.push(yearDataBuckets);
   }
+  const mergedSimulations = allYearDataBuckets.map(mergeYearData);
+  console.log(JSON.stringify(mergedSimulations, null, 2));
+
+
+  //const { shadedChart, lineChart } = buildChartDataFromBuckets(allYearDataBuckets, 2025);
 }
 
 // Call the main function to execute everything
 // main(1, "67df22db4996aba7bb6e8d73");
 //67e084385ca2a5376ad2efd2
+
 main(1, "67df22db4996aba7bb6e8d73");
