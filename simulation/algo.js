@@ -63,8 +63,7 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
   // roth conversation amount
   rc = u - (curYearFedTaxableIncome - fedDeduction);
   let rcCopy = rc;
-  //console.log("u :>> ", u);
-  //console.log("rc :>> ", rc);
+ 
   // transfer from pre-tax to after-tax retirement
   // console.log('curYearIncome before :>> ', curYearIncome);
 
@@ -102,13 +101,14 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
   }
   // console.log('scenario.investments :>> ', scenario.setOfInvestments);
   // console.log('investments :>> ', investments);
+
   yearTotals.curYearIncome += rcCopy;
   // console.log('curYearIncome after :>> ', curYearIncome);
   // return curYearIncome;
 }
 // incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment);
 
-function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, yearTotals, cashInvestment, curIncomeEvent) {
+function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, yearTotals, cashInvestment, curIncomeEvent, spouseDeath) {
   for (let incomeEvent of incomeEvents) {
     // console.log("incomeEvent :>> ", incomeEvent);
     // console.log('curIncomeEvent :>> ', curIncomeEvent);
@@ -133,7 +133,7 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
       }
       if (incomeEvent.inflationAdjustment) incomeValue *= 1 + inflationRate;
 
-      if (filingStatus == "marriedFilingJointly" && year > scenario.birthYearSpouse + scenario.lifeExpectancySpouse) {
+      if (spouseDeath) {
         incomeValue *= incomeEvent.userPercentage * 0.01;
       }
 
@@ -151,6 +151,14 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
     }
   }
   // return { curYearIncome, curYearSS, cashInvestment };
+}
+
+function updateInflationExpenses(curExpenseEvent, expenseEvent, inflationRate){
+  for (let expense of expenseEvent) {
+    if (!curExpenseEvent.includes(expense)) {
+      expense.initialAmount *= 1 + inflationRate;
+    }
+  }
 }
 
 function updateInvestmentValues(investments, investmentTypes, yearTotals) {
@@ -250,11 +258,12 @@ class DataStore {
   }
 }
 
-async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUser, investments, incomeEvent, expenseEvent, investEvent, rebalanceEvent, investmentTypes) {
 
+async function runSimulation(scenario, tax, stateTax, startYearPrev, lifeExpectancyUser, lifeExpectancySpouse, investments, incomeEvent, expenseEvent, investEvent, rebalanceEvent, investmentTypes) {
   // previous year
   let irsLimit = scenario.irsLimit;
   let filingStatus = scenario.filingStatus;
+  let spouseDeath = false;
   let state = scenario.stateResident;
   let federalIncomeTax, stateIncomeTaxBracket, fedDeduction, stateDeduction, capitalGains;
   // previous year's tax
@@ -263,16 +272,16 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     fedDeduction = tax.single.standardDeductions;
     capitalGains = tax.single.capitalGainsTaxRates;
     if (stateTax) {
-      stateIncomeTaxBracket = stateTax.taxDetails[prevYear].single.stateIncomeTaxRatesBrackets;
-      stateDeduction = stateTax.taxDetails[prevYear].single.standardDeduction;
+      stateIncomeTaxBracket = stateTax.taxDetails[startYearPrev].single.stateIncomeTaxRatesBrackets;
+      // stateDeduction = stateTax.taxDetails[prevYear].single.standardDeduction;
     }
   } else {
-    federalIncomeTax = tax.marriedFilingJointly.federalIncomeTaxRatesBrackets;
-    fedDeduction = tax.marriedFilingJointly.standardDeduction;
-    capitalGains = tax.marriedFilingJointly.capitalGainsTaxRates;
+    federalIncomeTax = tax.married.federalIncomeTaxRatesBrackets;
+    fedDeduction = tax.married.standardDeductions;
+    capitalGains = tax.married.capitalGainsTaxRates;
     if (stateTax) {
-      stateIncomeTaxBracket = stateTax.taxDetails[prevYear].single.stateIncomeTaxRatesBrackets;
-      stateDeduction = stateTax.taxDetails[prevYear].single.standardDeduction;
+      stateIncomeTaxBracket = stateTax.taxDetails[startYearPrev].single.stateIncomeTaxRatesBrackets;
+      // stateDeduction = stateTax.taxDetails[prevYear].single.standardDeduction;
     }
   }
   //console.log("capitalGains :>> ", capitalGains);
@@ -299,6 +308,13 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
   let prevYearEarlyWithdrawals = 0;
   let prevYearGains = 0;
 
+  let cashInvestmentType = investmentTypes.find((inv) => inv.name === "Cash");
+  let cashInvestment;
+  if (cashInvestmentType) {
+    let cashId = cashInvestmentType._id;
+    cashInvestment = investments.find((inv) => inv.investmentType === cashId);
+  }
+
   let yearDataBuckets = createYearDataBuckets(3); //2 is numYears
   let yearIndex = 0;
 
@@ -306,20 +322,30 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
   // manually adjusted for testing, should be year <= userEndYear !!
   for (let year = currentYear; year <= 2027; year++) {
     console.log("\nSIMULATION YEAR", year);
+    // console.log('scenario.birthYearSpouse :>> ', scenario.birthYearSpouse);
+    // console.log('scenario.lifeExpectancySpouse :>> ', lifeExpectancySpouse);
+    // console.log('year :>> ', year);
+    if(year == scenario.birthYearSpouse + lifeExpectancySpouse) {
+      spouseDeath = true;
+      filingStatus = "single";
+      // console.log("hello");
+      // console.log('federalIncomeTax before spouse :>> ', federalIncomeTax);
+      federalIncomeTax = tax.single.federalIncomeTaxRatesBrackets;
+      fedDeduction = tax.single.standardDeductions;
+      capitalGains = tax.single.capitalGainsTaxRates;
+      // console.log('federalIncomeTax after spouse :>> ', federalIncomeTax);
+      if (stateTax) {
+        stateIncomeTaxBracket = stateTax.taxDetails[startYearPrev].single.stateIncomeTaxRatesBrackets;
+        // stateDeduction = stateTax.taxDetails[prevYear].single.standardDeduction;
+      }
+    }
     inflationRate = findInflation(scenario.inflationAssumption) * 0.01;
     let { curIncomeEvent, curExpenseEvent, curInvestEvent, curRebalanceEvent } = getCurrentEvent(year, incomeEvent, expenseEvent, investEvent, rebalanceEvent);
     let { RMDStrategyInvestOrder, withdrawalStrategy, spendingStrategy, investStrategy } = getStrategy(scenario, investments, curExpenseEvent, curInvestEvent, year);
 
     // RUN INCOME EVENTS
-    let cashInvestmentType = investmentTypes.find((inv) => inv.name === "Cash");
-    let cashInvestment;
-    if (cashInvestmentType) {
-      let cashId = cashInvestmentType._id;
-      cashInvestment = investments.find((inv) => inv.investmentType === cashId);
-    }
-    console.log("BEFORE INCOME", yearTotals.curYearIncome);
     // console.log('income yearTotals before :>> ', yearTotals);
-    updateIncomeEvents(incomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, yearTotals, cashInvestment, curIncomeEvent);
+    updateIncomeEvents(incomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, yearTotals, cashInvestment, curIncomeEvent, spouseDeath);
     // console.log("yearTotals after :>> ", yearTotals);
     console.log("AFTER INCOME", yearTotals.curYearIncome);
 
@@ -341,13 +367,14 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
         rothConversionStrategyInvestments.push(foundInvestment);
       }
     }
-
     // console.log('roth yearTotals before :>> ', yearTotals);
     // RUN ROTH CONVERSION IF ENABLED
     if (scenario.optimizerSettings.enabled && year >= scenario.optimizerSettings.startYear && year <= scenario.optimizerSettings.endYear) {
       rothConversion(scenario, year, yearTotals, federalIncomeTax, investmentTypes, investments, rothConversionStrategyInvestments, fedDeduction);
     }
     // console.log("yearTotals after :>> ", yearTotals);
+
+    updateInflationExpenses(curExpenseEvent, expenseEvent, inflationRate);
 
     //   // PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
     let { sumNonDiscretionary, taxes } = payNonDiscretionaryExpenses(
@@ -365,11 +392,12 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
       capitalGains,
       withdrawalStrategy,
       yearTotals,
-      inflationRate
+      inflationRate,
+      spouseDeath
     );
 
     //   // PAY DISCRETIONARY EXPENSES
-    let sumDiscretionary = payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate);
+    let sumDiscretionary = payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath);
 
     //   // RUN INVEST EVENT
     runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
@@ -391,6 +419,18 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     if (stateTax) {
       updateStateIncomeTaxBracket(stateIncomeTaxBracket, inflationRate);
     }
+
+    // adjust for inflation for single if filed jointly
+    if (filingStatus == "married") {
+      updateFedIncomeTaxBracket(tax.single.federalIncomeTaxRatesBrackets, inflationRate);
+      updateFedDeduction(tax.single.standardDeductions, inflationRate);
+      updateCapitalGains(tax.single.capitalGainsTaxRates, inflationRate);
+      if (stateTax) {
+        updateStateIncomeTaxBracket(stateTax.taxDetails[startYearPrev].single.stateIncomeTaxRatesBrackets);
+      }
+      // console.log('tax.single.federalIncomeTaxRatesBracket :>> ', tax.single.federalIncomeTaxRatesBrackets);
+    }
+    // console.log('federalIncomeTax for married :>> ', federalIncomeTax);
     // retirement account limit - after tax
     irsLimit *= 1 + inflationRate;
 
@@ -424,9 +464,7 @@ async function runSimulation(scenario, tax, stateTax, prevYear, lifeExpectancyUs
     yearTotals.curYearSS = 0;
     yearTotals.curYearEarlyWithdrawals = 0;
     yearTotals.curYearGains = 0;
-
     yearIndex++;
-    prevYear += 1;
   }
   return yearDataBuckets;
 }
@@ -441,10 +479,10 @@ function calculateLifeExpectancy(scenario) {
   }
   if (scenario.filingStatus != "single") {
     // fix schema
-    if (scenario.spouseLifeExpectancy.type == "fixed") {
-      lifeExpectancySpouse = scenario.spouselifeExpectancy.fixedAge;
+    if (scenario.lifeExpectancySpouse.type == "fixed") {
+      lifeExpectancySpouse = scenario.lifeExpectancySpouse.fixedAge;
     } else {
-      lifeExpectancyUser = randomNormal(scenario.spouseLifeExpectancy.mean, scenario.spouseLifeExpectancy.stdDev);
+      lifeExpectancyUser = randomNormal(scenario.lifeExpectancySpouse.mean, scenario.lifeExpectancySpouse.stdDev);
     }
   }
   return { lifeExpectancyUser, lifeExpectancySpouse };
@@ -469,9 +507,10 @@ async function main(numScenarioTimes, scenarioId) {
   };
   // console.log("scenario: ", scenario);
   // console.log("stateTax :>> ", stateTax);
-  const prevYear = (new Date().getFullYear() - 1).toString();
+  const startYearPrev = (new Date().getFullYear() - 1).toString();
   //calculate life expectancy
   const { lifeExpectancyUser, lifeExpectancySpouse } = calculateLifeExpectancy(scenario);
+  console.log('lifeExpectancySpouse here :>> ', lifeExpectancySpouse);
   let allYearDataBuckets = [];
   for (let x = 0; x < numScenarioTimes; x++) {
     const clonedData = {
@@ -489,8 +528,9 @@ async function main(numScenarioTimes, scenarioId) {
       clonedData.scenario,
       clonedData.taxData[0],
       clonedData.stateTax[0],
-      prevYear,
+      startYearPrev,
       lifeExpectancyUser,
+      lifeExpectancySpouse,
       clonedData.investment,
       clonedData.income,
       clonedData.expense,
@@ -510,5 +550,4 @@ async function main(numScenarioTimes, scenarioId) {
 // Call the main function to execute everything
 // main(1, "67df22db4996aba7bb6e8d73");
 //67e084385ca2a5376ad2efd2
-
-main(1, "67df22db4996aba7bb6e8d73");
+main(1, "67e084385ca2a5376ad2efd2");

@@ -124,7 +124,6 @@ function getStrategy(scenario, investments, curExpenseEvent, investEvent, year) 
       })
       .filter(Boolean);
   };
-
   const RMDStrategyInvestOrder = safeMapById(scenario.rmdStrategy, investments, "RMD Strategy Investment");
   const withdrawalStrategy = safeMapById(scenario.expenseWithdrawalStrategy, investments, "Withdrawal Strategy Investment");
   const spendingStrategy = safeMapById(scenario.spendingStrategy, curExpenseEvent, "Spending Strategy Expense");

@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useState, useEffect, useContext, useMemo } from "react";
+import React, { useState, useEffect, useContext, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ThemeProvider, CssBaseline, Container, Typography, Button, Stack, InputAdornment, Box, List, MenuItem, ListItem,
@@ -20,35 +20,58 @@ import {
 } from "../../../components/styles";
 import { AppContext } from "../../../context/appContext";
 import { AuthContext } from "../../../context/authContext";
-
 import { ObjectId } from "bson";
 
+// ============================== Constants ==============================
+const NEW_ID = "new";
+const CASH_LABEL = "Cash";
+const TAX_STATUSES = [
+  { label: "Taxable", value: "non-tax" },
+  { label: "Tax-Deferred", value: "pre-tax" },
+  { label: "Tax-Free", value: "after-tax" },
+];
+// Map to quickly retrieve tax status labels
+const TAX_STATUSES_REVERSE = TAX_STATUSES.reduce((acc, item) => {
+  acc[item.value] = item.label;
+  return acc;
+}, {});
+
+// Default structure for a new investment
+const defaultInvestment = { id: NEW_ID, investmentTypeId: "", taxType: "", value: "0" };
+
+// ============================== Main Component ==============================
 const InvestmentLists = () => {
+  // Global app and auth context
   const {
     editMode, setEventEditMode, currInvestments, setCurrInvestments,
     currInvestmentTypes, setCurrScenario, takenTaxStatusAccounts, setTakenTaxStatusAccounts
   } = useContext(AppContext);
   const { user } = useContext(AuthContext);
 
+  // Local state
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [availableTaxTypes, setAvailableTaxTypes] = useState([[], []]);
-  const [newInvestment, setNewInvestment] = useState({ id: "new", investmentTypeId: "", taxType: "", value: "" });
+  const [newInvestment, setNewInvestment] = useState(defaultInvestment);
   const navigate = useNavigate();
 
-  const appendToScenarioKey = (key, value) => {
+  // Helper: Add value to a key array in the scenario object
+  const appendToScenarioKey = useCallback((key, value) => {
     setCurrScenario((prev) => ({
       ...prev,
       [key]: [...(prev[key] || []), value],
     }));
-  };
+  }, [setCurrScenario]);
 
-  const appendToTakenTaxStatusAccounts = (key, value) => {
+  // Helper: Add tax status to taken account types
+  const appendToTakenTaxStatusAccounts = useCallback((key, value) => {
     setTakenTaxStatusAccounts((prev) => ({
       ...prev,
       [key]: [...(prev[key] || []), value],
     }));
-  };
+  }, [setTakenTaxStatusAccounts]);
 
+  // Create a lookup map from investment type ID to name
   const investmentTypeMap = useMemo(() => {
     const map = {};
     if (Array.isArray(currInvestmentTypes)) {
@@ -61,119 +84,142 @@ const InvestmentLists = () => {
     return map;
   }, [currInvestmentTypes]);
 
+  // Update available tax types when a new investment or type changes
   useEffect(() => {
-    let taxStatus = [[], []];
+    const taxTypesList = [[], []]; // A list of valid tax types
     if (newInvestment.investmentTypeId) {
-      
-      if (!takenTaxStatusAccounts[newInvestment.investmentTypeId]) {
-        taxStatus = [["Taxable", "Tax-Deferred", "Tax-Free"], ["non-tax", "pre-tax", "after-tax"]];
-      } else {
-        if (!takenTaxStatusAccounts[newInvestment.investmentTypeId].includes("non-tax")) {
-          taxStatus[0].push("Taxable");
-          taxStatus[1].push("non-tax");
+      const taken = takenTaxStatusAccounts[newInvestment.investmentTypeId] || [];
+      TAX_STATUSES.forEach(({ label, value }) => {
+        if (!taken.includes(value)) {
+          taxTypesList[0].push(label);
+          taxTypesList[1].push(value);
         }
-        if (!takenTaxStatusAccounts[newInvestment.investmentTypeId].includes("pre-tax")) {
-          taxStatus[0].push("Tax-Deferred");
-          taxStatus[1].push("pre-tax");
-        }
-        if (!takenTaxStatusAccounts[newInvestment.investmentTypeId].includes("after-tax")) {
-          taxStatus[0].push("Tax-Free");
-          taxStatus[1].push("after-tax");
-        }
-      }
+      });
     }
 
-    setAvailableTaxTypes(taxStatus);
-    handleInputChange("taxType", "");
-  }, [newInvestment.investmentTypeId]);
+    if (editing && newInvestment.taxType && !taxTypesList[1].includes(newInvestment.taxType)) {
+      taxTypesList[0].push(TAX_STATUSES_REVERSE[newInvestment.taxType]);
+      taxTypesList[1].push(newInvestment.taxType);
+    }
+    console.log(taxTypesList);
+    setAvailableTaxTypes(taxTypesList);
 
+    if (!editing) {
+      handleInputChange("taxType", "");
+    }
+  }, [newInvestment.id, newInvestment.investmentTypeId]);
+
+  // UI Event: Modal open/close
   const handleOpen = () => {
-    setNewInvestment({ id: "new", investmentTypeId: "", taxType: "", value: "0" });
+    setNewInvestment(defaultInvestment);
     setOpen(true);
   };
-
   const handleClose = () => setOpen(false);
 
+  // Handle form input changes
   const handleInputChange = (field, value) => {
     setNewInvestment((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleAddInvestment = async () => {
-    const transformInvestmentData = (investment) => ({
-      investmentType: investment.investmentTypeId,
-      accountTaxStatus: investment.taxType,
-      value: investment.value,
-    });
+  // Transform frontend investment data to backend format
+  const transformInvestmentData = (investment) => ({
+    investmentType: investment.investmentTypeId,
+    accountTaxStatus: investment.taxType,
+    value: investment.value,
+  });
 
-    const handleUpdatingLocalStorageForNewInvestments = (investment, id) => {
-      appendToScenarioKey("setOfInvestments", id);
-      appendToTakenTaxStatusAccounts(investment.investmentType, investment.accountTaxStatus);
+  // Update scenario and tax status mappings for new investment
+  const handleUpdatingLocalStorageForNewInvestments = (investment, id) => {
+    appendToScenarioKey("setOfInvestments", id);
+    appendToTakenTaxStatusAccounts(investment.investmentType, investment.accountTaxStatus);
 
-      if (investment.accountTaxStatus === "pre-tax") {
-        appendToScenarioKey("rothConversionStrategy", id);
-        appendToScenarioKey("rmdStrategy", id);
-      } else {
-        appendToScenarioKey("expenseWithdrawalStrategy", id);
-      }
-    };
-
-    if (newInvestment.investmentTypeId) {
-      let transformedInvestment = transformInvestmentData(newInvestment);
-      try {
-        let id = newInvestment.id;
-        if (!user.guest) {
-          if (id === "new") {
-            const response = await axios.post(`http://localhost:8080/scenario/${editMode}/investment`, transformedInvestment);
-            id = response.data._id;
-            transformedInvestment._id = id;
-            handleUpdatingLocalStorageForNewInvestments(transformedInvestment, id);
-          } else {
-            transformedInvestment._id = id;
-            await axios.post(`http://localhost:8080/updateInvestment/${id}`, transformedInvestment);
-            setCurrInvestments((prev) => prev.filter((item) => item._id !== id));
-          }
-        } else {
-          if (id === "new") {
-            id = new ObjectId().toHexString();
-            transformedInvestment._id = id;
-            handleUpdatingLocalStorageForNewInvestments(transformedInvestment, id);
-          } else {
-            transformedInvestment._id = id;
-            setCurrInvestments((prev) => prev.filter((item) => item._id !== id));
-          }
-        }
-
-        setCurrInvestments((prev) => [...(Array.isArray(prev) ? prev : []), transformedInvestment]);
-        setNewInvestment({ id: "new", investmentTypeId: "", taxType: "", value: "0" });
-        handleClose();
-      } catch (error) {
-        console.error("Error adding investment:", error);
-      }
+    if (investment.accountTaxStatus === "pre-tax") {
+      appendToScenarioKey("rothConversionStrategy", id);
+      appendToScenarioKey("rmdStrategy", id);
+    } else {
+      appendToScenarioKey("expenseWithdrawalStrategy", id);
     }
   };
 
+  // Add or update investment in state (and backend if not guest)
+  const handleAddInvestment = async () => {
+    const { investmentTypeId, taxType, value, id } = newInvestment;
+    if (!investmentTypeId || !taxType || value === "" || isNaN(Number(value))) return;
+
+    const transformed = transformInvestmentData(newInvestment);
+    let newId = id;
+
+    try {
+      if (id === NEW_ID) {
+        // Create new investment
+        if (!user.guest) {
+          const response = await axios.post(`http://localhost:8080/scenario/${editMode}/investment`, transformed);
+          newId = response.data._id;
+        } else {
+          newId = new ObjectId().toHexString();
+        }
+
+        transformed._id = newId;
+        handleUpdatingLocalStorageForNewInvestments(transformed, newId);
+      } else {
+        // Update existing investment
+        transformed._id = id;
+
+        const original = currInvestments.find((inv) => inv._id === id);
+        if (!user.guest) {
+          await axios.post(`http://localhost:8080/updateInvestment/${id}`, transformed);
+        }
+
+        setCurrInvestments((prev) => prev.filter((item) => item._id !== id));
+
+        if (original && original.accountTaxStatus !== taxType) {
+          setTakenTaxStatusAccounts((prev) => {
+            const updated = { ...prev };
+            if (updated[investmentTypeId]) {
+              updated[investmentTypeId] = updated[investmentTypeId].filter((val) => val !== original.accountTaxStatus);
+            }
+            if (!updated[investmentTypeId]) updated[investmentTypeId] = [];
+            if (!updated[investmentTypeId].includes(taxType)) updated[investmentTypeId].push(taxType);
+            return updated;
+          });
+        }
+
+        setEditing(false);
+      }
+
+      setCurrInvestments((prev) => [...(Array.isArray(prev) ? prev : []), transformed]);
+      setNewInvestment(defaultInvestment);
+      handleClose();
+    } catch (error) {
+      console.error("Error adding investment:", error);
+    }
+  };
+
+  // Trigger edit modal with investment data
+  const handleEditInvestment = useCallback((item) => {
+    setEditing(true);
+    setNewInvestment({
+      id: item._id,
+      investmentTypeId: item.investmentType,
+      taxType: item.accountTaxStatus,
+      value: item.value,
+    });
+    setOpen(true);
+  }, []);
+
+  // Delete investment locally (and optionally backend)
+  const handleDeleteInvestment = useCallback((id) => {
+    setCurrInvestments((prev) => prev.filter((item) => item._id !== id));
+  }, [setCurrInvestments]);
+
+  // Investment list renderer by tax type
   const InvestList = ({ list, taxType }) => {
-    const handleDeleteInvestment = (id) => {
-      setCurrInvestments((prev) => prev.filter((item) => item._id !== id));
-    };
-
-    const handleEditInvestment = (item) => {
-      setNewInvestment({
-        id: item._id,
-        investmentTypeId: item.investmentType,
-        taxType: item.accountTaxStatus,
-        value: item.value,
-      });
-      setOpen(true);
-    };
-
     const filteredInvestments = Array.isArray(list) ? list.filter((item) => item.accountTaxStatus === taxType) : [];
 
     return (
       <List>
         {filteredInvestments.map((item, index) => {
           if (!item || !item.investmentType) {
-            console.error("Invalid investment data:", item);
             return (
               <ListItem key={`invalid-${index}`}>
                 <ListItemText primary="Invalid investment data" />
@@ -182,6 +228,7 @@ const InvestmentLists = () => {
           }
 
           const investmentTypeName = investmentTypeMap[item.investmentType] || "Unknown Type";
+          const isCash = investmentTypeName === CASH_LABEL;
 
           return (
             <ListItem
@@ -198,7 +245,7 @@ const InvestmentLists = () => {
               <IconButton edge="end" aria-label="edit" onClick={() => handleEditInvestment(item)}>
                 <EditIcon />
               </IconButton>
-              <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteInvestment(item._id)}>
+              <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteInvestment(item._id)} disabled={isCash}>
                 <DeleteIcon />
               </IconButton>
             </ListItem>
@@ -207,7 +254,7 @@ const InvestmentLists = () => {
       </List>
     );
   };
-  console.log(currInvestmentTypes);
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -279,11 +326,12 @@ const InvestmentLists = () => {
                     onChange={(e) => handleInputChange("investmentTypeId", e.target.value)}
                     sx={{ ...textFieldStyles, width: 350 }}
                     fullWidth
+                    disabled={investmentTypeMap[newInvestment.investmentTypeId] === "Cash"}
                   >
                     {Array.isArray(currInvestmentTypes) && currInvestmentTypes.length > 0 ? (
                       currInvestmentTypes.map((it) =>
                         it._id && it.name ? (
-                          <MenuItem key={it._id} value={it._id}>
+                          <MenuItem key={it._id} value={it._id} disabled={it.name === "Cash"}>
                             {it.name}
                           </MenuItem>
                         ) : null
@@ -339,6 +387,7 @@ const InvestmentLists = () => {
                     menuLabels={availableTaxTypes[0]}
                     menuItems={availableTaxTypes[1]}
                     width={250}
+                    disable={investmentTypeMap[newInvestment.investmentTypeId] === "Cash"}
                   />
                 </Box>
                 <Box sx={{ flex: 1 }}>
