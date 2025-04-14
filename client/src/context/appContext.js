@@ -9,13 +9,11 @@ export const defaultInfo = {
   "name": "",
   "filingStatus": "single",
   "financialGoal": "",
-  "residence": "",
+  "stateResident": "New York",
   "birthYear": "",
   "lifeExpectancy": { "type": "fixed", "fixedAge": "" },
   "birthYearSpouse": "",
   "lifeExpectancySpouse": { "type": "fixed", "fixedAge": "" },
-  "startYear": "",
-  "endYear": "",
   "expenseEventSeries": [],
   "expenseWithdrawalStrategy": [],
   "incomeEventSeries": [],
@@ -49,12 +47,12 @@ export const getInitialState = async (user) => {
           return []; // Return an empty list if no user ID
       }
 
-      console.log("Fetching scenarios for user:", userId);
+      // console.log("Fetching scenarios for user:", userId);
       // Fetch scenarios from the backend
       const response = await axios.get(`http://localhost:8080/user/${userId}/scenarios`); // Adjust API route
 
       if (response.data) {
-          console.log("Scenarios fetched from backend:", response.data);
+          // console.log("Scenarios fetched from backend:", response.data);
           localStorage.setItem("scenarioData", JSON.stringify(response.data));
           return response.data;
       }
@@ -83,9 +81,9 @@ const retrieveScenarioData = async (scenarioId, dataType) => {
       const response = await axios.get(`http://localhost:8080/scenario/${scenarioId}/${dataType}`);
       const data = response.data || [];
       localStorage.setItem(`current${capitalizeFirstLetter(dataType)}`, JSON.stringify(data));
-      console.log(data);
+      // console.log(data);
 
-      console.log(`Data for ${dataType} stored in localStorage.`);
+      // console.log(`Data for ${dataType} stored in localStorage.`);
       return data;
   } catch (error) {
       console.error(`Error retrieving ${dataType}:`, error);
@@ -97,7 +95,7 @@ const capitalizeFirstLetter = (string) => string.charAt(0).toUpperCase() + strin
 
 // Context Provider Component
 export const AppProvider = ({ children }) => {
-  console.log("Reading from local storage first!");
+  // console.log("Reading from local storage first!");
   const [scenarioData, setScenarioData] = useState(readStateFromLS("scenarioData"));
 
   const [editMode, setEditMode] = useState(readStateFromLS("edit"));
@@ -177,7 +175,7 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     // Load user data from localStorage
-    console.log("oop this got all scenarios got changed");
+    // console.log("oop this got all scenarios got changed");
     localStorage.setItem("scenarioData", JSON.stringify(scenarioData));
   }, [scenarioData]);
 
@@ -211,7 +209,7 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     if (eventEditMode) localStorage.setItem("editEvent", JSON.stringify(eventEditMode));
-    console.log(eventEditMode);
+    // console.log(eventEditMode);
   }, [eventEditMode]);
 
   useEffect(() => {

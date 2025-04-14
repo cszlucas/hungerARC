@@ -439,12 +439,12 @@ const EventSeries = () => {
                       select
                       value={permission}
                       onChange={(e) => setPermission(e.target.value)}
-                      displayEmpty
+                      displayempty="true"
                       fullWidth
                       sx={textFieldStyles}
                   >
                       <MenuItem value="" disabled>
-                          Select
+                        Select
                       </MenuItem>
                       <MenuItem key="Edit" value="Edit">
                         Edit

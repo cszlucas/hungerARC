@@ -20,7 +20,7 @@ const CustomDropdown = ({ label, value, setValue, menuLabels=[], menuItems=[], w
                 select
                 value={value}
                 onChange={handleChange}
-                displayEmpty
+                displayempty="true"
                 fullWidth
                 sx={{...textFieldStyles, width: width}}
                 disabled={menuLabels.length == 0}

@@ -1,8 +1,8 @@
 import axios from "axios";
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, InputAdornment, Box, List, MenuItem, ListItem, 
+  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, InputAdornment, Box, List, MenuItem, ListItem,
   ListItemText, IconButton, Backdrop, Fade, TextField,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -15,28 +15,56 @@ import CustomDropdown from "../../../components/customDropDown";
 import CustomInput from "../../../components/customInputBox";
 import CustomSave from "../../../components/customSaveBtn";
 import PageHeader from "../../../components/pageHeader";
-import { 
-  stackStyles, titleStyles, buttonStyles, rowBoxStyles, backContinueContainerStyles, textFieldStyles 
+import {
+  stackStyles, titleStyles, buttonStyles, rowBoxStyles, backContinueContainerStyles, textFieldStyles
 } from "../../../components/styles";
 import { AppContext } from "../../../context/appContext";
 import { AuthContext } from "../../../context/authContext";
 
-const mongoose = require("mongoose");
+import { ObjectId } from "bson";
 
 const InvestmentLists = () => {
-  const { editMode, setEventEditMode, currInvestments, setCurrInvestments, currInvestmentTypes, setCurrScenario, takenTaxStatusAccounts, setTakenTaxStatusAccounts } = useContext(AppContext);
+  const {
+    editMode, setEventEditMode, currInvestments, setCurrInvestments,
+    currInvestmentTypes, setCurrScenario, takenTaxStatusAccounts, setTakenTaxStatusAccounts
+  } = useContext(AppContext);
   const { user } = useContext(AuthContext);
 
   const [open, setOpen] = useState(false);
   const [availableTaxTypes, setAvailableTaxTypes] = useState([[], []]);
-
   const [newInvestment, setNewInvestment] = useState({ id: "new", investmentTypeId: "", taxType: "", value: "" });
   const navigate = useNavigate();
 
+  const appendToScenarioKey = (key, value) => {
+    setCurrScenario((prev) => ({
+      ...prev,
+      [key]: [...(prev[key] || []), value],
+    }));
+  };
+
+  const appendToTakenTaxStatusAccounts = (key, value) => {
+    setTakenTaxStatusAccounts((prev) => ({
+      ...prev,
+      [key]: [...(prev[key] || []), value],
+    }));
+  };
+
+  const investmentTypeMap = useMemo(() => {
+    const map = {};
+    if (Array.isArray(currInvestmentTypes)) {
+      currInvestmentTypes.forEach((type) => {
+        if (type._id && type.name) {
+          map[type._id] = type.name;
+        }
+      });
+    }
+    return map;
+  }, [currInvestmentTypes]);
+
   useEffect(() => {
     let taxStatus = [[], []];
-    if (newInvestment.investmentTypeId) { 
-
+    if (newInvestment.investmentTypeId) {
+      
       if (!takenTaxStatusAccounts[newInvestment.investmentTypeId]) {
         taxStatus = [["Taxable", "Tax-Deferred", "Tax-Free"], ["non-tax", "pre-tax", "after-tax"]];
       } else {
@@ -59,62 +87,38 @@ const InvestmentLists = () => {
     handleInputChange("taxType", "");
   }, [newInvestment.investmentTypeId]);
 
-  const handleOpen = () => { 
-    setNewInvestment({ id: "new", investmentTypeId: "", taxType: "", value: "0" }); 
-    setOpen(true); 
+  const handleOpen = () => {
+    setNewInvestment({ id: "new", investmentTypeId: "", taxType: "", value: "0" });
+    setOpen(true);
   };
+
   const handleClose = () => setOpen(false);
 
-  const handleInputChange = (field, value) => {  
-    setNewInvestment((prev) => {
-      return {
-        ...prev,
-        [field]: value,
-      };
-    });
+  const handleInputChange = (field, value) => {
+    setNewInvestment((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleAddInvestment = async () => {
-    const handleAppendInScenario = (key, newValue) => {
-      setCurrScenario((prev) => ({
-        ...prev,
-        [key]: [...(prev[key] || []), newValue]  // Append to the specified key
-      }));
-    };
-    const handleAppendInTakenTaxStatusAccounts = (key, newValue) => {
-      setTakenTaxStatusAccounts((prev) => ({
-        ...prev,
-        [key]: [...(prev[key] || []), newValue]  // Append to the specified key
-      }));
-    };
-
-    const transformInvestmentData = (investment) => {
-      return {
-        investmentType: investment.investmentTypeId,
-        accountTaxStatus: investment.taxType, // Example: change 'accountTaxStatus' to 'account_tax_status'
-        value: investment.value, // Keep 'value' as it is
-      };
-    };
+    const transformInvestmentData = (investment) => ({
+      investmentType: investment.investmentTypeId,
+      accountTaxStatus: investment.taxType,
+      value: investment.value,
+    });
 
     const handleUpdatingLocalStorageForNewInvestments = (investment, id) => {
-      handleAppendInScenario("setOfInvestments", id);
-      handleAppendInTakenTaxStatusAccounts(investment.investmentType, investment.accountTaxStatus);
-      if (investment.accountTaxStatus == "pre-tax") {
-        handleAppendInScenario("rothConversionStrategy", id);
-        handleAppendInScenario("rmdStrategy", id);
+      appendToScenarioKey("setOfInvestments", id);
+      appendToTakenTaxStatusAccounts(investment.investmentType, investment.accountTaxStatus);
+
+      if (investment.accountTaxStatus === "pre-tax") {
+        appendToScenarioKey("rothConversionStrategy", id);
+        appendToScenarioKey("rmdStrategy", id);
       } else {
-        handleAppendInScenario("expenseWithdrawalStrategy", id);
+        appendToScenarioKey("expenseWithdrawalStrategy", id);
       }
     };
 
     if (newInvestment.investmentTypeId) {
-      // if (takenTaxStatusAccounts[newInvestment.investmentTypeId].includes(newInvestment.taxType)) {
-      //   alert("Selected Tax Status Account is already taken!!!");
-      //   return;
-      // }
-
       let transformedInvestment = transformInvestmentData(newInvestment);
-
       try {
         let id = newInvestment.id;
         if (!user.guest) {
@@ -130,7 +134,7 @@ const InvestmentLists = () => {
           }
         } else {
           if (id === "new") {
-            id = currInvestments.length;
+            id = new ObjectId().toHexString();
             transformedInvestment._id = id;
             handleUpdatingLocalStorageForNewInvestments(transformedInvestment, id);
           } else {
@@ -139,9 +143,8 @@ const InvestmentLists = () => {
           }
         }
 
-        setCurrInvestments((prev) => { return [...(Array.isArray(prev) ? prev : []), transformedInvestment]; });
+        setCurrInvestments((prev) => [...(Array.isArray(prev) ? prev : []), transformedInvestment]);
         setNewInvestment({ id: "new", investmentTypeId: "", taxType: "", value: "0" });
-        
         handleClose();
       } catch (error) {
         console.error("Error adding investment:", error);
@@ -150,19 +153,10 @@ const InvestmentLists = () => {
   };
 
   const InvestList = ({ list, taxType }) => {
-    const getInvestmentTypeName = (id) => {
-      for (let i = 0; i < currInvestmentTypes.length; i++) {
-        if (currInvestmentTypes[i]._id.toString() === id.toString()) {
-          return currInvestmentTypes[i].name; // Return the matching investment name
-        }
-      }
-      return "Unknown Type"; // Default if not found
-    };
-
     const handleDeleteInvestment = (id) => {
       setCurrInvestments((prev) => prev.filter((item) => item._id !== id));
     };
-  
+
     const handleEditInvestment = (item) => {
       setNewInvestment({
         id: item._id,
@@ -170,7 +164,7 @@ const InvestmentLists = () => {
         taxType: item.accountTaxStatus,
         value: item.value,
       });
-      setOpen(true); // Open the modal
+      setOpen(true);
     };
 
     const filteredInvestments = Array.isArray(list) ? list.filter((item) => item.accountTaxStatus === taxType) : [];
@@ -178,7 +172,7 @@ const InvestmentLists = () => {
     return (
       <List>
         {filteredInvestments.map((item, index) => {
-          if (!item || !item.investmentType || !item.value) {
+          if (!item || !item.investmentType) {
             console.error("Invalid investment data:", item);
             return (
               <ListItem key={`invalid-${index}`}>
@@ -186,8 +180,9 @@ const InvestmentLists = () => {
               </ListItem>
             );
           }
-  
-          const investmentTypeName = getInvestmentTypeName(item.investmentType) || "Unknown Type";
+
+          const investmentTypeName = investmentTypeMap[item.investmentType] || "Unknown Type";
+
           return (
             <ListItem
               key={item._id}
@@ -200,13 +195,9 @@ const InvestmentLists = () => {
                 primary={<span style={{ fontWeight: "bold" }}>{investmentTypeName}</span>}
                 secondary={`Value: ${item.value} | ${item._id}`}
               />
-  
-              {/* Edit Button */}
               <IconButton edge="end" aria-label="edit" onClick={() => handleEditInvestment(item)}>
                 <EditIcon />
               </IconButton>
-  
-              {/* Delete Button */}
               <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteInvestment(item._id)}>
                 <DeleteIcon />
               </IconButton>
@@ -216,7 +207,7 @@ const InvestmentLists = () => {
       </List>
     );
   };
-
+  console.log(currInvestmentTypes);
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -226,9 +217,6 @@ const InvestmentLists = () => {
           <Typography variant="h2" component="h1" sx={titleStyles}>
             Investments
           </Typography>
-          {/* <Button variant="contained" color="secondary" sx={buttonStyles}>
-            Saves
-          </Button> */}
         </Stack>
 
         <PageHeader />
@@ -266,16 +254,15 @@ const InvestmentLists = () => {
           <Button variant="contained" color="primary" sx={buttonStyles} onClick={() => navigate("/scenario/basics")}>
             Back
           </Button>
-          <CustomSave label={"Continue"} routeTo={"/scenario/event_series_list"}/>
+          <CustomSave label={"Continue"} routeTo={"/scenario/event_series_list"} />
         </Box>
 
-        {/* Backdrop + Modal */}
         <Backdrop open={open} onClick={handleClose} sx={{ zIndex: 1300 }}>
           <Fade in={open}>
             <Box
               onClick={(e) => e.stopPropagation()}
               sx={{
-                backgroundColor: "white", boxShadow: 24, p: 4, borderRadius: 2, 
+                backgroundColor: "white", boxShadow: 24, p: 4, borderRadius: 2,
                 minWidth: 500, maxWidth: 800, display: "flex", flexDirection: "column", gap: 2,
               }}
             >
@@ -285,18 +272,16 @@ const InvestmentLists = () => {
                   Investment Type
                 </Typography>
                 <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
-                  <TextField 
-                    select 
-                    name="investmentTypeId" 
-                    value={newInvestment.investmentTypeId || ""} 
-                    onChange={(e) => handleInputChange("investmentTypeId", e.target.value)} 
-                    sx={{...textFieldStyles, width: 350}} 
+                  <TextField
+                    select
+                    name="investmentTypeId"
+                    value={newInvestment.investmentTypeId || ""}
+                    onChange={(e) => handleInputChange("investmentTypeId", e.target.value)}
+                    sx={{ ...textFieldStyles, width: 350 }}
                     fullWidth
                   >
-                    {/* Check if currInvestmentTypes is an array */}
                     {Array.isArray(currInvestmentTypes) && currInvestmentTypes.length > 0 ? (
                       currInvestmentTypes.map((it) =>
-                        // Ensure the item has _id and name properties before rendering
                         it._id && it.name ? (
                           <MenuItem key={it._id} value={it._id}>
                             {it.name}
@@ -306,7 +291,7 @@ const InvestmentLists = () => {
                     ) : (
                       <MenuItem value="" disabled>
                         No Investment Types Available
-                      </MenuItem> // Fallback if no valid data
+                      </MenuItem>
                     )}
                   </TextField>
                   <IconButton
@@ -320,8 +305,8 @@ const InvestmentLists = () => {
                     sx={{
                       backgroundColor: "black",
                       color: "white",
-                      "&:hover": { backgroundColor: "#333" }, // Slightly lighter black on hover
-                      "&:disabled": { backgroundColor: "#B0B0B0", color: "#FFFFFF99" }, // Greyed out when disabled
+                      "&:hover": { backgroundColor: "#333" },
+                      "&:disabled": { backgroundColor: "#B0B0B0", color: "#FFFFFF99" },
                       ml: -1.5,
                     }}
                   >
@@ -347,7 +332,7 @@ const InvestmentLists = () => {
 
               <Box sx={rowBoxStyles}>
                 <Box sx={{ flex: 1 }}>
-                  <CustomDropdown 
+                  <CustomDropdown
                     label={"Tax Status of account"}
                     value={newInvestment.taxType || ""}
                     setValue={(value) => handleInputChange("taxType", value)}
@@ -372,12 +357,12 @@ const InvestmentLists = () => {
                 <Button variant="contained" color="primary" onClick={handleClose} sx={{ textTransform: "none" }}>
                   Cancel
                 </Button>
-                <Button 
-                  variant="contained" 
-                  color="secondary" 
-                  onClick={handleAddInvestment} 
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={handleAddInvestment}
                   sx={{ textTransform: "none" }}
-                  disabled={newInvestment.taxType == "" || newInvestment.value == ""}
+                  disabled={newInvestment.taxType === "" || newInvestment.value === ""}
                 >
                   Save
                 </Button>
