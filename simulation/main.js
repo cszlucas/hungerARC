@@ -249,7 +249,9 @@ function updateValues(investment, userAge, yearTotals, partial, amountPaid) {
 //Use up excess cash with invest strategy
 function runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy) {
   console.log("\nINVEST STRATEGY");
+  console.log('investStrategy :>> ', investStrategy);
   const strategy = Array.isArray(investStrategy) ? investStrategy[0] : investStrategy;
+  console.log('strategy :>> ', strategy);
   console.log("cashInvestment", cashInvestment.value, " maxCash to keep: ", strategy.maxCash);
 
   const excessCash = cashInvestment.value - strategy.maxCash;

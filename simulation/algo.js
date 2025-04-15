@@ -420,16 +420,16 @@ async function runSimulation(scenario, tax, stateTax, startYearPrev, lifeExpecta
     let sumDiscretionary = payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath);
 
     //   // RUN INVEST EVENT
-    // runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
+    runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
 
     //   // RUN REBALANCE EVENT
-    // let types = ["pre-tax", "after-tax", "non-retirement"];
-    // for (let type of types) {
-    //   let rebalanceStrategy = getRebalanceStrategy(scenario, curRebalanceEvent, type, year);
-    //   if (rebalanceStrategy.length != 0) {
-    //     rebalance(investments, year, rebalanceStrategy, userAge, yearTotals);
-    //   }
-    // }
+    let types = ["pre-tax", "after-tax", "non-retirement"];
+    for (let type of types) {
+      let rebalanceStrategy = getRebalanceStrategy(scenario, curRebalanceEvent, type, year);
+      if (rebalanceStrategy.length != 0) {
+        rebalance(investments, year, rebalanceStrategy, userAge, yearTotals);
+      }
+    }
 
     // PRELIMINARIES
     // can differ each year if sampled from distribution
@@ -548,8 +548,8 @@ async function main(numScenarioTimes, scenarioId, userId) {
       taxData: JSON.parse(JSON.stringify(taxData)),
       investmentType: JSON.parse(JSON.stringify(investmentType)),
     };
-    console.log('clonedData.stateTax :>> ', clonedData.stateTax);
-    console.log('clonedData.taxData :>> ', clonedData.taxData);
+    // console.log('clonedData.stateTax :>> ', clonedData.stateTax);
+    // console.log('clonedData.taxData :>> ', clonedData.taxData);
     const yearDataBuckets = await runSimulation(
       clonedData.scenario,
       clonedData.taxData[0],
@@ -566,10 +566,9 @@ async function main(numScenarioTimes, scenarioId, userId) {
     );
     allYearDataBuckets.push(yearDataBuckets);
   }
-
   const flattenedBuckets = allYearDataBuckets.flat();
 
-  const { startYear, endYear, data } = buildChartDataFromBuckets(flattenedBuckets, 2025);
+  const { startYear, endYear, data } = buildChartDataFromBuckets(flattenedBuckets, 2025, numScenarioTimes);
 
   console.log(data);
 
@@ -607,14 +606,24 @@ async function main(numScenarioTimes, scenarioId, userId) {
   }, startYear);  
   
 
-  console.log("shadedChart", shadedChart);
-  console.log("probabilityChart", probabilityChart);
-  console.log("barChart average", barChartAverage);
-  console.log("barChart median", barChartMedian);
+  // console.log("shadedChart", shadedChart);
+  // console.log("probabilityChart", probabilityChart);
+  // console.log("barChart average", barChartAverage);
+  // console.log("barChart median", barChartMedian);
+
+  return {
+    probabilityChart,
+    shadedChart,
+    barChartAverage,
+    barChartMedian,
+  };
+
 }
 
 // Call the main function to execute everything
 // main(1, "67df22db4996aba7bb6e8d73");
 //67e084385ca2a5376ad2efd2
            // scenario id              user id
-main(1, "67e084385ca2a5376ad2efd2", "67e19c10a1325f92faf9f181");
+// main(1, "67e084385ca2a5376ad2efd2", "67e19c10a1325f92faf9f181");
+
+module.exports = { main };
