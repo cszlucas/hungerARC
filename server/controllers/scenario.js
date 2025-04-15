@@ -143,6 +143,14 @@ exports.importUserData = async (req, res) => {
     }
   }
 
+  if (inflationAssumption) {
+    inflationAssumption.inflationAssumptionType = inflationAssumption.type;
+  
+    if (inflationAssumption.inflationAssumptionType === "fixed") {
+      inflationAssumption.fixedRate = inflationAssumption.value;
+    }
+  }
+  
   const basicInfoData = {
     name: name,
     filingStatus: maritalStatus === "couple" ? "couple" : "single",

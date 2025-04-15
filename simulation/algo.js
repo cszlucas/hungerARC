@@ -251,6 +251,7 @@ class DataStore {
       this.user = user;
       const stateTaxAll = await StateTax.find();
 
+      console.log(stateTaxAll);
       // const stateTaxDocs = await StateTax.find(); // get all for direct lookup
       const residence = scenario.stateResident;
 
@@ -258,8 +259,10 @@ class DataStore {
 
       const triState = ["New York", "New Jersey", "Connecticut"];
 
+      console.log(residence);
       if (triState.includes(residence)) {
         // Search directly in StateTax collection
+        console.log("FOUND");
         matchedTax = stateTaxAll.find((tax) => tax.state === residence);
       } else {
         // Search user's uploaded YAMLs
@@ -267,7 +270,7 @@ class DataStore {
         matchedTax = userTaxDocs.find((tax) => tax.state === residence);
       }
       this.stateTax = matchedTax;
-
+      console.log(matchedTax);
       const investmentType = await InvestmentType.find({
         _id: { $in: scenario.setOfInvestmentTypes },
       });
@@ -547,7 +550,7 @@ async function main(numScenarioTimes, scenarioId, userId) {
 
   // find the user's state tax data
   // let stateTaxData = stateTax.find((state) => state.state === scenario.stateResident);
-
+  console.log(stateTax);
   for (let x = 0; x < numScenarioTimes; x++) {
     const clonedData = {
       scenario: JSON.parse(JSON.stringify(scenario)),
@@ -604,7 +607,12 @@ async function main(numScenarioTimes, scenarioId, userId) {
   const shadedChart = {
     startYear,
     endYear,
-    median: data.income.median,
+    income: data.income.median,
+    investments: data.investments.median,
+    discretionary: data.discretionary.median,
+    nonDiscretionary: data.nonDiscretionary.median,
+    taxes: data.taxes.median,
+    earlyWithdrawals: data.earlyWithdrawals.median,
     spread: 0.25,
   };
 

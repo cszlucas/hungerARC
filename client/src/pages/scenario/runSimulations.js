@@ -316,6 +316,8 @@ const EventSeries = () => {
 
   const getChartData = async () => {
     try {
+      console.log(user._id);
+      console.log(currScenario._id);
       const response = await axios.get("http://localhost:8080/runSimulation", {
         params: {
           scenarioId: currScenario._id,
@@ -323,8 +325,13 @@ const EventSeries = () => {
           simulationCount: numSimulations,
         },
       });
+
+      console.log(response.data);
+      navigate("/charts", {
+        state: { chartData: response.data }
+      });
   
-      return response.data; // optional: just return the data, not the whole Axios response
+      // return response.data; // optional: just return the data, not the whole Axios response
     } catch (error) {
       console.error("Error fetching simulation data:", error);
       throw error; // rethrow if you want to handle it outside
@@ -415,10 +422,9 @@ const EventSeries = () => {
           </Button>
           <Button variant="contained" color="secondary" sx={buttonStyles}
             onClick={() => {
-              const fetchedData = getChartData();
-              navigate("/charts", {
-                state: { chartData: fetchedData.data }
-              });
+              // const fetchedData = await getChartData();
+              // console.log(fetchedData);
+              getChartData();
             }}
           >
             Run Simulation

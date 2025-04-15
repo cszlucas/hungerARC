@@ -184,9 +184,9 @@ const ScenarioList = () => {
             const parsed = parseScenarioYAML(raw);
             console.log("✅ Parsed YAML:", parsed);
             const response = await axios.post(`http://localhost:8080/importScenario/user/${user._id}`, parsed);
-            console.log(response);
+            console.log(response.data);
 
-            setScenarioData((prev) => [...(prev || []), response]);
+            setScenarioData((prev) => [...(prev || []), response.data.scenario]);
             } catch (err) {
             console.error("❌ YAML import failed:", err);
             }

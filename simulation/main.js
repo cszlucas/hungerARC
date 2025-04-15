@@ -93,6 +93,7 @@ function payNonDiscretionaryExpenses(
   const taxes = getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, capitalGains, userAge, fedDeduction);
   console.log("nonDiscretionaryExpenses Amt: ", expenseAmt, "and taxes: ", taxes);
   let withdrawalAmt = expenseAmt + taxes;
+  console.log("is there cash? " + cashInvestment);
   console.log("My cash investment: ", cashInvestment.value, "Amount I need to withdraw: ", withdrawalAmt);
   if (cashInvestment.value >= withdrawalAmt) {
     cashInvestment.value -= withdrawalAmt; //use up cash needed

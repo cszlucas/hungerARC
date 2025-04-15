@@ -291,78 +291,40 @@ const Charts = () => {
     const location = useLocation();
     const chartData = location.state?.chartData || [];
     console.log(chartData);
-    const testShadedChartData = {
-        startYear: 2025,
-        endYear: 2027,
-        median: [ 115125, 60010.49099224512, 65010.69870199156 ],
-        spread: 0.25
-    };
-    const testLineProbabilityData = { startYear: 2025, endYear: 2027, probabilities: [ 1, 1, 1 ] };
-    const testBarChartAverage = [
-        {
-          year: 2025,
-          type: "investment",
-          name: "investments",
-          value: 110886.13735500976
-        },
-        { year: 2025, type: "income", name: "income", value: 115125 },
-        { year: 2025, type: "expense", name: "Discretionary", value: 900 },
-        {
-          year: 2025,
-          type: "expense",
-          name: "Non-Discretionary",
-          value: 1200
-        },
-        {
-          year: 2026,
-          type: "investment",
-          name: "investments",
-          value: 223539.62023312083
-        },
-        {
-          year: 2026,
-          type: "income",
-          name: "income",
-          value: 60010.49099224512
-        },
-        {
-          year: 2026,
-          type: "expense",
-          name: "Discretionary",
-          value: 990.0000000000001
-        },
-        {
-          year: 2026,
-          type: "expense",
-          name: "Non-Discretionary",
-          value: 1320
-        },
-    ];
-    const testBarChartMedian = [
-        {
-          year: 2025,
-          type: "investment",
-          name: "investments",
-          value: 110886.13735500976
-        },
-        { year: 2025, type: "income", name: "income", value: 115125 },
-        { year: 2025, type: "expense", name: "Discretionary", value: 900 },
-        {
-          year: 2025,
-          type: "expense",
-          name: "Non-Discretionary",
-          value: 1200
-        },
-    ];
     const [currChart, setCurrChart] = useState("");
     const [currQuantity, setCurrQuantity] = useState("");
-    const [currStat, setCurrStat] = useState("");
+    const [currStat, setCurrStat] = useState("Median");
     const [aggThres, setAggThres] = useState(false);
     const [limit, setLimit] = useState(0);
     useEffect(() => {
     }, [limit]);
     const chartTypes = ["Line Chart", "Shaded Line Chart", "Stacked Bar Chart"];
     const shadedQuantities = ["Total Investments", "Total Income", "Total Expenses", "Early Withdrawal Tax", "Percentage of Total Discretionary Expenses Incurred"];
+
+    const quantityKeyMap = {
+        "Total Investments": "investments",
+        "Total Income": "income",
+        "Total Expenses": "expenses", // we'll sum multiple fields
+        "Early Withdrawal Tax": "earlyWithdrawals",
+        "Percentage of Total Discretionary Expenses Incurred": "discretionary"
+      };
+      
+      const getMedianForQuantity = (chart, quantity) => {
+        const key = quantityKeyMap[quantity];
+      
+        if (!chart || !quantity) return [];
+      
+        if (quantity === "Total Expenses") {
+          const d = chart.discretionary || [];
+          const nd = chart.nonDiscretionary || [];
+          const t = chart.taxes || [];
+          return d.map((val, i) => (val ?? 0) + (nd[i] ?? 0) + (t[i] ?? 0));
+        }
+      
+        return chart[key] || [];
+      };
+      
+
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
@@ -423,43 +385,26 @@ const Charts = () => {
 
 
                     {currChart === "Line Chart" && (
-                        <ProbabilityLineChart
-                            lineChart={{
-                            startYear: 2025,
-                            probabilities: [0.9, 0.8, 0.7],
-                            endYear: 2028,
-                        }}
-                        />
+                        <ProbabilityLineChart lineChart={chartData.probabilityChart} />
                     )}
 
                     {currChart === "Shaded Line Chart" && (
                         <ChartWithBands
-                        shadedLineChart={{
-                          startYear: 2020,
-                          median: [20, 50, 60, 77, 120],
-                          spread: 25,
-                        }}
-                      />
+                            shadedLineChart={{
+                                startYear: chartData.shadedChart.startYear,
+                                spread: 500,
+                                median: getMedianForQuantity(chartData.shadedChart, currQuantity)
+                            }}
+                        />
                         // <ShadedConfidenceChart/>
                         // <ShadedLineChart/>
                     )}
 
                     {currChart === "Stacked Bar Chart" && (
                         <GroupedStackedBarChart
+                            data={currStat === "Median" ? chartData.barChartMedian : chartData.barChartAverage}
                             threshold={limit}
-                            data={[
-                                { year: 2025, type: "investment", name: "401k", value: 12000 },
-                                { year: 2025, type: "investment", name: "Roth IRA", value: 6000 },
-                                { year: 2025, type: "income", name: "Salary", value: 90000 },
-                                { year: 2025, type: "income", name: "Bonus", value: 10000 },
-                                { year: 2025, type: "expense", name: "Rent", value: 30000 },
-                                { year: 2025, type: "expense", name: "Groceries", value: 8000 },
-                            
-                                { year: 2026, type: "investment", name: "401k", value: 15000 },
-                                { year: 2026, type: "income", name: "Salary", value: 95000 },
-                                { year: 2026, type: "expense", name: "Rent", value: 31000 },
-                            ]}
-                      />
+                        />
                     )}
 
                 </Stack>
