@@ -80,9 +80,9 @@ const Income = () => {
         },
         initialAmount: "",
         annualChange: {
+            distribution: "none",
             type: "fixed",
             amount: "",
-            distribution: "none",
             mean: "",
             stdDev: "",
             min: "",
@@ -92,16 +92,23 @@ const Income = () => {
         inflationAdjustment: false,
         isSocialSecurity: false
     });
-    // State for disabling saving
+    // Handles the enabling or disabling the save button
     const [disable, setDisable] = useState(true);
     useEffect(() => {
         const expression = formValues.eventSeriesName 
             && (formValues.startYear.type !== "fixedAmt" || (formValues.startYear.value))
             && (formValues.startYear.type !== "normal" || (formValues.startYear.mean && formValues.startYear.stdDev))
             && (formValues.startYear.type !== "uniform" || (formValues.startYear.min && formValues.startYear.max))
-            && ((formValues.startYear.type !== "same" && formValues.startYear.type !== "after") || (formValues.startYear.refer));
-        console.log(expression);
-        setDisable(expression);
+            && ((formValues.startYear.type !== "same" && formValues.startYear.type !== "after") || (formValues.startYear.refer))
+            && (formValues.duration.type !== "fixedAmt" || (formValues.duration.value))
+            && (formValues.duration.type !== "normal" || (formValues.duration.mean && formValues.duration.stdDev))
+            && (formValues.duration.type !== "uniform" || (formValues.duration.min && formValues.duration.max))
+            && formValues.initialAmount
+            && (formValues.annualChange.distribution !== "none" || formValues.annualChange.amount)
+            && (formValues.annualChange.distribution !== "normal" || (formValues.annualChange.mean && formValues.annualChange.stdDev))
+            && (formValues.annualChange.distribution !== "uniform" || (formValues.annualChange.min && formValues.annualChange.max));
+
+        setDisable(expression ? false : true);
     }, [formValues]);
     
 
@@ -332,7 +339,7 @@ const Income = () => {
                             handleSave();
                             navigate("/scenario/event_series_list");
                         }}
-                        disable={disable}
+                        disabled={disable}
                     >
                         Save & Continue
                     </Button>
