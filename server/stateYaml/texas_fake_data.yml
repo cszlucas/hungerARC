@@ -1,0 +1,64 @@
+name: Texas
+operation: add
+taxDetails:
+  2024:
+    single:
+      - stateIncomeTaxRatesBrackets:
+          - incomeRange: [0, 8500]
+            taxRate: 4
+            change: 0
+          - incomeRange: [8500, 11700]
+            taxRate: 4.5
+            change: 340
+          - incomeRange: [11700, 13900]
+            taxRate: 5.25
+            change: 484
+          - incomeRange: [13900, 80650]
+            taxRate: 5.5
+            change: 600
+          - incomeRange: [80650, 215400]
+            taxRate: 6
+            change: 4271
+          - incomeRange: [215400, 1077550]
+            taxRate: 6.85
+            change: 12356
+          - incomeRange: [1077550, 5000000]
+            taxRate: 9.65
+            change: 71413
+          - incomeRange: [5000000, 25000000]
+            taxRate: 10.3
+            change: 449929
+          - incomeRange: [25000000, null]
+            taxRate: 10.9
+            change: 2509929
+      - standardDeduction: 8000
+    married:
+      - stateIncomeTaxRatesBrackets:
+          - incomeRange: [0, 17150]
+            taxRate: 4
+            change: 0
+          - incomeRange: [17150, 23600]
+            taxRate: 4.5
+            change: 686
+          - incomeRange: [23600, 27900]
+            taxRate: 5.25
+            change: 976
+          - incomeRange: [27900, 161550]
+            taxRate: 5.5
+            change: 1202
+          - incomeRange: [161550, 323200]
+            taxRate: 6
+            change: 8553
+          - incomeRange: [323200, 2155350]
+            taxRate: 6.85
+            change: 18252
+          - incomeRange: [2155350, 5000000]
+            taxRate: 9.65
+            change: 143754
+          - incomeRange: [5000000, 25000000]
+            taxRate: 10.3
+            change: 418263
+          - incomeRange: [25000000, null]
+            taxRate: 10.9
+            change: 2478263
+      - standardDeduction: 16050

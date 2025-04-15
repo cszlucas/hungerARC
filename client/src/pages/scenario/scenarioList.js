@@ -25,6 +25,7 @@ const ScenarioList = () => {
     const { scenarioData, setScenarioData, setEditMode, setCurrScenario, setCurrInvestments, setCurrIncome, setCurrExpense, setCurrInvest, setCurrRebalance, setCurrInvestmentTypes } = useContext(AppContext);
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
+    console.log(user);
 
     function parseScenarioYAML(yamlObject) {
         const {
@@ -182,7 +183,7 @@ const ScenarioList = () => {
             const raw = yaml.load(ev.target.result);
             const parsed = parseScenarioYAML(raw);
             console.log("✅ Parsed YAML:", parsed);
-            const response = await axios.post("http://localhost:8080/importScenario", parsed);
+            const response = await axios.post(`http://localhost:8080/importScenario/user/${user._id}`, parsed);
             console.log(response);
 
             setScenarioData((prev) => [...(prev || []), response]);

@@ -6,7 +6,8 @@ var userSchema=new Schema({
     email: {type: String, required: true, unique: true},
     guest: {type: Boolean, required: true},
     scenarios: [{ type: Schema.Types.ObjectId, ref: 'Scenario' }],
-    lastLogin: {type: Date, default: Date.now}
+    lastLogin: {type: Date, default: Date.now},
+    stateYaml: [{ type: Schema.Types.ObjectId, ref: 'StateTax' }],
 });
 
 const User =mongoose.model('User', userSchema);

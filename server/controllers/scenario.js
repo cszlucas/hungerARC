@@ -3,6 +3,7 @@ const Scenario = require("../models/scenario.js");
 const Investment = require("../models/investment.js");
 const User = require("../models/user.js");
 const { ObjectId } = mongoose.Types;
+const axios = require("axios");
 
 exports.scenario = async (req, res) => {
   const scenarioId = new ObjectId(req.params.id);
@@ -19,9 +20,11 @@ exports.scenario = async (req, res) => {
 
 exports.basicInfo = async (req, res) => {
   const { id } = req.params; //user id
+  console.log("Received request with ID:", req.params.id);
   try {
     const { name, filingStatus, financialGoal, inflationAssumption, birthYearUser, lifeExpectancy, stateResident, birthYearSpouse, lifeExpectancySpouse, irsLimit } = req.body;
     console.log("why");
+    console.log("Request body:", req.body);
     const newBasicInfo = new Scenario({
       name,
       filingStatus,
