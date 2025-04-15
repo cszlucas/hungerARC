@@ -11,6 +11,9 @@ exports.createIncomeEvent = async (req, res) => {
   try {
     const { eventSeriesName, description, startYear, duration, initialAmount, annualChange, userPercentage, inflationAdjustment, isSocialSecurity } = req.body;
 
+    console.log(annualChange);
+    console.log(annualChange.type);
+
     // creates a new income event using extracted request body data
     const newIncomeEvent = new IncomeEvent({
       eventSeriesName,
@@ -43,7 +46,7 @@ exports.createIncomeEvent = async (req, res) => {
 
     res.status(201).json(savedIncomeEvent);
   } catch (err) {
-    res.status(500).json({ error: "Failed to create IncomeEvent" });
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -183,6 +186,8 @@ exports.deleteExpenseEvent = async (req, res) => {
 exports.createInvestStrategy = async (req, res) => {
   const { id } = req.params;
   const { eventSeriesName, description, startYear, duration, type, assetAllocation, maxCash } = req.body;
+  console.log("create invest strategy");
+  console.log("assetAllocation", assetAllocation);
   try {
     const investEvent = new InvestEvent({
       eventSeriesName,
