@@ -73,13 +73,6 @@ var AssetAllocationSchema = new Schema({
   fixedPercentages: {
     type: Map,
     of: Number,
-    validate: {
-      validator: function (value) {
-        if (this.type === "fixed") return value !== undefined; // Required for "fixed"
-        return value === undefined; // Must NOT exist for "glidePath"
-      },
-      message: "fixedPercentages is required for 'fixed' type and must NOT be used with 'glidePath'.",
-    },
   },
 
   initialPercentages: {

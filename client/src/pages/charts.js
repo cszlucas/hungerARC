@@ -1,5 +1,6 @@
-import React, { useState, useContext } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Switch, MenuItem, TextField, IconButton, Backdrop, Fade } from "@mui/material";
+import React, { useState, useContext, useEffect } from "react";
+import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, 
+    Switch, MenuItem, TextField, IconButton, Backdrop, Fade, Checkbox } from "@mui/material";
 import theme from "../components/theme";
 import Navbar from "../components/navbar";
 import {
@@ -7,6 +8,7 @@ import {
   titleStyles,
 } from "../components/styles";  // Import your modular styles
 import CustomDropdown from "../components/customDropDown";
+import CustomInputBox from "../components/customInputBox";
 import ReactECharts from "echarts-for-react";
 import { Line } from "react-chartjs-2";
 import {
@@ -20,6 +22,7 @@ import {
   Filler,
   Legend,
 } from "chart.js";
+import { useLocation } from "react-router-dom";
 
 ChartJS.register(LineElement, PointElement, LinearScale, Title, CategoryScale, Tooltip, Filler, Legend);
 
@@ -149,72 +152,99 @@ const ChartWithBands = ({ shadedLineChart }) => {
 };
   
 
-const GroupedStackedBarChart = ({ data }) => {
+const GroupedStackedBarChart = ({ data, threshold = 0 }) => {
     const years = Array.from(new Set(data.map((d) => d.year))).sort();
     const categories = ["Investment", "Income", "Expense"];
-    const itemNames = Array.from(new Set(data.map((d) => d.name)));
+    const rawItemNames = Array.from(new Set(data.map((d) => d.name)));
   
-    // Build [year, category] combo labels
+    // Step 1: Sum all values per item
+    const itemSums = {};
+    rawItemNames.forEach((name) => (itemSums[name] = 0));
+    data.forEach((item) => {
+      itemSums[item.name] += item.value;
+    });
+  
+    // Step 2: Get visible items above threshold
+    const visibleItems = rawItemNames.filter((name) => itemSums[name] >= threshold);
+    // console.log("Visible Items (Above Threshold):", visibleItems);
+    // Step 3: Build axis labels (e.g., "Investment", "Income", etc. per year)
     const xAxisLabels = [];
     const xAxisYears = [];
-  
     years.forEach((year) => {
       categories.forEach((cat) => {
-        xAxisLabels.push(cat);     // Category labels
-        xAxisYears.push(year);     // For bottom xAxis ticks
+        xAxisLabels.push(cat);
+        xAxisYears.push(year);
       });
     });
   
-    // Map: item -> index-based data array matching xAxisLabels
+    // Step 4: Initialize valueMap ONLY for visible items
     const valueMap = {};
-    itemNames.forEach((name) => {
+    visibleItems.forEach((name) => {
       valueMap[name] = new Array(xAxisLabels.length).fill(0);
     });
   
+    // Step 5: Fill valueMap with visible + "Other"
     data.forEach(({ year, type, name, value }) => {
       const category = type.charAt(0).toUpperCase() + type.slice(1);
-      years.forEach((y, i) => {
-        if (y === year) {
-          const base = i * categories.length;
-          const index = base + categories.indexOf(category);
-          valueMap[name][index] += value;
+      const yearIndex = years.indexOf(year);
+      const base = yearIndex * categories.length;
+      const index = base + categories.indexOf(category);
+  
+      if (visibleItems.includes(name)) {
+        valueMap[name][index] += value;
+      } else {
+        if (!valueMap["Other"]) {
+          valueMap["Other"] = new Array(xAxisLabels.length).fill(0);
         }
-      });
+        valueMap["Other"][index] += value;
+      }
     });
   
-    // Build stacked series by item name
-    const series = itemNames.map((name) => ({
-      name,
-      type: "bar",
-      stack: (params) => xAxisLabels[params.dataIndex], // Stack by category
-      data: valueMap[name],
-      emphasis: { focus: "series" },
-    }));
+    // Step 6: Build series
+    const series = Object.entries(valueMap)
+      .filter(([, values]) => values.some((v) => v > 0)) // Skip empty series
+      .map(([name, values]) => {
+        const isOther = name === "Other";
+        return {
+          name,
+          type: "bar",
+          stack: (params) => {
+            const catIndex = params.dataIndex % categories.length;
+            return categories[catIndex];
+          },
+          data: values,
+          emphasis: { focus: "series" },
+          itemStyle: isOther ? { color: "#7fc97f" } : undefined, // force green for Other
+        };
+      });
+    
+    // console.log("Final Rendered Series:", series.map(s => s.name));
+
   
+    // Step 7: Chart configuration
     const option = {
       title: { text: "Grouped and Stacked Bar Chart" },
       tooltip: {
         trigger: "axis",
         axisPointer: { type: "shadow" },
         formatter: function (params) {
-            const index = params[0].dataIndex;
-            const categoryIndex = index % 3;
-            const category = ["Investment", "Income", "Expense"][categoryIndex];
-            const year = xAxisYears[index];
-          
-            const lines = [`<strong>${year} ${category}</strong>`];
-          
-            params.forEach((p) => {
-              if (xAxisLabels[p.dataIndex] === category && p.value > 0) {
-                const colorBox = `<span style="display:inline-block;margin-right:6px;
-                                    border-radius:3px;width:10px;height:10px;
-                                    background-color:${p.color}"></span>`;
-                lines.push(`${colorBox}${p.seriesName}: ${p.value}`);
-              }
-            });
-          
-            return lines.join("<br>");
-        }
+          const index = params[0].dataIndex;
+          const categoryIndex = index % categories.length;
+          const category = categories[categoryIndex];
+          const year = xAxisYears[index];
+  
+          const lines = [`<strong>${year} ${category}</strong>`];
+          params.forEach((p) => {
+            if (xAxisLabels[p.dataIndex] === category && p.value > 0) {
+              const colorBox = `<span style="display:inline-block;margin-right:6px;
+                border-radius:3px;width:10px;height:10px;
+                background-color:${p.color}"></span>`;
+              lines.push(`${colorBox}${p.seriesName}: ${p.value}`);
+            }
+          });
+  
+          return lines.join("<br>");
+        },
       },
       legend: { type: "scroll" },
       xAxis: [
@@ -223,7 +253,7 @@ const GroupedStackedBarChart = ({ data }) => {
           data: xAxisLabels,
           axisLabel: {
             interval: 0,
-            formatter: (value, index) => value,
+            formatter: (value) => value,
           },
         },
         {
@@ -234,10 +264,7 @@ const GroupedStackedBarChart = ({ data }) => {
           data: xAxisYears,
           axisLabel: {
             interval: 0,
-            formatter: (value, index) => {
-              // Show year under the center (Income) of each 3-bar group
-              return index % 3 === 1 ? value : "";
-            },
+            formatter: (value, index) => (index % categories.length === 1 ? value : ""),
             margin: 20,
             fontWeight: "bold",
             color: "#666",
@@ -252,10 +279,18 @@ const GroupedStackedBarChart = ({ data }) => {
       series,
     };
   
-    return <ReactECharts option={option} style={{ height: 500 }} />;
+    return (<ReactECharts
+        option={option}
+        key={`chart-${threshold ?? 0}-${data?.length ?? 0}`} // fallback if null/undefined
+        style={{ height: 500 }}
+    />);
   };
+  
 
 const Charts = () => {
+    const location = useLocation();
+    const chartData = location.state?.chartData || [];
+    console.log(chartData);
     const testShadedChartData = {
         startYear: 2025,
         endYear: 2027,
@@ -322,6 +357,10 @@ const Charts = () => {
     const [currChart, setCurrChart] = useState("");
     const [currQuantity, setCurrQuantity] = useState("");
     const [currStat, setCurrStat] = useState("");
+    const [aggThres, setAggThres] = useState(false);
+    const [limit, setLimit] = useState(0);
+    useEffect(() => {
+    }, [limit]);
     const chartTypes = ["Line Chart", "Shaded Line Chart", "Stacked Bar Chart"];
     const shadedQuantities = ["Total Investments", "Total Income", "Total Expenses", "Early Withdrawal Tax", "Percentage of Total Discretionary Expenses Incurred"];
     return (
@@ -351,12 +390,34 @@ const Charts = () => {
                             />
                         )}
                         {currChart === "Stacked Bar Chart" && (
-                            <CustomDropdown
-                                label="Pick Mean or Median"
-                                value={currStat}
-                                menuItems={["Mean", "Median"]}
-                                setValue={setCurrStat}
-                            />
+                            <>
+                                <CustomDropdown
+                                    label="Pick Mean or Median"
+                                    value={currStat}
+                                    menuItems={["Mean", "Median"]}
+                                    setValue={setCurrStat}
+                                />
+
+                                <Stack direction="row" alignItems="center" sx={{ mb: 5, gap:0.5 }}>
+                                    <Typography variant="body1" sx={{ fontWeight: "medium", width: 200 }}>
+                                        Aggregation Threshold
+                                    </Typography>
+                                    <Checkbox
+                                        checked={aggThres}
+                                        onChange={e => setAggThres(e.target.checked)}
+                                    />
+                                </Stack>
+
+                                {aggThres && (
+                                    <CustomInputBox
+                                        title="Threshold Limit"
+                                        type="number"
+                                        value={limit}
+                                        setValue={setLimit}
+                                        inputProps={{ min: 0 }}
+                                    />
+                                )}
+                            </>
                         )}
                     </Stack>
 
@@ -385,6 +446,7 @@ const Charts = () => {
 
                     {currChart === "Stacked Bar Chart" && (
                         <GroupedStackedBarChart
+                            threshold={limit}
                             data={[
                                 { year: 2025, type: "investment", name: "401k", value: 12000 },
                                 { year: 2025, type: "investment", name: "Roth IRA", value: 6000 },

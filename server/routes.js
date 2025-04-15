@@ -62,4 +62,7 @@ router.get("/capitalGains", webscraping.capitalGains);
 router.get("/rmd", webscraping.rmd);
 router.get("/handleAllRoutes", webscraping.handleAllRoutes);
 
+// simulation
+router.get("/runSimulation", scenario.simulateScenario);
+
 module.exports = router;
