@@ -31,7 +31,7 @@ exports.basicInfo = async (req, res) => {
       filingStatus,
       financialGoal,
       inflationAssumption: {
-        type: inflationAssumption.inflationAssumptionType,
+        type: inflationAssumption.type,
         fixedRate: inflationAssumption.fixedRate,
         mean: inflationAssumption.mean,
         stdDev: inflationAssumption.stdDev,
@@ -40,14 +40,14 @@ exports.basicInfo = async (req, res) => {
       },
       birthYearUser,
       lifeExpectancy: {
-        type: lifeExpectancy.lifeExpectancyType,
+        type: lifeExpectancy.type,
         fixedAge: lifeExpectancy.fixedAge,
         mean: lifeExpectancy.mean,
         stdDev: lifeExpectancy.stdDev,
       },
       birthYearSpouse,
       lifeExpectancySpouse: {
-        type: lifeExpectancySpouse.lifeExpectancyType,
+        type: lifeExpectancySpouse.type,
         fixedAge: lifeExpectancySpouse.fixedAge,
         mean: lifeExpectancySpouse.mean,
         stdDev: lifeExpectancySpouse.stdDev,
@@ -116,6 +116,7 @@ exports.importUserData = async (req, res) => {
     birthYearSpouse,
     birthYearUser,
     lifeExpectancy,
+    lifeExpectancySpouse,
     setOfinvestmentTypes,
     setOfinvestments,
     income,
@@ -133,15 +134,15 @@ exports.importUserData = async (req, res) => {
     stateResident,
   } = req.body;
 
-  for (const x of lifeExpectancy) {
-    x.lifeExpectancyType = x.type;
-    if (x.lifeExpectancyType === "fixed") {
-      x.fixedAge = x.value;
-    }
-    if (x.lifeExpectancyType === "normal") {
-      x.stdDev = x.stdev;
-    }
-  }
+  // for (const x of lifeExpectancy) {
+  //   x.lifeExpectancyType = x.type;
+  //   if (x.lifeExpectancyType === "fixed") {
+  //     x.fixedAge = x.value;
+  //   }
+  //   if (x.lifeExpectancyType === "normal") {
+  //     x.stdDev = x.stdev;
+  //   }
+  // }
 
   const basicInfoData = {
     name: name,
@@ -149,14 +150,16 @@ exports.importUserData = async (req, res) => {
     financialGoal: financialGoal,
     inflationAssumption: inflationAssumption,
     birthYearUser: birthYearUser,
-    lifeExpectancy: lifeExpectancy[0],
+    // lifeExpectancyUser: lifeExpectancy[0],
+    lifeExpectancy: lifeExpectancy,
     birthYearSpouse: birthYearSpouse ?? null,
-    lifeExpectancySpouse: lifeExpectancy[1],
+    // lifeExpectancySpouse: lifeExpectancy[1] ?? null,
+    lifeExpectancySpouse: lifeExpectancySpouse,
     stateResident: stateResident,
     irsLimit: afterTaxContributionLimit,
   };
 
-  console.log("lifeExpectancy[0]", lifeExpectancy[0], lifeExpectancy[1]);
+  // console.log("lifeExpectancy[0]", lifeExpectancy[0], lifeExpectancy[1]);
   try {
     const response = await axios.post(`http://localhost:8080/basicInfo/user/${id}`, basicInfoData);
 
