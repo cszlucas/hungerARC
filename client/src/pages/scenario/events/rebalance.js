@@ -243,13 +243,13 @@ const Rebalance = () => {
       eventSeriesName: "",
       eventSeriesDescription: "",
       startYear: {
-        type: "",
+        type: "fixedAmt",
         value: "",
         mean: "",
         stdDev: "",
         min: "",
         max: "",
-        year: "",
+        refer: "",
       },
       duration: {
         type: "fixedAmt",

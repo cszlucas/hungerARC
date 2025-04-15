@@ -1,35 +1,28 @@
+import axios from "axios";
+import { ObjectId } from "bson";
 import React, { useState, useContext, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, 
-  Box, List, ListItem, ListItemText, 
-  IconButton,
+  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, List, ListItem, ListItemText, IconButton,
 } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete"; 
+
+import EventSeries from "./eventSeries";
+import CustomDropdown from "../../../components/customDropDown"; 
+import CustomInput from "../../../components/customInputBox";
+import CustomToggle from "../../../components/customToggle";
 import theme from "../../../components/theme";
 import Navbar from "../../../components/navbar";
 import PageHeader from "../../../components/pageHeader";
 import {
-  stackStyles, titleStyles, buttonStyles, rowBoxStyles, 
-  backContinueContainerStyles, textFieldStyles, toggleButtonGroupStyles
+  stackStyles, titleStyles, buttonStyles, rowBoxStyles, backContinueContainerStyles,
 } from "../../../components/styles";
 
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete"; 
-import CustomDropdown from "../../../components/customDropDown"; 
-import CustomInput from "../../../components/customInputBox";
-import CustomToggle from "../../../components/customToggle";
-
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
 import { AuthContext } from "../../../context/authContext";
-import EventSeries from "./eventSeries";
-import { ObjectId } from "bson";
-
-import axios from "axios";
 
 const mongoose = require("mongoose");
-
 const DEFAULT_FORM_VALUES = {
     eventSeriesName: "",
     eventSeriesDescription: "",
@@ -41,7 +34,7 @@ const DEFAULT_FORM_VALUES = {
         stdDev: "",
         min: "",
         max: "",
-        year: "",
+        refer: "",
     },
     duration: {
         type: "fixedAmt",
@@ -123,7 +116,7 @@ const Invest = () => {
     const [formValues, setFormValues] = useState(getInvestById(eventEditMode ? eventEditMode.id : "new"));
     const [AAAList, setAAAList] = useState(computeAssestAllocatedAccounts);
     const [validInvestments, setValidInvestments] = useState(getValidInvestments);
-    const [newInvestment, setNewInvestment] = useState({id: "", fixed: "", initial: "", final: "" });
+    const [newAAA, setNewAAA] = useState({id: "", fixed: "", initial: "", final: "" });
 
     const handleInputChange = (field, value) => {
         const fieldParts = field.split("."); // Split the field into parts (e.g., "lifeExpectancy.mean")
@@ -160,73 +153,57 @@ const Invest = () => {
             };
         });
     };
-
-    useEffect(() => {
-        const resetAllocations = {
-            initialPercentages: {},
-            finalPercentages: {},
-            fixedPercentages: {},
-        };
-    
-        if (formValues.assetAllocation.type === "fixed") {
-            handleInputChange("assetAllocation", { ...formValues.assetAllocation, ...resetAllocations, fixedPercentages: {} });
-        } else {
-            handleInputChange("assetAllocation", { ...formValues.assetAllocation, ...resetAllocations, initialPercentages: {}, finalPercentages: {} });
-        }
-        
+    const handleNewAAAChange = (field, value) => {
+        setNewAAA((prev) => {
+            return { ...prev, [field]: value, };
+        });
+    };
+    useEffect(() => {       
         setValidInvestments(getValidInvestments);
         setAAAList(computeAssestAllocatedAccounts);
     }, [formValues.assetAllocation.type]);
 
-    const handleNewInvestmentChange = (field, value) => {
-        setNewInvestment((prev) => {
-            return { ...prev, [field]: value, };
-        });
-    };
-
     const handleAddInvestment = () => {
-        if (!newInvestment.id || (formValues.assetAllocation.type == "fixed" && newInvestment.fixed === "") 
-        || ( formValues.assetAllocation.type == "glidePath" && newInvestment.initial === "" && newInvestment.final === "")) {
+        if (!newAAA.id || (formValues.assetAllocation.type == "fixed" && newAAA.fixed === "") 
+        || ( formValues.assetAllocation.type == "glidePath" && newAAA.initial === "" && newAAA.final === "")) {
             alert("Please select an investment and enter a valid allocation percentage.");
             return;
         }
-        setValidInvestments((prev) => prev.filter((item) => item._id !== newInvestment.id));
+
+        setValidInvestments((prev) => prev.filter((item) => item._id !== newAAA.id));
         let newAllocation = {};
 
         // Adding the Assest Allocation under Invest
         if (formValues.assetAllocation.type == "fixed") {
             newAllocation = { 
                 ...formValues.assetAllocation.fixedPercentages, 
-                [new mongoose.Types.ObjectId(newInvestment.id)]: newInvestment.fixed 
+                [new mongoose.Types.ObjectId(newAAA.id)]: newAAA.fixed 
             };
             handleInputChange("assetAllocation.fixedPercentages", newAllocation);
         } else {
             newAllocation = { 
                 ...formValues.assetAllocation.initialPercentages, 
-                [new mongoose.Types.ObjectId(newInvestment.id)]: newInvestment.initial 
+                [new mongoose.Types.ObjectId(newAAA.id)]: newAAA.initial 
             };
             handleInputChange("assetAllocation.initialPercentages", newAllocation);
             newAllocation = { 
                 ...formValues.assetAllocation.finalPercentages, 
-                [new mongoose.Types.ObjectId(newInvestment.id)]: newInvestment.final 
+                [new mongoose.Types.ObjectId(newAAA.id)]: newAAA.final 
             };
             handleInputChange("assetAllocation.finalPercentages", newAllocation);
         }
 
         const description = formValues.assetAllocation.type === "fixed"
-            ? `Allocation: ${newInvestment.fixed}%`
-            : `Initial: ${newInvestment.initial}%\t\tFinal: ${newInvestment.final}%`;
-        
-        let investmentTypeId = getInvestmentById(newInvestment.id).investmentType;
+            ? `Allocation: ${newAAA.fixed}%`
+            : `Initial: ${newAAA.initial}%\t\tFinal: ${newAAA.final}%`;
         
         setAAAList((prev) => [...prev, {
-            id: newInvestment.id,
-            name: getInvestmentTypeById(investmentTypeId).name,
+            id: newAAA.id,
+            name: getInvestmentTypeById(getInvestmentById(newAAA.id).investmentType).name,
             description
         }]);
-        setNewInvestment({ id: "", fixed: "", initial: "", final: ""});
+        setNewAAA({ id: "", fixed: "", initial: "", final: ""});
     };
-
     const handleRemoveInvestment = (id) => {
         if (formValues.assetAllocation.type === "fixed") {
             const { [id]: discardFixed, ...updatedFixedAlloc } = formValues.assetAllocation.fixedPercentages;
@@ -241,18 +218,26 @@ const Invest = () => {
         setValidInvestments((prev) => [...prev, getInvestmentById(id)]);
         setAAAList((prevInvestments) => prevInvestments.filter((item) => item.id !== id));
     };    
-    
     const handleSave = async () => {
+        const updatedAssetAllocation = formValues.assetAllocation.type === "fixed" 
+            ? { ...formValues.assetAllocation, initialPercentages: {}, finalPercentages: {} } 
+            : { ...formValues.assetAllocation, fixedPercentages: {} };
+        
+        const updatedFormValues = {
+            ...formValues,
+            assetAllocation: updatedAssetAllocation,
+        };
+
         if (eventEditMode.id == "new") {
             let id = new ObjectId().toHexString();
 
             if (!user.guest) {
-              const response = await axios.post(`http://localhost:8080/scenario/${editMode}/investStrategy`, formValues);
+              const response = await axios.post(`http://localhost:8080/scenario/${editMode}/investStrategy`, updatedFormValues);
               id = response.data._id;
             }
 
             handleInputChange("_id", id);
-            setCurrInvest((prev) => [...prev, { ...formValues, _id: id }]);
+            setCurrInvest((prev) => [...prev, { ...updatedFormValues, _id: id }]);
             setEventEditMode({type:"Invest", id: id});
 
             setCurrScenario((prevScenario) => {
@@ -264,12 +249,11 @@ const Invest = () => {
                 return updatedScenario;
             });
         } else {
-            let response = await axios.post(`http://localhost:8080/updateInvestStrategy/${eventEditMode.id}`, formValues);
+            if (!user.guest) await axios.post(`http://localhost:8080/updateInvestStrategy/${eventEditMode.id}`, updatedFormValues);
             setCurrInvest((prev) => {
                 let newList = prev.filter((item)=> item._id !== eventEditMode.id);
-                return [...newList, formValues];
+                return [...newList, updatedFormValues];
             });
-            // console.log(response);
         }
     };
 
@@ -348,11 +332,11 @@ const Invest = () => {
                         <Box>
                             <CustomDropdown
                                 label="Investment Name"
-                                value={newInvestment.id}
+                                value={newAAA.id}
                                 menuLabels={validInvestments.map((item)=>{ return getInvestmentTypeById(item.investmentType).name;})}
                                 menuItems={validInvestments.map((item)=>{ return item._id;})}
                                 setValue={(value) => {
-                                    handleNewInvestmentChange("id", value);
+                                    handleNewAAAChange("id", value);
                                 }}
                             />
                         </Box>
@@ -375,18 +359,18 @@ const Invest = () => {
                                 <CustomInput
                                     title="Initial Allocation"
                                     type="number"
-                                    value={newInvestment.initial}
+                                    value={newAAA.initial}
                                     adornment={"%"}
-                                    setValue={(value) => handleNewInvestmentChange("initial", value)}
+                                    setValue={(value) => handleNewAAAChange("initial", value)}
                                     inputProps={{ min: 0, max: 100 }}
                                 />
 
                                 <CustomInput
                                     title="Final Allocation"
                                     type="number"
-                                    value={newInvestment.final}
+                                    value={newAAA.final}
                                     adornment={"%"}
-                                    setValue={(value) => handleNewInvestmentChange("final", value)}
+                                    setValue={(value) => handleNewAAAChange("final", value)}
                                     inputProps={{ min: 0, max: 100 }}
                                 />
                             </Stack>
@@ -398,9 +382,9 @@ const Invest = () => {
                                 <CustomInput
                                     title="Fixed Allocation"
                                     type="number"
-                                    value={newInvestment.fixed}
+                                    value={newAAA.fixed}
                                     adornment={"%"}
-                                    setValue={(value) => handleNewInvestmentChange("fixed", value)}
+                                    setValue={(value) => handleNewAAAChange("fixed", value)}
                                     inputProps={{ min: 0, max: 100 }}
                                 />
                             </Stack>

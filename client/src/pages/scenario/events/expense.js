@@ -130,13 +130,12 @@ const Expense = () => {
             });
         } else {
             // Updating an existing expense
-            const response = await axios.post(`http://localhost:8080/updateExpense/${eventEditMode.id}`, formValues);
+            if (!user.guest) await axios.post(`http://localhost:8080/updateExpense/${eventEditMode.id}`, formValues);
             // Replace old version with updated version in state
             setCurrExpense((prev) => {
                 let newList = prev.filter((item) => item._id !== eventEditMode.id);
                 return [...newList, formValues];
             });
-            console.log(response);
         }
     };
 

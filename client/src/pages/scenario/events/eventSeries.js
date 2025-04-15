@@ -23,18 +23,16 @@ const EventSeries = ({ formValues, setFormValues }) => {
     
     const menuLabels = [];
     const menuItems = [];
-
     const eventSeriesMap = new Map();
-    const validSet = new Set();
-
-    const buildMap = (arr) => {
-        if (!Array.isArray(arr)) return;
-        for (const { _id, eventSeriesName, startYear } of arr) {
-            eventSeriesMap.set(_id, { name: eventSeriesName, startYear });
-        }
-    };
-
+    
     const buildOutList = () => {
+        const buildMap = (arr) => {
+            if (!Array.isArray(arr)) return;
+            for (const { _id, eventSeriesName, startYear } of arr) {
+                eventSeriesMap.set(_id, { name: eventSeriesName, startYear });
+            }
+        };
+
         buildMap(currIncome);
         buildMap(currExpense);
         buildMap(currInvest);
@@ -47,7 +45,8 @@ const EventSeries = ({ formValues, setFormValues }) => {
             return;
         }
 
-        const notValidSet = new Set([eventEditMode]);
+        const validSet = new Set();
+        const notValidSet = new Set([eventEditMode.id]);
 
         const resolveValue = (key, path = new Set()) => {
             if (notValidSet.has(key)) {
@@ -62,58 +61,31 @@ const EventSeries = ({ formValues, setFormValues }) => {
 
             path.add(key);
 
-            const entry = eventSeriesMap.get(key);
-            if (entry) {
-                const { type, refer } = entry.startYear || {};
-                if (type !== "same" && type !== "after") {
-                    path.forEach(id => validSet.add(id));
-                    return;
-                }
-
-                if (eventSeriesMap.has(refer)) {
-                    resolveValue(refer, new Set(path)); // Pass a copy
-                    return;
-                }
+            const { type, refer } = eventSeriesMap.get(key).startYear || {};
+            if (type !== "same" && type !== "after") {
+                path.forEach(id => validSet.add(id));
+                return;
             }
 
+            if (eventSeriesMap.has(refer)) {
+                resolveValue(refer, new Set(path)); // Pass a copy
+                return;
+            }
+            
             path.forEach(id => validSet.add(id));
         };
 
-        for (const key of eventSeriesMap.keys()) {
-            resolveValue(key);
+        for (const key of eventSeriesMap.keys()) { resolveValue(key); }
+
+        for (const id of validSet) {
+            menuLabels.push((eventSeriesMap.get(id)).name);
+            menuItems.push(id);
         }
     };
 
     // Run build and populate menu
     buildOutList();
 
-    for (const id of validSet) {
-        menuLabels.push((eventSeriesMap.get(id)).name);
-        menuItems.push(id);
-    }
-    
-    // const [formValues, setFormValues] = useState({
-    //     _id:"",
-    //     eventSeriesName: "",
-    //     description: "",
-    //     startYear: {
-    //         type: "fixedAmt",
-    //         value: "",
-    //         mean: "",
-    //         stdDev: "",
-    //         min: "",
-    //         max: "",
-    //         refer: "", 
-    //     },
-    //     duration: {
-    //         type: "fixedAmt",
-    //         value: "",
-    //         mean: "",
-    //         stdDev: "",
-    //         min: "",
-    //         max: ""
-    // },});
-        
     const handleInputChange = (field, value) => {
         const fieldParts = field.split("."); // Split the field into parts (e.g., "lifeExpectancy.mean")
         

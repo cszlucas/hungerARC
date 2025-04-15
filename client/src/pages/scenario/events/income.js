@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import {
     ThemeProvider,
     CssBaseline,
@@ -37,6 +37,8 @@ const Income = () => {
     const { currScenario, setCurrScenario } = useContext(AppContext);
     const { editMode } = useContext(AppContext);
     const { user } = useContext(AuthContext);
+
+    const navigate = useNavigate();
 
     // Utility function to get a specific income event by ID
     const getIncomeById = (id) => {
@@ -90,8 +92,18 @@ const Income = () => {
         inflationAdjustment: false,
         isSocialSecurity: false
     });
-
-    const navigate = useNavigate();
+    // State for disabling saving
+    const [disable, setDisable] = useState(true);
+    useEffect(() => {
+        const expression = formValues.eventSeriesName 
+            && (formValues.startYear.type !== "fixedAmt" || (formValues.startYear.value))
+            && (formValues.startYear.type !== "normal" || (formValues.startYear.mean && formValues.startYear.stdDev))
+            && (formValues.startYear.type !== "uniform" || (formValues.startYear.min && formValues.startYear.max))
+            && ((formValues.startYear.type !== "same" && formValues.startYear.type !== "after") || (formValues.startYear.refer));
+        console.log(expression);
+        setDisable(expression);
+    }, [formValues]);
+    
 
     // Generic handler for updating nested or flat form fields
     const handleInputChange = (field, value) => {
@@ -139,7 +151,7 @@ const Income = () => {
 
             } else {
                 // Updating an existing event
-                await axios.post(`http://localhost:8080/updateIncome/${eventEditMode.id}`, formValues);
+                if (!user.guest) await axios.post(`http://localhost:8080/updateIncome/${eventEditMode.id}`, formValues);
                 setCurrIncome((prev) => {
                     const newList = prev.filter((item) => item._id !== eventEditMode.id);
                     return [...newList, formValues];
@@ -320,6 +332,7 @@ const Income = () => {
                             handleSave();
                             navigate("/scenario/event_series_list");
                         }}
+                        disable={disable}
                     >
                         Save & Continue
                     </Button>
