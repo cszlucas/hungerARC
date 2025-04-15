@@ -9,7 +9,7 @@ const User = require("../server/models/user.js");
 const { IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent } = require("../server/models/eventSeries");
 const { performRMDs, payNonDiscretionaryExpenses, payDiscretionaryExpenses, runInvestStrategy, rebalance } = require("./main.js");
 const { getCurrentEvent, getStrategy, getRebalanceStrategy, setValues, randomNormal, randomUniform } = require("./format.js");
-const { buildChartDataFromBuckets, updateYearDataBucket, createYearDataBuckets, mergeYearData } = require("./charts_prep.js");
+const { buildChartDataFromBuckets, updateYearDataBucket, createYearDataBuckets, formatGroupedStackedBarChart } = require("./charts_prep.js");
 
 function findInflation(inflationAssumption) {
   if (inflationAssumption.type == "fixed") return inflationAssumption.fixedRate;
@@ -566,11 +566,51 @@ async function main(numScenarioTimes, scenarioId, userId) {
     );
     allYearDataBuckets.push(yearDataBuckets);
   }
-  const mergedSimulations = allYearDataBuckets.map(mergeYearData);
-  console.log(JSON.stringify(mergedSimulations, null, 2));
 
+  const flattenedBuckets = allYearDataBuckets.flat();
 
-  //const { shadedChart, lineChart } = buildChartDataFromBuckets(allYearDataBuckets, 2025);
+  const { startYear, endYear, data } = buildChartDataFromBuckets(flattenedBuckets, 2025);
+
+  console.log(data);
+
+  const probabilityChart = {
+    startYear,
+    endYear,
+    probabilities: data.metGoal.average.map((p) => Math.round(p * 100) / 100),
+  };
+
+  const shadedChart = {
+    startYear,
+    endYear,
+    median: data.income.median,
+    spread: 0.25,
+  };
+
+  const barChartAverage = formatGroupedStackedBarChart({
+    income: data.income.average,
+    investments: data.investments.average,
+    discretionary: data.discretionary.average,
+    nonDiscretionary: data.nonDiscretionary.average,
+    taxes: data.taxes.average,
+    earlyWithdrawals: data.earlyWithdrawals.average,
+    metGoal: data.metGoal.average,
+  }, startYear);
+  
+  const barChartMedian = formatGroupedStackedBarChart({
+    income: data.income.median,
+    investments: data.investments.median,
+    discretionary: data.discretionary.median,
+    nonDiscretionary: data.nonDiscretionary.median,
+    taxes: data.taxes.median,
+    earlyWithdrawals: data.earlyWithdrawals.median,
+    metGoal: data.metGoal.average, // Still using average for probability
+  }, startYear);  
+  
+
+  console.log("shadedChart", shadedChart);
+  console.log("probabilityChart", probabilityChart);
+  console.log("barChart average", barChartAverage);
+  console.log("barChart median", barChartMedian);
 }
 
 // Call the main function to execute everything

@@ -16,43 +16,44 @@ import { AppContext } from "../../../context/appContext";
 import { AuthContext } from "../../../context/authContext";
 import EventSeries from "./eventSeries";
 import axios from "axios";
+import { ObjectId } from "bson";
 
 const Expense = () => {
-    const {currExpense, setCurrExpense} = useContext(AppContext);
-    const {eventEditMode, setEventEditMode} = useContext(AppContext);
-    const {currScenario, setCurrScenario} = useContext(AppContext);
-    const {editMode, setEditMode} = useContext(AppContext);
+    // Accessing global app and auth contexts
+    const { currExpense, setCurrExpense } = useContext(AppContext);
+    const { eventEditMode, setEventEditMode } = useContext(AppContext);
+    const { currScenario, setCurrScenario } = useContext(AppContext);
+    const { editMode } = useContext(AppContext);
     const { user } = useContext(AuthContext);
 
+    // Helper to find an expense by its ID from the current expense list
     const getExpenseById = (id) => {
         for (let i = 0; i < currExpense.length; i++) {
             if (currExpense[i]._id == id) {
-                return currExpense[i]; // Return the found scenario
+                return currExpense[i];
             }
         }
-        return null; // Return null if not found
-      };
+        return null;
+    };
 
+    // Determine whether editing an existing expense or creating a new one
     let indieExpense = getExpenseById(eventEditMode.id);
-    // console.log(indieExpense);
 
-    // console.log(indieExpense.duration.type);
-
+    // Initialize the form state — prefill if editing, otherwise use default structure
     const [formValues, setFormValues] = useState(indieExpense || {
         _id: "",
         eventSeriesName: "",
         eventSeriesDescription: "",
         startYear: {
-            type: "",
+            type: "fixedAmt",
             value: "",
             mean: "",
             stdDev: "",
             min: "",
             max: "",
-            year: ""
+            refer: ""
         },
-        duration:
-        {
+        duration: {
             type: "fixedAmt",
             value: "",
             mean: "",
@@ -61,102 +62,86 @@ const Expense = () => {
             max: ""
         },
         initialAmount: "",
-        annualChange: 
-        {
+        annualChange: {
             distribution: "none",
             type: "fixed",
-            // value: "",
+            amount: "",
             mean: "",
             stdDev: "",
             min: "",
             max: "",
-            amount: ""
         },
         userPercentage: "",
         inflationAdjustment: false,
         isDiscretionary: false
     });
 
-    // console.log(formValues);
-
-    // console.log(indieExpense);
+    // Utility for updating nested or top-level form fields
     const handleInputChange = (field, value) => {
-        const fieldParts = field.split("."); // Split the field into parts (e.g., "lifeExpectancy.mean")
-      
+        const fieldParts = field.split(".");
         setFormValues((prev) => {
-          // Update the nested object
-          if (fieldParts.length === 2) {
-            const [parent, child] = fieldParts; // 'lifeExpectancy' and 'mean'
+            if (fieldParts.length === 2) {
+                const [parent, child] = fieldParts;
+                return {
+                    ...prev,
+                    [parent]: {
+                        ...prev[parent],
+                        [child]: value,
+                    },
+                };
+            }
             return {
-              ...prev,
-              [parent]: { // Spread the parent object (lifeExpectancy)
-                ...prev[parent],
-                [child]: value, // Update the child property (mean)
-              },
+                ...prev,
+                [field]: value,
             };
-          }
-      
-          // For top-level fields (no dot notation)
-          return {
-            ...prev,
-            [field]: value,
-          };
         });
     };
 
-    useEffect(() => {
-                    console.log("Updated eventEditMode:", eventEditMode);
-                }, [eventEditMode]);
-    const handleSave = async () =>
-    {
-        // console.log("HANDLER");
-        // console.log(formValues);
-        // console.log(eventEditMode);
-        if (eventEditMode.id == "new")
-        {
-            let id;
+    // useEffect(() => {
+    //     // Helpful for debugging edit mode state
+    //     console.log("Updated eventEditMode:", eventEditMode);
+    // }, [eventEditMode]);
 
+    // Handles saving new or updated expense data
+    const handleSave = async () => {
+        if (eventEditMode.id === "new") {
+            // Creating new expense
+            let id = new ObjectId().toHexString();
+
+            // Persist to backend if not in guest mode
             if (!user.guest) {
-              const response = await axios.post(`http://localhost:8080/scenario/${editMode}/expenseEvent`, formValues);
-              id = response.data._id;
-            } else {
-              id = currExpense.length;
+                const response = await axios.post(`http://localhost:8080/scenario/${editMode}/expenseEvent`, formValues);
+                id = response.data._id;
             }
-            // console.log(id);
+
+            // Update local state with newly generated ID
             handleInputChange("_id", id);
             setCurrExpense((prev) => [...prev, { ...formValues, _id: id }]);
-            // console.log(formValues);
+            setEventEditMode({ type: "Expense", id });
 
-            setEventEditMode({type:"Expense", id: id});
-            
-
+            // Append new expense to the current scenario
             setCurrScenario((prevScenario) => {
                 const updatedScenario = {
                     ...prevScenario,
                     expenseEventSeries: [...(prevScenario?.expenseEventSeries || []), id],
                     spendingStrategy: [...(prevScenario?.spendingStrategy || []), id]
                 };
-                // Send POST request with the updated scenario after state update
-                // axios.post(`http://localhost:8080/updateScenario/${editMode}`, updatedScenario)
-                //     .then(() => console.log("Scenario updated successfully"))
-                //     .catch((error) => console.error("Error updating scenario:", error));
-
                 return updatedScenario;
             });
-        } 
-        else
-        {
-            let response = await axios.post(`http://localhost:8080/updateExpense/${eventEditMode.id}`, formValues);
+        } else {
+            // Updating an existing expense
+            const response = await axios.post(`http://localhost:8080/updateExpense/${eventEditMode.id}`, formValues);
+            // Replace old version with updated version in state
             setCurrExpense((prev) => {
-                let newList = prev.filter((item)=> item._id !== eventEditMode.id);
+                let newList = prev.filter((item) => item._id !== eventEditMode.id);
                 return [...newList, formValues];
-              });
+            });
             console.log(response);
         }
     };
 
     const navigate = useNavigate();
-    
+
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
@@ -174,10 +159,12 @@ const Expense = () => {
                 <PageHeader />
 
                 <Box sx={rowBoxStyles}>
+                    {/* Left column for event metadata */}
                     <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, width: 400 }}>
-                        <EventSeries formValues={formValues} setFormValues={setFormValues}/>
+                        <EventSeries formValues={formValues} setFormValues={setFormValues} />
                     </Box>
-                    {/* Second Column */}
+
+                    {/* Right column for financial details */}
                     <Box sx={{ flex: 1, display: "flex", flexDirection: "column", width: 300 }}>
                         <Stack direction="row" spacing={2} sx={{ marginTop: 2 }}>
                             <CustomInput 
@@ -186,39 +173,47 @@ const Expense = () => {
                                 adornment="$"
                                 value={formValues.initialAmount}
                                 setValue={(value) => handleInputChange("initialAmount", value)}
+                                inputProps={{ min: 0 }}
                             />
-                            <CustomInput 
-                                title="User's Contribution"
-                                type="number"
-                                adornment="%"
-                                value={formValues.userPercentage}
-                                setValue={(value) => handleInputChange("userPercentage", value)}
-                            />
+                            {currScenario.filingStatus === "married" && 
+                                <CustomInput 
+                                    title="User's Contribution"
+                                    type="number"
+                                    adornment="%"
+                                    value={formValues.userPercentage}
+                                    setValue={(value) => handleInputChange("userPercentage", value)}
+                                    inputProps={{ min: 0, max: 100 }}
+                                />
+                            }
                         </Stack>
 
                         <Stack direction="row" alignItems="center" spacing={2} sx={{ marginTop: 4, mb: 1 }}>
                             <Typography variant="body1" sx={{ fontWeight: "medium", width: 150 }}>
                                 Inflation Adjustment
                             </Typography>
-                            <Checkbox checked={formValues.inflationAdjustment} 
-                            onChange={(value) => {
-                                console.log(formValues.inflationAdjustment);
-                                handleInputChange("inflationAdjustment", value.target.checked);
-                                }}/>
+                            <Checkbox
+                                checked={formValues.inflationAdjustment}
+                                onChange={(value) => handleInputChange("inflationAdjustment", value.target.checked)}
+                            />
                         </Stack>
 
                         <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 4 }}>
                             <Typography variant="body1" sx={{ fontWeight: "medium", width: 150 }}>
-                               Discretionary
+                                Discretionary
                             </Typography>
-                            <Checkbox checked={formValues.isDiscretionary} onChange={(value) => handleInputChange("isDiscretionary", value.target.checked)}/>
+                            <Checkbox
+                                checked={formValues.isDiscretionary}
+                                onChange={(value) => handleInputChange("isDiscretionary", value.target.checked)}
+                            />
                         </Stack>
 
-                        <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "bold" }}>Expected Annual Change:</Typography>
+                        <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "bold" }}>
+                            Expected Annual Change:
+                        </Typography>
 
                         <CustomToggle
                             title="Distribution"
-                            labels = {["None", "Normal", "Uniform"]}
+                            labels={["None", "Normal", "Uniform"]}
                             values={["none", "normal", "uniform"]}
                             sideView={true}
                             width={100}
@@ -228,7 +223,7 @@ const Expense = () => {
 
                         <CustomToggle
                             title="Rate/Unit"
-                            labels = {["Fixed", "Percentage"]}
+                            labels={["Fixed", "Percentage"]}
                             values={["fixed", "percentage"]}
                             sideView={true}
                             width={100}
@@ -236,6 +231,7 @@ const Expense = () => {
                             setValue={(value) => handleInputChange("annualChange.type", value)}
                         />
 
+                        {/* Conditional inputs based on distribution type */}
                         {formValues.annualChange.distribution === "none" && (
                             <CustomInput 
                                 title="Value"
@@ -243,9 +239,10 @@ const Expense = () => {
                                 adornment={formValues.annualChange.type === "percentage" ? "%" : "$"}
                                 value={formValues.annualChange.amount}
                                 setValue={(value) => handleInputChange("annualChange.amount", value)}
+                                inputProps={{ min: 0 }}
                             />
                         )}
-                        
+
                         {formValues.annualChange.distribution === "normal" && (
                             <Stack direction="row" spacing={2} sx={{ marginTop: 2 }}>
                                 <CustomInput 
@@ -254,6 +251,7 @@ const Expense = () => {
                                     adornment={formValues.annualChange.type === "percentage" ? "%" : "$"}
                                     value={formValues.annualChange.mean}
                                     setValue={(value) => handleInputChange("annualChange.mean", value)}
+                                    inputProps={{ min: 0 }}
                                 />
                                 <CustomInput 
                                     title="Standard Deviation"
@@ -261,6 +259,7 @@ const Expense = () => {
                                     adornment={formValues.annualChange.type === "percentage" ? "%" : "$"}
                                     value={formValues.annualChange.stdDev}
                                     setValue={(value) => handleInputChange("annualChange.stdDev", value)}
+                                    inputProps={{ min: 0 }}
                                 />
                             </Stack>
                         )}
@@ -273,13 +272,15 @@ const Expense = () => {
                                     adornment={formValues.annualChange.type === "percentage" ? "%" : "$"}
                                     value={formValues.annualChange.min}
                                     setValue={(value) => handleInputChange("annualChange.min", value)}
+                                    inputProps={{ min: 0 }}
                                 />
                                 <CustomInput 
                                     title="Max"
                                     type="number"
                                     adornment={formValues.annualChange.type === "percentage" ? "%" : "$"}
                                     value={formValues.annualChange.max}
-                                    setValue={(value) => handleInputChange("annualChange.type", value)}
+                                    setValue={(value) => handleInputChange("annualChange.max", value)}
+                                    inputProps={{ min: 0 }}
                                 />
                             </Stack>
                         )}
@@ -287,15 +288,21 @@ const Expense = () => {
                 </Box>
 
                 <Box sx={backContinueContainerStyles}>
-                    <Button variant="contained" color="primary" sx={buttonStyles}
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        sx={buttonStyles}
                         onClick={() => navigate("/scenario/event_series_list")}
                     >
                         Cancel
                     </Button>
-                    <Button variant="contained" color="success" sx={buttonStyles}
+                    <Button
+                        variant="contained"
+                        color="success"
+                        sx={buttonStyles}
                         onClick={() => {
                             handleSave();
-                            navigate("/scenario/event_series");
+                            navigate("/scenario/event_series_list");
                         }}
                     >
                         Save & Continue

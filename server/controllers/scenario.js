@@ -105,15 +105,16 @@ exports.deleteScenario = async (req, res) => {
 };
 
 exports.importUserData = async (req, res) => {
-  
+  const { id } = req.params; //user id
   const {
     name,
     maritalStatus,
-    birthYears,
+    birthYearSpouse,
+    birthYearUser,
     lifeExpectancy,
     lifeExpectancySpouse,
-    setOfinvestmentTypes: frontendInvestmentTypes,
-    setOfinvestments: frontendInvestments,
+    setOfinvestmentTypes,
+    setOfinvestments,
     income,
     expense,
     invest,
@@ -122,63 +123,64 @@ exports.importUserData = async (req, res) => {
     irsLimit,
     spendingStrategy,
     expenseWithdrawalStrategy,
-    rmdStrategy: RMDStrategy,
+    rmdStrategy,
     optimizerSettings,
-    rothConversionStrategy: RothConversionStrategy,
+    rothConversionStrategy,
     financialGoal,
-    stateResident: residenceState,
+    stateResident,
   } = req.body;
 
   const basicInfoData = {
-    name,
+    name: name,
     filingStatus: maritalStatus === "couple" ? "couple" : "single",
-    financialGoal,
-    inflationAssumption,
-    birthYearUser: birthYears[0],
-    lifeExpectancy,
-    birthYearSpouse: birthYears[1] ?? null,
-    lifeExpectancySpouse,
-    stateResident: residenceState,
-    irsLimit,
+    financialGoal: financialGoal,
+    inflationAssumption: inflationAssumption,
+    birthYearUser: birthYearUser,
+    lifeExpectancy: lifeExpectancy,
+    birthYearSpouse: birthYearSpouse ?? null,
+    lifeExpectancySpouse: lifeExpectancySpouse,
+    stateResident: stateResident,
+    irsLimit: irsLimit,
   };
 
   try {
-    let scenario = await handleBasicInfo(id, basicInfoData);
-    let id = scenario._id;
+    const response = await axios.post(`http://localhost:3000/basicInfo/user/${id}`, {
+      basicInfoData: basicInfoData,
+    });
 
-    for (const event of income ?? []) {
-      await createIncomeEvent(id, event);
+    let scenarioId = response._id;
+
+    const eventMappings = [
+      { data: income, route: "incomeEvent" },
+      { data: expense, route: "expenseEvent" },
+      { data: invest, route: "investStrategy" },
+      { data: rebalance, route: "rebalanceStrategy" },
+      { data: setOfinvestments, route: "investment" },
+      { data: setOfinvestmentTypes, route: "investmentType" },
+    ];
+
+    for (const { data, route } of eventMappings) {
+      for (const event of data ?? []) {
+        try {
+          await createEvent(route, scenarioId, event);
+        } catch (error) {
+          console.error(`Error creating ${route}:`, error.message);
+        }
+      }
     }
 
-    for (const event of expense ?? []) {
-      await createExpenseEvent(id, event);
-    }
-
-    for (const event of invest ?? []) {
-      await createInvestStrategy(id, event);
-    }
-
-    for (const event of rebalance ?? []) {
-      await createRebalanceStrategy(id, event);
-    }
-
-    for (const investment of frontendInvestments ?? []) {
-      await createInvestment(id, investment);
-    }
-
-    for (const type of frontendInvestmentTypes ?? []) {
-      await createInvestmentType(id, type);
-    }
-
-    await updateScenario(id, {
+    await axios.post(`http://localhost:3000/scenario/${scenarioId}/update`, {
       spendingStrategy: spendingStrategy,
       expenseWithdrawalStrategy: expenseWithdrawalStrategy,
-      rmdStrategy: RMDStrategy,
-      rothConversionStrategy: RothConversionStrategy,
+      rmdStrategy: rmdStrategy,
+      rothConversionStrategy: rothConversionStrategy,
       optimizerSettings: optimizerSettings,
     });
 
-    res.status(200).json({ message: "User data imported successfully" });
+    res.status(200).json({
+      message: "User data imported successfully",
+      scenario: response.data,
+    });
   } catch (error) {
     console.error("Import failed:", error);
     res.status(500).json({ error: "Import failed" });

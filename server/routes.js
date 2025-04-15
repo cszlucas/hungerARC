@@ -49,7 +49,7 @@ router.post("/basicInfo/user/:id", scenario.basicInfo);
 router.post("/updateScenario/:id", scenario.updateScenario);
 router.post("/scenarioInvestments", scenario.scenarioInvestments);
 router.post("/deleteScenario/:id", scenario.deleteScenario);
-router.post("/importScenario", scenario.importUserData);
+router.post("/importScenario/user/:id", scenario.importUserData);
 //tax
 router.get("/tax", tax.tax);
 router.get("/statetax/:state", tax.statetax);

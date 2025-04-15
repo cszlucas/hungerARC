@@ -18,7 +18,7 @@ import theme from "../../components/theme";
 import Navbar from "../../components/navbar";
 import { useNavigate } from "react-router-dom";
 import yaml from "js-yaml";
-
+import axios from "axios";
 
 const ScenarioList = () => {
     // const [ selectedScenario, setSelectedScenario] = useState(null); // Track selected scenario
@@ -159,18 +159,39 @@ const ScenarioList = () => {
         };
       }
       
-      function parseChange(e) {
-        const dist = e.changeDistribution || {};
-        return {
-          type: e.changeAmtOrPct,
-          amount: dist.value ?? "",
-          distribution: dist.type === "fixed" ? "none" : dist.type,
-          mean: dist.mean ?? "",
-          stdDev: dist.stdev ?? "",
-          min: dist.lower ?? "",
-          max: dist.upper ?? "",
+    function parseChange(e) {
+    const dist = e.changeDistribution || {};
+    return {
+        type: e.changeAmtOrPct,
+        amount: dist.value ?? "",
+        distribution: dist.type === "fixed" ? "none" : dist.type,
+        mean: dist.mean ?? "",
+        stdDev: dist.stdev ?? "",
+        min: dist.lower ?? "",
+        max: dist.upper ?? "",
+    };
+    }
+
+    const handleYAMLImportFile = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+            try {
+            const raw = yaml.load(ev.target.result);
+            const parsed = parseScenarioYAML(raw);
+            console.log("✅ Parsed YAML:", parsed);
+            const response = await axios.post("http://localhost:8080/importScenario", parsed);
+            console.log(response);
+
+            setScenarioData((prev) => [...(prev || []), response]);
+            } catch (err) {
+            console.error("❌ YAML import failed:", err);
+            }
         };
-      }
+        reader.readAsText(file);
+    };
 
     const handleNewScenario = async () => {
         // Reset the app state for a new scenario
@@ -223,27 +244,11 @@ const ScenarioList = () => {
                         Existing Scenarios
                     </Typography>
                     <input
-                    type="file"
-                    accept=".yaml"
-                    id="yaml-upload"
-                    style={{ display: "none" }}
-                    onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (!file) return;
-
-                        const reader = new FileReader();
-                        reader.onload = (ev) => {
-                        try {
-                            const raw = yaml.load(ev.target.result);
-                            const parsed = parseScenarioYAML(raw);
-                            console.log("✅ Parsed YAML:", parsed);
-                            setScenarioData(prev => [...(prev || []), parsed]);
-                        } catch (err) {
-                            console.error("❌ YAML import failed:", err);
-                        }
-                        };
-                        reader.readAsText(file);
-                    }}
+                        type="file"
+                        accept=".yaml"
+                        id="yaml-upload"
+                        style={{ display: "none" }}
+                        onChange={handleYAMLImportFile}
                     />
 
                     <label htmlFor="yaml-upload">
