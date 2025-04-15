@@ -9,7 +9,7 @@ import { buttonStyles } from "./styles";
 
 import { ObjectId } from "bson";
 
-const CustomSave = ({ label = "Save", routeTo, color = "secondary" }) => {
+const CustomSave = ({ label = "Save", routeTo, color = "secondary", disable = false }) => {
   const { currScenario, setCurrScenario, setScenarioData, editMode, setEditMode } = useContext(AppContext);
   const { setCurrInvestmentTypes, setCurrInvestments } = useContext(AppContext);
   const { user } = useContext(AuthContext);
@@ -161,7 +161,7 @@ const CustomSave = ({ label = "Save", routeTo, color = "secondary" }) => {
       color={color}
       sx={buttonStyles}
       onClick={handleSave}
-      disabled={isSaving}
+      disabled={isSaving || disable}
     >
       {label}
     </Button>

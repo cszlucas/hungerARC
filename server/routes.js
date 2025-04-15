@@ -10,6 +10,7 @@ const webscraping = require("./controllers/webscraping.js");
 // user
 router.get("/user/:id/scenarios", user.scenarios);
 router.post("/auth/google", user.auth);
+router.post("/uploadStateTaxYaml", user.uploadStateTaxYaml);
 
 // events
 router.get("/getInvestStrategy/:id", events.getInvestStrategy);
@@ -60,5 +61,8 @@ router.get("/incomeMarried", webscraping.incomeMarried);
 router.get("/capitalGains", webscraping.capitalGains);
 router.get("/rmd", webscraping.rmd);
 router.get("/handleAllRoutes", webscraping.handleAllRoutes);
+
+// simulation
+router.get("/runSimulation", scenario.simulateScenario);
 
 module.exports = router;

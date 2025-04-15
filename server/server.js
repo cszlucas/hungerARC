@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const path = require("path");
+const parseYaml = require("./importStateYaml.js");
 
 // Manually load the .env file
 dotenv.config({ path: path.resolve(__dirname, "process.env") });
@@ -18,8 +19,11 @@ const PORT = 8080;
 mongoose.connect("mongodb://localhost:27017/hungerarc", { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
     console.log("Connected to MongoDB");
-    const parseAndInsertYaml = require("./importStateYaml.js");
-    parseAndInsertYaml();
+    const yamlPath = path.join(__dirname, "stateYaml/states.yml");
+    parseYaml(yamlPath);
+    // const path = require("path");
+// const yamlPath = path.join(__dirname, "stateYaml/states.yml");
+// parseYaml(yamlPath);
   })
   .catch(err => console.error("MongoDB connection error:", err));
 

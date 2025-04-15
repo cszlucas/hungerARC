@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Checkbox 
@@ -89,6 +89,18 @@ const InvestmentType = () => {
       };
     });
   };
+  
+  // Handles the enabling or disabling the save button
+  const [disable, setDisable] = useState(true);
+  useEffect(() => {
+      let expression = formValues.name && formValues.expenseRatio 
+        && (formValues.annualReturn.type !== "fixed" || formValues.annualReturn.value)
+        && (formValues.annualReturn.type !== "normal" || formValues.annualReturn.mean && formValues.annualIncome.stdDev)
+        && (formValues.annualIncome.type !== "fixed" || formValues.annualIncome.value)
+        && (formValues.annualIncome.type !== "normal" || formValues.annualIncome.mean && formValues.annualIncome.stdDev);
+
+      setDisable(expression ? false : true);
+  }, [formValues]);
 
   /**
    * Handle appending a newly created investment type ID to the current scenario
@@ -331,8 +343,9 @@ const InvestmentType = () => {
               handleSave();
               navigate("/scenario/investment_lists");
             }}
+            disabled={disable}
           >
-            Add
+            Save
           </Button>
         </Box>
       </Container>
