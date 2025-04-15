@@ -21,14 +21,12 @@ describe("Login Page", () => {
     });
 });
 
-describe('Guest Profile Page to Senario Nav bar test', () => {
+describe('Nav Bar Tests', () => {
   beforeEach(() => {
-    cy.visit('localhost:3000/login');
-    cy.contains('Go as Guest').click();
-
+    cy.loginAsGuest();
   });
 
-  it('opens drawer and navigates to Scenarios page', () => {
+  it('Navigate to Scenarios page', () => {
     // Open the drawer (hamburger icon)
     cy.get('header').find('button').click();
 
@@ -37,9 +35,6 @@ describe('Guest Profile Page to Senario Nav bar test', () => {
 
     // Click on "Scenarios"
     cy.get('.MuiDrawer-paper').contains('Scenarios').click();
-
-    // Confirm navigation occurred
-    cy.url().should('include', '/scenarios');
 
     // Confirm URL changed
     cy.url().should('include', '/scenarios');
@@ -52,32 +47,82 @@ describe('Guest Profile Page to Senario Nav bar test', () => {
     cy.contains('Import').should('be.visible');
     cy.contains('Share').should('be.visible');
   });
-});
-
-describe('Create New Scenario', () => {
-  beforeEach(() => {
-    // Add protocol to avoid "invalid URL" error
-    cy.visit('http://localhost:3000/login');
-
-    // Go as Guest
-    cy.contains('Go as Guest').click();
-
-    // Open the navbar drawer
+  it('logout', () => {
     cy.get('header').find('button').click();
 
-    // Click "Scenarios" in the drawer
-    cy.get('.MuiDrawer-paper').contains('Scenarios').click();
+    // Confirm drawer opens
+    cy.get('.MuiDrawer-paper').should('be.visible');
 
-    // Click the "New Scenario" button
-    cy.get('button.MuiButton-root').contains('New Scenario').click();
+    cy.get('.MuiDrawer-paper').contains('Logout').click();
+    cy.url().should('include', 'login');
+
+
   });
-
-  it('Goes to Basic Info Page', () => {
-    cy.url().should('include', 'basics'); // or '/scenarios/basics' if that's the route
-  });
-  // it('Has Name', () => {
-
-  // });
 });
+
+describe('Input New Scenario', () => {
+  beforeEach(() => {
+    cy.loginAsGuest();
+    cy.navigateTo('Scenarios');
+    cy.get('button.MuiButton-root').contains('New Scenario').click();
+    cy.url().should('include', 'basics');
+  });
+
+  it('has basic info', () => {
+    cy.contains('Name of Scenario').should('exist');
+    cy.contains('Financial Goal').should('exist');
+    cy.contains('State Residence').should('exist');
+    cy.contains('Your Birth Year').should('exist');
+    cy.contains('Your age type').should('exist');
+    cy.contains('Inflation Assumptio').should('exist');
+    cy.contains('Continue').should('exist');
+    cy.contains('Back').should('exist');
+    cy.contains('Save').should('exist');
+  });
+
+  it('fills out Basic Info form', () => {
+    cy.fillInputByLabel('Name of Scenario', 'Scenario 1');
+    cy.fillInputByLabel('Financial Goal', '10000');
+    cy.selectDropdown('State Residence', 'Connecticut');
+    cy.fillInputByLabel('Your Birth Year', '2003');
+    cy.selectToggle('Your age type', 'Normal');
+    cy.fillInputByLabel('Mean', '75');
+    cy.fillInputByLabel('Standard Deviation', '10');
+    cy.selectToggle('Distribution', 'Fixed');
+    cy.fillInputByLabel('Value', '5');
+    // cy.get('button').contains('Save').click();
+  });
+});
+
+
+describe('Save Basic Info', () => {
+  beforeEach(() => {
+    cy.loginAsGuest();
+    cy.navigateTo('Scenarios');
+    cy.get('button.MuiButton-root').contains('New Scenario').click();
+    cy.url().should('include', 'basics');
+    cy.fillInputByLabel('Name of Scenario', 'Scenario 1');
+    cy.fillInputByLabel('Financial Goal', '10000');
+    cy.selectDropdown('State Residence', 'Connecticut');
+    cy.fillInputByLabel('Your Birth Year', '2003');
+    cy.selectToggle('Your age type', 'Normal');
+    cy.fillInputByLabel('Mean', '75');
+    cy.fillInputByLabel('Standard Deviation', '10');
+    cy.selectToggle('Distribution', 'Fixed');
+    cy.fillInputByLabel('Value', '5');
+  });
+
+  it("Save, Go Back, Edit", () => {
+    cy.get('button.MuiButton-root').contains('Save').click();
+    cy.get('button.MuiButton-root').contains('Back').click();
+    cy.contains('Scenario 1').should('exist');
+    cy.contains('Goal: $10000').should('exist');
+    cy.url().should('include', '/scenarios');
+
+    cy.get('button[aria-label="edit"]').first().click();
+    cy.url().should('include', '/scenario/basics');
+  })
+});
+
 
 

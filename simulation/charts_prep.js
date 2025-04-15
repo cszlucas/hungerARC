@@ -83,8 +83,8 @@ function formatGroupedStackedBarChart(mergedData, startYear) {
 
 
 //After All Simulations — Build Chart Data
-function buildChartDataFromBuckets(buckets, startYear) {
-  const numYears = buckets.length;
+function buildChartDataFromBuckets(buckets, startYear, numScenarioTimes) {
+  const numYears = buckets.length / numScenarioTimes;
   const endYear = startYear + numYears - 1;
 
   const data = {

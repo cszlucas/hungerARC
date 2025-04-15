@@ -22,7 +22,7 @@ import { AppContext } from "../../../context/appContext";
 import { AuthContext } from "../../../context/authContext";
 import { ObjectId } from "bson";
 
-// ============================== Constants ==============================
+// Constants 
 const NEW_ID = "new";
 const CASH_LABEL = "Cash";
 const TAX_STATUSES = [
@@ -39,7 +39,6 @@ const TAX_STATUSES_REVERSE = TAX_STATUSES.reduce((acc, item) => {
 // Default structure for a new investment
 const defaultInvestment = { id: NEW_ID, investmentTypeId: "", taxType: "", value: "0" };
 
-// ============================== Main Component ==============================
 const InvestmentLists = () => {
   // Global app and auth context
   const {
@@ -101,7 +100,7 @@ const InvestmentLists = () => {
       taxTypesList[0].push(TAX_STATUSES_REVERSE[newInvestment.taxType]);
       taxTypesList[1].push(newInvestment.taxType);
     }
-    console.log(taxTypesList);
+    // console.log(taxTypesList);
     setAvailableTaxTypes(taxTypesList);
 
     if (!editing) {

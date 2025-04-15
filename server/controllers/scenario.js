@@ -5,6 +5,7 @@ const User = require("../models/user.js");
 const { ObjectId } = mongoose.Types;
 const axios = require("axios");
 const { ExpenseEvent } = require("../models/eventSeries.js");
+const { main } = require('../../simulation/algo.js');
 
 exports.scenario = async (req, res) => {
   const scenarioId = new ObjectId(req.params.id);
@@ -21,10 +22,10 @@ exports.scenario = async (req, res) => {
 
 exports.basicInfo = async (req, res) => {
   const { id } = req.params; //user id
+  console.log("Received request with ID:", req.params.id);
   try {
     const { name, filingStatus, financialGoal, inflationAssumption, birthYearUser, lifeExpectancy, stateResident, birthYearSpouse, lifeExpectancySpouse, irsLimit } = req.body;
     console.log("why");
-    console.log("lifeExpectancy", lifeExpectancy, lifeExpectancySpouse);
     const newBasicInfo = new Scenario({
       name,
       filingStatus,
@@ -274,6 +275,7 @@ exports.importUserData = async (req, res) => {
   }
 };
 
+
 async function mapStrategyNamesToIds(type, strategyNames) {
   let typeMap = {};
 
@@ -340,3 +342,33 @@ function formatIssues(data) {
     }
   }
 }
+
+exports.simulateScenario = async (req, res) => {
+  try {
+    const { scenarioId, userId, simulationCount = 1 } = req.query;
+
+    if (!scenarioId || !userId) {
+      return res.status(400).json({ error: 'Missing scenarioId or userId' });
+    }
+
+    // Run the simulation
+    const {
+      shadedChart,
+      probabilityChart,
+      barChartAverage,
+      barChartMedian,
+    } = await main(simulationCount, scenarioId, userId);
+
+    // Send results to frontend
+    res.status(200).json({
+      shadedChart,
+      probabilityChart,
+      barChartAverage,
+      barChartMedian,
+    });
+  } catch (err) {
+    console.error('Simulation error:', err);
+    res.status(500).json({ error: 'Simulation failed' });
+  }
+}
+

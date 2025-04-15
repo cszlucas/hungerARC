@@ -18,6 +18,7 @@ const GoogleAuth = () => {
         console.log("Decoded Token:", decodedToken);
 
         const userData = {
+            _id: "",
             googleId: decodedToken.sub,
             email: decodedToken.email,
             guest: false,

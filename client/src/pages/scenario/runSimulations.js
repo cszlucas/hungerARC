@@ -15,8 +15,10 @@ import CustomInput from "../../components/customInputBox";
 import { Close as CloseIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../context/appContext";
+import {AuthContext} from "../../context/authContext";
 import { saveAs } from "file-saver";
 import yaml from "js-yaml";
+import axios from "axios";
 
 const EventSeries = () => {
   const [numSimulations, setNumSimulations] = useState("1");
@@ -26,7 +28,7 @@ const EventSeries = () => {
 
 
   const {currScenario, currInvestmentTypes, currInvestments, currIncome, currExpense, currInvest, currRebalance} = useContext(AppContext);
-
+  const {user} = useContext(AuthContext);
   console.log(currScenario);
 
   function buildDistribution(dist) {
@@ -312,6 +314,23 @@ const EventSeries = () => {
     setEmails(emails.filter(email => email !== emailToDelete)); // Remove email from list
   };
 
+  const getChartData = async () => {
+    try {
+      const response = await axios.get("http://localhost:8080/runSimulation", {
+        params: {
+          scenarioId: currScenario._id,
+          userId: user._id,
+          simulationCount: numSimulations,
+        },
+      });
+  
+      return response.data; // optional: just return the data, not the whole Axios response
+    } catch (error) {
+      console.error("Error fetching simulation data:", error);
+      throw error; // rethrow if you want to handle it outside
+    }
+  };
+  
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -394,7 +413,14 @@ const EventSeries = () => {
           >
             Back
           </Button>
-          <Button variant="contained" color="secondary" sx={buttonStyles}>
+          <Button variant="contained" color="secondary" sx={buttonStyles}
+            onClick={() => {
+              const fetchedData = getChartData();
+              navigate("/charts", {
+                state: { chartData: fetchedData.data }
+              });
+            }}
+          >
             Run Simulation
           </Button>
         </Box>

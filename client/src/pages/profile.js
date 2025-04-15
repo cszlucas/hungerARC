@@ -5,6 +5,7 @@ import { AuthContext } from "../context/authContext";
 import DeleteIcon from "@mui/icons-material/Delete";
 import theme from "../components/theme";
 import Navbar from "../components/navbar";
+import axios from "axios";
 
 function extractPrefix(email) {
     let match = email.match(/^[a-zA-Z0-9]+/);
@@ -59,14 +60,15 @@ const Profile = () => {
 
         const formData = new FormData();
         formData.append("file", file);
-
+        formData.append("id", user._id);
+        for (let pair of formData.entries()) {
+            console.log(pair[0] + ":", pair[1]);
+        }
         try {
-            const response = await fetch("http://localhost:8080/getStateYaml", {
-                method: "POST",
-                body: formData,
-            });
+            const response = await axios.post("http://localhost:8080/uploadStateTaxYaml", formData);
 
-            if (response.ok) {
+            console.log(response);
+            if (response.status === 200) {
                 alert("File uploaded successfully!");
             } else {
                 alert("Failed to upload file.");

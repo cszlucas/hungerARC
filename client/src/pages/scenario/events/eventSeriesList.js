@@ -184,12 +184,13 @@ const EventSeriesList = () => {
 
         {/* Backdrop with Buttons for Event Type Selection */}
         <Backdrop open={openBackdrop} onClick={handleCloseBackdrop} sx={{ zIndex: 1200, color: "#fff" }}>
-          <Dialog open={openBackdrop} onClose={handleCloseBackdrop} >
+          <Dialog open={openBackdrop} onClose={handleCloseBackdrop}>
             <DialogTitle>
-              <Typography variant="h5" sx={{ fontWeight: "bold", marginTop: 2, marginBottom: 1, minWidth: 400 }}>
+              <Typography variant="h5" component="div" sx={{ fontWeight: "bold", marginTop: 2, marginBottom: 1, minWidth: 400 }}>
                 Select a category
               </Typography>
             </DialogTitle>
+
             <DialogContent>
               <Stack direction="row" spacing={3} sx={{ justifyContent: "center" }}>
                 <Button variant="contained" onClick={handleAddIncome} 

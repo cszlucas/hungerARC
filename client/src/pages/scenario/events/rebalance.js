@@ -168,7 +168,6 @@ const Rebalance = () => {
   // console.log(getRebalanceById(eventEditMode.id));
 
   let indieRebalance = getRebalanceById(eventEditMode.id);
-  // console.log(indieRebalance);
   const [formValues, setFormValues] = useState(indieRebalance || {
     _id: "",
     eventSeriesName: "",
@@ -243,13 +242,13 @@ const Rebalance = () => {
       eventSeriesName: "",
       eventSeriesDescription: "",
       startYear: {
-        type: "",
+        type: "fixedAmt",
         value: "",
         mean: "",
         stdDev: "",
         min: "",
         max: "",
-        year: "",
+        refer: "",
       },
       duration: {
         type: "fixedAmt",
