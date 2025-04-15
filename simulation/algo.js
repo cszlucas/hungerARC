@@ -10,6 +10,10 @@ const { IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent } = require("../s
 const { performRMDs, payNonDiscretionaryExpenses, payDiscretionaryExpenses, runInvestStrategy, rebalance } = require("./main.js");
 const { getCurrentEvent, getStrategy, getRebalanceStrategy, setValues, randomNormal, randomUniform } = require("./format.js");
 const { buildChartDataFromBuckets, updateYearDataBucket, createYearDataBuckets, formatGroupedStackedBarChart } = require("./charts_prep.js");
+// const { writeCSVLog,
+//     writeEventLog,
+//     logInvestment}
+const path = require('path');
 
 function findInflation(inflationAssumption) {
   if (inflationAssumption.type == "fixed") return inflationAssumption.fixedRate;
@@ -209,7 +213,7 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals) {
 
 class DataStore {
   constructor() {
-    this.taxData = this.stateTax = this.scenario = this.investment = this.income = this.expense = this.rebalance = this.invest = this.investmentType = {};
+    this.taxData = this.stateTax = this.scenario = this.investment = this.income = this.expense = this.rebalance = this.invest = this.investmentType = this.user = {};
   }
   async populateData(scenarioId, userId) {
     const query = { _id: new mongoose.Types.ObjectId(scenarioId) };
@@ -244,7 +248,7 @@ class DataStore {
       const tax = await Tax.find();
       this.taxData = tax;
       const user = await User.findById(userId);
-
+      this.user = user;
       const stateTaxAll = await StateTax.find();
 
       // const stateTaxDocs = await StateTax.find(); // get all for direct lookup
@@ -279,7 +283,7 @@ class DataStore {
 }
 
 
-async function runSimulation(scenario, tax, stateTax, startYearPrev, lifeExpectancyUser, lifeExpectancySpouse, investments, incomeEvent, expenseEvent, investEvent, rebalanceEvent, investmentTypes) {
+async function runSimulation(scenario, tax, stateTax, startYearPrev, lifeExpectancyUser, lifeExpectancySpouse, investments, incomeEvent, expenseEvent, investEvent, rebalanceEvent, investmentTypes, csvLog, eventLog) {
   // previous year
   let irsLimit = scenario.irsLimit;
   let filingStatus = scenario.filingStatus;
@@ -345,20 +349,22 @@ async function runSimulation(scenario, tax, stateTax, startYearPrev, lifeExpecta
     // console.log('scenario.birthYearSpouse :>> ', scenario.birthYearSpouse);
     // console.log('scenario.lifeExpectancySpouse :>> ', lifeExpectancySpouse);
     // console.log('year :>> ', year);
-    if(year == scenario.birthYearSpouse + lifeExpectancySpouse) {
-      spouseDeath = true;
-      filingStatus = "single";
-      // console.log("hello");
-      // console.log('federalIncomeTax before spouse :>> ', federalIncomeTax);
-      federalIncomeTax = tax.single.federalIncomeTaxRatesBrackets;
-      fedDeduction = tax.single.standardDeductions;
-      capitalGains = tax.single.capitalGainsTaxRates;
-      // console.log('federalIncomeTax after spouse :>> ', federalIncomeTax);
-      if (stateTax) {
-        stateIncomeTaxBracket = stateTax.taxDetails[startYearPrev].single.stateIncomeTaxRatesBrackets;
-        // stateDeduction = stateTax.taxDetails[prevYear].single.standardDeduction;
+    if (filingStatus == "married") { 
+      if(year == scenario.birthYearSpouse + lifeExpectancySpouse) {
+        spouseDeath = true;
+        filingStatus = "single";
+        // console.log("hello");
+        // console.log('federalIncomeTax before spouse :>> ', federalIncomeTax);
+        federalIncomeTax = tax.single.federalIncomeTaxRatesBrackets;
+        fedDeduction = tax.single.standardDeductions;
+        capitalGains = tax.single.capitalGainsTaxRates;
+        // console.log('federalIncomeTax after spouse :>> ', federalIncomeTax);
+        if (stateTax) {
+          stateIncomeTaxBracket = stateTax.taxDetails[startYearPrev].single.stateIncomeTaxRatesBrackets;
+          // stateDeduction = stateTax.taxDetails[prevYear].single.standardDeduction;
+        }
       }
-    }
+  } 
     inflationRate = findInflation(scenario.inflationAssumption) * 0.01;
     let { curIncomeEvent, curExpenseEvent, curInvestEvent, curRebalanceEvent } = getCurrentEvent(year, incomeEvent, expenseEvent, investEvent, rebalanceEvent);
     let { RMDStrategyInvestOrder, withdrawalStrategy, spendingStrategy, investStrategy } = getStrategy(scenario, investments, curExpenseEvent, curInvestEvent, year);
@@ -476,6 +482,8 @@ async function runSimulation(scenario, tax, stateTax, startYearPrev, lifeExpecta
       metGoal: totalInvestmentValue >= scenario.financialGoal ? 1 : 0,
     });
 
+    // logInvestment(investments, year, csvLog);
+
     prevYearIncome = yearTotals.curYearIncome;
     prevYearSS = yearTotals.curYearSS;
     prevYearEarlyWithdrawals = yearTotals.curYearEarlyWithdrawals;
@@ -490,7 +498,7 @@ async function runSimulation(scenario, tax, stateTax, startYearPrev, lifeExpecta
 }
 
 function calculateLifeExpectancy(scenario) {
-  let lifeExpectancyUser, lifeExpectancySpouse;
+  let lifeExpectancyUser, lifeExpectancySpouse = 0;
   if (scenario.lifeExpectancy.type == "fixed") {
     lifeExpectancyUser = scenario.lifeExpectancy.fixedAge;
   } else {
@@ -514,7 +522,10 @@ async function main(numScenarioTimes, scenarioId, userId) {
   const dataStore = new DataStore();
   await Promise.all([dataStore.populateData(scenarioId, userId)]);
 
-  const { taxData, scenario, stateTax, invest, income, expense, rebalance, investment, investmentType } = {
+  const csvLog = []; // For user_datetime.csv
+  const eventLog = []; // For user_datetime.log
+
+  const { taxData, scenario, stateTax, invest, income, expense, rebalance, investment, investmentType, user } = {
     taxData: dataStore.getData("taxData"),
     scenario: dataStore.getData("scenario"),
     stateTax: dataStore.getData("stateTax"),
@@ -524,6 +535,7 @@ async function main(numScenarioTimes, scenarioId, userId) {
     rebalance: dataStore.getData("rebalance"),
     investment: dataStore.getData("investment"),
     investmentType: dataStore.getData("investmentType"),
+    user: dataStore.getData("user")
   };
   // console.log("scenario: ", scenario);
   // console.log("stateTax :>> ", dataStore.stateTax);
@@ -562,9 +574,20 @@ async function main(numScenarioTimes, scenarioId, userId) {
       clonedData.expense,
       clonedData.invest,
       clonedData.rebalance,
-      clonedData.investmentType
+      clonedData.investmentType,
+      csvLog,
+      eventLog
     );
     allYearDataBuckets.push(yearDataBuckets);
+
+    // logs only for the first simulation
+    const userName = user.email.split("@")[0];
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const baseFilename = `${userName}_${timestamp}`;
+    const csvFilename = path.join(__dirname, '../server/logs', `${baseFilename}.csv`);
+    const logFilename = path.join(__dirname, '../server/logs', `${baseFilename}.log`);
+    // writeCSVLog(csvFilename, simulationResult);
+    // writeEventLog(logFilename, simulationResult.eventLog);
   }
   const flattenedBuckets = allYearDataBuckets.flat();
 
