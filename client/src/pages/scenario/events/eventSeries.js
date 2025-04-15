@@ -17,6 +17,8 @@ import CustomToggle from "../../../components/customToggle";
 
 import { AppContext } from "../../../context/appContext";
 
+const mongoose = require("mongoose");
+
 const EventSeries = ({ formValues, setFormValues }) => {
 // const EventSeries = () => {
     const { eventEditMode, currIncome, currExpense, currInvest, currRebalance } = useContext(AppContext);

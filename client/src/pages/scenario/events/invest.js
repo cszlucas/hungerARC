@@ -44,7 +44,7 @@ const DEFAULT_FORM_VALUES = {
         stdDev: "",
         min: "",
         max: "",
-        refer: "",
+        refer: null,
     },
     duration: {
         type: "fixedAmt",
