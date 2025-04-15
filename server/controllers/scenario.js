@@ -24,7 +24,7 @@ exports.basicInfo = async (req, res) => {
   try {
     const { name, filingStatus, financialGoal, inflationAssumption, birthYearUser, lifeExpectancy, stateResident, birthYearSpouse, lifeExpectancySpouse, irsLimit } = req.body;
     console.log("why");
-    console.log("inflation", lifeExpectancy);
+    console.log("lifeExpectancy", lifeExpectancy, lifeExpectancySpouse);
     const newBasicInfo = new Scenario({
       name,
       filingStatus,
@@ -132,6 +132,16 @@ exports.importUserData = async (req, res) => {
     stateResident,
   } = req.body;
 
+  for (const x of lifeExpectancy) {
+    x.lifeExpectancyType = x.type;
+    if (x.lifeExpectancyType === "fixed") {
+      x.fixedAge = x.value;
+    }
+    if (x.lifeExpectancyType === "normal") {
+      x.stdDev = x.stdev;
+    }
+  }
+
   const basicInfoData = {
     name: name,
     filingStatus: maritalStatus === "couple" ? "couple" : "single",
@@ -145,6 +155,7 @@ exports.importUserData = async (req, res) => {
     irsLimit: afterTaxContributionLimit,
   };
 
+  console.log("lifeExpectancy[0]", lifeExpectancy[0], lifeExpectancy[1]);
   try {
     const response = await axios.post(`http://localhost:8080/basicInfo/user/${id}`, basicInfoData);
 
@@ -255,6 +266,8 @@ exports.importUserData = async (req, res) => {
         console.error(`Error creating:`, error.message);
       }
     }
+
+    res.status(200).json({ scenario: response.data });
   } catch (error) {
     console.error("Import failed:", error);
     res.status(500).json({ error: error.message });
