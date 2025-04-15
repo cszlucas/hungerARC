@@ -74,13 +74,23 @@ const retrieveScenarioData = async (scenarioId, dataType) => {
   try {
       const validTypes = ["investments", "incomeEvent", "expenseEvent", "invest", "rebalance", "investmentType"];
       
+      const validTypesMap = {
+        "investments": "currentInvestments", 
+        "incomeEvent": "currentIncome",
+        "expenseEvent": "currentExpense",
+        "invest": "currentInvest",
+        "rebalance": "currentRebalance",
+        "investmentType": "currentInvestmentType",
+      };
+
       if (!validTypes.includes(dataType)) {
           console.error(`Invalid data type: ${dataType}`);
           return;
       }
+      
       const response = await axios.get(`http://localhost:8080/scenario/${scenarioId}/${dataType}`);
       const data = response.data || [];
-      localStorage.setItem(`current${capitalizeFirstLetter(dataType)}`, JSON.stringify(data));
+      localStorage.setItem(`${validTypesMap[dataType]}`, JSON.stringify(data));
       
       return data;
   } catch (error) {

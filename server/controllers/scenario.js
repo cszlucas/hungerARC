@@ -161,12 +161,18 @@ exports.importUserData = async (req, res) => {
       { data: invest, route: "investStrategy" },
       { data: rebalance, route: "rebalanceStrategy" },
     ];
-
+    const setEventSeriesMap = {
+      "incomeEvent": [],
+      "expenseEvent": [],
+      "investStrategy": [],
+      "rebalanceStrategy": [],
+    }
     for (const { data, route } of eventMappings) {
       try {
         console.log("data", data);
         formatIssues(data);
-        await axios.post(`http://localhost:8080/scenario/${scenarioId}/${route}`, data[0]);
+        const response = await axios.post(`http://localhost:8080/scenario/${scenarioId}/${route}`, data[0]);
+        setEventSeriesMap[route].push(response.data._id);
       } catch (error) {
         if (error.response) {
           console.error(`Error creating ${route}:`, error.response.data);
@@ -233,13 +239,13 @@ exports.importUserData = async (req, res) => {
     try {
       const expenseWithdrawalStrategyIds = await mapStrategyNamesToIds("investments", expenseWithdrawalStrategy);
       const RMDStrategyIds = await mapStrategyNamesToIds("investments", rmdStrategy);
-      //console.log("spendingStrategy", spendingStrategy);
       const spendingStrategyIds = await mapStrategyNamesToIds("expense", spendingStrategy);
       const rothStrategy = await mapStrategyNamesToIds("investments", rothConversionStrategy);
-      console.log("expenseWithdrawalStrategyIds", expenseWithdrawalStrategyIds);
-      console.log("RMDStrategyIds", RMDStrategyIds);
-      console.log("spendingStrategyIds", spendingStrategyIds);
-      console.log("rothStrategy", rothStrategy);
+
+      // console.log("expenseWithdrawalStrategyIds", expenseWithdrawalStrategyIds);
+      // console.log("RMDStrategyIds", RMDStrategyIds);
+      // console.log("spendingStrategyIds", spendingStrategyIds);
+      // console.log("rothStrategy", rothStrategy);
 
       await axios.post(`http://localhost:8080/updateScenario/${scenarioId}`, {
         spendingStrategy: spendingStrategyIds,
@@ -248,6 +254,10 @@ exports.importUserData = async (req, res) => {
         rothConversionStrategy: rothStrategy,
         optimizerSettings: optimizerSettings,
         // Include other strategies if needed
+        incomeEventSeries: setEventSeriesMap["incomeEvent"],
+        expenseEventSeries: setEventSeriesMap["expenseEvent"],
+        investEventSeries: setEventSeriesMap["investStrategy"],
+        rebalanceEventSeries: setEventSeriesMap["rebalanceStrategy"],
       });
     } catch (error) {
       if (error.response) {
