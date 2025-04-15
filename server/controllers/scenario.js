@@ -134,26 +134,14 @@ exports.importUserData = async (req, res) => {
     stateResident,
   } = req.body;
 
-  // for (const x of lifeExpectancy) {
-  //   x.lifeExpectancyType = x.type;
-  //   if (x.lifeExpectancyType === "fixed") {
-  //     x.fixedAge = x.value;
-  //   }
-  //   if (x.lifeExpectancyType === "normal") {
-  //     x.stdDev = x.stdev;
-  //   }
-  // }
-
   const basicInfoData = {
     name: name,
     filingStatus: maritalStatus === "couple" ? "couple" : "single",
     financialGoal: financialGoal,
     inflationAssumption: inflationAssumption,
     birthYearUser: birthYearUser,
-    // lifeExpectancyUser: lifeExpectancy[0],
     lifeExpectancy: lifeExpectancy,
     birthYearSpouse: birthYearSpouse ?? null,
-    // lifeExpectancySpouse: lifeExpectancy[1] ?? null,
     lifeExpectancySpouse: lifeExpectancySpouse,
     stateResident: stateResident,
     irsLimit: afterTaxContributionLimit,
@@ -177,9 +165,7 @@ exports.importUserData = async (req, res) => {
     for (const { data, route } of eventMappings) {
       try {
         console.log("data", data);
-
         formatIssues(data);
-
         await axios.post(`http://localhost:8080/scenario/${scenarioId}/${route}`, data[0]);
       } catch (error) {
         if (error.response) {
@@ -342,6 +328,9 @@ function formatIssues(data) {
     }
     if (d.annualIncome?.unit === "percent") {
       d.annualIncome.unit = "percentage";
+    }
+    if (d.accountTaxStatus === "non-retirement") {
+      d.accountTaxStatus = "non-tax";
     }
   }
 }
