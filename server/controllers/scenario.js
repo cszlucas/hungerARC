@@ -194,7 +194,7 @@ exports.importUserData = async (req, res) => {
 
 exports.simulateScenario = async (req, res) => {
   try {
-    const { scenarioId, userId, simulationCount = 1 } = req.body;
+    const { scenarioId, userId, simulationCount = 1 } = req.query;
 
     if (!scenarioId || !userId) {
       return res.status(400).json({ error: 'Missing scenarioId or userId' });
