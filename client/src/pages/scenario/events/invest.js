@@ -272,10 +272,7 @@ const Invest = () => {
             ? { ...formValues.assetAllocation, initialPercentages: {}, finalPercentages: {} }
             : { ...formValues.assetAllocation, fixedPercentages: {} };
 
-        const updatedFormValues = {
-            ...formValues,
-            assetAllocation: cleanedAllocation,
-        };
+        const updatedFormValues = {...formValues, assetAllocation: cleanedAllocation };
 
         // If new investment strategy
         if (eventEditMode.id === "new") {

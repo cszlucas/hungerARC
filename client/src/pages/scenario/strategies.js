@@ -16,10 +16,12 @@ import {
   stackStyles,
   titleStyles
 } from "../../components/styles";
+import CustomSave from "../../components/customSaveBtn";
 import axios from "axios";
+import { AuthContext } from "../../context/authContext";
 
 
-const StrategyList = ({ title, list, setList, fieldName, setScenario, setScenarioData, currScenario, editMode }) => {
+const StrategyList = ({ list, setList, fieldName, setScenario }) => {
   const handleMove = (index, direction) => {
     const newList = [...list];
     const newIndex = index + direction;
@@ -37,9 +39,6 @@ const StrategyList = ({ title, list, setList, fieldName, setScenario, setScenari
 
   return (
     <>
-      <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 2 }}>
-        {title}
-      </Typography>
       <List>
         {list.map((item, index) => (
           <ListItem
@@ -75,6 +74,7 @@ const Strategies = () => {
   const [isRothOptimized, setIsRothOptimized] = useState(currScenario.isRothOptimized || false);
   const [startYear, setStartYear] = useState(currScenario.optimizerSettings?.startYear || "");
   const [endYear, setEndYear] = useState(currScenario.optimizerSettings?.endYear || "");
+  const { user } = useContext(AuthContext);
 
   // ✅ Toggle Handler for Roth Optimizer
   const handleToggleRothOptimizer = () => {
@@ -126,10 +126,10 @@ const Strategies = () => {
       isRothOptimized
     };
 
-    let response = await axios.post(`http://localhost:8080/updateScenario/${editMode}`, formValues);
+    if (!user.guest) await axios.post(`http://localhost:8080/updateScenario/${editMode}`, formValues);
     setScenarioData(prev => prev.map(item => (item._id === editMode ? currScenario : item)));
-    console.log(scenarioData);
-    console.log("Data successfully updated:", response.data);
+    // console.log(scenarioData);
+    // console.log("Data successfully updated:", response.data);
   };
 
   const spendingStrategy = useMemo(() => {
@@ -200,25 +200,44 @@ const Strategies = () => {
         <Box sx={{ padding: 4 }}>
           <Grid container spacing={4}>
             <Grid item xs={12} md={6}>
-              <StrategyList title="Spending Strategy:" list={spendingStrategy} setList={() => {}} fieldName="spendingStrategy" setScenario={setCurrScenario} />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <StrategyList title="Expense Withdrawal Strategy:" list={expenseWithdrawalStrategy} setList={() => {}} fieldName="expenseWithdrawalStrategy" setScenario={setCurrScenario} />
+              <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 2 }}>
+                Spending Strategy:
+              </Typography>
+              <StrategyList 
+                list={spendingStrategy} 
+                setList={() => {}} 
+                fieldName="spendingStrategy" 
+                setScenario={setCurrScenario} 
+              />
             </Grid>
 
-            {/* ✅ Roth Strategy Toggle */}
             <Grid item xs={12} md={6}>
-              {!isRothOptimized && (
-              <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: -5 }}>
-                Roth Conversion Strategy:
-              </Typography>)}
-              <Stack direction="row" alignItems="center" justifyContent="flex-end" sx={{ marginBottom: -4 }}>
-                
+              <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 2 }}>
+                Expense Withdrawal Strategy:
+              </Typography>
+              <StrategyList 
+                list={expenseWithdrawalStrategy} 
+                setList={() => {}} 
+                fieldName="expenseWithdrawalStrategy" 
+                setScenario={setCurrScenario} 
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                  Roth Conversion Strategy:
+                </Typography>
                 <Switch checked={isRothOptimized} onChange={handleToggleRothOptimizer} color="secondary" />
               </Stack>
               {isRothOptimized && (
                 <>
-                  <StrategyList title="Roth Conversion Strategy:" list={rothConversionStrategy} setList={() => {}} fieldName="rothConversionStrategy" setScenario={setCurrScenario} />
+                  <StrategyList 
+                    list={rothConversionStrategy} 
+                    setList={() => {}} 
+                    fieldName="rothConversionStrategy" 
+                    setScenario={setCurrScenario} 
+                  />
                   <Box sx={{...rowBoxStyles, mt: 2}}>
                     <CustomInput
                       title="Start Year"
@@ -246,22 +265,29 @@ const Strategies = () => {
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <StrategyList title="RMD Strategy:" list={rmdStrategy} setList={() => {}} fieldName="rmdStrategy" setScenario={setCurrScenario} />
+              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                RMD Strategy:
+              </Typography>
+              <StrategyList 
+                list={rmdStrategy} 
+                setList={() => {}} 
+                fieldName="rmdStrategy" 
+                setScenario={setCurrScenario} 
+              />
             </Grid>
           </Grid>
         </Box> 
           <Box sx={backContinueContainerStyles}>
-                  <Button variant="contained" color="primary" sx={buttonStyles}
-                      onClick={() => navigate("/scenario/event_series_list")}
-                  >
-                      Back
-                  </Button>
-                  <Button variant="contained" color="success" sx={buttonStyles}
-                    onClick={() => navigate("/scenario/run_simulations")}
-                  >
-                      Finish
-                  </Button>
-            </Box>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              sx={buttonStyles}
+              onClick={() => navigate("/scenario/event_series_list")}
+            >
+                Back
+            </Button>
+            <CustomSave label={"Finish"} routeTo={"/scenario/run_simulations"}/>
+        </Box>
       </Container>
     </ThemeProvider>
   );
