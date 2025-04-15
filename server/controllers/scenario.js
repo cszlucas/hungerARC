@@ -4,6 +4,7 @@ const Investment = require("../models/investment.js");
 const User = require("../models/user.js");
 const { ObjectId } = mongoose.Types;
 const axios = require("axios");
+const { main } = require('../../simulation/algo.js');
 
 exports.scenario = async (req, res) => {
   const scenarioId = new ObjectId(req.params.id);
@@ -189,3 +190,33 @@ exports.importUserData = async (req, res) => {
     res.status(500).json({ error: "Import failed" });
   }
 };
+
+
+exports.simulateScenario = async (req, res) => {
+  try {
+    const { scenarioId, userId, simulationCount = 1 } = req.body;
+
+    if (!scenarioId || !userId) {
+      return res.status(400).json({ error: 'Missing scenarioId or userId' });
+    }
+
+    // Run the simulation
+    const {
+      shadedChart,
+      probabilityChart,
+      barChartAverage,
+      barChartMedian,
+    } = await main(simulationCount, scenarioId, userId);
+
+    // Send results to frontend
+    res.status(200).json({
+      shadedChart,
+      probabilityChart,
+      barChartAverage,
+      barChartMedian,
+    });
+  } catch (err) {
+    console.error('Simulation error:', err);
+    res.status(500).json({ error: 'Simulation failed' });
+  }
+}
