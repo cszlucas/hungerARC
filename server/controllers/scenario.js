@@ -333,7 +333,7 @@ function formatIssues(data) {
 exports.simulateScenario = async (req, res) => {
   try {
     const { scenarioId, userId, simulationCount = 1 } = req.query;
-
+    
     if (!scenarioId || !userId) {
       return res.status(400).json({ error: 'Missing scenarioId or userId' });
     }
