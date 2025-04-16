@@ -76,7 +76,7 @@ exports.updateScenario = async (req, res) => {
   const { id } = req.params;
   const updateData = req.body;
   try {
-    const result = await Scenario.updateOne({ _id: new ObjectId(id) }, { $set: updateData });
+    const result = await Scenario.findByIdAndUpdate( new ObjectId(id), { $set: updateData }, { new: true });
     return res.status(200).json({ message: "Scenario updated successfully", scenario: result });
   } catch (err) {
     console.error("Error adding to scenario:", err);
@@ -124,7 +124,7 @@ exports.importUserData = async (req, res) => {
     invest,
     rebalance,
     inflationAssumption,
-    afterTaxContributionLimit,
+    irsLimit,
     spendingStrategy,
     expenseWithdrawalStrategy,
     rmdStrategy,
@@ -144,10 +144,10 @@ exports.importUserData = async (req, res) => {
     birthYearSpouse: birthYearSpouse ?? null,
     lifeExpectancySpouse: lifeExpectancySpouse,
     stateResident: stateResident,
-    irsLimit: afterTaxContributionLimit,
+    irsLimit: irsLimit,
   };
 
-  console.log("irsLimit", afterTaxContributionLimit);
+  console.log("irsLimit", irsLimit);
   console.log("expenses ", expense);
   console.log("spendingStrategy", spendingStrategy);
   try {
@@ -262,7 +262,7 @@ exports.importUserData = async (req, res) => {
         rothConversionStrategy: rothStrategy,
         optimizerSettings: optimizerSettings,
       });
-      res.status(200).json({ scenario: update.data });
+      res.status(200).json({ scenario: update.data.scenario });
     } catch (error) {
       if (error.response) {
         console.error(`Error creating:`, error.response.data);
