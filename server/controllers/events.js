@@ -47,6 +47,7 @@ exports.createIncomeEvent = async (req, res) => {
 
     res.status(201).json(savedIncomeEvent);
   } catch (err) {
+    console.log(err.message);
     res.status(500).json({ error: err.message });
   }
 };

@@ -33,7 +33,7 @@ import EventSeries from "./eventSeries";
 import { ObjectId } from "bson";
 
 const DEFAULT_FORM_VALUES = {
-  _id: "",
+  _id: null,
   eventSeriesName: "",
   eventSeriesDescription: "",
   startYear: {
@@ -64,7 +64,7 @@ const DEFAULT_FORM_VALUES = {
 const TAX_MAP = {
   "non-retirement": "Taxable",
   "pre-tax": "Tax-Deferred",
-  "after-tax": "Tax-free",
+  "after-tax": "Tax-Free",
 };
 
 const Rebalance = () => {
