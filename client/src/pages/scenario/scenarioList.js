@@ -164,7 +164,7 @@ const ScenarioList = () => {
             min: inflationAssumption.min ?? null,
             max: inflationAssumption.max ?? null,
           },
-          irsLimit: { initialAfterTax: afterTaxContributionLimit },
+          irsLimit: afterTaxContributionLimit,
           spendingStrategy,
           expenseWithdrawalStrategy,
           rmdStrategy: RMDStrategy,
