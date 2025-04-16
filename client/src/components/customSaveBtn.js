@@ -63,7 +63,7 @@ const CustomSave = ({ label = "Save", routeTo, color = "secondary", disable = fa
     // Default investment entry tied to the cash investment type
     const cashInvestment = {
         investmentType: "", // Will be assigned below
-        accountTaxStatus: "non-tax",
+        accountTaxStatus: "non-retirement",
         value: "0",
     };
 

@@ -82,10 +82,24 @@ const ScenarioList = () => {
         for (const e of eventSeries) {
           const base = {
             eventSeriesName: e.name,
-            startYear: e.start,
-            duration: e.duration,
+            startYear: {
+              type: e.start.type,
+              value: e.start.value ?? null,
+              mean: e.start.mean ?? null,
+              stdDev: e.start.stdev ?? null,
+              min: e.start.lower ?? null,
+              max: e.start.upper ?? null,
+              refer:  e.start.eventSeries ?? null,
+            },
+            duration: {
+              type: e.duration.type,
+              value: e.duration.value ?? null,
+              mean: e.duration.mean ?? null,
+              stdDev: e.duration.stdev ?? null,
+              min: e.duration.lower ?? null,
+              max: e.duration.upper ?? null,
+            },
           };
-
           if (e.type === "income") {
             income.push({
               ...base,

@@ -53,7 +53,7 @@ const DEFAULT_FORM_VALUES = {
     min: "",
     max: ""
   },
-  taxStatus: "non-tax",
+  taxStatus: "non-retirement",
   rebalanceAllocation: {
     type: "fixed",
     fixedPercentages: {},
@@ -62,7 +62,7 @@ const DEFAULT_FORM_VALUES = {
   }
 };
 const TAX_MAP = {
-  "non-tax": "Taxable",
+  "non-retirement": "Taxable",
   "pre-tax": "Tax-Deferred",
   "after-tax": "Tax-free",
 };
@@ -85,7 +85,7 @@ const Rebalance = () => {
   const getRebalanceByTaxStatus = (status) => currRebalance.find(r => r.taxStatus === status) || DEFAULT_FORM_VALUES;
   
   const allowedInvestments = currInvestments.filter((item) => getInvestmentTypeById(item.investmentType).name !== "Cash");
-  const [formValues, setFormValues] = useState(getRebalanceById(eventEditMode.id) || getRebalanceByTaxStatus("non-tax"));
+  const [formValues, setFormValues] = useState(getRebalanceById(eventEditMode.id) || getRebalanceByTaxStatus("non-retirement"));
   const [selectedInvestment, setSelectedInvestment] = useState("");
   const displayedList = formValues.rebalanceAllocation;
   console.log(displayedList);
@@ -231,7 +231,7 @@ const Rebalance = () => {
     // const alreadyInList = (list) =>
     //   list.some((inv) => inv.investmentTypeName === investment.investmentTypeName);
   
-    // if (formValues.taxStatus === "non-tax" && !alreadyInList(taxableInvestments)) {
+    // if (formValues.taxStatus === "non-retirement" && !alreadyInList(taxableInvestments)) {
     //   setTaxableInvestments([...taxableInvestments, investment]);
     // } else if (formValues.taxStatus === "pre-tax" && !alreadyInList(taxDeferredInvestments)) {
     //   setTaxDeferredInvestments([...taxDeferredInvestments, investment]);
@@ -366,7 +366,7 @@ const Rebalance = () => {
               </Typography>
               <TextField
                 select
-                value={formValues.taxStatus || "non-tax"}
+                value={formValues.taxStatus || "non-retirement"}
                 onChange={(e) => { handleTaxStatusChange(e.target.value); }}
                 sx ={{ 
                   mt: -1,
@@ -384,7 +384,7 @@ const Rebalance = () => {
                   },
                 }}
               >
-                <MenuItem value="non-tax">Taxable</MenuItem>
+                <MenuItem value="non-retirement">Taxable</MenuItem>
                 <MenuItem value="pre-tax">Tax-Deferred</MenuItem>
                 <MenuItem value="after-tax">Tax-Free</MenuItem>
               </TextField>
