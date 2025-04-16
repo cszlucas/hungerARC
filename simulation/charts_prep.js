@@ -84,9 +84,9 @@ function formatGroupedStackedBarChart(mergedData, startYear) {
 
 //After All Simulations — Build Chart Data
 function buildChartDataFromBuckets(buckets, startYear, numScenarioTimes) {
-  const numYears = buckets.length / numScenarioTimes;
+  const numYears = buckets.length / numScenarioTimes; // Number of years in each bucket
   const endYear = startYear + numYears - 1;
-
+  console.log('endYear :>> ', endYear);
   const data = {
     income: {
       average: [],
@@ -117,7 +117,30 @@ function buildChartDataFromBuckets(buckets, startYear, numScenarioTimes) {
     },
   };
 
-  for (const bucket of buckets) {
+  const yearBuckets = Array.from({ length: numYears }, () => ({
+    income: [],
+    investments: [],
+    discretionary: [],
+    nonDiscretionary: [],
+    taxes: [],
+    earlyWithdrawals: [],
+    metGoal: [],
+  }));
+
+  for (let i = 0; i < buckets.length; i++) {
+    const yearIndex = i % numYears;
+    const bucket = buckets[i];
+
+    yearBuckets[yearIndex].income.push(...bucket.income);
+    yearBuckets[yearIndex].investments.push(...bucket.investments);
+    yearBuckets[yearIndex].discretionary.push(...bucket.discretionary);
+    yearBuckets[yearIndex].nonDiscretionary.push(...bucket.nonDiscretionary);
+    yearBuckets[yearIndex].taxes.push(...bucket.taxes);
+    yearBuckets[yearIndex].earlyWithdrawals.push(...bucket.earlyWithdrawals);
+    yearBuckets[yearIndex].metGoal.push(...bucket.metGoal);
+  }
+
+  for (const bucket of yearBuckets) {
     data.income.average.push(average(bucket.income));
     data.income.median.push(median(bucket.income));
 
@@ -138,7 +161,8 @@ function buildChartDataFromBuckets(buckets, startYear, numScenarioTimes) {
 
     data.metGoal.average.push(average(bucket.metGoal));
   }
-
+  // console.log('data :>> ', data);
+  // console.log('yearBuckets :>> ', yearBuckets);
   return { startYear, endYear, data };
 }
 

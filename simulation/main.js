@@ -326,11 +326,26 @@ function allocationIDToObject(allocations, investments) {
   return investmentsWithAllocations;
 }
 
+// function getGlidePathAllocation(year, startYear, endYear, initial, final) {
+//   const t = (year - startYear) / (endYear - startYear);
+//   const allocation = {};
+//   for (const asset in initial) {
+//     allocation[asset] = initial[asset] + t * (final[asset] - initial[asset]);
+//   }
+
+//   return allocation;
+// }
 function getGlidePathAllocation(year, startYear, endYear, initial, final) {
-  const t = (year - startYear) / (endYear - startYear);
+  const tRaw = (year - startYear) / (endYear - startYear);
+  const t = Math.max(0, Math.min(1, tRaw)); // clamp between 0 and 1
+
   const allocation = {};
-  for (const asset in initial) {
-    allocation[asset] = initial[asset] + t * (final[asset] - initial[asset]);
+  const allAssets = new Set([...Object.keys(initial), ...Object.keys(final)]);
+
+  for (const asset of allAssets) {
+    const initVal = initial[asset] || 0;
+    const finalVal = final[asset] || 0;
+    allocation[asset] = (1 - t) * initVal + t * finalVal;
   }
 
   return allocation;
