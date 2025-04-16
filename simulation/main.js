@@ -14,7 +14,7 @@ async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOr
     }
 
     const distributionPeriod = match.rmd[0].distributionPeriod;
-    const allInvestmentsNonRetirement = investments.filter((investment) => investment.accountTaxStatus.trim().toLowerCase() === "non-tax");
+    const allInvestmentsNonRetirement = investments.filter((investment) => investment.accountTaxStatus.trim().toLowerCase() === "non-retirement");
 
     let rmd = sumInvestmentsPreTaxRMD / distributionPeriod;
     yearTotals.curYearIncome += rmd;
@@ -56,7 +56,7 @@ function transferInvestment(preTaxInvest, allInvestmentsNonRetirement, amountTra
       _id: uuidv4(),
       ...structuredClone(preTaxInvest),
       value: amountTransfer,
-      accountTaxStatus: "non-tax",
+      accountTaxStatus: "non-retirement",
     };
     investments.push(newInvestment);
   }
@@ -223,7 +223,7 @@ function payFromInvestment(withdrawalAmt, investment, userAge, yearTotals) {
 }
 
 function updateValues(investment, userAge, yearTotals, partial, amountPaid) {
-  if (investment.accountTaxStatus === "non-tax") {
+  if (investment.accountTaxStatus === "non-retirement") {
     if (partial) {
       const fractionSold = investment.value > 0 ? amountPaid / investment.value : 0;
       const gain = fractionSold * (investment.value - investment.purchasePrice);
@@ -339,7 +339,7 @@ function getGlidePathAllocation(year, startYear, endYear, initial, final) {
 
 function buyNonRetirement(investmentsWithAllocations, excessCash) {
   // Filter only non-retirement investments first
-  const nonRetirement = investmentsWithAllocations.filter(({ investment }) => investment.accountTaxStatus === "non-tax");
+  const nonRetirement = investmentsWithAllocations.filter(({ investment }) => investment.accountTaxStatus === "non-retirement");
 
   // Total their percentage (in case it doesn't sum to 1)
   const totalPercentage = nonRetirement.reduce((sum, { percentage }) => sum + percentage, 0);

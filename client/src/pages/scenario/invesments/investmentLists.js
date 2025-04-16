@@ -26,7 +26,7 @@ import { ObjectId } from "bson";
 const NEW_ID = "new";
 const CASH_LABEL = "Cash";
 const TAX_STATUSES = [
-  { label: "Taxable", value: "non-tax" },
+  { label: "Taxable", value: "non-retirement" },
   { label: "Tax-Deferred", value: "pre-tax" },
   { label: "Tax-Free", value: "after-tax" },
 ];
@@ -278,7 +278,7 @@ const InvestmentLists = () => {
             <Typography variant="h5" sx={{ fontWeight: "bold" }}>
               Taxable
             </Typography>
-            <InvestList list={currInvestments} taxType="non-tax" />
+            <InvestList list={currInvestments} taxType="non-retirement" />
           </Box>
 
           <Box sx={{ flex: 1 }}>

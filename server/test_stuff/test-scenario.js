@@ -77,7 +77,7 @@ async function createScenario() {
     const invest2 = new investment({
       investmentType: savedInvestmentType2._id,
       value: 50,
-      accountTaxStatus: "non-tax",
+      accountTaxStatus: "non-retirement",
     });
 
     const investment2 = await invest2.save(); // Wait for the save to complete
@@ -207,7 +207,7 @@ async function createScenario() {
         type: "fixedAmt",
         value: 2,
       },
-      taxStatus: "non-tax",
+      taxStatus: "non-retirement",
       rebalanceAllocation: {
         type: "glidePath",
         initialPercentages: {

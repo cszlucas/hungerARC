@@ -203,7 +203,7 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals) {
     }
 
     // Add the income to curYearIncome, if the investment’s tax status is ‘non-retirement’ and the investment type’s taxability is ‘taxable’.
-    if (investment.accountTaxStatus == "non-tax" && investmentType.taxability == "taxable") {
+    if (investment.accountTaxStatus == "non-retirement" && investmentType.taxability == "taxable") {
       yearTotals.curYearIncome += income;
     }
 
@@ -454,7 +454,7 @@ async function runSimulation(scenario, tax, stateTax, startYearPrev, lifeExpecta
     runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
    
     //   // RUN REBALANCE EVENT
-    let types = ["pre-tax", "after-tax", "non-tax"];
+    let types = ["pre-tax", "after-tax", "non-retirement"];
     for (let type of types) {
       let rebalanceStrategy = getRebalanceStrategy(scenario, curRebalanceEvent, type, year);
       // console.log('curRebalanceEvent :>> ', curRebalanceEvent);

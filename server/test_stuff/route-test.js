@@ -173,7 +173,7 @@ async function Investments() {
     // const invest2 = new Investment({
     //   investmentType: type2.data._id,
     //   value: 50,
-    //   accountTaxStatus: "non-tax",
+    //   accountTaxStatus: "non-retirement",
     // });
 
     // const inv2 = await axios.post("http://localhost:8080/investment", invest2);
@@ -203,7 +203,7 @@ async function Investments() {
     // const invest2 = new Investment({
     //   investmentType: update.data._id, // Reference the saved InvestmentType by ObjectId
     //   value: 10,
-    //   accountTaxStatus: "non-tax",
+    //   accountTaxStatus: "non-retirement",
     // });
 
     // const updateInvest = await axios.post("http://localhost:8080/updateInvestment/67df68e520abee9d9188b03e", invest2);

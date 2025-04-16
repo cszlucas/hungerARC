@@ -63,7 +63,7 @@ exports.createInvestment = async (req, res) => {
     }
     scenario.setOfInvestments.push(investment._id);
     await scenario.save();
-    console.log("Investment saved ");
+    // console.log("Investment saved ");
 
     res.status(201).json(investment);
   } catch (err) {
