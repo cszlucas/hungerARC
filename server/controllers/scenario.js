@@ -175,7 +175,7 @@ exports.importUserData = async (req, res) => {
       formatIssues(data);
       for (const oneEvent of data) {
         try {
-         const response = await axios.post(`http://localhost:8080/scenario/${scenarioId}/${route}`, oneEvent);
+          const response = await axios.post(`http://localhost:8080/scenario/${scenarioId}/${route}`, oneEvent);
           const id = response.data._id;
           setEventSeriesMap[route].push(id); // ✅ push to map
           console.log(`[${route}] ${response.data._id}`);
@@ -243,11 +243,18 @@ exports.importUserData = async (req, res) => {
         }
       }
     }
+
+    for (const event of [invest, rebalance]) {
+      if (event?.assetAllocation) {
+        event.assetAllocation = assetAllocationToID(investments, event.assetAllocation);
+      }
+    }
+
     try {
       const expenseWithdrawalStrategyIds = await mapStrategyNamesToIds("investments", expenseWithdrawalStrategy);
       const RMDStrategyIds = await mapStrategyNamesToIds("investments", rmdStrategy);
-    const spendingStrategyIds = await mapStrategyNamesToIds("expense", spendingStrategy);
-    console.log("spendingStrategyIds", spendingStrategyIds);
+      const spendingStrategyIds = await mapStrategyNamesToIds("expense", spendingStrategy);
+      console.log("spendingStrategyIds", spendingStrategyIds);
       const rothStrategy = await mapStrategyNamesToIds("investments", rothConversionStrategy);
 
       // console.log("expenseWithdrawalStrategyIds", expenseWithdrawalStrategyIds);
@@ -261,6 +268,8 @@ exports.importUserData = async (req, res) => {
         rmdStrategy: RMDStrategyIds,
         rothConversionStrategy: rothStrategy,
         optimizerSettings: optimizerSettings,
+        investEventSeries: setEventSeriesMap["investStrategy"],
+        rebalanceEventSeries: setEventSeriesMap["rebalanceStrategy"],
       });
       res.status(200).json({ scenario: update.data.scenario });
     } catch (error) {
@@ -275,6 +284,36 @@ exports.importUserData = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+function assetAllocationToID(investments, assetAllocation) {
+  const nameToId = investments.reduce((acc, inv) => {
+    const typeName = inv.investmentType?.name;
+    if (typeName) {
+      acc[typeName] = inv._id;
+    }
+    return acc;
+  }, {});
+
+  function mapKeysToIds(percentagesObj, nameToIdMap) {
+    const result = {};
+    for (const [name, value] of Object.entries(percentagesObj)) {
+      const id = nameToIdMap[name]; // Use name directly
+      if (id) {
+        result[id] = value;
+      } else {
+        console.warn(`No ID found for investment name: ${name}`);
+      }
+    }
+    return result;
+  }
+
+  return {
+    ...assetAllocation,
+    fixedPercentages: mapKeysToIds(assetAllocation.fixedPercentages || {}, nameToId),
+    initialPercentages: mapKeysToIds(assetAllocation.initialPercentages || {}, nameToId),
+    finalPercentages: mapKeysToIds(assetAllocation.finalPercentages || {}, nameToId),
+  };
+}
 
 async function mapStrategyNamesToIds(type, strategyNames) {
   let typeMap = {};
