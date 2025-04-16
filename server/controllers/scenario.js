@@ -5,7 +5,7 @@ const User = require("../models/user.js");
 const { ObjectId } = mongoose.Types;
 const axios = require("axios");
 const { ExpenseEvent } = require("../models/eventSeries.js");
-const { main } = require('../../simulation/algo.js');
+const { main } = require("../../simulation/algo.js");
 
 exports.scenario = async (req, res) => {
   const scenarioId = new ObjectId(req.params.id);
@@ -155,7 +155,9 @@ exports.importUserData = async (req, res) => {
     irsLimit: afterTaxContributionLimit,
   };
 
-  // console.log("lifeExpectancy[0]", lifeExpectancy[0], lifeExpectancy[1]);
+  console.log("irsLimit", afterTaxContributionLimit);
+  console.log("expenses ", expense);
+  console.log("spendingStrategy", spendingStrategy);
   try {
     const response = await axios.post(`http://localhost:8080/basicInfo/user/${id}`, basicInfoData);
 
@@ -169,23 +171,28 @@ exports.importUserData = async (req, res) => {
       { data: invest, route: "investStrategy" },
       { data: rebalance, route: "rebalanceStrategy" },
     ];
+
     const setEventSeriesMap = {
-      "incomeEvent": [],
-      "expenseEvent": [],
-      "investStrategy": [],
-      "rebalanceStrategy": [],
-    }
+      incomeEvent: [],
+      expenseEvent: [],
+      investStrategy: [],
+      rebalanceStrategy: [],
+    };
+
     for (const { data, route } of eventMappings) {
-      try {
-        console.log("data", data);
-        formatIssues(data);
-        const response = await axios.post(`http://localhost:8080/scenario/${scenarioId}/${route}`, data[0]);
-        setEventSeriesMap[route].push(response.data._id);
-      } catch (error) {
-        if (error.response) {
-          console.error(`Error creating ${route}:`, error.response.data);
-        } else {
-          console.error(`Error creating ${route}:`, error.message);
+      formatIssues(data);
+      for (const oneEvent of data) {
+        try {
+         const response = await axios.post(`http://localhost:8080/scenario/${scenarioId}/${route}`, oneEvent);
+          const id = response.data._id;
+          setEventSeriesMap[route].push(id); // ✅ push to map
+          console.log(`[${route}] ${response.data._id}`);
+        } catch (error) {
+          if (error.response) {
+            console.error(`Error creating ${route}:`, error.response.data);
+          } else {
+            console.error(`Error creating ${route}:`, error.message);
+          }
         }
       }
     }
@@ -247,7 +254,8 @@ exports.importUserData = async (req, res) => {
     try {
       const expenseWithdrawalStrategyIds = await mapStrategyNamesToIds("investments", expenseWithdrawalStrategy);
       const RMDStrategyIds = await mapStrategyNamesToIds("investments", rmdStrategy);
-      const spendingStrategyIds = await mapStrategyNamesToIds("expense", spendingStrategy);
+    const spendingStrategyIds = await mapStrategyNamesToIds("expense", spendingStrategy);
+    console.log("spendingStrategyIds", spendingStrategyIds);
       const rothStrategy = await mapStrategyNamesToIds("investments", rothConversionStrategy);
 
       // console.log("expenseWithdrawalStrategyIds", expenseWithdrawalStrategyIds);
@@ -281,7 +289,6 @@ exports.importUserData = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 async function mapStrategyNamesToIds(type, strategyNames) {
   let typeMap = {};
@@ -356,18 +363,13 @@ function formatIssues(data) {
 exports.simulateScenario = async (req, res) => {
   try {
     const { scenarioId, userId, simulationCount = 1 } = req.query;
-    
+
     if (!scenarioId || !userId) {
-      return res.status(400).json({ error: 'Missing scenarioId or userId' });
+      return res.status(400).json({ error: "Missing scenarioId or userId" });
     }
 
     // Run the simulation
-    const {
-      shadedChart,
-      probabilityChart,
-      barChartAverage,
-      barChartMedian,
-    } = await main(simulationCount, scenarioId, userId);
+    const { shadedChart, probabilityChart, barChartAverage, barChartMedian } = await main(simulationCount, scenarioId, userId);
 
     // Send results to frontend
     res.status(200).json({
@@ -377,8 +379,7 @@ exports.simulateScenario = async (req, res) => {
       barChartMedian,
     });
   } catch (err) {
-    console.error('Simulation error:', err);
-    res.status(500).json({ error: 'Simulation failed' });
+    console.error("Simulation error:", err);
+    res.status(500).json({ error: "Simulation failed" });
   }
-}
-
+};

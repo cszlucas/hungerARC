@@ -186,8 +186,8 @@ exports.deleteExpenseEvent = async (req, res) => {
 exports.createInvestStrategy = async (req, res) => {
   const { id } = req.params;
   const { eventSeriesName, description, startYear, duration, type, assetAllocation, maxCash } = req.body;
-  console.log("create invest strategy");
-  console.log("assetAllocation", assetAllocation);
+  //console.log("create invest strategy");
+  //console.log("assetAllocation", assetAllocation);
   try {
     const investEvent = new InvestEvent({
       eventSeriesName,
