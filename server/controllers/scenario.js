@@ -31,7 +31,7 @@ exports.basicInfo = async (req, res) => {
       filingStatus,
       financialGoal,
       inflationAssumption: {
-        type: inflationAssumption.inflationAssumptionType,
+        type: inflationAssumption.type,
         fixedRate: inflationAssumption.fixedRate,
         mean: inflationAssumption.mean,
         stdDev: inflationAssumption.stdDev,
@@ -40,14 +40,14 @@ exports.basicInfo = async (req, res) => {
       },
       birthYearUser,
       lifeExpectancy: {
-        type: lifeExpectancy.lifeExpectancyType,
+        type: lifeExpectancy.type,
         fixedAge: lifeExpectancy.fixedAge,
         mean: lifeExpectancy.mean,
         stdDev: lifeExpectancy.stdDev,
       },
       birthYearSpouse,
       lifeExpectancySpouse: {
-        type: lifeExpectancySpouse.lifeExpectancyType,
+        type: lifeExpectancySpouse.type,
         fixedAge: lifeExpectancySpouse.fixedAge,
         mean: lifeExpectancySpouse.mean,
         stdDev: lifeExpectancySpouse.stdDev,
@@ -116,6 +116,7 @@ exports.importUserData = async (req, res) => {
     birthYearSpouse,
     birthYearUser,
     lifeExpectancy,
+    lifeExpectancySpouse,
     setOfinvestmentTypes,
     setOfinvestments,
     income,
@@ -133,16 +134,6 @@ exports.importUserData = async (req, res) => {
     stateResident,
   } = req.body;
 
-  for (const x of lifeExpectancy) {
-    x.lifeExpectancyType = x.type;
-    if (x.lifeExpectancyType === "fixed") {
-      x.fixedAge = x.value;
-    }
-    if (x.lifeExpectancyType === "normal") {
-      x.stdDev = x.stdev;
-    }
-  }
-
   if (inflationAssumption) {
     inflationAssumption.inflationAssumptionType = inflationAssumption.type;
   
@@ -157,14 +148,14 @@ exports.importUserData = async (req, res) => {
     financialGoal: financialGoal,
     inflationAssumption: inflationAssumption,
     birthYearUser: birthYearUser,
-    lifeExpectancy: lifeExpectancy[0],
+    lifeExpectancy: lifeExpectancy,
     birthYearSpouse: birthYearSpouse ?? null,
-    lifeExpectancySpouse: lifeExpectancy[1],
+    lifeExpectancySpouse: lifeExpectancySpouse,
     stateResident: stateResident,
     irsLimit: afterTaxContributionLimit,
   };
 
-  console.log("lifeExpectancy[0]", lifeExpectancy[0], lifeExpectancy[1]);
+  // console.log("lifeExpectancy[0]", lifeExpectancy[0], lifeExpectancy[1]);
   try {
     const response = await axios.post(`http://localhost:8080/basicInfo/user/${id}`, basicInfoData);
 
@@ -178,14 +169,18 @@ exports.importUserData = async (req, res) => {
       { data: invest, route: "investStrategy" },
       { data: rebalance, route: "rebalanceStrategy" },
     ];
-
+    const setEventSeriesMap = {
+      "incomeEvent": [],
+      "expenseEvent": [],
+      "investStrategy": [],
+      "rebalanceStrategy": [],
+    }
     for (const { data, route } of eventMappings) {
       try {
         console.log("data", data);
-
         formatIssues(data);
-
-        await axios.post(`http://localhost:8080/scenario/${scenarioId}/${route}`, data[0]);
+        const response = await axios.post(`http://localhost:8080/scenario/${scenarioId}/${route}`, data[0]);
+        setEventSeriesMap[route].push(response.data._id);
       } catch (error) {
         if (error.response) {
           console.error(`Error creating ${route}:`, error.response.data);
@@ -252,13 +247,13 @@ exports.importUserData = async (req, res) => {
     try {
       const expenseWithdrawalStrategyIds = await mapStrategyNamesToIds("investments", expenseWithdrawalStrategy);
       const RMDStrategyIds = await mapStrategyNamesToIds("investments", rmdStrategy);
-      //console.log("spendingStrategy", spendingStrategy);
       const spendingStrategyIds = await mapStrategyNamesToIds("expense", spendingStrategy);
       const rothStrategy = await mapStrategyNamesToIds("investments", rothConversionStrategy);
-      console.log("expenseWithdrawalStrategyIds", expenseWithdrawalStrategyIds);
-      console.log("RMDStrategyIds", RMDStrategyIds);
-      console.log("spendingStrategyIds", spendingStrategyIds);
-      console.log("rothStrategy", rothStrategy);
+
+      // console.log("expenseWithdrawalStrategyIds", expenseWithdrawalStrategyIds);
+      // console.log("RMDStrategyIds", RMDStrategyIds);
+      // console.log("spendingStrategyIds", spendingStrategyIds);
+      // console.log("rothStrategy", rothStrategy);
 
       await axios.post(`http://localhost:8080/updateScenario/${scenarioId}`, {
         spendingStrategy: spendingStrategyIds,
@@ -267,6 +262,10 @@ exports.importUserData = async (req, res) => {
         rothConversionStrategy: rothStrategy,
         optimizerSettings: optimizerSettings,
         // Include other strategies if needed
+        incomeEventSeries: setEventSeriesMap["incomeEvent"],
+        expenseEventSeries: setEventSeriesMap["expenseEvent"],
+        investEventSeries: setEventSeriesMap["investStrategy"],
+        rebalanceEventSeries: setEventSeriesMap["rebalanceStrategy"],
       });
     } catch (error) {
       if (error.response) {
@@ -348,13 +347,16 @@ function formatIssues(data) {
     if (d.annualIncome?.unit === "percent") {
       d.annualIncome.unit = "percentage";
     }
+    if (d.accountTaxStatus === "non-retirement") {
+      d.accountTaxStatus = "non-tax";
+    }
   }
 }
 
 exports.simulateScenario = async (req, res) => {
   try {
     const { scenarioId, userId, simulationCount = 1 } = req.query;
-
+    
     if (!scenarioId || !userId) {
       return res.status(400).json({ error: 'Missing scenarioId or userId' });
     }

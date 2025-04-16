@@ -16,7 +16,7 @@ import {
 } from "../../components/styles";
 import { AppContext } from "../../context/appContext";
 
-const states = ["California", "Colorado", "Connecticut", "Delaware", "Hawaii", "Massachusetts", "New Jersey", "New York"];
+const states = ["California", "Colorado", "Connecticut", "Delaware", "Hawaii", "Massachusetts", "New Jersey", "New York", "Texas"];
 
 const Basics = () => {
   const { currScenario, setCurrScenario } = useContext(AppContext);
@@ -99,7 +99,7 @@ const Basics = () => {
             type="number"
             value={currScenario.birthYearUser}
             setValue={(value) => handleInputChange("birthYearUser", value)}
-            inputProps={{ min: 1900, max: new Date().getFullYear() }}
+            inputProps={{ min: 0, max: new Date().getFullYear() }}
           />
 
           <CustomToggle
@@ -189,11 +189,19 @@ const Basics = () => {
           </Box>
         )}
 
+        <CustomInput
+          title="IRS Limit"
+          type="number"
+          adornment="$"
+          value={currScenario.irsLimit}
+          setValue={(value) => handleInputChange("irsLimit", value)}
+          inputProps={{ min: 0 }}
+        />
+
         {/* Inflation Assumptions */}
         <Typography variant="h6" sx={{ fontWeight: "bold", marginTop: 4, marginBottom: 2 }}>
           Inflation Assumptions
         </Typography>
-
         <Box sx={rowBoxStyles}>
           <CustomToggle
             title="Distribution"

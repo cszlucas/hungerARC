@@ -85,7 +85,7 @@ const ScenarioList = () => {
             startYear: e.start,
             duration: e.duration,
           };
-      
+
           if (e.type === "income") {
             income.push({
               ...base,
@@ -137,14 +137,33 @@ const ScenarioList = () => {
           filingStatus: maritalStatus === "couple" ? "couple" : "single",
           birthYearUser: birthYears[0],
           birthYearSpouse: birthYears[1] ?? null,
-          lifeExpectancy,
+          // lifeExpectancy,
+          lifeExpectancy: {
+            type: lifeExpectancy[0].type,
+            fixedAge: lifeExpectancy[0].value ?? null,
+            mean: lifeExpectancy[0].mean ?? null,
+            stdDev: lifeExpectancy[0].stdev ?? null,
+          },
+          lifeExpectancySpouse: {
+            type: lifeExpectancy[1].type,
+            fixedAge: lifeExpectancy[1].value ?? null,
+            mean: lifeExpectancy[1].mean ?? null,
+            stdDev: lifeExpectancy[1].stdev ?? null,
+          },
           setOfinvestmentTypes: frontendInvestmentTypes,
           setOfinvestments: frontendInvestments,
           income,
           expense,
           invest,
           rebalance,
-          inflationAssumption,
+          inflationAssumption: {
+            type: inflationAssumption.type,
+            fixedRate: inflationAssumption.value ?? null,
+            mean: inflationAssumption.mean ?? null,
+            stdDev: inflationAssumption.stdev ?? null,
+            min: inflationAssumption.min ?? null,
+            max: inflationAssumption.max ?? null,
+          },
           irsLimit: { initialAfterTax: afterTaxContributionLimit },
           spendingStrategy,
           expenseWithdrawalStrategy,
@@ -158,7 +177,7 @@ const ScenarioList = () => {
           financialGoal,
           stateResident: residenceState,
         };
-      }
+    }
       
     function parseChange(e) {
     const dist = e.changeDistribution || {};
@@ -188,7 +207,7 @@ const ScenarioList = () => {
 
             setScenarioData((prev) => [...(prev || []), response.data.scenario]);
             } catch (err) {
-            console.error("❌ YAML import failed:", err);
+              console.error("❌ YAML import failed:", err);
             }
         };
         reader.readAsText(file);
@@ -236,6 +255,7 @@ const ScenarioList = () => {
                     variant="contained"
                     sx={{ marginBottom: 6, textTransform: "none" }}
                     onClick={handleNewScenario}
+                    disabled={user.guest && scenarioData.length > 1}
                 >
                     New Scenario
                 </Button>
@@ -250,21 +270,23 @@ const ScenarioList = () => {
                         id="yaml-upload"
                         style={{ display: "none" }}
                         onChange={handleYAMLImportFile}
+                        disabled={user.guest}
                     />
-
                     <label htmlFor="yaml-upload">
-                    <Button
-                        variant="contained"
-                        component="span"
-                        sx={{ marginRight: 2, textTransform: "none" }}
-                    >
-                        Import
-                    </Button>
+                      <Button
+                          variant="contained"
+                          component="span"
+                          sx={{ marginRight: 2, textTransform: "none" }}
+                          disabled={user.guest}
+                      >
+                          Import
+                      </Button>
                     </label>
                     <Button 
                         variant="contained" 
                         color="secondary" // Uses the theme's secondary color
                         sx={{ textTransform: "none" }}
+                        disabled={user.guest}
                     >
                         Share
                     </Button>

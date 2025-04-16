@@ -10,10 +10,10 @@ const { IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent } = require("../s
 const { performRMDs, payNonDiscretionaryExpenses, payDiscretionaryExpenses, runInvestStrategy, rebalance } = require("./main.js");
 const { getCurrentEvent, getStrategy, getRebalanceStrategy, setValues, randomNormal, randomUniform } = require("./format.js");
 const { buildChartDataFromBuckets, updateYearDataBucket, createYearDataBuckets, formatGroupedStackedBarChart } = require("./charts_prep.js");
-// const { writeCSVLog,
-//     writeEventLog,
-//     logInvestment}
+const { writeCSVLog, writeEventLog, logInvestment } = require("./logs.js");
 const path = require('path');
+const { v4: uuidv4 } = require('uuid');
+
 
 function findInflation(inflationAssumption) {
   if (inflationAssumption.type == "fixed") return inflationAssumption.fixedRate;
@@ -60,6 +60,7 @@ function findUpperFedTaxBracket(curYearFedTaxableIncome, federalIncomeTax) {
 }
 
 function rothConversion(scenario, year, yearTotals, federalIncomeTax, investmentTypes, investments, rothConversionStrategyInvestments, fedDeduction) {
+  console.log("\nROTH CONVERSION");
   let curYearFedTaxableIncome = yearTotals.curYearIncome - 0.15 * yearTotals.curYearSS;
   // upper limit of the tax bracket user is in
   // console.log("curYearFedTaxableIncome :>> ", curYearFedTaxableIncome);
@@ -68,18 +69,21 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
   // roth conversation amount
   rc = u - (curYearFedTaxableIncome - fedDeduction);
   let rcCopy = rc;
- 
   // transfer from pre-tax to after-tax retirement
   // console.log('curYearIncome before :>> ', curYearIncome);
 
   for (let investment of rothConversionStrategyInvestments) {
+    if (investment.accountTaxStatus == "after-tax") continue;
+    let investmentType = investmentTypes.find((type) => type._id === investment.investmentType);
     if (rc > 0) {
-      //console.log("rc :>> ", rc);
+      console.log("rc :>> ", rc);
       //console.log("investment.value :>> ", investment.value);
       // if (investment.accountTaxStatus == "pre-tax" && rc > 0) {
       if (rc >= investment.value) {
         rc -= investment.value;
         investment.accountTaxStatus = "after-tax";
+        console.log("investment ", investmentType.name, " is now after-tax account with same value");
+
       } else {
         investment.value -= rc;
         const newInvestmentObject = {
@@ -91,7 +95,7 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
           // is this needed?
           purchasePrice: rc,
         };
-
+        console.log("investment ", investmentType.name, " has a value of ", investment.value, " after subtracting ", rc, ". A new investment object is created with value ", rc, " and account tax status after-tax");
         // save or process the object (e.g., store in another array or database)
         investments.push(newInvestmentObject); // optional, depending on your context
 
@@ -114,8 +118,9 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
 // incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, curYearIncome, curYearSS, cashInvestment);
 
 function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, yearTotals, cashInvestment, curIncomeEvent, spouseDeath) {
+  console.log("\nUPDATE INCOME EVENTS");
   for (let incomeEvent of incomeEvents) {
-    // console.log("incomeEvent :>> ", incomeEvent);
+    console.log("incomeEvent :>> ", incomeEvent.eventSeriesName);
     // console.log('curIncomeEvent :>> ', curIncomeEvent);
     if (curIncomeEvent.includes(incomeEvent)) {
       let annualChange = incomeEvent.annualChange;
@@ -127,8 +132,10 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
         amt = annualChange.amount;
       } else if (annualChange.distribution == "uniform") {
         amt = randomUniform(annualChange.min, annualChange.max);
+        console.log("uniform distribution, of min and max respectively, ", annualChange.min," ", annualChange.max, ", amount is ", amt);
       } else {
         amt = randomNormal(annualChange.mean, annualChange.stdDev);
+        console.log("normal distribution, of mean and stdDev respectively, ", annualChange.mean," ", annualChange.stdDev, ", amount is ", amt);
       }
 
       if (annualChange.type == "fixed") {
@@ -136,13 +143,17 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
       } else if (annualChange.type == "percentage") {
         incomeValue *= 1 + amt * 0.01;
       }
-      if (incomeEvent.inflationAdjustment) incomeValue *= 1 + inflationRate;
+      if (incomeEvent.inflationAdjustment) {
+        console.log("inflationAdjustment is true, income value goes to ", incomeValue);
+        incomeValue *= 1 + inflationRate;
+      }
 
       if (spouseDeath) {
         incomeValue *= incomeEvent.userPercentage * 0.01;
       }
 
       incomeEvent.initialAmount = incomeValue;
+      console.log('incomeEvent.value after :>> ', incomeEvent.initialAmount);
       cashInvestment.value += incomeValue;
       yearTotals.curYearIncome += incomeValue;
       if (incomeEvent.isSocialSecurity) {
@@ -151,26 +162,33 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
     } else {
       // console.log("Income event not found in current year: ", incomeEvent.eventSeriesName);
       // console.log('incomeEvent.value before :>> ', incomeEvent.initialAmount);
-      incomeEvent.initialAmount *= 1 + inflationRate;
+      if (incomeEvent.inflationAdjustment) {
+        console.log("inflationAdjustment is true, amount updates to ", incomeEvent.initialAmount);
+        incomeEvent.initialAmount *= 1 + inflationRate;
+      }
       // console.log('incomeEvent.value after :>> ', incomeEvent.initialAmount);
     }
   }
-  // return { curYearIncome, curYearSS, cashInvestment };
 }
 
 function updateInflationExpenses(curExpenseEvent, expenseEvent, inflationRate){
   for (let expense of expenseEvent) {
-    if (!curExpenseEvent.includes(expense)) {
-      expense.initialAmount *= 1 + inflationRate;
-    }
+    if(expense.inflationAdjustment){
+      if (!curExpenseEvent.includes(expense)) {
+        expense.initialAmount *= 1 + inflationRate;
+      }
+  }
   }
 }
 
 function updateInvestmentValues(investments, investmentTypes, yearTotals) {
+  console.log("\nUPDATE INVESTMENT VALUES");
   for (let investment of investments) {
     // Calculate the generated income, using the given fixed amount or percentage, or sampling from the specified probability distribution.
     let initialValue = investment.value;
     let investmentType = investmentTypes.find((type) => type._id === investment.investmentType);
+    console.log("investment type name of ", investmentType.name, ", investment is ", investment.accountTaxStatus, " and value is ", investment.value);
+
     let annualIncome = investmentType.annualIncome;
     let income = 0;
     if (annualIncome.type == "normal") {
@@ -180,7 +198,8 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals) {
     }
 
     if (annualIncome.unit == "percentage") {
-      income = investment.value * (1 + income * 0.01);
+      // income = investment.value * (1 + income * 0.01);
+      income *= (1 + (investment.value * 0.01));
     }
 
     // Add the income to curYearIncome, if the investment’s tax status is ‘non-retirement’ and the investment type’s taxability is ‘taxable’.
@@ -202,13 +221,13 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals) {
     // Add the income to the value of the investment
     //console.log("\ninvestment.value", investment.value, investment._id, "change:", change);
     investment.value += change;
+    console.log('change :>> ', change);
     yearTotals.curYearGains += change;
     // Calculate this year’s expenses, by multiplying the expense ratio and the average value of the investment
     let expenses = investmentType.expenseRatio * 0.01 * ((initialValue + investment.value) / 2);
     investment.value -= expenses;
-    //console.log("now investment.value", investment.value, investment._id, "expenses", expenses);
+    console.log("now its value is ", investment.value, "after subtracting an expense of ", expenses);
   }
-  // return {curYearIncome, curYearGains};
 }
 
 class DataStore {
@@ -376,17 +395,18 @@ async function runSimulation(scenario, tax, stateTax, startYearPrev, lifeExpecta
     // console.log('income yearTotals before :>> ', yearTotals);
     updateIncomeEvents(incomeEvent, year, userEndYear, inflationRate, filingStatus, scenario, yearTotals, cashInvestment, curIncomeEvent, spouseDeath);
     // console.log("yearTotals after :>> ", yearTotals);
-    console.log("AFTER INCOME", yearTotals.curYearIncome);
+    console.log("after running income event, the curYearIncome is", yearTotals.curYearIncome);
 
-    //   // PERFORM RMD FOR PREVIOUS YEAR
+    // PERFORM RMD FOR PREVIOUS YEAR
     const userAge = year - scenario.birthYearUser;
     await performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD);
     sumInvestmentsPreTaxRMD = 0;
 
-    //   // UPDATE INVESTMENT VALUES
+    //  UPDATE INVESTMENT VALUES
     // console.log(' investment yearTotals before :>> ', yearTotals);
     updateInvestmentValues(investments, investmentTypes, yearTotals);
     // console.log("yearTotals after :>> ", yearTotals);
+
 
     // find all the investment objects by the roth conversion strategy ids
     let rothConversionStrategyInvestments = [];
@@ -398,14 +418,16 @@ async function runSimulation(scenario, tax, stateTax, startYearPrev, lifeExpecta
     }
     // console.log('roth yearTotals before :>> ', yearTotals);
     // RUN ROTH CONVERSION IF ENABLED
+
     if (scenario.optimizerSettings.enabled && year >= scenario.optimizerSettings.startYear && year <= scenario.optimizerSettings.endYear) {
       rothConversion(scenario, year, yearTotals, federalIncomeTax, investmentTypes, investments, rothConversionStrategyInvestments, fedDeduction);
     }
     // console.log("yearTotals after :>> ", yearTotals);
-
+    
+    // account for inflation for expenses that are not in the current year
     updateInflationExpenses(curExpenseEvent, expenseEvent, inflationRate);
 
-    //   // PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
+    //  PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
     let { sumNonDiscretionary, taxes } = payNonDiscretionaryExpenses(
       curExpenseEvent,
       cashInvestment,
@@ -424,22 +446,29 @@ async function runSimulation(scenario, tax, stateTax, startYearPrev, lifeExpecta
       inflationRate,
       spouseDeath
     );
-
+    
     //   // PAY DISCRETIONARY EXPENSES
     let sumDiscretionary = payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath);
-
+  
     //   // RUN INVEST EVENT
     runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
-
+   
     //   // RUN REBALANCE EVENT
-    let types = ["pre-tax", "after-tax", "non-retirement"];
+    let types = ["pre-tax", "after-tax", "non-tax"];
     for (let type of types) {
       let rebalanceStrategy = getRebalanceStrategy(scenario, curRebalanceEvent, type, year);
+      // console.log('curRebalanceEvent :>> ', curRebalanceEvent);
+      // console.log("rebalanceStrategy :>> ", rebalanceStrategy);
       if (rebalanceStrategy.length != 0) {
         rebalance(investments, year, rebalanceStrategy, userAge, yearTotals);
       }
     }
-
+    for (let investment of investments) {
+      // Calculate the generated income, using the given fixed amount or percentage, or sampling from the specified probability distribution.
+      let initialValue = investment.value;
+      let investmentType = investmentTypes.find((type) => type._id === investment.investmentType);
+      console.log("balance investment type name of ", investmentType.name, ", investment is ", investment.accountTaxStatus, " and value is ", investment.value);
+    }
     // PRELIMINARIES
     // can differ each year if sampled from distribution
     federalIncomeTax = updateFedIncomeTaxBracket(federalIncomeTax, inflationRate);
@@ -484,9 +513,9 @@ async function runSimulation(scenario, tax, stateTax, startYearPrev, lifeExpecta
       earlyWithdrawals: yearTotals.curYearEarlyWithdrawals,
       metGoal: totalInvestmentValue >= scenario.financialGoal ? 1 : 0,
     });
-
-    // logInvestment(investments, year, csvLog);
-
+    console.log('investments :>> ', investments);
+    logInvestment(investments, year, csvLog, investmentTypes);
+    console.log('logInvestment :>> ', csvLog, "for year: ", year);
     prevYearIncome = yearTotals.curYearIncome;
     prevYearSS = yearTotals.curYearSS;
     prevYearEarlyWithdrawals = yearTotals.curYearEarlyWithdrawals;
@@ -545,7 +574,7 @@ async function main(numScenarioTimes, scenarioId, userId) {
   const startYearPrev = (new Date().getFullYear() - 1).toString();
   //calculate life expectancy
   const { lifeExpectancyUser, lifeExpectancySpouse } = calculateLifeExpectancy(scenario);
-  console.log('lifeExpectancySpouse here :>> ', lifeExpectancySpouse);
+  // console.log('lifeExpectancySpouse here :>> ', lifeExpectancySpouse);
   let allYearDataBuckets = [];
 
   // find the user's state tax data
@@ -584,13 +613,15 @@ async function main(numScenarioTimes, scenarioId, userId) {
     allYearDataBuckets.push(yearDataBuckets);
 
     // logs only for the first simulation
-    const userName = user.email.split("@")[0];
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const baseFilename = `${userName}_${timestamp}`;
-    const csvFilename = path.join(__dirname, '../server/logs', `${baseFilename}.csv`);
-    const logFilename = path.join(__dirname, '../server/logs', `${baseFilename}.log`);
-    // writeCSVLog(csvFilename, simulationResult);
-    // writeEventLog(logFilename, simulationResult.eventLog);
+    if(x == 0) {
+      const userName = user.email.split("@")[0];
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const baseFilename = `${userName}_${timestamp}`;
+      const csvFile = path.join(__dirname, '../server/logs', `${baseFilename}.csv`);
+      const logFile = path.join(__dirname, '../server/logs', `${baseFilename}.log`);
+      writeCSVLog(csvFile, csvLog);
+      // writeEventLog(logFilename, simulationResult.eventLog);
+    }
   }
   const flattenedBuckets = allYearDataBuckets.flat();
 
@@ -607,6 +638,12 @@ async function main(numScenarioTimes, scenarioId, userId) {
   const shadedChart = {
     startYear,
     endYear,
+    income: data.income.median,
+    investments: data.investments.median,
+    discretionary: data.discretionary.median,
+    nonDiscretionary: data.nonDiscretionary.median,
+    taxes: data.taxes.median,
+    earlyWithdrawals: data.earlyWithdrawals.median,
     income: data.income.median,
     investments: data.investments.median,
     discretionary: data.discretionary.median,

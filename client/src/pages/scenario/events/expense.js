@@ -51,7 +51,7 @@ const Expense = () => {
             stdDev: "",
             min: "",
             max: "",
-            refer: ""
+            refer: null,
         },
         duration: {
             type: "fixedAmt",

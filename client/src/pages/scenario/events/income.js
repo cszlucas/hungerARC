@@ -68,7 +68,7 @@ const Income = () => {
             stdDev: "",
             min: "",
             max: "",
-            refer: "",
+            refer: null,
         },
         duration: {
             type: "fixedAmt",
