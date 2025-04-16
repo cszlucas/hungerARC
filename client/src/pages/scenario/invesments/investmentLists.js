@@ -24,7 +24,6 @@ import { ObjectId } from "bson";
 
 // Constants 
 const NEW_ID = "new";
-const CASH_LABEL = "Cash";
 const TAX_STATUSES = [
   { label: "Taxable", value: "non-retirement" },
   { label: "Tax-Deferred", value: "pre-tax" },
@@ -227,7 +226,7 @@ const InvestmentLists = () => {
           }
 
           const investmentTypeName = investmentTypeMap[item.investmentType] || "Unknown Type";
-          const isCash = investmentTypeName === CASH_LABEL;
+          const isCash = investmentTypeName?.toLowerCase() === "cash";
 
           return (
             <ListItem
@@ -325,12 +324,12 @@ const InvestmentLists = () => {
                     onChange={(e) => handleInputChange("investmentTypeId", e.target.value)}
                     sx={{ ...textFieldStyles, width: 350 }}
                     fullWidth
-                    disabled={investmentTypeMap[newInvestment.investmentTypeId] === "Cash"}
+                    disabled={investmentTypeMap[newInvestment.investmentTypeId]?.toLowerCase() === "cash"}
                   >
                     {Array.isArray(currInvestmentTypes) && currInvestmentTypes.length > 0 ? (
                       currInvestmentTypes.map((it) =>
                         it._id && it.name ? (
-                          <MenuItem key={it._id} value={it._id} disabled={it.name === "Cash"}>
+                          <MenuItem key={it._id} value={it._id} disabled={it.name?.toLowerCase() === "cash"}>
                             {it.name}
                           </MenuItem>
                         ) : null
@@ -386,7 +385,7 @@ const InvestmentLists = () => {
                     menuLabels={availableTaxTypes[0]}
                     menuItems={availableTaxTypes[1]}
                     width={250}
-                    disable={investmentTypeMap[newInvestment.investmentTypeId] === "Cash"}
+                    disable={investmentTypeMap[newInvestment.investmentTypeId]?.toLowerCase() === "cash"}
                   />
                 </Box>
                 <Box sx={{ flex: 1 }}>

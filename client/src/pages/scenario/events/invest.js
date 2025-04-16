@@ -108,7 +108,7 @@ const Invest = () => {
 
     // Filters investments that are allowed (excluding 'Cash' or 'pre-tax')
     const allowedInvestments = currInvestments
-        .filter((item) => getInvestmentTypeById(item.investmentType).name !== "Cash")
+        .filter((item) => getInvestmentTypeById(item.investmentType).name.toLowerCase() !== "cash")
         .filter((item) => item.accountTaxStatus !== "pre-tax");
 
     // Computes the list of currently allocated investments for display

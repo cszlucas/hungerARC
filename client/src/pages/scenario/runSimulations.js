@@ -19,8 +19,10 @@ import {AuthContext} from "../../context/authContext";
 import { saveAs } from "file-saver";
 import yaml from "js-yaml";
 import axios from "axios";
+import CustomSave from "../../components/customSaveBtn";
 
-const EventSeries = () => {
+
+const RunSimulation = () => {
   const [numSimulations, setNumSimulations] = useState("1");
   const [openBackdrop, setOpenBackdrop] = useState(false); // State to control backdrop visibility
   const [emails, setEmails] = useState([]); // Store the email addresses
@@ -29,8 +31,12 @@ const EventSeries = () => {
 
   const {currScenario, currInvestmentTypes, currInvestments, currIncome, currExpense, currInvest, currRebalance} = useContext(AppContext);
   const {user} = useContext(AuthContext);
-  console.log(currScenario);
+  // console.log(currScenario);
 
+  /**
+   * Converts a generic distribution object into a standardized internal format.
+   * Supports fixed, normal, and uniform distributions with appropriate defaults.
+   */
   function buildDistribution(dist) {
     if (dist.type === "fixed") {
       return { type: "fixed", value: parseFloat(dist.value) || 0 };
@@ -47,28 +53,39 @@ const EventSeries = () => {
         upper: parseFloat(dist.upper) || 0,
       };
     }
-    return { type: "fixed", value: 0 }; // fallback
+    // Fallback to a fixed zero value if the distribution type is unrecognized
+    return { type: "fixed", value: 0 };
   }
 
-  // Convert MongoDB ObjectId to human-readable investmentType name
+  /**
+   * Resolves a MongoDB ObjectId for an investment type to its human-readable name.
+   * Falls back to the raw ID if a match is not found.
+   */
   function resolveInvestmentTypeName(id, investmentTypes) {
     const match = investmentTypes.find(t => t._id === id);
-    return match ? match.name : id; // fallback to id if no match
+    return match ? match.name : id;
   }
 
-  // Build readable investment id (e.g. "S&P 500 pre-tax")
+  /**
+   * Constructs a readable label for an investment, combining its type and tax status.
+   * Example: "S&P 500 pre-tax"
+   */
   function buildReadableInvestmentId(investment, investmentTypes) {
     const name = resolveInvestmentTypeName(investment.investmentType, investmentTypes);
     return `${name} ${investment.accountTaxStatus}`;
   }
 
-
+  /**
+   * Converts a start or duration field into a normalized internal format.
+   * Supports fixed values, distributions (normal/uniform), and references to events.
+   */
   function convertStartOrDuration(field) {
     if (!field || !field.type) {
-      return { type: "fixed", value: 0 }; // fallback for missing or bad input
+      return { type: "fixed", value: 0 }; // Default for undefined or malformed input
     }
-  
+
     const { type, value, mean, stdDev, min, max, refer } = field;
+
     if (type === "fixedAmt" || type === "fixed") {
       return { type: "fixed", value: parseFloat(value) };
     } else if (type === "normal") {
@@ -76,12 +93,17 @@ const EventSeries = () => {
     } else if (type === "uniform") {
       return { type: "uniform", lower: parseFloat(min), upper: parseFloat(max) };
     } else if (type === "startWith" || type === "startAfter") {
-      return { type, eventSeries: refer };
+      return { type, eventSeries: refer }; // Relative timing based on another event
     }
-  
+
+    // Fallback for unrecognized types
     return { type: "fixed", value: 0 };
   }
-  
+
+  /**
+   * Converts an annual change object into a normalized format with distribution info.
+   * Supports both amount and percent-based changes, with optional variability.
+   */
   function convertAnnualChange(change) {
     if (!change || !change.type) {
       return {
@@ -89,10 +111,11 @@ const EventSeries = () => {
         changeDistribution: { type: "fixed", value: 0 },
       };
     }
-  
+
     const { type, amount, distribution, mean, stdDev, min, max } = change;
     const changeAmtOrPct = type === "percent" ? "percent" : "amount";
-  
+
+    // Default to fixed change unless a distribution is specified
     let changeDistribution = { type: "fixed", value: parseFloat(amount) || 0 };
     if (distribution === "normal") {
       changeDistribution = {
@@ -107,12 +130,17 @@ const EventSeries = () => {
         upper: parseFloat(max),
       };
     }
-  
+
     return { changeAmtOrPct, changeDistribution };
   }
-  
+
+  /**
+   * Converts investment allocation keys (raw MongoDB ObjectIds) to user-friendly strings.
+   * This makes allocation maps easier to read in a UI or exported format.
+   */
   function convertAllocationKeys(allocationObj, currInvestments, currInvestmentTypes) {
     if (!allocationObj) return {};
+
     const result = {};
     for (const rawId in allocationObj) {
       const inv = currInvestments.find(i => i._id === rawId);
@@ -121,7 +149,6 @@ const EventSeries = () => {
     }
     return result;
   }
-
 
   function exportToYAML({
     currScenario,
@@ -147,8 +174,8 @@ const EventSeries = () => {
     const yamlObject = {
       name: filteredScenario.name || "Retirement Planning Scenario",
       maritalStatus: filteredScenario.filingStatus === "single" ? "individual" : "couple",
-      birthYears: [filteredScenario.birthYearUser],
-      lifeExpectancy: [filteredScenario.lifeExpectancy],
+      birthYears: [filteredScenario.birthYearUser, filteredScenario.birthYearSpouse],
+      lifeExpectancy: [filteredScenario.lifeExpectancy, filteredScenario.lifeExpectancySpouse],
       investmentTypes: currInvestmentTypes.map(t => ({
         name: t.name,
         description: t.description,
@@ -280,20 +307,19 @@ const EventSeries = () => {
   }
   
   
-    const handleExport = () => {
-      exportToYAML({
-        currScenario,
-        currInvestmentTypes,
-        currInvestments,
-        currIncome,
-        currExpense,
-        currInvest,
-        currRebalance
-      });
-    };
+  const handleExport = () => {
+    exportToYAML({
+      currScenario,
+      currInvestmentTypes,
+      currInvestments,
+      currIncome,
+      currExpense,
+      currInvest,
+      currRebalance
+    });
+  };
 
   const navigate = useNavigate();
-  
 
   const handleShareClick = () => {
     setOpenBackdrop(true); // Show backdrop when the "Share" button is clicked
@@ -389,6 +415,7 @@ const EventSeries = () => {
                   backgroundColor: "#59a8c2", // Optionally set hover color
                 },
               }}
+              onClick={() => navigate("/scenario/scenarios")}
             >
               Save & Exit
             </Button>
@@ -517,4 +544,4 @@ const EventSeries = () => {
   );
 };
 
-export default EventSeries;
+export default RunSimulation;

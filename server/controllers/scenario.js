@@ -110,7 +110,7 @@ exports.deleteScenario = async (req, res) => {
 exports.importUserData = async (req, res) => {
   const { id } = req.params;
   const {
-    name, maritalStatus, birthYearSpouse, birthYearUser, lifeExpectancy, lifeExpectancySpouse,
+    name, filingStatus, birthYearSpouse, birthYearUser, lifeExpectancy, lifeExpectancySpouse,
     setOfinvestmentTypes, setOfinvestments, income, expense, invest, rebalance,
     inflationAssumption, irsLimit, spendingStrategy, expenseWithdrawalStrategy,
     rmdStrategy, optimizerSettings, rothConversionStrategy, financialGoal, stateResident,
@@ -118,7 +118,7 @@ exports.importUserData = async (req, res) => {
 
   const basicInfoData = {
     name,
-    filingStatus: maritalStatus === "couple" ? "married" : "single",
+    filingStatus, //: maritalStatus === "couple" ? "married" : "single",
     financialGoal,
     inflationAssumption,
     birthYearUser,
@@ -139,12 +139,8 @@ exports.importUserData = async (req, res) => {
     // Handle investment types
     for (const type of setOfinvestmentTypes) {
       formatIssues([type]);
-      if (type.name.toLowerCase() === "cash") { 
-        type.name = "Cash"; 
-        console.log(type);
-      }
       const { data: res } = await axios.post(`http://localhost:8080/scenario/${scenarioId}/investmentType`, type);
-      investmentTypeMap[res.name === "Cash" ? "cash" : res.name] = res._id;
+      investmentTypeMap[res.name] = res._id;
     }
 
     // Handle individual investments
@@ -192,8 +188,9 @@ exports.importUserData = async (req, res) => {
     // Submit events
     for (const { data, route } of eventMappings) {
       for (const event of data) {
-        console.log(event);
-        console.log("=====================================")
+        // if (route === "expenseEvent") { console.log(event);}
+        // console.log("=====================================");
+
         event.startYear.refer = eventSeriesMapNameToId[event.startYear.refer] ?? null;
         await axios.post(`http://localhost:8080/scenario/${scenarioId}/${route}`, event);
       }
