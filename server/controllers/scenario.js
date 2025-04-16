@@ -146,7 +146,7 @@ exports.importUserData = async (req, res) => {
       const { data: res } = await axios.post(`http://localhost:8080/scenario/${scenarioId}/investmentType`, type);
       investmentTypeMap[res.name === "Cash" ? "cash" : res.name] = res._id;
     }
-    console.log(setOfinvestments);
+
     // Handle individual investments
     for (const inv of setOfinvestments) {
       formatIssues([inv]);
@@ -158,20 +158,13 @@ exports.importUserData = async (req, res) => {
       const { data: res } = await axios.post(`http://localhost:8080/scenario/${scenarioId}/investment`, investmentToCreate);
       investmentMap[`${inv.investmentType} ${inv.accountTaxStatus}`] = res._id;
     }
-
-    console.log(investmentTypeMap);
-    console.log("==========================================================");
-    console.log(investmentMap);
-    console.log("==========================================================");
     
-    // Attach investment IDs to allocation
-    // Convert asset allocation to IDs
+    // Convert asset allocation to IDs Mappings
     for (const event of invest) {
       if (event?.assetAllocation) {
         event.assetAllocation = await assetAllocationToID(investmentMap, event.assetAllocation);
       }
     }
-
     for (const event of rebalance) {
       if (event?.rebalanceAllocation) {
         event.rebalanceAllocation = await assetAllocationToID(investmentMap, event.rebalanceAllocation);
@@ -199,6 +192,8 @@ exports.importUserData = async (req, res) => {
     // Submit events
     for (const { data, route } of eventMappings) {
       for (const event of data) {
+        console.log(event);
+        console.log("=====================================")
         event.startYear.refer = eventSeriesMapNameToId[event.startYear.refer] ?? null;
         await axios.post(`http://localhost:8080/scenario/${scenarioId}/${route}`, event);
       }
@@ -214,7 +209,6 @@ exports.importUserData = async (req, res) => {
     });
 
     return res.status(200).json({ scenario: update.data.scenario });
-
   } catch (error) {
     logAxiosError("importing user data", error);
     return res.status(500).json({ error: error.message });
