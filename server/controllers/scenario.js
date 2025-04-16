@@ -77,7 +77,7 @@ exports.updateScenario = async (req, res) => {
   const updateData = req.body;
   try {
     const result = await Scenario.updateOne({ _id: new ObjectId(id) }, { $set: updateData });
-    return res.status(200).json({ message: "Scenario updated successfully" });
+    return res.status(200).json({ message: "Scenario updated successfully", scenario: result });
   } catch (err) {
     console.error("Error adding to scenario:", err);
     res.status(500).json({ error: err.message });
@@ -255,18 +255,14 @@ exports.importUserData = async (req, res) => {
       // console.log("spendingStrategyIds", spendingStrategyIds);
       // console.log("rothStrategy", rothStrategy);
 
-      await axios.post(`http://localhost:8080/updateScenario/${scenarioId}`, {
+      const update = await axios.post(`http://localhost:8080/updateScenario/${scenarioId}`, {
         spendingStrategy: spendingStrategyIds,
         expenseWithdrawalStrategy: expenseWithdrawalStrategyIds,
         rmdStrategy: RMDStrategyIds,
         rothConversionStrategy: rothStrategy,
         optimizerSettings: optimizerSettings,
-        // Include other strategies if needed
-        incomeEventSeries: setEventSeriesMap["incomeEvent"],
-        expenseEventSeries: setEventSeriesMap["expenseEvent"],
-        investEventSeries: setEventSeriesMap["investStrategy"],
-        rebalanceEventSeries: setEventSeriesMap["rebalanceStrategy"],
       });
+      res.status(200).json({ scenario: update.data });
     } catch (error) {
       if (error.response) {
         console.error(`Error creating:`, error.response.data);
@@ -274,8 +270,6 @@ exports.importUserData = async (req, res) => {
         console.error(`Error creating:`, error.message);
       }
     }
-
-    res.status(200).json({ scenario: response.data });
   } catch (error) {
     console.error("Import failed:", error);
     res.status(500).json({ error: error.message });
