@@ -188,8 +188,8 @@ exports.importUserData = async (req, res) => {
     // Submit events
     for (const { data, route } of eventMappings) {
       for (const event of data) {
-        // if (route === "expenseEvent") { console.log(event);}
-        // console.log("=====================================");
+        if (route === "expenseEvent") { console.log(event);}
+        console.log("=====================================");
 
         event.startYear.refer = eventSeriesMapNameToId[event.startYear.refer] ?? null;
         await axios.post(`http://localhost:8080/scenario/${scenarioId}/${route}`, event);
