@@ -89,7 +89,6 @@ function payNonDiscretionaryExpenses(
   for (let expense of nonDiscretionaryExpenses) {
     expenseAmt += getExpenseAmountInYear(expense, year, inflationRate, spouseDeath);
   }
-  const nonDiscretionaryExpenseAmt = expenseAmt;
   const taxes = getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, capitalGains, userAge, fedDeduction);
   console.log("nonDiscretionaryExpenses Amt: ", expenseAmt, "and taxes: ", taxes);
   let withdrawalAmt = expenseAmt + taxes;
@@ -117,7 +116,7 @@ function payNonDiscretionaryExpenses(
     }
   }
   return {
-    sumNonDiscretionary: nonDiscretionaryExpenseAmt,
+    nonDiscretionary: nonDiscretionaryExpenses,
     taxes: taxes
   };
 }

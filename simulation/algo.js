@@ -13,6 +13,7 @@ const { buildChartDataFromBuckets, updateYearDataBucket, createYearDataBuckets }
 const { writeCSVLog, writeEventLog, logInvestment } = require("./logs.js");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
+const {getExpenseAmountInYear} = require("./helper.js");
 
 function findInflation(inflationAssumption) {
   if (inflationAssumption.type == "fixed") return inflationAssumption.fixedRate;
@@ -415,7 +416,7 @@ async function runSimulation(
     updateInflationExpenses(curExpenseEvent, expenseEvent, inflationRate);
 
     //  PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
-    let { sumNonDiscretionary, taxes } = payNonDiscretionaryExpenses(
+    let { nonDiscretionary, taxes } = payNonDiscretionaryExpenses(
       curExpenseEvent,
       cashInvestment,
       prevYearIncome,
@@ -436,6 +437,8 @@ async function runSimulation(
 
     // PAY DISCRETIONARY EXPENSES
     let sumDiscretionary = payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath);
+
+    const discretionary = curExpenseEvent.filter((expenseEvent) => expenseEvent.isDiscretionary === true);
 
     // RUN INVEST EVENT
     //runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
@@ -479,20 +482,29 @@ async function runSimulation(
     }
     console.log("The sum of investments with value pretax (to use in RMD) is: ", sumInvestmentsPreTaxRMD, "as of year: ", year);
 
-    let totalInvestmentValue = 0;
-    for (let investment of investments) {
-      totalInvestmentValue += investment.value;
-    }
+    const lookup = Object.fromEntries(investmentTypes.map((type) => [type._id.toString(), type.name]));
 
     updateYearDataBucket(yearDataBuckets, yearIndex, {
-      investments: totalInvestmentValue,
-      income: yearTotals.curYearIncome,
-      discretionary: sumDiscretionary,
-      nonDiscretionary: sumNonDiscretionary,
+      investments: investments.map((event) => ({
+        name: lookup[event.investmentType.toString()] || "Unknown",
+        value: event.value,
+      })),
+      income: curIncomeEvent.map((event) => ({
+        name: event.eventSeriesName,
+        value: getExpenseAmountInYear(event, year, inflationRate, spouseDeath),
+      })),
+      discretionary: discretionary.map((event) => ({
+        name: event.eventSeriesName,
+        value: getExpenseAmountInYear(event, year, inflationRate, spouseDeath),
+      })),
+      nonDiscretionary: nonDiscretionary.map((event) => ({
+        name: event.eventSeriesName,
+        value: getExpenseAmountInYear(event, year, inflationRate, spouseDeath),
+      })),
       taxes: taxes,
       earlyWithdrawals: yearTotals.curYearEarlyWithdrawals,
-      metGoal: totalInvestmentValue >= scenario.financialGoal ? 1 : 0,
     });
+
     // console.log('investments :>> ', investments);
     logInvestment(investments, year, csvLog, investmentTypes);
     console.log("logInvestment :>> ", csvLog, "for year: ", year);
@@ -602,8 +614,9 @@ async function main(numScenarioTimes, scenarioId, userId) {
       // writeEventLog(logFilename, simulationResult.eventLog);
     }
   }
+  //console.log("allYearDataBuckets", JSON.stringify(allYearDataBuckets, null, 2));
   const flattenedBuckets = allYearDataBuckets.flat();
-  //console.log("flattenedBuckets", flattenedBuckets)
+  // console.log("flattenedBuckets", flattenedBuckets)
 
   const { startYear, endYear, data } = buildChartDataFromBuckets(flattenedBuckets, 2025, numScenarioTimes);
   // console.log("DATA", JSON.stringify(data, null, 2));
@@ -618,7 +631,6 @@ async function main(numScenarioTimes, scenarioId, userId) {
       nonDiscretionary: data.nonDiscretionary[i],
       taxes: data.taxes[i],
       earlyWithdrawals: data.earlyWithdrawals[i],
-      metGoal: data.metGoal[i],
     });
   }
 
