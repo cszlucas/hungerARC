@@ -31,8 +31,6 @@ function buildChartDataFromBuckets(buckets, startYear, numScenarioTimes) {
   const endYear = startYear + numYears - 1;
   console.log("endYear :>> ", endYear);
   const data = {
-    startYear: startYear,
-    endYear: endYear,
     income: [],
     investments: [],
     discretionary: [],

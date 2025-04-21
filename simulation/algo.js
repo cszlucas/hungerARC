@@ -603,25 +603,28 @@ async function main(numScenarioTimes, scenarioId, userId) {
     }
   }
   const flattenedBuckets = allYearDataBuckets.flat();
+  //console.log("flattenedBuckets", flattenedBuckets)
 
-  const data = buildChartDataFromBuckets(flattenedBuckets, 2025, numScenarioTimes);
-
-  console.log("DATA", data);
+  const { startYear, endYear, data } = buildChartDataFromBuckets(flattenedBuckets, 2025, numScenarioTimes);
+  // console.log("DATA", JSON.stringify(data, null, 2));
+  // console.log("DATA", data);
   const years = [];
-  for (let i = 0; i <= data.endYear - data.startYear; i++) {
+  for (let i = 0; i <= endYear - startYear; i++) {
     years.push({
-      year: data.startYear + i,
-      income: data.income[i][0],
-      investments: data.investments[i][0],
-      discretionary: data.discretionary[i][0],
-      nonDiscretionary: data.nonDiscretionary[i][0],
-      taxes: data.taxes[i][0],
-      earlyWithdrawals: data.earlyWithdrawals[i][0],
-      metGoal: data.metGoal[i][0],
+      year: startYear + i,
+      income: data.income[i],
+      investments: data.investments[i],
+      discretionary: data.discretionary[i],
+      nonDiscretionary: data.nonDiscretionary[i],
+      taxes: data.taxes[i],
+      earlyWithdrawals: data.earlyWithdrawals[i],
+      metGoal: data.metGoal[i],
     });
   }
 
-  console.log(years);
+  console.log("YEARS", JSON.stringify(years, null, 2));
+
+  // console.log(years);
 
   return years;
 }
