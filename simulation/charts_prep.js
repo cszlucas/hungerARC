@@ -15,14 +15,13 @@ function createYearDataBuckets(numYears) {
 }
 
 //During each year of a simulation, call this helper to push values into the appropriate bucket:
-function updateYearDataBucket(buckets, index, { investments, income, discretionary, nonDiscretionary, taxes, earlyWithdrawals, metGoal }) {
+function updateYearDataBucket(buckets, index, { investments, income, discretionary, nonDiscretionary, taxes, earlyWithdrawals }) {
   buckets[index].investments.push(investments);
   buckets[index].income.push(income);
   buckets[index].discretionary.push(discretionary);
   buckets[index].nonDiscretionary.push(nonDiscretionary);
   buckets[index].taxes.push(taxes);
   buckets[index].earlyWithdrawals.push(earlyWithdrawals);
-  buckets[index].metGoal.push(metGoal); // 1 or 0
 }
 
 //After All Simulations — Build Chart Data
@@ -37,7 +36,6 @@ function buildChartDataFromBuckets(buckets, startYear, numScenarioTimes) {
     nonDiscretionary: [],
     taxes: [],
     earlyWithdrawals: [],
-    metGoal: [],
   };
 
   const yearBuckets = Array.from({ length: numYears }, () => ({
@@ -47,7 +45,6 @@ function buildChartDataFromBuckets(buckets, startYear, numScenarioTimes) {
     nonDiscretionary: [],
     taxes: [],
     earlyWithdrawals: [],
-    metGoal: [],
   }));
 
   for (let i = 0; i < buckets.length; i++) {
@@ -60,7 +57,6 @@ function buildChartDataFromBuckets(buckets, startYear, numScenarioTimes) {
     yearBuckets[yearIndex].nonDiscretionary.push(...bucket.nonDiscretionary);
     yearBuckets[yearIndex].taxes.push(...bucket.taxes);
     yearBuckets[yearIndex].earlyWithdrawals.push(...bucket.earlyWithdrawals);
-    yearBuckets[yearIndex].metGoal.push(...bucket.metGoal);
   }
 
   for (const bucket of yearBuckets) {
@@ -70,7 +66,6 @@ function buildChartDataFromBuckets(buckets, startYear, numScenarioTimes) {
     data.nonDiscretionary.push(bucket.nonDiscretionary);
     data.taxes.push(bucket.taxes);
     data.earlyWithdrawals.push(bucket.earlyWithdrawals);
-    data.metGoal.push(bucket.metGoal);
   }
   // console.log('data :>> ', data);
   // console.log('yearBuckets :>> ', yearBuckets);
