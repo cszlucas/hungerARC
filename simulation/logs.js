@@ -1,41 +1,188 @@
+const fs = require("fs");
+const path = require("path");
+const { getExpenseAmountInYear } = require("./helper.js");
 
-const fs = require('fs');
+function writeCSVLog(csvFilename, simulationResult) {
+  const years = simulationResult.years; // array of years like [2025, 2026,...]
+  const firstYearData = simulationResult[0]; // assuming it's not empty
+  const investments = Object.keys(firstYearData).filter((key) => key !== "year");
+  console.log("investments :>> ", investments);
+  // const investments = simulationResult.investments; // ['IRA', '401k', 'Roth']
+  const valuesByYear = simulationResult; // assume array of {year: 2025, IRA: 1000, 401k: 2000, Roth: 500}
 
-function writeCSVLog(csvFilename, simulationResult){
-    const years = simulationResult.years; // array of years like [2025, 2026,...]
-    const firstYearData = simulationResult[0]; // assuming it's not empty
-    const investments = Object.keys(firstYearData).filter(key => key !== 'year');
-    console.log('investments :>> ', investments);
-    // const investments = simulationResult.investments; // ['IRA', '401k', 'Roth']
-    const valuesByYear = simulationResult; // assume array of {year: 2025, IRA: 1000, 401k: 2000, Roth: 500}
-  
-    const header = ['Year', ...investments].join(',');
-    const rows = valuesByYear.map((entry) =>
-      [entry.year, ...investments.map((inv) => entry[inv])].join(',')
-    );
-  
-    const fullCSV = [header, ...rows].join('\n');
-    fs.writeFileSync(csvFilename, fullCSV, 'utf8');
+  const header = ["Year", ...investments].join(",");
+  const rows = valuesByYear.map((entry) => [entry.year, ...investments.map((inv) => entry[inv])].join(","));
+
+  const fullCSV = [header, ...rows].join("\n");
+  fs.writeFileSync(csvFilename, fullCSV, "utf8");
 }
 
-function writeEventLog(logFilename, simulationResult){
+function writeEventLog(logFilename, simulationResult) {}
 
-}
-
-function logInvestment(investments, year, csvLog, investmentTypes){
-    const csvRow = { year };
-    for (const inv of investments) {
-      const type = investmentTypes.find(type => type._id === inv.investmentType);
+function logInvestment(investments, year, csvLog, investmentTypes) {
+  const csvRow = { year };
+  for (const inv of investments) {
+    const type = investmentTypes.find((type) => type._id === inv.investmentType);
     //   console.log('inv :>> ', inv);
-      const columnName = type.name;
-      csvRow[columnName] = inv.value;
+    const columnName = type.name;
+    csvRow[columnName] = inv.value;
+  }
+  csvLog.push(csvRow);
+  // console.log('csvLog :>> ', csvLog);
+}
+
+const logDir = path.join(__dirname, "logs");
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir);
+}
+
+const logFile = path.join(logDir, "user_datetime.log");
+fs.appendFileSync(logFile, "Hello, this is a test log.\n", "utf8");
+
+function logFinancialEvent({ year, type, description, amount, details = {} }) {
+  if (amount !== undefined) {
+    const formattedAmount = typeof amount === "number" ? `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : amount;
+    line += ` - ${formattedAmount}.`;
+  }
+
+  let line = `[${year}] ${type.toUpperCase()} | `;
+
+  switch (type.toLowerCase()) {
+    case "income":
+    case "invest":
+    case "expense":
+      if (details.name) line += ` from "${details.name}"`;
+      break;
+
+    case "tax":
+      if (details.taxType) line += ` paid as "${details.taxType}"`;
+      break;
+
+    case "roth conversion":
+      if (details.from && details.to) {
+        line += ` of "${details.from}" to "${details.to}"`;
+      }
+      break;
+
+    case "rebalance":
+      if (details.sold && details.bought) {
+        line += ` - Sold: "${details.sold}", Bought: "${details.bought}"`;
+      }
+      break;
+
+    case "rmd": {
+      const rmdAmount = details.amount ?? amount;
+      let formattedAmount = "";
+
+      if (typeof rmdAmount === "number") {
+        formattedAmount = `$${rmdAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+      } else {
+        formattedAmount = rmdAmount ?? "";
+      }
+
+      if (formattedAmount) line += `RMD amount - ${formattedAmount}`;
+      if (description) line += ` | ${description}`;
+      if (details.userAge) line += ` at age ${details.userAge}`;
+      if (details.rmdCount !== undefined) line += `${details.rmdCount} of RMD left to withdraw`;
+      if (details.amountTransfer) {
+        line += ` Transferred "${details.amountTransfer} from pretax investment to non-retirement.`;
+      }
+      if (details.preTaxInvestmentID) {
+        line += ` from [preTaxInvestment ID: ${details.preTaxInvestmentID}] of  `;
+        if (details.preTaxInvestmentValue !== undefined) {
+          const val = typeof details.preTaxInvestmentValue === "number" ? `$${details.preTaxInvestmentValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : details.preTaxInvestmentValue;
+          line += ` (value: ${val})`;
+        }
+      }
+      if (details.nonRetirementInvestmentID) {
+        line += ` from [nonRetirementInvestment ID: ${details.nonRetirementInvestmentID}] of `;
+        if (details.nonRetirementInvestmentValue !== undefined) {
+          const val =
+            typeof details.nonRetirementInvestmentValue === "number"
+              ? `$${details.nonRetirementInvestmentValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+              : details.nonRetirementInvestmentValue;
+          line += ` (value: ${val})`;
+        }
+      }
+      break;
     }
-    csvLog.push(csvRow);
-    // console.log('csvLog :>> ', csvLog);
+    case "non-discretionary": {
+      line += formatNonDiscretionaryDetails(details, amount, description);
+      break;
+    }
+    default:
+      if (Object.keys(details).length) {
+        line += ` - Details: ${JSON.stringify(details)}`;
+      }
+  }
+
+  // Add a newline and write to file
+  fs.appendFileSync(logFile, line + "\n", "utf8");
+}
+
+function formatNonDiscretionaryDetails(details, amount, description = "") {
+  const expenseAmount = details.amount ?? amount;
+
+  const formatCurrency = (val) => (typeof val === "number" ? `$${val.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : val ?? "");
+
+  let line = "";
+
+  const formattedAmount = formatCurrency(expenseAmount);
+  if (description) line += `${description}\n`;
+  if (formattedAmount) line += `Amount you need to pay in Non-discretionary expenses - ${formattedAmount}.`;
+
+  if (details.taxes) {
+    line += `Amount owed in taxes: "${formatCurrency(details.taxes)}"`;
+  }
+  if (details.cash) {
+    line += `Amount of cash you have to spend: "${formatCurrency(details.cash)}".`;
+  }
+  if (details.withdrawalAmt) {
+    line += `Amount you need to withdraw: "${formatCurrency(details.withdrawalAmt)}".`;
+  }
+  if (details.investmentID) {
+    line += `Investment to withdraw from ID "${details.investmentID}" with value "${formatCurrency(details.investmentValue)}".`;
+  }
+  if (details?.type && details?.ID && details?.Value) {
+    const valueFormatted = formatCurrency(details.Value);
+    line += ` ${details.type.toUpperCase()} ID: ${details.ID} | Value: ${valueFormatted}`;
+  }
+  return line;
+}
+
+function printInvestments(investments, year, type, detailsType) {
+  for (investment of investments) {
+    logFinancialEvent({
+      year: year,
+      type: type,
+      details: {
+        type: detailsType,
+        ID: investment._id,
+        Value: investment.value,
+      },
+    });
+  }
+}
+
+function printEvents(events, year, type, detailsType, inflationRate, spouseDeath) {
+  for (e of events) {
+    logFinancialEvent({
+      year: year,
+      type: type,
+      details: {
+        type: detailsType,
+        ID: e._id,
+        Value: getExpenseAmountInYear(e, year, inflationRate, spouseDeath),
+      },
+    });
+  }
 }
 
 module.exports = {
-    writeCSVLog,
-    writeEventLog,
-    logInvestment
+  writeCSVLog,
+  writeEventLog,
+  logInvestment,
+  logFinancialEvent,
+  printInvestments,
+  printEvents,
 };

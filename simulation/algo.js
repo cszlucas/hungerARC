@@ -393,7 +393,7 @@ async function runSimulation(
 
     // PERFORM RMD FOR PREVIOUS YEAR
     const userAge = year - scenario.birthYearUser;
-    await performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD);
+    //await performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year);
     sumInvestmentsPreTaxRMD = 0;
 
     //  UPDATE INVESTMENT VALUES
@@ -436,7 +436,7 @@ async function runSimulation(
     );
 
     // PAY DISCRETIONARY EXPENSES
-    let sumDiscretionary = payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath);
+    //let sumDiscretionary = payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath);
 
     const discretionary = curExpenseEvent.filter((expenseEvent) => expenseEvent.isDiscretionary === true);
 
@@ -450,7 +450,7 @@ async function runSimulation(
       // console.log('curRebalanceEvent :>> ', curRebalanceEvent);
       // console.log("rebalanceStrategy :>> ", rebalanceStrategy);
       if (rebalanceStrategy.length != 0) {
-        rebalance(investments, year, rebalanceStrategy, userAge, yearTotals);
+        //rebalance(investments, year, rebalanceStrategy, userAge, yearTotals);
       }
     }
 

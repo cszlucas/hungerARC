@@ -1,12 +1,14 @@
 import RMD from "../server/models/rmd-schema.js";
 import { getExpenseAmountInYear } from "./helper.js";
-import structuredClone from 'structured-clone';
-import { v4 as uuidv4 } from 'uuid';
+import structuredClone from "structured-clone";
+import { v4 as uuidv4 } from "uuid";
+import { logFinancialEvent, printInvestments, printEvents } from "./logs.js";
 
 //RMDStrategyInvestOrder is an ordering on investments in pre-tax retirement accounts.
-async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD) {
+async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year) {
+  console.log("Perform RMD");
   if (userAge >= 74 && RMDStrategyInvestOrder != null) {
-    console.log("\nRMDs\nUser age", userAge, "and sum of pre-tax values from prev year is", sumInvestmentsPreTaxRMD);
+    //console.log("\nRMDs\nUser age", userAge, "and sum of pre-tax values from prev year is", sumInvestmentsPreTaxRMD);
 
     const match = await RMD.findOne({ "rmd.age": userAge }, { "rmd.$": 1 });
     if (!match || !match.rmd || !match.rmd[0]) {
@@ -19,23 +21,69 @@ async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOr
     let rmd = sumInvestmentsPreTaxRMD / distributionPeriod;
     yearTotals.curYearIncome += rmd;
     let rmdCount = rmd;
+    logFinancialEvent({
+      year: year,
+      type: "rmd",
+      description: "Performing RMD",
+      details: {
+        amount: rmdCount,
+        userAge: userAge,
+      },
+    });
 
     for (let preTaxInvest of RMDStrategyInvestOrder) {
       if (rmdCount > 0) {
-        console.log("The rmd count: ", rmdCount, "and the pretax investment", preTaxInvest._id, "has value:", preTaxInvest.value);
+        logFinancialEvent({
+          year: year,
+          type: "rmd",
+          details: {
+            rmdCount: rmdCount,
+            preTaxInvestmentValue: preTaxInvest.value,
+            preTaxInvestmentID: preTaxInvest._id,
+          },
+        });
+        //console.log("The rmd count: ", rmdCount, "and the pretax investment", preTaxInvest._id, "has value:", preTaxInvest.value);
         if (preTaxInvest.value - rmdCount >= 0) {
-          transferInvestment(preTaxInvest, allInvestmentsNonRetirement, rmdCount, investments);
+          transferInvestment(preTaxInvest, allInvestmentsNonRetirement, rmdCount, investments, year);
           preTaxInvest.value -= rmdCount;
-          console.log("can perform rmd all this round. The old pretax investment", preTaxInvest._id, " now has", preTaxInvest.value);
+
+          logFinancialEvent({
+            year: year,
+            type: "rmd",
+            description: "Performed all rmd this round. The new pretax investment values are:",
+            details: {
+              rmdCount: rmdCount,
+              preTaxInvestmentValue: preTaxInvest.value,
+              preTaxInvestmentID: preTaxInvest._id,
+            },
+          });
+          //console.log("can perform rmd all this round. The old pretax investment", preTaxInvest._id, " now has", preTaxInvest.value);
           break;
         } else {
-          transferInvestment(preTaxInvest, allInvestmentsNonRetirement, preTaxInvest.value, investments);
+          transferInvestment(preTaxInvest, allInvestmentsNonRetirement, preTaxInvest.value, investments, year);
           rmdCount -= preTaxInvest.value;
           preTaxInvest.value = 0;
-          console.log("can NOT pay all this round. Transfer all of pretax investment. The rmd amount left to transfer: ", rmdCount);
+
+          logFinancialEvent({
+            year: year,
+            type: "rmd",
+            description: "can NOT pay all this round. Transferred all of pretax investment to non-retirement.",
+            details: {
+              rmdCount: rmdCount,
+              preTaxInvestmentValue: preTaxInvest.value,
+              preTaxInvestmentID: preTaxInvest._id,
+            },
+          });
+          //console.log("can NOT pay all this round. Transfer all of pretax investment. The rmd amount left to transfer: ", rmdCount);
         }
       } else {
-        console.log("RMD transferred");
+        //console.log("RMD transferred");
+        logFinancialEvent({
+          year: year,
+          type: "rmd",
+          description: "All RMD transferred.",
+          rmdCount: rmdCount,
+        });
         break;
       }
     }
@@ -43,21 +91,42 @@ async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOr
 }
 
 // from the pretax account to non-retirement accounts
-function transferInvestment(preTaxInvest, allInvestmentsNonRetirement, amountTransfer, investments) {
+function transferInvestment(preTaxInvest, allInvestmentsNonRetirement, amountTransfer, investments, year) {
   let nonRetirementMap = new Map(allInvestmentsNonRetirement.map((investment) => [investment.investmentType, investment]));
   let nonRetirementInvestment = nonRetirementMap.get("preTaxInvest.investmentType");
 
   if (nonRetirementInvestment) {
-    console.log("able to add value: ", amountTransfer, "to a current afterTaxInvestment ", nonRetirementInvestment._id, "of value", nonRetirementInvestment.value);
+    // console.log("able to add value: ", amountTransfer, "to a current afterTaxInvestment ", nonRetirementInvestment._id, "of value", nonRetirementInvestment.value);
+    logFinancialEvent({
+      year: year,
+      type: "rmd",
+      description: "Add amount to old non-retirement investment",
+      details: {
+        amountTransfer: amountTransfer,
+        nonRetirementInvestmentValue: nonRetirementInvestment.value,
+        nonRetirementInvestmentID: nonRetirementInvestment._id,
+      },
+    });
     nonRetirementInvestment.value += amountTransfer;
   } else {
-    console.log("create a new non-retirement investment with value: ", amountTransfer);
+    //console.log("create a new non-retirement investment with value: ", amountTransfer);
     let newInvestment = {
       _id: uuidv4(),
       ...structuredClone(preTaxInvest),
       value: amountTransfer,
       accountTaxStatus: "non-retirement",
     };
+
+    logFinancialEvent({
+      year: year,
+      type: "rmd",
+      description: "Add amount to new non-retirement investment",
+      details: {
+        amountTransfer: amountTransfer,
+        nonRetirementInvestmentID: newInvestment._id,
+      },
+    });
+
     investments.push(newInvestment);
   }
 }
@@ -90,34 +159,68 @@ function payNonDiscretionaryExpenses(
     expenseAmt += getExpenseAmountInYear(expense, year, inflationRate, spouseDeath);
   }
   const taxes = getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, capitalGains, userAge, fedDeduction);
-  console.log("nonDiscretionaryExpenses Amt: ", expenseAmt, "and taxes: ", taxes);
   let withdrawalAmt = expenseAmt + taxes;
-  console.log("My cash investment: ", cashInvestment.value, "Amount I need to withdraw: ", withdrawalAmt);
+  logFinancialEvent({
+    year: year,
+    type: "non-discretionary",
+    details: {
+      amount: expenseAmt,
+      taxes: taxes,
+      cash: cashInvestment.value,
+      withdrawalAmt: withdrawalAmt
+    },
+  });
+  printInvestments(withdrawalStrategy, year, "non-discretionary", "investment");
+  printEvents(nonDiscretionaryExpenses, year, "non-discretionary", "expense", inflationRate, spouseDeath);
+  //console.log("nonDiscretionaryExpenses Amt: ", expenseAmt, "and taxes: ", taxes);
+  //console.log("My cash investment: ", cashInvestment.value, "Amount I need to withdraw: ", withdrawalAmt);
   if (cashInvestment.value >= withdrawalAmt) {
     cashInvestment.value -= withdrawalAmt; //use up cash needed
+    logFinancialEvent({
+      year: year,
+      type: "non-discretionary",
+      description: "You paid all your non-discretionary expenses with cash...wow!",
+      details: {
+        cash: cashInvestment.value,
+      },
+    });
     withdrawalAmt = 0;
   } else {
     withdrawalAmt -= cashInvestment.value;
     cashInvestment.value = 0; //use up cash
     for (let investment of withdrawalStrategy) {
       if (withdrawalAmt > 0) {
-        console.log("Still left to withdraw: ", withdrawalAmt);
-        console.log("investment to withdraw from ID:", investment._id, ",type:", investment.accountTaxStatus, ",value:", investment.value);
+        //console.log("Still left to withdraw: ", withdrawalAmt);
+        //console.log("investment to withdraw from ID:", investment._id, ",type:", investment.accountTaxStatus, ",value:", investment.value);
         const amtPaid = payFromInvestment(withdrawalAmt, investment, userAge, yearTotals);
         withdrawalAmt -= amtPaid;
       } else {
         break;
       }
     }
+
+    printInvestments(withdrawalStrategy, year, "non-discretionary", "investments");
+    printEvents(nonDiscretionaryExpenses, year, "non-discretionary", "expense", inflationRate, spouseDeath);
+
     if (withdrawalAmt > 0) {
-      console.log("You CAN NOT pay your non-discretionary expenses GO TO JAIL-Don't pass go...;A;");
+      logFinancialEvent({
+        year: year,
+        type: "non-discretionary",
+        description: "You CAN NOT pay your non-discretionary expenses GO TO JAIL-Don't pass go...;A;"
+      });
+      //console.log("You CAN NOT pay your non-discretionary expenses GO TO JAIL-Don't pass go...;A;");
     } else {
-      console.log("You paid all your non-discretionary expenses...phew");
+      logFinancialEvent({
+        year: year,
+        type: "non-discretionary",
+        description: "You paid all your non-discretionary expenses...phew"
+      });
+      //console.log("You paid all your non-discretionary expenses...phew");
     }
   }
   return {
     nonDiscretionary: nonDiscretionaryExpenses,
-    taxes: taxes
+    taxes: taxes,
   };
 }
 
@@ -165,7 +268,7 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
 
     if (cashInvestment.value >= expenseVal) {
       cashInvestment.value -= expenseVal;
-      expensesPaid+=expenseVal;
+      expensesPaid += expenseVal;
       expenseVal = 0;
       console.log("You paid expense all with cash.");
       continue;
@@ -179,12 +282,12 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
       console.log("Expense value now is: ", expenseVal);
       if (goalRemaining >= expenseVal) {
         let amtPaid = payFromInvestment(expenseVal, investment, userAge, yearTotals);
-        expensesPaid+=amtPaid;
+        expensesPaid += amtPaid;
         expenseVal -= amtPaid;
         goalRemaining -= amtPaid;
       } else if (goalRemaining > 0) {
         let partialAmt = Math.min(expenseVal, goalRemaining);
-        expensesPaid+=partialAmt;
+        expensesPaid += partialAmt;
         let amtPaid = payFromInvestment(partialAmt, investment, userAge, yearTotals);
         expenseVal -= amtPaid;
         goalRemaining -= amtPaid;
@@ -203,17 +306,22 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
 
 function payFromInvestment(withdrawalAmt, investment, userAge, yearTotals) {
   if (investment.value == 0) {
-    console.log("This investment: ", investment._id, "is already empty", investment.value);
+    //console.log("This investment: ", investment._id, "is already empty", investment.value);
+    logFinancialEvent({
+      year: year,
+      type: "non-discretionary",
+      description: "This investment is already empty."
+    });
     return 0;
   } else if (investment.value - withdrawalAmt > 0) {
-    console.log("subtract needed and keep investment:", investment._id, "type:", investment.accountTaxStatus, "value: ", investment.value);
+    //console.log("subtract needed and keep investment:", investment._id, "type:", investment.accountTaxStatus, "value: ", investment.value);
     updateValues(investment, userAge, yearTotals, true, withdrawalAmt);
     investment.value -= withdrawalAmt;
-    console.log("Investment now with value: ", investment.value);
+    //console.log("Investment now with value: ", investment.value);
     return withdrawalAmt;
   } else {
     let amountPaid = investment.value;
-    console.log("use up investment:", investment._id, "value: ", investment.value, "now with value 0 and move onto next");
+    //console.log("use up investment:", investment._id, "value: ", investment.value, "now with value 0 and move onto next");
     updateValues(investment, userAge, yearTotals, false, amountPaid);
     investment.value = 0;
     return amountPaid;
@@ -226,7 +334,7 @@ function updateValues(investment, userAge, yearTotals, partial, amountPaid) {
       const fractionSold = investment.value > 0 ? amountPaid / investment.value : 0;
       const gain = fractionSold * (investment.value - investment.purchasePrice);
       yearTotals.curYearGains += Math.max(gain, 0);
-      investment.purchasePrice -= (1-fractionSold)*investment.purchasePrice;
+      investment.purchasePrice -= (1 - fractionSold) * investment.purchasePrice;
       console.log("By a fraction update curYearGains:", gain, "purchase price:", investment.purchasePrice);
     } else {
       const gain = investment.value - investment.purchasePrice;
@@ -248,9 +356,9 @@ function updateValues(investment, userAge, yearTotals, partial, amountPaid) {
 //Use up excess cash with invest strategy
 function runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy) {
   console.log("\nINVEST STRATEGY");
-  console.log('investStrategy :>> ', investStrategy);
+  console.log("investStrategy :>> ", investStrategy);
   const strategy = Array.isArray(investStrategy) ? investStrategy[0] : investStrategy;
-  console.log('strategy :>> ', strategy);
+  console.log("strategy :>> ", strategy);
   console.log("cashInvestment", cashInvestment.value, " maxCash to keep: ", strategy.maxCash);
 
   const excessCash = cashInvestment.value - strategy.maxCash;
@@ -387,7 +495,7 @@ function scaleDownRatio(type, investmentsWithAllocations, irsLimit, excessCash) 
 function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals) {
   console.log("\nREBALANCE STRATEGY");
   rebalanceStrategy = rebalanceStrategy[0];
-  
+
   let allocations = [];
   if (rebalanceStrategy.rebalanceAllocation.type === "glidePath") {
     console.log("you chose glidepath woohoo");
@@ -443,10 +551,4 @@ function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals) {
   }
 }
 
-export {
-  performRMDs,
-  payNonDiscretionaryExpenses,
-  payDiscretionaryExpenses,
-  runInvestStrategy,
-  rebalance,
-};
+export { performRMDs, payNonDiscretionaryExpenses, payDiscretionaryExpenses, runInvestStrategy, rebalance };
