@@ -2,7 +2,7 @@ import RMD from "../server/models/rmd-schema.js";
 import { getExpenseAmountInYear } from "./helper.js";
 import structuredClone from "structured-clone";
 import { v4 as uuidv4 } from "uuid";
-import { logFinancialEvent, printInvestments, printEvents } from "./logs.js";
+import { logFinancialEvent, printInvestments, printEvents, printStrategy } from "./logs.js";
 
 //RMDStrategyInvestOrder is an ordering on investments in pre-tax retirement accounts.
 async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year) {
@@ -167,7 +167,7 @@ function payNonDiscretionaryExpenses(
       amount: expenseAmt,
       taxes: taxes,
       cash: cashInvestment.value,
-      withdrawalAmt: withdrawalAmt
+      withdrawalAmt: withdrawalAmt,
     },
   });
   printInvestments(withdrawalStrategy, year, "non-discretionary", "investment");
@@ -206,14 +206,14 @@ function payNonDiscretionaryExpenses(
       logFinancialEvent({
         year: year,
         type: "non-discretionary",
-        description: "You CAN NOT pay your non-discretionary expenses GO TO JAIL-Don't pass go...;A;"
+        description: "You CAN NOT pay your non-discretionary expenses GO TO JAIL-Don't pass go...;A;",
       });
       //console.log("You CAN NOT pay your non-discretionary expenses GO TO JAIL-Don't pass go...;A;");
     } else {
       logFinancialEvent({
         year: year,
         type: "non-discretionary",
-        description: "You paid all your non-discretionary expenses...phew"
+        description: "You paid all your non-discretionary expenses...phew",
       });
       //console.log("You paid all your non-discretionary expenses...phew");
     }
@@ -262,6 +262,14 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
   console.log("\nPAY DISCRETIONARY EXPENSES");
   let goalRemaining = financialGoal;
   let expensesPaid = 0;
+  printEvents(spendingStrategy, year, "discretionary", "expense", inflationRate, spouseDeath);
+  logFinancialEvent({
+    year: year,
+    type: "discretionary",
+    details: {
+      cash: cashInvestment.value,
+    },
+  });
   for (let expense of spendingStrategy) {
     let expenseVal = getExpenseAmountInYear(expense, year, inflationRate, spouseDeath);
     console.log("Expense:", expense._id, "Amount:", expenseVal, "Cash available:", cashInvestment.value);
@@ -270,13 +278,21 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
       cashInvestment.value -= expenseVal;
       expensesPaid += expenseVal;
       expenseVal = 0;
-      console.log("You paid expense all with cash.");
+      logFinancialEvent({
+        year: year,
+        type: "discretionary",
+        description: `You paid expense ID: ${expense._id} all with cash.`,
+        details: {
+          cash: cashInvestment.value,
+        },
+      });
+      //console.log("You paid expense all with cash.");
       continue;
     }
 
     expenseVal -= cashInvestment.value;
     cashInvestment.value = 0;
-
+    printInvestments(withdrawalStrategy, year, "discretionary", "investments");
     for (let investment of withdrawalStrategy) {
       if (expenseVal <= 0) break;
       console.log("Expense value now is: ", expenseVal);
@@ -294,11 +310,24 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
         console.log("You paid some of the expense and then was forced to stop", expenseVal);
       }
     }
-
+    printInvestments(withdrawalStrategy, year, "discretionary", "investments");
     if (expenseVal > 0) {
-      console.log("You were NOT able to pay all your discretionary expenses.");
+      logFinancialEvent({
+        year: year,
+        type: "discretionary",
+        description: "You were NOT able to pay all your discretionary expenses.",
+        details: {
+          cash: cashInvestment.value,
+        },
+      });
+      //console.log("You were NOT able to pay all your discretionary expenses.");
     } else {
-      console.log("You were able to pay all your discretionary expenses without violating your financial goal.");
+      //console.log("You were able to pay all your discretionary expenses without violating your financial goal.");
+      logFinancialEvent({
+        year: year,
+        type: "discretionary",
+        description: "You were able to pay all your discretionary expenses without violating your financial goal.",
+      });
     }
   }
   return expensesPaid;
@@ -310,7 +339,7 @@ function payFromInvestment(withdrawalAmt, investment, userAge, yearTotals) {
     logFinancialEvent({
       year: year,
       type: "non-discretionary",
-      description: "This investment is already empty."
+      description: "This investment is already empty.",
     });
     return 0;
   } else if (investment.value - withdrawalAmt > 0) {
@@ -356,17 +385,27 @@ function updateValues(investment, userAge, yearTotals, partial, amountPaid) {
 //Use up excess cash with invest strategy
 function runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy) {
   console.log("\nINVEST STRATEGY");
-  console.log("investStrategy :>> ", investStrategy);
+  //console.log("investStrategy :>> ", investStrategy);
   const strategy = Array.isArray(investStrategy) ? investStrategy[0] : investStrategy;
-  console.log("strategy :>> ", strategy);
-  console.log("cashInvestment", cashInvestment.value, " maxCash to keep: ", strategy.maxCash);
+  //console.log("strategy :>> ", strategy);
+  //console.log("cashInvestment", cashInvestment.value, " maxCash to keep: ", strategy.maxCash);
 
+  logFinancialEvent({
+    year: year,
+    type: "invest",
+    details: {
+      cash: cashInvestment.value,
+      excessCash: cashInvestment.value - strategy.maxCash,
+    },
+  });
   const excessCash = cashInvestment.value - strategy.maxCash;
-  console.log("The excess cash is (if <0 no money to invest)", excessCash);
+  //.log("The excess cash is (if <0 no money to invest)", excessCash);
+  printStrategy(strategy.assetAllocation, "invest", strategy.assetAllocation.type);
+  printInvestments(investments, year, "invest", "investments");
   let allocations = [];
 
   if (excessCash > 0) {
-    console.log("The excess cash now is", excessCash);
+    //console.log("The excess cash now is", excessCash);
     if (strategy.assetAllocation.type === "glidePath") {
       allocations = getGlidePathAllocation(
         year,
@@ -378,11 +417,19 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
     } else if (strategy.assetAllocation.type === "fixed") {
       allocations = strategy.assetAllocation.fixedPercentages;
     }
-    console.log(allocations);
+    //console.log(allocations);
+    printStrategy(allocations, "invest", strategy.assetAllocation.type);
     const investmentsWithAllocations = allocationIDToObject(allocations, investments);
     const afterTaxRatio = scaleDownRatio("after-tax", investmentsWithAllocations, irsLimit, excessCash);
     console.log("afterTaxRatio: ", afterTaxRatio);
-
+    logFinancialEvent({
+      year: year,
+      type: "invest",
+      details: {
+        irsLimit: irsLimit,
+        afterTaxRatio: afterTaxRatio,
+      },
+    });
     let totalInvested = 0;
     let excessDueToLimit = 0;
 
@@ -407,6 +454,7 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
       console.log("everything else in non-retirement: ", excessDueToLimit);
       buyNonRetirement(investmentsWithAllocations, excessDueToLimit);
     }
+    printInvestments(investments, year, "invest", "investments");
   }
 }
 

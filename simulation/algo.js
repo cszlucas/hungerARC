@@ -416,24 +416,24 @@ async function runSimulation(
     updateInflationExpenses(curExpenseEvent, expenseEvent, inflationRate);
 
     //  PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
-    let { nonDiscretionary, taxes } = payNonDiscretionaryExpenses(
-      curExpenseEvent,
-      cashInvestment,
-      prevYearIncome,
-      prevYearSS,
-      prevYearGains,
-      prevYearEarlyWithdrawals,
-      federalIncomeTax,
-      stateIncomeTaxBracket,
-      fedDeduction,
-      year,
-      userAge,
-      capitalGains,
-      withdrawalStrategy,
-      yearTotals,
-      inflationRate,
-      spouseDeath
-    );
+    //let { nonDiscretionary, taxes } = payNonDiscretionaryExpenses(
+    //   curExpenseEvent,
+    //   cashInvestment,
+    //   prevYearIncome,
+    //   prevYearSS,
+    //   prevYearGains,
+    //   prevYearEarlyWithdrawals,
+    //   federalIncomeTax,
+    //   stateIncomeTaxBracket,
+    //   fedDeduction,
+    //   year,
+    //   userAge,
+    //   capitalGains,
+    //   withdrawalStrategy,
+    //   yearTotals,
+    //   inflationRate,
+    //   spouseDeath
+    // );
 
     // PAY DISCRETIONARY EXPENSES
     //let sumDiscretionary = payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath);
@@ -441,7 +441,7 @@ async function runSimulation(
     const discretionary = curExpenseEvent.filter((expenseEvent) => expenseEvent.isDiscretionary === true);
 
     // RUN INVEST EVENT
-    //runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
+    runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
 
     // RUN REBALANCE EVENT
     let types = ["pre-tax", "after-tax", "non-retirement"];

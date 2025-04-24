@@ -50,14 +50,8 @@ function logFinancialEvent({ year, type, description, amount, details = {} }) {
   switch (type.toLowerCase()) {
     case "income":
     case "invest":
-    case "expense":
-      if (details.name) line += ` from "${details.name}"`;
+      line += formatStrategy(details, amount, description);
       break;
-
-    case "tax":
-      if (details.taxType) line += ` paid as "${details.taxType}"`;
-      break;
-
     case "roth conversion":
       if (details.from && details.to) {
         line += ` of "${details.from}" to "${details.to}"`;
@@ -106,6 +100,7 @@ function logFinancialEvent({ year, type, description, amount, details = {} }) {
       }
       break;
     }
+    case "discretionary":
     case "non-discretionary": {
       line += formatNonDiscretionaryDetails(details, amount, description);
       break;
@@ -150,6 +145,30 @@ function formatNonDiscretionaryDetails(details, amount, description = "") {
   return line;
 }
 
+function formatStrategy(details) {
+  const formatCurrency = (val) => (typeof val === "number" ? `$${val.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : val ?? "");
+  if (description) line += `${description}\n`;
+  if (details.cash) {
+    line += `Amount of cash you have to spend: "${formatCurrency(details.cash)}".`;
+  }
+  if (details.excessCash) {
+    line += `Excess cash: "${formatCurrency(details.excessCash)}".`;
+  }
+  if (details.irsLimit) {
+    line += `IRS Limit: "${formatCurrency(details.irsLimit)}".`;
+  }
+  if (details.afterTaxRatio) {
+    line += `After tax ratio: "${formatCurrency(details.afterTaxRatio)}".`;
+  }
+  if (details.type === "initial") {
+    line += `Initial investment percentage: ${formatCurrency(Value)}.\n`;
+  } else if (details.type === "final") {
+    line += `Final investment percentage: ${formatCurrency(Value)}.\n`;
+  } else if (details.type === "fixed") {
+    line += `Fixed investment percentage: ${formatCurrency(Value)}.\n`;
+  }
+}
+
 function printInvestments(investments, year, type, detailsType) {
   for (investment of investments) {
     logFinancialEvent({
@@ -178,6 +197,24 @@ function printEvents(events, year, type, detailsType, inflationRate, spouseDeath
   }
 }
 
+function printStrategy(allocations, type, detailsType, year) {
+  allocations.forEach((allocation) => {
+    const logDetails = (subType, key, value) =>
+      logFinancialEvent({
+        year: year,
+        type: type,
+        details: { type: subType, ID: key, Value: value },
+      });
+
+    logDetails("initial", allocation.initialPercentages.key, allocation.initialPercentages.value);
+    logDetails("final", allocation.finalPercentages.key, allocation.finalPercentages.value);
+
+    if (detailsType === "fixed") {
+      logDetails("fixed", allocation.fixed.key, allocation.fixed.value);
+    }
+  });
+}
+
 module.exports = {
   writeCSVLog,
   writeEventLog,
@@ -185,4 +222,5 @@ module.exports = {
   logFinancialEvent,
   printInvestments,
   printEvents,
+  printStrategy,
 };
