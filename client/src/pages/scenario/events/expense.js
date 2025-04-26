@@ -41,7 +41,7 @@ const Expense = () => {
 
     // Initialize the form state — prefill if editing, otherwise use default structure
     const [formValues, setFormValues] = useState(indieExpense || {
-        _id: "",
+        _id: null,
         eventSeriesName: "",
         eventSeriesDescription: "",
         startYear: {

@@ -148,7 +148,7 @@ const ScenarioList = () => {
         return {
           _id: `${name.replace(/\s/g, "-")}-${Date.now()}`, // fake unique ID
           name,
-          filingStatus: maritalStatus === "couple" ? "couple" : "single",
+          filingStatus: maritalStatus === "couple" ? "married" : "single",
           birthYearUser: birthYears[0],
           birthYearSpouse: birthYears[1] ?? null,
           // lifeExpectancy,
@@ -159,11 +159,11 @@ const ScenarioList = () => {
             stdDev: lifeExpectancy[0].stdev ?? null,
           },
           lifeExpectancySpouse: {
-            type: lifeExpectancy[1].type,
-            fixedAge: lifeExpectancy[1].value ?? null,
-            mean: lifeExpectancy[1].mean ?? null,
-            stdDev: lifeExpectancy[1].stdev ?? null,
-          },
+            type: lifeExpectancy[1]?.type ?? "fixed",
+            fixedAge: lifeExpectancy[1]?.value ?? null,
+            mean: lifeExpectancy[1]?.mean ?? null,
+            stdDev: lifeExpectancy[1]?.stdev ?? null,
+          },          
           setOfinvestmentTypes: frontendInvestmentTypes,
           setOfinvestments: frontendInvestments,
           income,

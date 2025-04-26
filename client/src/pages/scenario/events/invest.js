@@ -34,6 +34,7 @@ const mongoose = require("mongoose");
 
 // Default state structure for a new investment event
 const DEFAULT_FORM_VALUES = {
+    _id: null,
     eventSeriesName: "",
     eventSeriesDescription: "",
     maxCash: 0,
@@ -107,7 +108,7 @@ const Invest = () => {
 
     // Filters investments that are allowed (excluding 'Cash' or 'pre-tax')
     const allowedInvestments = currInvestments
-        .filter((item) => getInvestmentTypeById(item.investmentType).name !== "Cash")
+        .filter((item) => getInvestmentTypeById(item.investmentType).name.toLowerCase() !== "cash")
         .filter((item) => item.accountTaxStatus !== "pre-tax");
 
     // Computes the list of currently allocated investments for display
@@ -200,6 +201,7 @@ const Invest = () => {
     // Handles changes for new investment being added
     const handleNewAAAChange = (field, value) => {
         setNewAAA((prev) => ({ ...prev, [field]: value }));
+        console.log(newAAA);
     };
 
     // Syncs list and investment options when assetAllocation.type changes
@@ -432,6 +434,10 @@ const Invest = () => {
                                 color="primary"
                                 sx={{ textTransform: "none", mt:-1 }}
                                 onClick={handleAddInvestment}
+                                disabled={
+                                    !newAAA.id || (formValues.assetAllocation.type === "fixed" && !newAAA.fixed) 
+                                    || (formValues.assetAllocation.type === "glidePath" && (!newAAA.initial || !newAAA.final)) 
+                                }
                             >
                                 Add
                             </Button>

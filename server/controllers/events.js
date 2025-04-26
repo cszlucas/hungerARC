@@ -47,6 +47,7 @@ exports.createIncomeEvent = async (req, res) => {
 
     res.status(201).json(savedIncomeEvent);
   } catch (err) {
+    console.log(err.message);
     res.status(500).json({ error: err.message });
   }
 };
@@ -121,10 +122,7 @@ exports.createExpenseEvent = async (req, res) => {
       startYear,
       duration,
       initialAmount,
-      annualChange: {
-        type: annualChange.type,
-        amount: annualChange.amount,
-      },
+      annualChange: annualChange,
       userPercentage,
       inflationAdjustment,
       isDiscretionary,

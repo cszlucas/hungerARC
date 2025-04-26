@@ -33,7 +33,7 @@ import EventSeries from "./eventSeries";
 import { ObjectId } from "bson";
 
 const DEFAULT_FORM_VALUES = {
-  _id: "",
+  _id: null,
   eventSeriesName: "",
   eventSeriesDescription: "",
   startYear: {
@@ -64,7 +64,7 @@ const DEFAULT_FORM_VALUES = {
 const TAX_MAP = {
   "non-retirement": "Taxable",
   "pre-tax": "Tax-Deferred",
-  "after-tax": "Tax-free",
+  "after-tax": "Tax-Free",
 };
 
 const Rebalance = () => {
@@ -84,7 +84,7 @@ const Rebalance = () => {
   const getRebalanceById = (id) => currRebalance.find(r => r._id === id) || null;
   const getRebalanceByTaxStatus = (status) => currRebalance.find(r => r.taxStatus === status) || DEFAULT_FORM_VALUES;
   
-  const allowedInvestments = currInvestments.filter((item) => getInvestmentTypeById(item.investmentType).name !== "Cash");
+  const allowedInvestments = currInvestments.filter((item) => getInvestmentTypeById(item.investmentType).name?.toLowerCase() !== "cash");
   const [formValues, setFormValues] = useState(getRebalanceById(eventEditMode.id) || getRebalanceByTaxStatus("non-retirement"));
   const [selectedInvestment, setSelectedInvestment] = useState("");
   const displayedList = formValues.rebalanceAllocation;
@@ -427,7 +427,7 @@ const Rebalance = () => {
                 </MenuItem>
                 {filteredInvestments.map((investment) => (
                   <MenuItem key={investment._id} value={investment._id}>
-                    {getInvestmentTypeById(investment.investmentType).name}
+                    {getInvestmentTypeById(investment.investmentType)?.name}
                   </MenuItem>
                 ))}
               </TextField>

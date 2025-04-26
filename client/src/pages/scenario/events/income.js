@@ -58,7 +58,7 @@ const Income = () => {
 
     // Form state for the income event series
     const [formValues, setFormValues] = useState(indieIncome || {
-        _id: "",
+        _id: null,
         eventSeriesName: "",
         description: "",
         startYear: {

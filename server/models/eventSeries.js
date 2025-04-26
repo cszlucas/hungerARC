@@ -40,9 +40,7 @@ var AnnualChange = new Schema({
     type: String,
     enum: ["none", "normal", "uniform", ""],
   },
-  amount: {
-    type: Number,
-  },
+  amount: { type: Number, },
   mean: { type: Number },
   stdDev: { type: Number },
   min: { type: Number },
