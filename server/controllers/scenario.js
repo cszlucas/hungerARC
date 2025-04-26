@@ -5,7 +5,7 @@ const User = require("../models/user.js");
 const { ObjectId } = mongoose.Types;
 const axios = require("axios");
 const { ExpenseEvent } = require("../models/eventSeries.js");
-const { main } = require("../../simulation/algo.js");
+const { main } = require("../../simulation/main.js");
 
 exports.scenario = async (req, res) => {
   const scenarioId = new ObjectId(req.params.id);

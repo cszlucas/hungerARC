@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { getExpenseAmountInYear } = require("./helper.js");
+const { getValueInYear } = require("./value.js");
 
 function writeCSVLog(csvFilename, simulationResult) {
   const years = simulationResult.years; // array of years like [2025, 2026,...]
@@ -169,16 +169,16 @@ function formatStrategy(description, details, type) {
     line += `Fixed investment ID: ${details.ID}, percentage: ${formatPercentage(details.Value)}.`;
   } else if (details.type === "calculated") {
     line += `Glide path calculated investment ID: ${details.ID}, percentage: ${formatPercentage(details.Value)}.`;
-  } else if (details.type === "investments" && details.Value){
+  } else if (details.type === "investments" && details.Value) {
     line += `${details.type.toUpperCase()} | Investment ID: ${details.ID}, value: ${formatCurrency(details.Value)}.`;
-  } else if (details.excessCash){
-    line += `After ${type} the excess cash to distribute to non-retirement accounts that were in the allocation is: ${formatCurrency(details.excessCash)}.`
-  } else if (details.type === "investments" && details.purchasePrice){
+  } else if (details.excessCash) {
+    line += `After ${type} the excess cash to distribute to non-retirement accounts that were in the allocation is: ${formatCurrency(details.excessCash)}.`;
+  } else if (details.type === "investments" && details.purchasePrice) {
     line += `${details.type.toUpperCase()} | ${details.tax_status} Investment ID: ${details.ID}, purchased: ${formatCurrency(details.purchasePrice)}.`;
-  } if (details.tax_status){
+  }
+  if (details.tax_status) {
     line += `The investments are of type: ${details.tax_status}`;
   }
-
 
   return line;
 }
@@ -206,7 +206,7 @@ function printEvents(events, year, type, detailsType, inflationRate, spouseDeath
       details: {
         type: detailsType,
         ID: e._id,
-        Value: getExpenseAmountInYear(e, year, inflationRate, spouseDeath),
+        Value: getValueInYear(e, year, inflationRate, spouseDeath),
       },
     });
   }
