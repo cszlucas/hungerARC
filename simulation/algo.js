@@ -311,6 +311,7 @@ async function runSimulation(
   eventLog
 ) {
   // previous year
+
   let irsLimit = scenario.irsLimit;
   let filingStatus = scenario.filingStatus;
   let spouseDeath = false;
@@ -441,7 +442,7 @@ async function runSimulation(
     const discretionary = curExpenseEvent.filter((expenseEvent) => expenseEvent.isDiscretionary === true);
 
     // RUN INVEST EVENT
-    runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
+    //runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
 
     // RUN REBALANCE EVENT
     let types = ["pre-tax", "after-tax", "non-retirement"];
@@ -450,7 +451,9 @@ async function runSimulation(
       // console.log('curRebalanceEvent :>> ', curRebalanceEvent);
       // console.log("rebalanceStrategy :>> ", rebalanceStrategy);
       if (rebalanceStrategy.length != 0) {
-        //rebalance(investments, year, rebalanceStrategy, userAge, yearTotals);
+        rebalance(investments, year, rebalanceStrategy, userAge, yearTotals, type);
+      } else {
+        console.log("Nothing to rebalance of type: ", type);
       }
     }
 

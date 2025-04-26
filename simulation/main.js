@@ -481,15 +481,6 @@ function allocationIDToObject(allocations, investments) {
   return investmentsWithAllocations;
 }
 
-// function getGlidePathAllocation(year, startYear, endYear, initial, final) {
-//   const t = (year - startYear) / (endYear - startYear);
-//   const allocation = {};
-//   for (const asset in initial) {
-//     allocation[asset] = initial[asset] + t * (final[asset] - initial[asset]);
-//   }
-
-//   return allocation;
-// }
 function getGlidePathAllocation(year, startYear, endYear, initial, final) {
   const tRaw = (year - startYear) / (endYear - startYear);
   const t = Math.max(0, Math.min(1, tRaw)); // clamp between 0 and 1
@@ -558,9 +549,17 @@ function scaleDownRatio(type, investmentsWithAllocations, irsLimit, excessCash) 
 }
 
 //rebalance investment allocations of same account tax status based on desired targets specified in rebalance strategy.
-function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals) {
+function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals, type) {
   console.log("\nREBALANCE STRATEGY");
+  logFinancialEvent({
+    year: year,
+    type: "rebalance",
+    details: {
+      tax_status: type
+    },
+  });
   rebalanceStrategy = rebalanceStrategy[0];
+  printStrategy(rebalanceStrategy.rebalanceAllocation, "rebalance", rebalanceStrategy.rebalanceAllocation.type, year);
 
   let allocations = [];
   if (rebalanceStrategy.rebalanceAllocation.type === "glidePath") {
@@ -572,6 +571,7 @@ function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals) {
       rebalanceStrategy.rebalanceAllocation.initialPercentages,
       rebalanceStrategy.rebalanceAllocation.finalPercentages
     );
+    printStrategy(allocations, "rebalance", rebalanceStrategy.rebalanceAllocation.type, year, true);
   } else if (rebalanceStrategy.rebalanceAllocation.type === "fixed") {
     allocations = rebalanceStrategy.rebalanceAllocation.fixedPercentages;
   }
@@ -582,6 +582,10 @@ function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals) {
   for (const { investment } of investmentsWithAllocations) {
     sum += investment.value;
   }
+  printInvestments(
+    investmentsWithAllocations.map((item) => item.investment),
+    year, "rebalance", "investments"
+  );  
 
   // First: process sales
   for (const { investment, percentage } of investmentsWithAllocations) {
@@ -615,6 +619,15 @@ function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals) {
       investment.value += buyAmt;
     }
   }
+  logFinancialEvent({
+    year: year,
+    type: "rebalance",
+    description: "The rebalance has now been done."
+  });
+  printInvestments(
+    investmentsWithAllocations.map((item) => item.investment),
+    year, "rebalance", "investments"
+  ); 
 }
 
 export { performRMDs, payNonDiscretionaryExpenses, payDiscretionaryExpenses, runInvestStrategy, rebalance };

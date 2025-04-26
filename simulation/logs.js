@@ -59,9 +59,7 @@ function logFinancialEvent({ year, type, description, amount, details = {} }) {
       break;
 
     case "rebalance":
-      if (details.sold && details.bought) {
-        line += ` - Sold: "${details.sold}", Bought: "${details.bought}"`;
-      }
+      line += formatStrategy(description, details, "rebalance");
       break;
 
     case "rmd": {
@@ -147,7 +145,7 @@ function formatNonDiscretionaryDetails(details, amount, description = "") {
 
 function formatStrategy(description, details, type) {
   let line = "";
-
+  //console.log("details: ", details);
   const formatCurrency = (val) => (typeof val === "number" ? `$${val.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : val ?? "");
   const formatPercentage = (val) => `${(val * 100).toFixed(2)}%`;
   if (description) line += `${description}\n`;
@@ -172,11 +170,13 @@ function formatStrategy(description, details, type) {
   } else if (details.type === "calculated") {
     line += `Glide path calculated investment ID: ${details.ID}, percentage: ${formatPercentage(details.Value)}.`;
   } else if (details.type === "investments" && details.Value){
-    line += `${details.type.toUpperCase()} | Investment ID: ${details.ID}, percentage: ${formatCurrency(details.Value)}.`;
+    line += `${details.type.toUpperCase()} | Investment ID: ${details.ID}, value: ${formatCurrency(details.Value)}.`;
   } else if (details.excessCash){
     line += `After ${type} the excess cash to distribute to non-retirement accounts that were in the allocation is: ${formatCurrency(details.excessCash)}.`
   } else if (details.type === "investments" && details.purchasePrice){
     line += `${details.type.toUpperCase()} | ${details.tax_status} Investment ID: ${details.ID}, purchased: ${formatCurrency(details.purchasePrice)}.`;
+  } if (details.tax_status){
+    line += `The investments are of type: ${details.tax_status}`;
   }
 
 
@@ -185,6 +185,7 @@ function formatStrategy(description, details, type) {
 
 function printInvestments(investments, year, type, detailsType) {
   for (investment of investments) {
+    //console.log("inn ", investment, type);
     logFinancialEvent({
       year: year,
       type: type,
