@@ -50,7 +50,7 @@ function logFinancialEvent({ year, type, description, amount, details = {} }) {
   switch (type.toLowerCase()) {
     case "income":
     case "invest":
-      line += formatStrategy(details, amount, description);
+      line += formatStrategy(description, details, "invest");
       break;
     case "roth conversion":
       if (details.from && details.to) {
@@ -145,8 +145,11 @@ function formatNonDiscretionaryDetails(details, amount, description = "") {
   return line;
 }
 
-function formatStrategy(details) {
+function formatStrategy(description, details, type) {
+  let line = "";
+
   const formatCurrency = (val) => (typeof val === "number" ? `$${val.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : val ?? "");
+  const formatPercentage = (val) => `${(val * 100).toFixed(2)}%`;
   if (description) line += `${description}\n`;
   if (details.cash) {
     line += `Amount of cash you have to spend: "${formatCurrency(details.cash)}".`;
@@ -161,12 +164,23 @@ function formatStrategy(details) {
     line += `After tax ratio: "${formatCurrency(details.afterTaxRatio)}".`;
   }
   if (details.type === "initial") {
-    line += `Initial investment percentage: ${formatCurrency(Value)}.\n`;
+    line += `Initial investment ID: ${details.ID}, percentage: ${formatPercentage(details.Value)}.`;
   } else if (details.type === "final") {
-    line += `Final investment percentage: ${formatCurrency(Value)}.\n`;
+    line += `Final investment ID: ${details.ID}, percentage: ${formatPercentage(details.Value)}.`;
   } else if (details.type === "fixed") {
-    line += `Fixed investment percentage: ${formatCurrency(Value)}.\n`;
+    line += `Fixed investment ID: ${details.ID}, percentage: ${formatPercentage(details.Value)}.`;
+  } else if (details.type === "calculated") {
+    line += `Glide path calculated investment ID: ${details.ID}, percentage: ${formatPercentage(details.Value)}.`;
+  } else if (details.type === "investments" && details.Value){
+    line += `${details.type.toUpperCase()} | Investment ID: ${details.ID}, percentage: ${formatCurrency(details.Value)}.`;
+  } else if (details.excessCash){
+    line += `After ${type} the excess cash to distribute to non-retirement accounts that were in the allocation is: ${formatCurrency(details.excessCash)}.`
+  } else if (details.type === "investments" && details.purchasePrice){
+    line += `${details.type.toUpperCase()} | ${details.tax_status} Investment ID: ${details.ID}, purchased: ${formatCurrency(details.purchasePrice)}.`;
   }
+
+
+  return line;
 }
 
 function printInvestments(investments, year, type, detailsType) {
@@ -197,22 +211,33 @@ function printEvents(events, year, type, detailsType, inflationRate, spouseDeath
   }
 }
 
-function printStrategy(allocations, type, detailsType, year) {
-  allocations.forEach((allocation) => {
-    const logDetails = (subType, key, value) =>
-      logFinancialEvent({
-        year: year,
-        type: type,
-        details: { type: subType, ID: key, Value: value },
-      });
+function printStrategy(allocations, type, detailsType, year, calculated) {
+  console.log("ALLOCATIONS ..", allocations);
 
-    logDetails("initial", allocation.initialPercentages.key, allocation.initialPercentages.value);
-    logDetails("final", allocation.finalPercentages.key, allocation.finalPercentages.value);
+  const logDetails = (subType, key, value) =>
+    logFinancialEvent({
+      year: year,
+      type: type,
+      details: { type: subType, ID: key, Value: value },
+    });
 
-    if (detailsType === "fixed") {
-      logDetails("fixed", allocation.fixed.key, allocation.fixed.value);
-    }
-  });
+  if (calculated) {
+    Object.entries(allocations).forEach(([key, value]) => {
+      logDetails("calculated", key, value);
+    });
+  } else if (allocations.type === "glidePath") {
+    Object.entries(allocations.initialPercentages).forEach(([key, value]) => {
+      logDetails("initial", key, value);
+    });
+
+    Object.entries(allocations.finalPercentages).forEach(([key, value]) => {
+      logDetails("final", key, value);
+    });
+  } else if (allocations.fixedPercentages && Object.keys(allocations.fixedPercentages).length > 0) {
+    Object.entries(allocations.fixedPercentages).forEach(([key, value]) => {
+      logDetails("fixed", key, value);
+    });
+  }
 }
 
 module.exports = {

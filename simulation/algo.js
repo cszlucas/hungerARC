@@ -484,26 +484,26 @@ async function runSimulation(
 
     const lookup = Object.fromEntries(investmentTypes.map((type) => [type._id.toString(), type.name]));
 
-    updateYearDataBucket(yearDataBuckets, yearIndex, {
-      investments: investments.map((event) => ({
-        name: lookup[event.investmentType.toString()] || "Unknown",
-        value: event.value,
-      })),
-      income: curIncomeEvent.map((event) => ({
-        name: event.eventSeriesName,
-        value: getExpenseAmountInYear(event, year, inflationRate, spouseDeath),
-      })),
-      discretionary: discretionary.map((event) => ({
-        name: event.eventSeriesName,
-        value: getExpenseAmountInYear(event, year, inflationRate, spouseDeath),
-      })),
-      nonDiscretionary: nonDiscretionary.map((event) => ({
-        name: event.eventSeriesName,
-        value: getExpenseAmountInYear(event, year, inflationRate, spouseDeath),
-      })),
-      taxes: taxes,
-      earlyWithdrawals: yearTotals.curYearEarlyWithdrawals,
-    });
+    // updateYearDataBucket(yearDataBuckets, yearIndex, {
+    //   investments: investments.map((event) => ({
+    //     name: lookup[event.investmentType.toString()] || "Unknown",
+    //     value: event.value,
+    //   })),
+    //   income: curIncomeEvent.map((event) => ({
+    //     name: event.eventSeriesName,
+    //     value: getExpenseAmountInYear(event, year, inflationRate, spouseDeath),
+    //   })),
+    //   discretionary: discretionary.map((event) => ({
+    //     name: event.eventSeriesName,
+    //     value: getExpenseAmountInYear(event, year, inflationRate, spouseDeath),
+    //   })),
+    //   nonDiscretionary: nonDiscretionary.map((event) => ({
+    //     name: event.eventSeriesName,
+    //     value: getExpenseAmountInYear(event, year, inflationRate, spouseDeath),
+    //   })),
+    //   taxes: taxes,
+    //   earlyWithdrawals: yearTotals.curYearEarlyWithdrawals,
+    // });
 
     // console.log('investments :>> ', investments);
     logInvestment(investments, year, csvLog, investmentTypes);

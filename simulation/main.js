@@ -395,12 +395,12 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
     type: "invest",
     details: {
       cash: cashInvestment.value,
-      excessCash: cashInvestment.value - strategy.maxCash,
+      excessCash: (cashInvestment.value - strategy.maxCash),
     },
   });
   const excessCash = cashInvestment.value - strategy.maxCash;
   //.log("The excess cash is (if <0 no money to invest)", excessCash);
-  printStrategy(strategy.assetAllocation, "invest", strategy.assetAllocation.type);
+  printStrategy(strategy.assetAllocation, "invest", strategy.assetAllocation.type, year);
   printInvestments(investments, year, "invest", "investments");
   let allocations = [];
 
@@ -414,14 +414,14 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
         strategy.assetAllocation.initialPercentages,
         strategy.assetAllocation.finalPercentages
       );
+      printStrategy(allocations, "invest", strategy.assetAllocation.type, year, true);
     } else if (strategy.assetAllocation.type === "fixed") {
       allocations = strategy.assetAllocation.fixedPercentages;
     }
-    //console.log(allocations);
-    printStrategy(allocations, "invest", strategy.assetAllocation.type);
+    //console.log("moon", allocations);
     const investmentsWithAllocations = allocationIDToObject(allocations, investments);
     const afterTaxRatio = scaleDownRatio("after-tax", investmentsWithAllocations, irsLimit, excessCash);
-    console.log("afterTaxRatio: ", afterTaxRatio);
+    //console.log("afterTaxRatio: ", afterTaxRatio);
     logFinancialEvent({
       year: year,
       type: "invest",
@@ -447,12 +447,12 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
       investment.value += buyAmt;
       totalInvested += buyAmt;
 
-      console.log("investment", investment._id, "percentage", percentage, "type", investment.accountTaxStatus, "increase purchasePrice by:", buyAmt);
+      //console.log("investment", investment._id, "percentage", percentage, "type", investment.accountTaxStatus, "increase purchasePrice by:", buyAmt);
     }
 
     if (excessCash - totalInvested > 0) {
       console.log("everything else in non-retirement: ", excessDueToLimit);
-      buyNonRetirement(investmentsWithAllocations, excessDueToLimit);
+      buyNonRetirement(investmentsWithAllocations, excessDueToLimit, year);
     }
     printInvestments(investments, year, "invest", "investments");
   }
@@ -506,12 +506,20 @@ function getGlidePathAllocation(year, startYear, endYear, initial, final) {
   return allocation;
 }
 
-function buyNonRetirement(investmentsWithAllocations, excessCash) {
+function buyNonRetirement(investmentsWithAllocations, excessCash, year) {
   // Filter only non-retirement investments first
   const nonRetirement = investmentsWithAllocations.filter(({ investment }) => investment.accountTaxStatus === "non-retirement");
 
   // Total their percentage (in case it doesn't sum to 1)
   const totalPercentage = nonRetirement.reduce((sum, { percentage }) => sum + percentage, 0);
+
+  logFinancialEvent({
+    year: year,
+    type: "invest",
+    details: {
+      excessCash: excessCash,
+    },
+  });
 
   for (const { investment, percentage } of nonRetirement) {
     // Normalize percentage if necessary
@@ -520,6 +528,16 @@ function buyNonRetirement(investmentsWithAllocations, excessCash) {
     investment.purchasePrice += buyAmt;
     investment.value += buyAmt;
     console.log("Buying into non-retirement:", investment._id, "purchase:", buyAmt);
+    logFinancialEvent({
+      year: year,
+      type: "invest",
+      details: {
+        type: "investments",
+        tax_status: investment.accountTaxStatus,
+        ID: investment._id,
+        purchasePrice: buyAmt,
+      },
+    });
   }
 }
 
