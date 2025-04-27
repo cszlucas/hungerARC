@@ -187,7 +187,7 @@ async function runSimulation(
     updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, curIncomeEvent, discretionary, nonDiscretionary, taxes, yearTotals, year, inflationRate, spouseDeath);
 
     // SAVE FOR PREV YEAR
-    ({ prevYearIncome, prevYearSS, prevYearEarlyWithdrawals, prevYearGains } = savePrevYr(
+    ({ prevYearIncome, prevYearSS, prevYearEarlyWithdrawals, prevYearGains, sumInvestmentsPreTaxRMD } = savePrevYr(
       investments,
       investmentTypes,
       year,
@@ -256,7 +256,7 @@ function savePrevYr(investments, investmentTypes, year, csvLog, yearTotals, prev
   for (let preTaxInvestment of allInvestmentsPreTax) {
     sumInvestmentsPreTaxRMD += preTaxInvestment.value;
   }
-  console.log("The sum of investments with value pretax (to use in RMD) is: ", sumInvestmentsPreTaxRMD, "as of year: ", year);
+  //console.log("The sum of investments with value pretax (to use in RMD) is: ", sumInvestmentsPreTaxRMD, "as of year: ", year);
 
   // console.log('investments :>> ', investments);
   logInvestment(investments, year, csvLog, investmentTypes);

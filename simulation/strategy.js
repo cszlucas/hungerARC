@@ -14,31 +14,36 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
     type: "invest",
     details: {
       cash: cashInvestment.value,
+      maxCash: strategy.maxCash,
       excessCash: cashInvestment.value - strategy.maxCash,
     },
   });
   const excessCash = cashInvestment.value - strategy.maxCash;
   //.log("The excess cash is (if <0 no money to invest)", excessCash);
-  printStrategy(strategy.assetAllocation, "invest", strategy.assetAllocation.type, year);
-  printInvestments(investments, year, "invest", "investments");
   let allocations = [];
-
   if (excessCash > 0) {
     //console.log("The excess cash now is", excessCash);
     if (strategy.assetAllocation.type === "glidePath") {
       allocations = getGlidePathAllocation(
         year,
-        strategy.startYear.value,
-        strategy.startYear.value + strategy.duration.value,
+        strategy.startYear.calculated,
+        strategy.startYear.value + strategy.duration.calculated,
         strategy.assetAllocation.initialPercentages,
         strategy.assetAllocation.finalPercentages
       );
-      printStrategy(allocations, "invest", strategy.assetAllocation.type, year, true);
+      printStrategy(allocations, "invest", year, true, strategy.startYear.calculated, (strategy.startYear.calculated + strategy.duration.calculated));
     } else if (strategy.assetAllocation.type === "fixed") {
       allocations = strategy.assetAllocation.fixedPercentages;
+      printStrategy(allocations, "invest", year);
     }
     //console.log("moon", allocations);
-    const investmentsWithAllocations = allocationIDToObject(allocations, investments);
+    let investmentsWithAllocations = allocationIDToObject(allocations, investments);
+    printInvestments(
+        investmentsWithAllocations.map((item) => item.investment),
+        year,
+        "invest",
+        "investments"
+      );
     const afterTaxRatio = scaleDownRatio("after-tax", investmentsWithAllocations, irsLimit, excessCash);
     //console.log("afterTaxRatio: ", afterTaxRatio);
     logFinancialEvent({
@@ -68,12 +73,17 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
 
       //console.log("investment", investment._id, "percentage", percentage, "type", investment.accountTaxStatus, "increase purchasePrice by:", buyAmt);
     }
+    printInvestments(
+        investmentsWithAllocations.map((item) => item.investment),
+        year,
+        "invest",
+        "investments"
+      );
 
     if (excessCash - totalInvested > 0) {
       console.log("everything else in non-retirement: ", excessDueToLimit);
       buyNonRetirement(investmentsWithAllocations, excessDueToLimit, year);
     }
-    printInvestments(investments, year, "invest", "investments");
   }
 }
 
@@ -143,7 +153,7 @@ function buyNonRetirement(investmentsWithAllocations, excessCash, year) {
       type: "invest",
       details: {
         type: "investments",
-        tax_status: investment.accountTaxStatus,
+        taxStatus: investment.accountTaxStatus,
         ID: investment._id,
         purchasePrice: buyAmt,
       },
@@ -174,28 +184,28 @@ function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals, ty
     year: year,
     type: "rebalance",
     details: {
-      tax_status: type,
+      taxStatus: type,
     },
   });
   rebalanceStrategy = rebalanceStrategy[0];
-  printStrategy(rebalanceStrategy.rebalanceAllocation, "rebalance", rebalanceStrategy.rebalanceAllocation.type, year);
+  printStrategy(rebalanceStrategy.rebalanceAllocation, "rebalance", year);
 
   let allocations = [];
   if (rebalanceStrategy.rebalanceAllocation.type === "glidePath") {
     console.log("you chose glidepath woohoo");
     allocations = getGlidePathAllocation(
       year,
-      rebalanceStrategy.startYear.value,
-      rebalanceStrategy.startYear.value + rebalanceStrategy.duration.value,
+      rebalanceStrategy.startYear.calculated,
+      rebalanceStrategy.startYear.calculated + rebalanceStrategy.duration.calculated,
       rebalanceStrategy.rebalanceAllocation.initialPercentages,
       rebalanceStrategy.rebalanceAllocation.finalPercentages
     );
-    printStrategy(allocations, "rebalance", rebalanceStrategy.rebalanceAllocation.type, year, true);
+    printStrategy(allocations, "rebalance", year, true, rebalanceStrategy.startYear.calculated, (rebalanceStrategy.startYear.calculated + rebalanceStrategy.duration.calculated));
   } else if (rebalanceStrategy.rebalanceAllocation.type === "fixed") {
     allocations = rebalanceStrategy.rebalanceAllocation.fixedPercentages;
   }
   console.log(allocations);
-  const investmentsWithAllocations = allocationIDToObject(allocations, investments);
+  let investmentsWithAllocations = allocationIDToObject(allocations, investments);
 
   let sum = 0;
   for (const { investment } of investmentsWithAllocations) {
@@ -240,17 +250,17 @@ function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals, ty
       investment.value += buyAmt;
     }
   }
-  logFinancialEvent({
-    year: year,
-    type: "rebalance",
-    description: "The rebalance has now been done.",
-  });
   printInvestments(
     investmentsWithAllocations.map((item) => item.investment),
     year,
     "rebalance",
     "investments"
   );
+  logFinancialEvent({
+    year: year,
+    type: "rebalance",
+    description: "The rebalance has now been done.",
+  });
 }
 
 export { runInvestStrategy, rebalance };

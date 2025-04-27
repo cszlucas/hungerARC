@@ -175,7 +175,7 @@ async function main(numScenarioTimes, scenarioId, userId) {
     });
   }
 
-  console.log("YEARS", JSON.stringify(years, null, 2));
+  //console.log("YEARS", JSON.stringify(years, null, 2));
 
   // console.log(years);
 

@@ -40,7 +40,6 @@ function payNonDiscretionaryExpenses(
       withdrawalAmt: withdrawalAmt,
     },
   });
-  printInvestments(withdrawalStrategy, year, "non-discretionary", "investment");
   printEvents(nonDiscretionaryExpenses, year, "non-discretionary", "expense", inflationRate, spouseDeath);
   //console.log("nonDiscretionaryExpenses Amt: ", expenseAmt, "and taxes: ", taxes);
   //console.log("My cash investment: ", cashInvestment.value, "Amount I need to withdraw: ", withdrawalAmt);
@@ -56,6 +55,7 @@ function payNonDiscretionaryExpenses(
     });
     withdrawalAmt = 0;
   } else {
+    printInvestments(withdrawalStrategy, year, "non-discretionary", "investments");
     withdrawalAmt -= cashInvestment.value;
     cashInvestment.value = 0; //use up cash
     for (let investment of withdrawalStrategy) {
@@ -68,9 +68,6 @@ function payNonDiscretionaryExpenses(
         break;
       }
     }
-
-    printInvestments(withdrawalStrategy, year, "non-discretionary", "investments");
-    printEvents(nonDiscretionaryExpenses, year, "non-discretionary", "expense", inflationRate, spouseDeath);
 
     if (withdrawalAmt > 0) {
       logFinancialEvent({
@@ -85,6 +82,7 @@ function payNonDiscretionaryExpenses(
         type: "non-discretionary",
         description: "You paid all your non-discretionary expenses...phew",
       });
+      printInvestments(withdrawalStrategy, year, "non-discretionary", "investments");
       //console.log("You paid all your non-discretionary expenses...phew");
     }
   }
