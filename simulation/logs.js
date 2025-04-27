@@ -119,9 +119,6 @@ function formatNonDiscretionaryDetails(details, amount, description = "") {
   if (details.cash) {
     line += `Amount of cash you have to spend: "${formatCurrency(details.cash)}".`;
   }
-  if (details.withdrawalAmt) {
-    line += `Amount you need to withdraw: "${formatCurrency(details.withdrawalAmt)}".`;
-  }
   if (details.investmentID) {
     line += `Investment to withdraw from ID "${details.investmentID}" with value "${formatCurrency(details.investmentValue)}".`;
   }

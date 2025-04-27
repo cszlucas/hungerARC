@@ -36,8 +36,7 @@ function payNonDiscretionaryExpenses(
     details: {
       amount: expenseAmt,
       taxes: taxes,
-      cash: cashInvestment.value,
-      withdrawalAmt: withdrawalAmt,
+      cash: cashInvestment.value
     },
   });
   printEvents(nonDiscretionaryExpenses, year, "non-discretionary", "expense", inflationRate, spouseDeath);

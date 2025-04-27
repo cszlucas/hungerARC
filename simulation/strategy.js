@@ -2,6 +2,7 @@ import { logFinancialEvent, printInvestments, printStrategy } from "./logs.js";
 import { updateValues } from "./expenses.js";
 
 //Use up excess cash with invest strategy
+//pre-tax is not part of invest
 function runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy) {
   console.log("\nINVEST STRATEGY");
   //console.log("investStrategy :>> ", investStrategy);
@@ -20,6 +21,7 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
   });
   const excessCash = cashInvestment.value - strategy.maxCash;
   //.log("The excess cash is (if <0 no money to invest)", excessCash);
+  printStrategy(strategy.assetAllocation, "invest", year);
   let allocations = [];
   if (excessCash > 0) {
     //console.log("The excess cash now is", excessCash);
@@ -31,19 +33,23 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
         strategy.assetAllocation.initialPercentages,
         strategy.assetAllocation.finalPercentages
       );
-      printStrategy(allocations, "invest", year, true, strategy.startYear.calculated, (strategy.startYear.calculated + strategy.duration.calculated));
+      printStrategy(allocations, "invest", year, true, strategy.startYear.calculated, strategy.startYear.calculated + strategy.duration.calculated);
     } else if (strategy.assetAllocation.type === "fixed") {
       allocations = strategy.assetAllocation.fixedPercentages;
-      printStrategy(allocations, "invest", year);
     }
     //console.log("moon", allocations);
     let investmentsWithAllocations = allocationIDToObject(allocations, investments);
+    logFinancialEvent({
+        year: year,
+        type: "invest",
+        description: "The investments before investing.",
+      });
     printInvestments(
-        investmentsWithAllocations.map((item) => item.investment),
-        year,
-        "invest",
-        "investments"
-      );
+      investmentsWithAllocations.map((item) => item.investment),
+      year,
+      "invest",
+      "investments"
+    );
     const afterTaxRatio = scaleDownRatio("after-tax", investmentsWithAllocations, irsLimit, excessCash);
     //console.log("afterTaxRatio: ", afterTaxRatio);
     logFinancialEvent({
@@ -73,12 +79,17 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
 
       //console.log("investment", investment._id, "percentage", percentage, "type", investment.accountTaxStatus, "increase purchasePrice by:", buyAmt);
     }
+    logFinancialEvent({
+      year: year,
+      type: "invest",
+      description: "The investments after investing.",
+    });
     printInvestments(
-        investmentsWithAllocations.map((item) => item.investment),
-        year,
-        "invest",
-        "investments"
-      );
+      investmentsWithAllocations.map((item) => item.investment),
+      year,
+      "invest",
+      "investments"
+    );
 
     if (excessCash - totalInvested > 0) {
       console.log("everything else in non-retirement: ", excessDueToLimit);
@@ -200,7 +211,7 @@ function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals, ty
       rebalanceStrategy.rebalanceAllocation.initialPercentages,
       rebalanceStrategy.rebalanceAllocation.finalPercentages
     );
-    printStrategy(allocations, "rebalance", year, true, rebalanceStrategy.startYear.calculated, (rebalanceStrategy.startYear.calculated + rebalanceStrategy.duration.calculated));
+    printStrategy(allocations, "rebalance", year, true, rebalanceStrategy.startYear.calculated, rebalanceStrategy.startYear.calculated + rebalanceStrategy.duration.calculated);
   } else if (rebalanceStrategy.rebalanceAllocation.type === "fixed") {
     allocations = rebalanceStrategy.rebalanceAllocation.fixedPercentages;
   }
@@ -211,6 +222,11 @@ function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals, ty
   for (const { investment } of investmentsWithAllocations) {
     sum += investment.value;
   }
+  logFinancialEvent({
+    year: year,
+    type: "rebalance",
+    description: "The investments before rebalancing.",
+  });
   printInvestments(
     investmentsWithAllocations.map((item) => item.investment),
     year,
@@ -250,6 +266,11 @@ function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals, ty
       investment.value += buyAmt;
     }
   }
+  logFinancialEvent({
+    year: year,
+    type: "rebalance",
+    description: "The investments after rebalancing.",
+  });
   printInvestments(
     investmentsWithAllocations.map((item) => item.investment),
     year,
