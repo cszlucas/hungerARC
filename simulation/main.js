@@ -97,6 +97,7 @@ function payNonDiscretionaryExpenses(
   if (cashInvestment.value >= withdrawalAmt) {
     cashInvestment.value -= withdrawalAmt; //use up cash needed
     withdrawalAmt = 0;
+    console.log("You paid all your discretionary expenses. My cash investment now: ", cashInvestment.value)
   } else {
     withdrawalAmt -= cashInvestment.value;
     cashInvestment.value = 0; //use up cash
@@ -168,7 +169,7 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
       cashInvestment.value -= expenseVal;
       expensesPaid+=expenseVal;
       expenseVal = 0;
-      console.log("You paid expense all with cash.");
+      console.log("You paid expense all with cash. Cash investment now is: ", cashInvestment.value);
       continue;
     }
 
