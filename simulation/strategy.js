@@ -21,9 +21,9 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
   });
   const excessCash = cashInvestment.value - strategy.maxCash;
   //.log("The excess cash is (if <0 no money to invest)", excessCash);
-  printStrategy(strategy.assetAllocation, "invest", year);
   let allocations = [];
   if (excessCash > 0) {
+    printStrategy(strategy.assetAllocation, "invest", year);
     //console.log("The excess cash now is", excessCash);
     if (strategy.assetAllocation.type === "glidePath") {
       allocations = getGlidePathAllocation(

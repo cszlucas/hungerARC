@@ -116,13 +116,13 @@ function formatNonDiscretionaryDetails(details, amount, description = "") {
   if (details.taxes) {
     line += `Amount owed in taxes: "${formatCurrency(details.taxes)}"`;
   }
-  if (details.cash) {
+  if (details.cash != undefined) {
     line += `Amount of cash you have to spend: "${formatCurrency(details.cash)}".`;
   }
   if (details.investmentID) {
     line += `Investment to withdraw from ID "${details.investmentID}" with value "${formatCurrency(details.investmentValue)}".`;
   }
-  if (details?.type && details?.ID && details?.value) {
+  if (details?.type && details?.ID && details?.value!=undefined) {
     const valueFormatted = formatCurrency(details.value);
     line += ` ${details.type.toUpperCase()} ID: ${details.ID} | Value: ${valueFormatted}`;
   }
@@ -131,23 +131,23 @@ function formatNonDiscretionaryDetails(details, amount, description = "") {
 
 function formatStrategy(description, details, type) {
   let line = "";
-  //console.log("details: ", details);
+  //console.log("DETAILS: ", details, type);
   const formatCurrency = (val) => (typeof val === "number" ? `$${val.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : val ?? "");
   const formatPercentage = (val) => `${(val * 100).toFixed(2)}%`;
   if (description) line += `${description}`;
   if (details.cash) {
     line += `Amount of cash you have to spend: "${formatCurrency(details.cash)}".`;
   }
-  if (details.excessCash) {
+  if (details.excessCash!=undefined) {
     line += `Excess cash: "${formatCurrency(details.excessCash)}".`;
   }
-  if (details.maxCash) {
+  if (details.maxCash!=undefined) {
     line += `Maximum cash to keep: "${formatCurrency(details.maxCash)}".`;
   }
-  if (details.irsLimit) {
+  if (details.irsLimit!=undefined) {
     line += `IRS Limit: "${formatCurrency(details.irsLimit)}".`;
   }
-  if (details.afterTaxRatio) {
+  if (details.afterTaxRatio!=undefined) {
     line += `After tax ratio: ${details.afterTaxRatio}.`;
   }
   if (details.type === "initial") {
@@ -158,9 +158,9 @@ function formatStrategy(description, details, type) {
     line += `Fixed investment ID: ${details.ID}, percentage: ${formatPercentage(details.value)}.`;
   } else if (details.type === "calculated") {
     line += `Glide path calculated investment ID: ${details.ID}, percentage: ${formatPercentage(details.value)}. Glide path started year: ${details.start} and ends in year: ${details.end}`;
-  } else if (details.type === "investments" && details.value) {
+  } else if (details.type === "investments" && details.value != undefined) {
     line += `${details.type.toUpperCase()} | Investment ID: ${details.ID}, value: ${formatCurrency(details.value)}, taxType: ${details.taxStatus}.`;
-  } else if (details.type === "investments" && details.purchasePrice) {
+  } else if (details.type === "investments" && details.purchasePrice != undefined) {
     line += `${details.type.toUpperCase()} | ${details.taxStatus} Investment ID: ${details.ID}, purchased: ${formatCurrency(details.purchasePrice)}.`;
   } else if (details.taxStatus) {
     line += `The investments are of type: ${details.taxStatus}`;
@@ -170,31 +170,47 @@ function formatStrategy(description, details, type) {
 }
 
 function printInvestments(investments, year, type, detailsType) {
-  for (const investment of investments) {
+  if (investments.length == 0) {
     logFinancialEvent({
       year: year,
       type: type,
-      details: {
-        type: detailsType,
-        ID: investment._id,
-        value: investment.value,
-        taxStatus: investment.accountTaxStatus,
-      },
+      description: "There are no more investments of this strategy.",
     });
+  } else {
+    for (const investment of investments) {
+      logFinancialEvent({
+        year: year,
+        type: type,
+        details: {
+          type: detailsType,
+          ID: investment._id,
+          value: investment.value,
+          taxStatus: investment.accountTaxStatus,
+        },
+      });
+    }
   }
 }
 
 function printEvents(events, year, type, detailsType, inflationRate, spouseDeath) {
-  for (e of events) {
+  if (events.length == 0) {
     logFinancialEvent({
       year: year,
       type: type,
-      details: {
-        type: detailsType,
-        ID: e._id,
-        value: getValueInYear(e, year, inflationRate, spouseDeath),
-      },
+      description: `There are no more events of type ${type} this year.`,
     });
+  } else {
+    for (e of events) {
+      logFinancialEvent({
+        year: year,
+        type: type,
+        details: {
+          type: detailsType,
+          ID: e._id,
+          value: getValueInYear(e, year, inflationRate, spouseDeath),
+        },
+      });
+    }
   }
 }
 
