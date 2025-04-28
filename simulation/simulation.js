@@ -117,7 +117,9 @@ async function runSimulation(
 
     // PERFORM RMD FOR PREVIOUS YEAR
     const userAge = year - scenario.birthYearUser;
-    await performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year);
+    if (sumInvestmentsPreTaxRMD > 0) {
+      await performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year);
+    }
     sumInvestmentsPreTaxRMD = 0;
 
     //  UPDATE INVESTMENT VALUES
@@ -160,19 +162,23 @@ async function runSimulation(
     );
 
     // PAY DISCRETIONARY EXPENSES
-    payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath);
+    if (spendingStrategy && spendingStrategy.length != 0) {
+      payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath);
+    }
 
     const discretionary = curExpenseEvent.filter((expenseEvent) => expenseEvent.isDiscretionary === true);
 
     // RUN INVEST EVENT
-    runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
+    if (investStrategy && investStrategy.length != 0) {
+      runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
+    }
 
     // RUN REBALANCE EVENT
     let types = ["pre-tax", "after-tax", "non-retirement"];
     for (let type of types) {
       let rebalanceStrategy = getRebalanceStrategy(scenario, curRebalanceEvent, type, year);
       // console.log('curRebalanceEvent :>> ', curRebalanceEvent);
-      if (rebalanceStrategy.length != 0) {
+      if (rebalanceStrategy && rebalanceStrategy.length != 0) {
         rebalance(investments, year, rebalanceStrategy, userAge, yearTotals, type);
       } else {
         console.log("Nothing to rebalance of type: ", type);
