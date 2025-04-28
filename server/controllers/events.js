@@ -122,10 +122,7 @@ exports.createExpenseEvent = async (req, res) => {
       startYear,
       duration,
       initialAmount,
-      annualChange: {
-        type: annualChange.type,
-        amount: annualChange.amount,
-      },
+      annualChange: annualChange,
       userPercentage,
       inflationAdjustment,
       isDiscretionary,

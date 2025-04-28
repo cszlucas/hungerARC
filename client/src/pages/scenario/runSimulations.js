@@ -19,8 +19,11 @@ import {AuthContext} from "../../context/authContext";
 import { saveAs } from "file-saver";
 import yaml from "js-yaml";
 import axios from "axios";
+import { exportToYAML } from "./import-export/export";
+import CustomSave from "../../components/customSaveBtn";
 
-const EventSeries = () => {
+
+const RunSimulation = () => {
   const [numSimulations, setNumSimulations] = useState("1");
   const [openBackdrop, setOpenBackdrop] = useState(false); // State to control backdrop visibility
   const [emails, setEmails] = useState([]); // Store the email addresses
@@ -29,271 +32,21 @@ const EventSeries = () => {
 
   const {currScenario, currInvestmentTypes, currInvestments, currIncome, currExpense, currInvest, currRebalance} = useContext(AppContext);
   const {user} = useContext(AuthContext);
-  console.log(currScenario);
-
-  function buildDistribution(dist) {
-    if (dist.type === "fixed") {
-      return { type: "fixed", value: parseFloat(dist.value) || 0 };
-    } else if (dist.type === "normal") {
-      return {
-        type: "normal",
-        mean: parseFloat(dist.mean) || 0,
-        stdev: parseFloat(dist.stdDev) || 0,
-      };
-    } else if (dist.type === "uniform") {
-      return {
-        type: "uniform",
-        lower: parseFloat(dist.lower) || 0,
-        upper: parseFloat(dist.upper) || 0,
-      };
-    }
-    return { type: "fixed", value: 0 }; // fallback
-  }
-
-  // Convert MongoDB ObjectId to human-readable investmentType name
-  function resolveInvestmentTypeName(id, investmentTypes) {
-    const match = investmentTypes.find(t => t._id === id);
-    return match ? match.name : id; // fallback to id if no match
-  }
-
-  // Build readable investment id (e.g. "S&P 500 pre-tax")
-  function buildReadableInvestmentId(investment, investmentTypes) {
-    const name = resolveInvestmentTypeName(investment.investmentType, investmentTypes);
-    return `${name} ${investment.accountTaxStatus}`;
-  }
-
-
-  function convertStartOrDuration(field) {
-    if (!field || !field.type) {
-      return { type: "fixed", value: 0 }; // fallback for missing or bad input
-    }
+  // console.log(currScenario);
   
-    const { type, value, mean, stdDev, min, max, refer } = field;
-    if (type === "fixedAmt" || type === "fixed") {
-      return { type: "fixed", value: parseFloat(value) };
-    } else if (type === "normal") {
-      return { type: "normal", mean: parseFloat(mean), stdev: parseFloat(stdDev) };
-    } else if (type === "uniform") {
-      return { type: "uniform", lower: parseFloat(min), upper: parseFloat(max) };
-    } else if (type === "startWith" || type === "startAfter") {
-      return { type, eventSeries: refer };
-    }
-  
-    return { type: "fixed", value: 0 };
-  }
-  
-  function convertAnnualChange(change) {
-    if (!change || !change.type) {
-      return {
-        changeAmtOrPct: "amount",
-        changeDistribution: { type: "fixed", value: 0 },
-      };
-    }
-  
-    const { type, amount, distribution, mean, stdDev, min, max } = change;
-    const changeAmtOrPct = type === "percent" ? "percent" : "amount";
-  
-    let changeDistribution = { type: "fixed", value: parseFloat(amount) || 0 };
-    if (distribution === "normal") {
-      changeDistribution = {
-        type: "normal",
-        mean: parseFloat(mean),
-        stdev: parseFloat(stdDev),
-      };
-    } else if (distribution === "uniform") {
-      changeDistribution = {
-        type: "uniform",
-        lower: parseFloat(min),
-        upper: parseFloat(max),
-      };
-    }
-  
-    return { changeAmtOrPct, changeDistribution };
-  }
-  
-  function convertAllocationKeys(allocationObj, currInvestments, currInvestmentTypes) {
-    if (!allocationObj) return {};
-    const result = {};
-    for (const rawId in allocationObj) {
-      const inv = currInvestments.find(i => i._id === rawId);
-      const readableId = inv ? buildReadableInvestmentId(inv, currInvestmentTypes) : rawId;
-      result[readableId] = allocationObj[rawId];
-    }
-    return result;
-  }
-
-
-  function exportToYAML({
-    currScenario,
-    currInvestmentTypes,
-    currInvestments,
-    currIncome,
-    currExpense,
-    currInvest,
-    currRebalance,
-  }) {
-    const {
-      setOfInvestmentTypes,
-      setOfInvestments,
-      incomeEventSeries,
-      expenseEventSeries,
-      investEventSeries,
-      rebalanceEventSeries,
-      _id,
-      __v,
-      ...filteredScenario
-    } = currScenario;
-  
-    const yamlObject = {
-      name: filteredScenario.name || "Retirement Planning Scenario",
-      maritalStatus: filteredScenario.filingStatus === "single" ? "individual" : "couple",
-      birthYears: [filteredScenario.birthYearUser],
-      lifeExpectancy: [filteredScenario.lifeExpectancy],
-      investmentTypes: currInvestmentTypes.map(t => ({
-        name: t.name,
-        description: t.description,
-        returnAmtOrPct: t.annualReturn.unit,
-        returnDistribution: buildDistribution(t.annualReturn),
-        expenseRatio: parseFloat(t.expenseRatio),
-        incomeAmtOrPct: t.annualIncome.unit,
-        incomeDistribution: buildDistribution(t.annualIncome),
-        taxability: t.taxability,
-      })),
-      investments: currInvestments.map(inv => {
-        const name = resolveInvestmentTypeName(inv.investmentType, currInvestmentTypes);
-        const readableId = buildReadableInvestmentId(inv, currInvestmentTypes);
-        return {
-          investmentType: name,
-          value: inv.value,
-          taxStatus: inv.accountTaxStatus,
-          id: readableId,
-        };
-      }),
-      eventSeries: [
-        ...(currIncome || []).filter(e => e?.startYear && e?.duration).map(e => {
-          const { changeAmtOrPct, changeDistribution } = convertAnnualChange(e.annualChange);
-          return {
-            name: e.eventSeriesName,
-            start: convertStartOrDuration(e.startYear),
-            duration: convertStartOrDuration(e.duration),
-            type: "income",
-            initialAmount: parseFloat(e.initialAmount),
-            changeAmtOrPct,
-            changeDistribution,
-            inflationAdjusted: e.inflationAdjustment,
-            userFraction: parseFloat(e.userPercentage),
-            socialSecurity: e.isSocialSecurity,
-          };
-        }),
-        ...(currExpense || []).filter(e => e?.startYear && e?.duration).map(e => {
-          const { changeAmtOrPct, changeDistribution } = convertAnnualChange(e.annualChange);
-          return {
-            name: e.eventSeriesName,
-            start: convertStartOrDuration(e.startYear),
-            duration: convertStartOrDuration(e.duration),
-            type: "expense",
-            initialAmount: parseFloat(e.initialAmount),
-            changeAmtOrPct,
-            changeDistribution,
-            inflationAdjusted: e.inflationAdjustment,
-            userFraction: parseFloat(e.userPercentage),
-            discretionary: e.isDiscretionary,
-          };
-        }),
-        ...(currInvest || []).filter(e => e?.startYear && e?.duration && e?.assetAllocation).map(e => {
-          const isGlide = e.assetAllocation.type === "glidePath";
-          const allocation = convertAllocationKeys(
-            isGlide ? e.assetAllocation.initialPercentages ?? {} : e.assetAllocation.fixedPercentages ?? {},
-            currInvestments,
-            currInvestmentTypes
-          );
-      
-          const allocation2 = isGlide
-            ? convertAllocationKeys(e.assetAllocation.finalPercentages ?? {}, currInvestments, currInvestmentTypes)
-            : undefined;
-      
-          
-          return {
-            name: e.eventSeriesName,
-            start: convertStartOrDuration(e.startYear),
-            duration: convertStartOrDuration(e.duration),
-            type: "invest",
-            assetAllocation: allocation,
-            ...(isGlide && { glidePath: true }),
-            ...(isGlide && { assetAllocation2: allocation2 }),
-            ...(e.maxCash !== undefined && { maxCash: parseFloat(e.maxCash) }),
-          };
-        }),
-        ...(currRebalance || []).filter(e => e?.startYear && e?.duration && e?.rebalanceAllocation).map(e => {
-          const isGlide = e.rebalanceAllocation.type === "glidePath";
-          const allocation = convertAllocationKeys(
-            isGlide ? e.rebalanceAllocation.initialPercentages ?? {} : e.rebalanceAllocation.fixedPercentages ?? {},
-            currInvestments,
-            currInvestmentTypes
-          );
-      
-          const allocation2 = isGlide
-            ? convertAllocationKeys(e.rebalanceAllocation.finalPercentages ?? {}, currInvestments, currInvestmentTypes)
-            : undefined;
-          
-  
-          return {
-            name: e.eventSeriesName,
-            start: convertStartOrDuration(e.startYear),
-            duration: convertStartOrDuration(e.duration),
-            type: "rebalance",
-            assetAllocation: allocation,
-            ...(isGlide && { glidePath: true }),
-            ...(isGlide && { assetAllocation2: allocation2 }),
-          };
-        })
-      ],
-      inflationAssumption: filteredScenario.inflationAssumption,
-      afterTaxContributionLimit: filteredScenario.irsLimits?.initialAfterTax || 7000,
-      spendingStrategy: (filteredScenario.spendingStrategy || []).map(id => {
-        const match = currExpense.find(e => e._id === id);
-        return match ? match.eventSeriesName : id;
-      }),      
-      expenseWithdrawalStrategy: (filteredScenario.expenseWithdrawalStrategy || []).map(id => {
-        const inv = currInvestments.find(i => i._id === id);
-        return inv ? buildReadableInvestmentId(inv, currInvestmentTypes) : id;
-      }),
-      RMDStrategy: (filteredScenario.rmdStrategy || []).map(id => {
-        const inv = currInvestments.find(i => i._id === id);
-        return inv ? buildReadableInvestmentId(inv, currInvestmentTypes) : id;
-      }),
-      RothConversionOpt: filteredScenario.optimizerSettings?.enabled || false,
-      RothConversionStart: filteredScenario.optimizerSettings?.startYear,
-      RothConversionEnd: filteredScenario.optimizerSettings?.endYear,
-      RothConversionStrategy: (filteredScenario.rothConversionStrategy || []).map(id => {
-        const inv = currInvestments.find(i => i._id === id);
-        return inv ? buildReadableInvestmentId(inv, currInvestmentTypes) : id;
-      }),
-      financialGoal: filteredScenario.financialGoal,
-      residenceState: filteredScenario.stateResident || "NY",
-    };
-  
-    const yamlStr = yaml.dump(yamlObject, { lineWidth: -1 });
-    const fileName = `${currScenario.name?.replace(/\s+/g, "_").toLowerCase() || "scenario"}.yaml`;
-    const blob = new Blob([yamlStr], { type: "text/yaml;charset=utf-8" });
-    saveAs(blob, fileName);
-  }
-  
-  
-    const handleExport = () => {
-      exportToYAML({
-        currScenario,
-        currInvestmentTypes,
-        currInvestments,
-        currIncome,
-        currExpense,
-        currInvest,
-        currRebalance
-      });
-    };
+  const handleExport = () => {
+    exportToYAML({
+      currScenario,
+      currInvestmentTypes,
+      currInvestments,
+      currIncome,
+      currExpense,
+      currInvest,
+      currRebalance
+    });
+  };
 
   const navigate = useNavigate();
-  
 
   const handleShareClick = () => {
     setOpenBackdrop(true); // Show backdrop when the "Share" button is clicked
@@ -389,6 +142,7 @@ const EventSeries = () => {
                   backgroundColor: "#59a8c2", // Optionally set hover color
                 },
               }}
+              onClick={() => navigate("/scenario/scenarios")}
             >
               Save & Exit
             </Button>
@@ -517,4 +271,4 @@ const EventSeries = () => {
   );
 };
 
-export default EventSeries;
+export default RunSimulation;

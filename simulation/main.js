@@ -1,67 +1,97 @@
-import RMD from "../server/models/rmd-schema.js";
-import { getExpenseAmountInYear } from "./helper.js";
-import structuredClone from 'structured-clone';
-import { v4 as uuidv4 } from 'uuid';
+const mongoose = require("mongoose");
+const StateTax = require("../server/models/stateTax.js");
+const Tax = require("../server/models/tax.js");
+const Scenario = require("../server/models/scenario");
+const Investment = require("../server/models/investment");
+const InvestmentType = require("../server/models/investmentType");
+const User = require("../server/models/user.js");
+const { buildChartDataFromBuckets } = require("./charts.js");
+const { IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent } = require("../server/models/eventSeries");
+const { calculateLifeExpectancy } = require("./algo.js");
+const { runSimulation } = require("./simulation.js");
+const path = require("path");
 
-//RMDStrategyInvestOrder is an ordering on investments in pre-tax retirement accounts.
-async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD) {
-  if (userAge >= 74 && RMDStrategyInvestOrder != null) {
-    console.log("\nRMDs\nUser age", userAge, "and sum of pre-tax values from prev year is", sumInvestmentsPreTaxRMD);
-
-    const match = await RMD.findOne({ "rmd.age": userAge }, { "rmd.$": 1 });
-    if (!match || !match.rmd || !match.rmd[0]) {
-      console.error("RMD data not found for age:", userAge);
-    }
-
-    const distributionPeriod = match.rmd[0].distributionPeriod;
-    const allInvestmentsNonRetirement = investments.filter((investment) => investment.accountTaxStatus.trim().toLowerCase() === "non-retirement");
-
-    let rmd = sumInvestmentsPreTaxRMD / distributionPeriod;
-    yearTotals.curYearIncome += rmd;
-    let rmdCount = rmd;
-
-    for (let preTaxInvest of RMDStrategyInvestOrder) {
-      if (rmdCount > 0) {
-        console.log("The rmd count: ", rmdCount, "and the pretax investment", preTaxInvest._id, "has value:", preTaxInvest.value);
-        if (preTaxInvest.value - rmdCount >= 0) {
-          transferInvestment(preTaxInvest, allInvestmentsNonRetirement, rmdCount, investments);
-          preTaxInvest.value -= rmdCount;
-          console.log("can perform rmd all this round. The old pretax investment", preTaxInvest._id, " now has", preTaxInvest.value);
-          break;
-        } else {
-          transferInvestment(preTaxInvest, allInvestmentsNonRetirement, preTaxInvest.value, investments);
-          rmdCount -= preTaxInvest.value;
-          preTaxInvest.value = 0;
-          console.log("can NOT pay all this round. Transfer all of pretax investment. The rmd amount left to transfer: ", rmdCount);
-        }
-      } else {
-        console.log("RMD transferred");
-        break;
+class DataStore {
+  constructor() {
+    this.taxData = this.stateTax = this.scenario = this.investment = this.income = this.expense = this.rebalance = this.invest = this.investmentType = this.user = {};
+  }
+  async populateData(scenarioId, userId) {
+    const query = { _id: new mongoose.Types.ObjectId(scenarioId) };
+    try {
+      const scenario = await Scenario.findOne(query);
+      if (!scenario) {
+        console.log("Scenario not found");
+        return;
       }
+      this.scenario = scenario;
+      const investment = await Investment.find({
+        _id: { $in: scenario.setOfInvestments },
+      });
+      investment.purchasePrice = 0;
+      this.investment = investment;
+      const income = await IncomeEvent.find({
+        _id: { $in: scenario.incomeEventSeries },
+      });
+      this.income = income;
+      const expense = await ExpenseEvent.find({
+        _id: { $in: scenario.expenseEventSeries },
+      });
+      this.expense = expense;
+      const invest = await InvestEvent.find({
+        _id: { $in: scenario.investEventSeries },
+      });
+      this.invest = invest;
+      const rebalance = await RebalanceEvent.find({
+        _id: { $in: scenario.rebalanceEventSeries },
+      });
+      this.rebalance = rebalance;
+      const tax = await Tax.find();
+      this.taxData = tax;
+      const user = await User.findById(userId);
+      this.user = user;
+      const stateTaxAll = await StateTax.find();
+
+      // const stateTaxDocs = await StateTax.find(); // get all for direct lookup
+      const residence = scenario.stateResident;
+
+      let matchedTax = null;
+
+      const triState = ["New York", "New Jersey", "Connecticut"];
+
+      if (triState.includes(residence)) {
+        // Search directly in StateTax collection
+        matchedTax = stateTaxAll.find((tax) => tax.state === residence);
+      } else {
+        // Search user's uploaded YAMLs
+        const userTaxDocs = await StateTax.find({ _id: { $in: user.stateYaml } });
+        matchedTax = userTaxDocs.find((tax) => tax.state === residence);
+      }
+      this.stateTax = matchedTax;
+
+      const investmentType = await InvestmentType.find({
+        _id: { $in: scenario.setOfInvestmentTypes },
+      });
+      this.investmentType = investmentType;
+    } catch (err) {
+      console.log("Error while populating data:", err);
     }
   }
-}
 
-// from the pretax account to non-retirement accounts
-function transferInvestment(preTaxInvest, allInvestmentsNonRetirement, amountTransfer, investments) {
-  let nonRetirementMap = new Map(allInvestmentsNonRetirement.map((investment) => [investment.investmentType, investment]));
-  let nonRetirementInvestment = nonRetirementMap.get("preTaxInvest.investmentType");
-
-  if (nonRetirementInvestment) {
-    console.log("able to add value: ", amountTransfer, "to a current afterTaxInvestment ", nonRetirementInvestment._id, "of value", nonRetirementInvestment.value);
-    nonRetirementInvestment.value += amountTransfer;
-  } else {
-    console.log("create a new non-retirement investment with value: ", amountTransfer);
-    let newInvestment = {
-      _id: uuidv4(),
-      ...structuredClone(preTaxInvest),
-      value: amountTransfer,
-      accountTaxStatus: "non-retirement",
-    };
-    investments.push(newInvestment);
+  getData(property) {
+    return this[property];
   }
 }
 
+async function main(numScenarioTimes, scenarioId, userId) {
+  // not sure how to get a value using this, not needed
+  var distributions = require("distributions");
+  const dataStore = new DataStore();
+  await Promise.all([dataStore.populateData(scenarioId, userId)]);
+
+  const csvLog = []; // For user_datetime.csv
+  const eventLog = []; // For user_datetime.log
+
+<<<<<<< HEAD
 //ordering on a set of investments that specifies the order in which
 //investments are sold to generate cash.
 function payNonDiscretionaryExpenses(
@@ -120,16 +150,32 @@ function payNonDiscretionaryExpenses(
   return {
     sumNonDiscretionary: nonDiscretionaryExpenseAmt,
     taxes: taxes
+=======
+  const { taxData, scenario, stateTax, invest, income, expense, rebalance, investment, investmentType, user } = {
+    taxData: dataStore.getData("taxData"),
+    scenario: dataStore.getData("scenario"),
+    stateTax: dataStore.getData("stateTax"),
+    invest: dataStore.getData("invest"),
+    income: dataStore.getData("income"),
+    expense: dataStore.getData("expense"),
+    rebalance: dataStore.getData("rebalance"),
+    investment: dataStore.getData("investment"),
+    investmentType: dataStore.getData("investmentType"),
+    user: dataStore.getData("user"),
+>>>>>>> main
   };
-}
+  // console.log("scenario: ", scenario);
+  // console.log("stateTax :>> ", dataStore.stateTax);
+  const startYearPrev = (new Date().getFullYear() - 1).toString();
+  //calculate life expectancy
+  const { lifeExpectancyUser, lifeExpectancySpouse } = calculateLifeExpectancy(scenario);
+  // console.log('lifeExpectancySpouse here :>> ', lifeExpectancySpouse);
+  let allYearDataBuckets = [];
 
-//calculate TAX
-function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGains, userAge, fedDeduction) {
-  console.log("CALCULATING TAXES, my prev year income: ", prevYearIncome);
-  const adjustedIncome = Math.max(0, prevYearIncome - fedDeduction - prevYearSS);
-  const federalTax = taxAmt(adjustedIncome, federalIncomeRange);
-  const stateTax = taxAmt(adjustedIncome, stateIncomeRange);
+  // find the user's state tax data
+  // let stateTaxData = stateTax.find((state) => state.state === scenario.stateResident);
 
+<<<<<<< HEAD
   const ssTax = taxAmt(prevYearSS * 0.85, federalIncomeRange);
 
   let earlyWithdrawalTax = 0;
@@ -399,56 +445,80 @@ function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals) {
       rebalanceStrategy.startYear.value + rebalanceStrategy.duration.value,
       rebalanceStrategy.rebalanceAllocation.initialPercentages,
       rebalanceStrategy.rebalanceAllocation.finalPercentages
+=======
+  for (let x = 0; x < numScenarioTimes; x++) {
+    const clonedData = {
+      scenario: JSON.parse(JSON.stringify(scenario)),
+      stateTax: JSON.parse(JSON.stringify(stateTax)),
+      investment: JSON.parse(JSON.stringify(investment)),
+      expense: JSON.parse(JSON.stringify(expense)),
+      income: JSON.parse(JSON.stringify(income)),
+      invest: JSON.parse(JSON.stringify(invest)),
+      rebalance: JSON.parse(JSON.stringify(rebalance)),
+      taxData: JSON.parse(JSON.stringify(taxData)),
+      investmentType: JSON.parse(JSON.stringify(investmentType)),
+    };
+    const yearDataBuckets = await runSimulation(
+      clonedData.scenario,
+      clonedData.taxData[0],
+      clonedData.stateTax,
+      startYearPrev,
+      lifeExpectancyUser,
+      lifeExpectancySpouse,
+      clonedData.investment,
+      clonedData.income,
+      clonedData.expense,
+      clonedData.invest,
+      clonedData.rebalance,
+      clonedData.investmentType,
+      csvLog,
+      eventLog
+>>>>>>> main
     );
-  } else if (rebalanceStrategy.rebalanceAllocation.type === "fixed") {
-    allocations = rebalanceStrategy.rebalanceAllocation.fixedPercentages;
-  }
-  console.log(allocations);
-  const investmentsWithAllocations = allocationIDToObject(allocations, investments);
+    allYearDataBuckets.push(yearDataBuckets);
 
-  let sum = 0;
-  for (const { investment } of investmentsWithAllocations) {
-    sum += investment.value;
-  }
-
-  // First: process sales
-  for (const { investment, percentage } of investmentsWithAllocations) {
-    const target = sum * percentage;
-
-    if (investment.value > target) {
-      const sellAmt = investment.value - target;
-
-      if (investment.value - sellAmt <= 0) {
-        // full sale
-        console.log("Sell entire investment", investment._id, "value: ", investment.value);
-        updateValues(investment, userAge, yearTotals, false, investment.value);
-        investment.value = 0;
-      } else {
-        // partial sale
-        console.log("Sell partial investment", investment._id, "value:", investment.value, "sell amount:", sellAmt);
-        updateValues(investment, userAge, yearTotals, true, sellAmt);
-        investment.value -= sellAmt;
-      }
+    // logs only for the first simulation
+    if (x == 0) {
+      const userName = user.email.split("@")[0];
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const baseFilename = `${userName}_${timestamp}`;
+      const csvFile = path.join(__dirname, "../server/logs", `${baseFilename}.csv`);
+      const logFile = path.join(__dirname, "../server/logs", `${baseFilename}.log`);
+      // writeCSVLog(csvFile, csvLog);
+      // writeEventLog(logFilename, simulationResult.eventLog);
     }
   }
+  //console.log("allYearDataBuckets", JSON.stringify(allYearDataBuckets, null, 2));
+  const flattenedBuckets = allYearDataBuckets.flat();
+  // console.log("flattenedBuckets", flattenedBuckets)
 
-  // Then: process purchases
-  for (const { investment, percentage } of investmentsWithAllocations) {
-    const target = sum * percentage;
-
-    if (investment.value < target) {
-      const buyAmt = target - investment.value;
-      console.log("Buy investment", investment._id, "value: ", investment.value, "buy amount:", buyAmt);
-      investment.purchasePrice += buyAmt;
-      investment.value += buyAmt;
-    }
+  const { startYear, endYear, data } = buildChartDataFromBuckets(flattenedBuckets, 2025, numScenarioTimes);
+  // console.log("DATA", JSON.stringify(data, null, 2));
+  // console.log("DATA", data);
+  const years = [];
+  for (let i = 0; i <= endYear - startYear; i++) {
+    years.push({
+      year: startYear + i,
+      income: data.income[i],
+      investments: data.investments[i],
+      discretionary: data.discretionary[i],
+      nonDiscretionary: data.nonDiscretionary[i],
+      taxes: data.taxes[i],
+      earlyWithdrawals: data.earlyWithdrawals[i],
+    });
   }
+
+  console.log("YEARS", JSON.stringify(years, null, 2));
+
+  // console.log(years);
+
+  return years;
 }
 
-export {
-  performRMDs,
-  payNonDiscretionaryExpenses,
-  payDiscretionaryExpenses,
-  runInvestStrategy,
-  rebalance,
-};
+// Call the main function to execute everything
+// main(1, "67df22db4996aba7bb6e8d73");
+//67e084385ca2a5376ad2efd2
+// scenario id              user id
+// main(1, "67e084385ca2a5376ad2efd2", "67e19c10a1325f92faf9f181");
+
+module.exports = { main };
