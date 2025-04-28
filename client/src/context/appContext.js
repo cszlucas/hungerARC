@@ -119,7 +119,7 @@ export const AppProvider = ({ children }) => {
   const [currInvest, setCurrInvest] = useState(readStateFromLS("currentInvest") || []);  // investEvents[],    // invest event series
   const [currRebalance, setCurrRebalance] = useState(readStateFromLS("currentRebalance") || []);   // rebalanceEvents[], // rebalance event series
   
-
+  const [tempExploration, setTempExploration] = useState(readStateFromLS("tempExploration") || []); 
   const { user } = useContext(AuthContext);
   
   useEffect(() => {
@@ -167,6 +167,7 @@ export const AppProvider = ({ children }) => {
       }, {});
   
       setTakenTaxStatusAccounts(takenTaxStatusAccounts);
+      setTempExploration([]);
     };
   
     loadScenarioData();
@@ -212,6 +213,10 @@ export const AppProvider = ({ children }) => {
     if (takenTaxStatusAccounts) localStorage.setItem("takenTaxStatusAccounts", JSON.stringify(takenTaxStatusAccounts));
   }, [takenTaxStatusAccounts]);
 
+  useEffect(() => {
+    if (tempExploration) localStorage.setItem("tempExploration", JSON.stringify(tempExploration));
+  }, [setTempExploration]);
+
   return (
     <AppContext.Provider value={{ 
       scenarioData, setScenarioData, 
@@ -225,6 +230,7 @@ export const AppProvider = ({ children }) => {
       currRebalance, setCurrRebalance,
       currInvestmentTypes, setCurrInvestmentTypes,
       takenTaxStatusAccounts, setTakenTaxStatusAccounts,
+      tempExploration, setTempExploration,
     }}>
         {children}
     </AppContext.Provider>

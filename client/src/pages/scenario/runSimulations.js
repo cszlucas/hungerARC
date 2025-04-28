@@ -21,6 +21,7 @@ import yaml from "js-yaml";
 import axios from "axios";
 import { exportToYAML } from "./import-export/export";
 import CustomSave from "../../components/customSaveBtn";
+import DimensionalExploration from "../explore";
 
 
 const RunSimulation = () => {
@@ -152,7 +153,7 @@ const RunSimulation = () => {
         <PageHeader />
 
         {/* Stack for title and save button */}
-        <Box sx={rowBoxStyles}>
+        <Box sx={rowBoxStyles} justifyContent="space-between">
           <Box>
             <Typography variant="h5" sx={{fontWeight: "bold", mb: 3}}>
               Simulation
@@ -164,7 +165,10 @@ const RunSimulation = () => {
               setValue={setNumSimulations}
               inputProps={{ min: "1" }}
             />
-         </Box>
+          </Box>
+          <Box>
+            <DimensionalExploration/>
+          </Box>
         </Box>
 
         {/* Back and Continue buttons */}
