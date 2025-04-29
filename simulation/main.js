@@ -508,7 +508,7 @@ function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals) {
     });
   }
 
-  console.log("YEARS", JSON.stringify(years, null, 2));
+  //console.log("YEARS", JSON.stringify(years, null, 2));
 
   // console.log(years);
 

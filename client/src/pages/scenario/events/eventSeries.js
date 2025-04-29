@@ -21,7 +21,7 @@ const mongoose = require("mongoose");
 
 const EventSeries = ({ formValues, setFormValues }) => {
 // const EventSeries = () => {
-    const { eventEditMode, currIncome, currExpense, currInvest, currRebalance } = useContext(AppContext);
+    const { eventEditMode, currIncome, currExpense, currInvest, currRebalance, tempExploration } = useContext(AppContext);
     
     const menuLabels = [];
     const menuItems = [];
@@ -39,6 +39,14 @@ const EventSeries = ({ formValues, setFormValues }) => {
         buildMap(currExpense);
         buildMap(currInvest);
         buildMap(currRebalance);
+        
+        // if (dimensionalExplorationMode[0]) {
+        //     tempExploration.forEach((e) => { 
+        //         if (e.setting === "Start Year / Duration") {
+        //             eventSeriesMap.set(e.data._id, { name: e.data.eventSeriesName, startYear: e.data.startYear });
+        //         }
+        //     });
+        // }
 
         if (eventEditMode === "new") {
             for (const key of eventSeriesMap.keys()) {
@@ -128,18 +136,18 @@ const EventSeries = ({ formValues, setFormValues }) => {
     return (
         <>
             <Box sx={{width: "100%"}}>
-            <CustomInput 
-                title="Event name" 
-                value={formValues.eventSeriesName} 
-                setValue={(value) => handleInputChange("eventSeriesName", value)} 
-            />
+                <CustomInput 
+                    title="Event name" 
+                    value={formValues.eventSeriesName} 
+                    setValue={(value) => handleInputChange("eventSeriesName", value)} 
+                />
 
-            <CustomInput 
-                title="Description (Optional)" 
-                type="multiline" 
-                value={formValues.eventSeriesDescription} 
-                setValue={(value) => handleInputChange("eventSeriesDescription", value)} 
-            />
+                <CustomInput 
+                    title="Description (Optional)" 
+                    type="multiline" 
+                    value={formValues.eventSeriesDescription} 
+                    setValue={(value) => handleInputChange("eventSeriesDescription", value)} 
+                />
             </Box>
 
             <Box sx={rowBoxStyles}>
@@ -161,6 +169,7 @@ const EventSeries = ({ formValues, setFormValues }) => {
                             type="number"
                             value={formValues.startYear.value}
                             setValue={(value) => handleInputChange("startYear.value", value)}
+                            disable={true}
                         />
                     </Stack>
                 )}
