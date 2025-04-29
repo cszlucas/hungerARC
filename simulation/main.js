@@ -101,8 +101,18 @@ function scenarioExploration(foundData, parameter, stepSize, year) {
   return foundData;
 }
 
-function getEvent(collection, data) {
+function getEvent(type, data) {
   const id = data._id;
+  let collection;
+  if (type === "Income") {
+    collection = incomeevents;
+  } else if (type === "Expense") {
+    collection = expenseevents;
+  } else if (type === "Invest") {
+    collection = investevents;
+  } else if (type === "Rebalance") {
+    collection = rebalanceevents;
+  }
   const event = collection.find((item) => item._id === id);
   if (event) {
     console.log("Event found:", event);
@@ -149,13 +159,14 @@ async function main(numScenarioTimes, scenarioId, userId) {
   let lowerBound = 1;
   let upperBound = 1;
   let stepSize = 1;
-
+  let isFirstIteration = true;
   for (let value = lowerBound; value <= upperBound; value += stepSize) {
     console.log(`Running ${numScenarioTimes} simulations for ${parameter}: ${value}`);
     if (oneScenarioExploration) {
       let foundData;
-      if (year == 0) { //start
-        foundData = getEvent(collection, data._id);
+      if (isFirstIteration) {
+        foundData = getEvent(type, data._id);
+        isFirstIteration = false;
       }
 
       scenarioExploration(foundData, parameter, stepSize);
