@@ -9,7 +9,8 @@ const CustomInput = ({
     value, 
     setValue, 
     width = "auto",
-    inputProps = {}
+    inputProps = {},
+    disable=false
 }) => {
     
     const handleChange = (event, newValue) => {
@@ -73,6 +74,7 @@ const CustomInput = ({
                     startAdornment: adornment !== "none" && adornment !== "%" ? getAdornment() : null,
                     endAdornment: adornment === "%" ? getAdornment() : null
                 }, ...{inputProps}}}
+                disabled={disable}
             />
         </Box>
     );

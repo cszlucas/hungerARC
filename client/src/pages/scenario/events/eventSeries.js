@@ -19,7 +19,7 @@ import { AppContext } from "../../../context/appContext";
 
 const mongoose = require("mongoose");
 
-const EventSeries = ({ formValues, setFormValues, dimensionalExplorationMode = false }) => {
+const EventSeries = ({ formValues, setFormValues }) => {
 // const EventSeries = () => {
     const { eventEditMode, currIncome, currExpense, currInvest, currRebalance, tempExploration } = useContext(AppContext);
     
@@ -39,14 +39,14 @@ const EventSeries = ({ formValues, setFormValues, dimensionalExplorationMode = f
         buildMap(currExpense);
         buildMap(currInvest);
         buildMap(currRebalance);
-
-        if (dimensionalExplorationMode) {
-            tempExploration.forEach((e) => { 
-                if (e.setting === "Start Year / Duration") {
-                    eventSeriesMap.set(e.data._id, { name: e.data.eventSeriesName, startYear: e.data.startYear });
-                }
-            });
-        }
+        
+        // if (dimensionalExplorationMode[0]) {
+        //     tempExploration.forEach((e) => { 
+        //         if (e.setting === "Start Year / Duration") {
+        //             eventSeriesMap.set(e.data._id, { name: e.data.eventSeriesName, startYear: e.data.startYear });
+        //         }
+        //     });
+        // }
 
         if (eventEditMode === "new") {
             for (const key of eventSeriesMap.keys()) {
@@ -135,7 +135,7 @@ const EventSeries = ({ formValues, setFormValues, dimensionalExplorationMode = f
 
     return (
         <>
-            {!dimensionalExplorationMode && (<Box sx={{width: "100%"}}>
+            <Box sx={{width: "100%"}}>
                 <CustomInput 
                     title="Event name" 
                     value={formValues.eventSeriesName} 
@@ -148,7 +148,7 @@ const EventSeries = ({ formValues, setFormValues, dimensionalExplorationMode = f
                     value={formValues.eventSeriesDescription} 
                     setValue={(value) => handleInputChange("eventSeriesDescription", value)} 
                 />
-            </Box>)}
+            </Box>
 
             <Box sx={rowBoxStyles}>
             <Box width={{width: 400}}>
@@ -169,6 +169,7 @@ const EventSeries = ({ formValues, setFormValues, dimensionalExplorationMode = f
                             type="number"
                             value={formValues.startYear.value}
                             setValue={(value) => handleInputChange("startYear.value", value)}
+                            disable={true}
                         />
                     </Stack>
                 )}

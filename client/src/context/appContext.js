@@ -178,7 +178,7 @@ export const AppProvider = ({ children }) => {
   }, [scenarioData]);
 
   useEffect(() => {
-    if (currScenario) localStorage.setItem("currentScenario", JSON.stringify(currScenario));
+    localStorage.setItem("currentScenario", JSON.stringify(currScenario));
   }, [currScenario]);
 
   useEffect(() => {
@@ -206,7 +206,7 @@ export const AppProvider = ({ children }) => {
   }, [currInvestmentTypes]);
 
   useEffect(() => {
-    if (eventEditMode) localStorage.setItem("editEvent", JSON.stringify(eventEditMode));
+    localStorage.setItem("editEvent", JSON.stringify(eventEditMode));
   }, [eventEditMode]);
 
   useEffect(() => {
@@ -215,7 +215,8 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     if (tempExploration) localStorage.setItem("tempExploration", JSON.stringify(tempExploration));
-  }, [setTempExploration]);
+  }, [tempExploration]);
+  
 
   return (
     <AppContext.Provider value={{ 
