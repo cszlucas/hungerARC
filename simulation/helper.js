@@ -131,7 +131,8 @@ function getStrategy(scenario, investments, curExpenseEvent, investEvent, year) 
   const investStrategy = investEvent.filter(
     (invest) => scenario.investEventSeries.includes(invest._id) && invest.startYear?.calculated <= year && year <= invest.startYear?.calculated + invest.duration?.calculated
   );
-
+  
+  console.log("helper invest strategy: " + investStrategy);
   return {
     RMDStrategyInvestOrder,
     withdrawalStrategy,

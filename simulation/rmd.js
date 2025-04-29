@@ -1,6 +1,7 @@
 import RMD from "../server/models/rmd-schema.js";
 import structuredClone from "structured-clone";
 import { v4 as uuidv4 } from "uuid";
+import { logFinancialEvent, printInvestments, printStrategy } from "./logs.js";
 
 //RMDStrategyInvestOrder is an ordering on investments in pre-tax retirement accounts.
 async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year) {

@@ -6,7 +6,7 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
   console.log("\nINVEST STRATEGY");
   //console.log("investStrategy :>> ", investStrategy);
   const strategy = Array.isArray(investStrategy) ? investStrategy[0] : investStrategy;
-  //console.log("strategy :>> ", strategy);
+  console.log("strategy :>> ", strategy);
   //console.log("cashInvestment", cashInvestment.value, " maxCash to keep: ", strategy.maxCash);
 
   logFinancialEvent({

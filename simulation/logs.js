@@ -17,6 +17,7 @@ function writeCSVLog(csvFilename, simulationResult) {
   fs.writeFileSync(csvFilename, fullCSV, "utf8");
 }
 function writeEventLog(logFilename, simulationResult){
+}
 
 function writeEventLog(logFilename, simulationResult) {}
 

@@ -27,7 +27,10 @@ function DisplayUserName({ user }) {
 
 const Profile = () => {
     const { user } = useContext(AuthContext);
+    const [stateTaxes, setStateTaxes] = useState(user?.stateYaml || null);
     const navigate = useNavigate(); // Initialize useNavigate
+
+    console.log(user);
 
     useEffect(() => {
         if (!user) {
@@ -35,14 +38,20 @@ const Profile = () => {
         }
     }, [user, navigate]);
 
+    useEffect(() => {
+        // Whenever user.stateYaml changes, update stateTaxes
+        setStateTaxes(user?.stateYaml || null);
+    }, [user?.stateYaml]);
+
     const [selectedStateTax, setStateTax] = useState(null);
     const [file, setFile] = useState(null); 
 
-    const stateTaxes = {
-        "New_York_Tax": { "date": new Date(2025, 2, 20) },
-        "New_Jersery_Tax": { "date": new Date(2025, 2, 19) },
-        "Texas_Tax": { "date": new Date(2025, 2, 18) },
-    };
+    // const stateTaxes = {
+    //     "New_York_Tax": { "date": new Date(2025, 2, 20) },
+    //     "New_Jersery_Tax": { "date": new Date(2025, 2, 19) },
+    //     "Texas_Tax": { "date": new Date(2025, 2, 18) },
+    // };
+    // const stateTaxes = user.stateYaml;
 
     const handleSelectState = (taxKey) => {
         setStateTax(taxKey);
@@ -54,29 +63,41 @@ const Profile = () => {
 
     const handleUpload = async () => {
         if (!file) {
-            alert("Please select a YAML file first.");
-            return;
+          alert("Please select a YAML file first.");
+          return;
         }
-
+      
         const formData = new FormData();
         formData.append("file", file);
         formData.append("id", user._id);
-        for (let pair of formData.entries()) {
-            console.log(pair[0] + ":", pair[1]);
+      
+        console.log("Uploading the following data:");
+        for (let [key, value] of formData.entries()) {
+          console.log(`${key}:`, value);
         }
+      
         try {
-            const response = await axios.post("http://localhost:8080/uploadStateTaxYaml", formData);
-
-            console.log(response);
-            if (response.status === 200) {
-                alert("File uploaded successfully!");
-            } else {
-                alert("Failed to upload file.");
-            }
+          const response = await axios.post("http://localhost:8080/uploadStateTaxYaml", formData);
+      
+          console.log("Upload response:", response);
+      
+          if (response.status === 200) {
+            alert("File uploaded successfully!");
+      
+            const newId = response.data.data._id; // <-- the new document ID
+      
+            // ✅ Update stateTaxes by adding the new ID
+            setStateTaxes((prevStateYaml) => [...(prevStateYaml || []), newId]);
+      
+          } else {
+            alert("Failed to upload file. Server responded with status: " + response.status);
+          }
         } catch (error) {
-            console.error("Error uploading file:", error);
+          console.error("Error uploading file:", error);
+          alert("An error occurred during file upload. Please try again.");
         }
     };
+      
 
     return (
         <ThemeProvider theme={theme}>
@@ -131,8 +152,8 @@ const Profile = () => {
                                 onClick={() => handleSelectState(key)}
                             >
                                 <ListItemText
-                                    primary={<span style={{ fontWeight: "bold" }}>{key}</span>}
-                                    secondary={`Date: ${value.date.toDateString()}`}
+                                    primary={<span style={{ fontWeight: "bold" }}>{value}</span>}
+                                    // secondary={`Date: ${value.date.toDateString()}`}
                                 />
                                 <IconButton 
                                     edge="end" 
