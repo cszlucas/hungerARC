@@ -350,3 +350,297 @@ Log started at 2025-04-30T05:19:50.993Z
 [2027] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $7,274.87, taxType: non-retirement.
 [2027] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $6,197.11, taxType: after-tax.
 [2027] REBALANCE | The rebalance has now been done.
+Log started at 2025-04-30T05:32:37.134Z
+[2025] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $1,200.Amount of cash you have to spend: "$60,680.34".
+[2025] NON-DISCRETIONARY |  EXPENSE ID: 67fc94b54b5dd3060038908a | Value: $1,200
+[2025] NON-DISCRETIONARY | You paid all your non-discretionary expenses with cash...wow!.Amount of cash you have to spend: "$59,480.34".
+[2025] DISCRETIONARY | Amount of cash you have to spend: "$59,480.34".
+[2025] DISCRETIONARY |  EXPENSE ID: 67e084385ca2a5376ad2efc7 | Value: $1,200
+[2025] DISCRETIONARY | You paid expense ID: 67e084385ca2a5376ad2efc7 all with cash..Amount of cash you have to spend: "$58,280.34".
+[2025] INVEST | Amount of cash you have to spend: "$58,280.34".Excess cash: "$57,980.34".Maximum cash to keep: "$300".
+[2025] INVEST | Fixed investment ID: 67fdbb984b5dd306003890be, percentage: 40.00%.
+[2025] INVEST | Fixed investment ID: 67fdbbb54b5dd306003890c1, percentage: 60.00%.
+[2025] INVEST | The investments before investing.
+[2025] INVEST | INVESTMENTS | Investment ID: 67fdbb984b5dd306003890be, value: $84.06, taxType: after-tax.
+[2025] INVEST | INVESTMENTS | Investment ID: 67fdbbb54b5dd306003890c1, value: $124.93, taxType: after-tax.
+[2025] INVEST | IRS Limit: "$1,000".After tax ratio: 0.01724722643248745.
+[2025] INVEST | The investments after investing.
+[2025] INVEST | INVESTMENTS | Investment ID: 67fdbb984b5dd306003890be, value: $484.06, taxType: after-tax.
+[2025] INVEST | INVESTMENTS | Investment ID: 67fdbbb54b5dd306003890c1, value: $724.93, taxType: after-tax.
+[2025] INVEST | Excess cash: "$56,980.34".
+[2025] REBALANCE | The investments are of type: pre-tax
+[2025] REBALANCE | Initial investment ID: 67e084385ca2a5376ad2efb7, percentage: 60.00%.
+[2025] REBALANCE | Initial investment ID: 67e084385ca2a5376ad2efbd, percentage: 40.00%.
+[2025] REBALANCE | Final investment ID: 67e084385ca2a5376ad2efb7, percentage: 30.00%.
+[2025] REBALANCE | Final investment ID: 67e084385ca2a5376ad2efbd, percentage: 70.00%.
+[2025] REBALANCE | Glide path calculated investment ID: 67e084385ca2a5376ad2efb7, percentage: 60.00%. Glide path started year: 2025 and ends in year: 2035
+[2025] REBALANCE | Glide path calculated investment ID: 67e084385ca2a5376ad2efbd, percentage: 40.00%. Glide path started year: 2025 and ends in year: 2035
+[2025] REBALANCE | The investments before rebalancing.
+[2025] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $28,881.37, taxType: after-tax.
+[2025] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $10,777.02, taxType: pre-tax.
+[2025] REBALANCE | The investments after rebalancing.
+[2025] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $23,795.03, taxType: after-tax.
+[2025] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $15,863.36, taxType: pre-tax.
+[2025] REBALANCE | The rebalance has now been done.
+[2026] RMD | RMD amount - $622.09. Previous year's income amount - $15,863.36 at age 74
+[2026] RMD | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $23,795.03, taxType: after-tax.
+[2026] RMD | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $15,863.36, taxType: pre-tax.
+[2026] RMD | Transferred "622.0923946227537" from pretax investment to non-retirement. Add amount to new non-retirement investment[nonRetirementInvestment ID: 67e084385ca2a5376ad2efb7]
+[2026] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $1,320.Amount owed in taxes: "$14,763.5"Amount of cash you have to spend: "$130,439.39".
+[2026] NON-DISCRETIONARY |  EXPENSE ID: 67fc94b54b5dd3060038908a | Value: $1,320
+[2026] NON-DISCRETIONARY | You paid all your non-discretionary expenses with cash...wow!.Amount of cash you have to spend: "$114,355.89".
+[2026] DISCRETIONARY | Amount of cash you have to spend: "$114,355.89".
+[2026] DISCRETIONARY |  EXPENSE ID: 67e084385ca2a5376ad2efc7 | Value: $1,320
+[2026] DISCRETIONARY | You paid expense ID: 67e084385ca2a5376ad2efc7 all with cash..Amount of cash you have to spend: "$113,035.89".
+[2026] INVEST | Amount of cash you have to spend: "$113,035.89".Excess cash: "$112,735.89".Maximum cash to keep: "$300".
+[2026] INVEST | Fixed investment ID: 67fdbb984b5dd306003890be, percentage: 40.00%.
+[2026] INVEST | Fixed investment ID: 67fdbbb54b5dd306003890c1, percentage: 60.00%.
+[2026] INVEST | The investments before investing.
+[2026] INVEST | INVESTMENTS | Investment ID: 67fdbb984b5dd306003890be, value: $396.98, taxType: after-tax.
+[2026] INVEST | INVESTMENTS | Investment ID: 67fdbbb54b5dd306003890c1, value: $592.28, taxType: after-tax.
+[2026] INVEST | IRS Limit: "$1,000".After tax ratio: 0.00887028958692479.
+[2026] INVEST | The investments after investing.
+[2026] INVEST | INVESTMENTS | Investment ID: 67fdbb984b5dd306003890be, value: $796.98, taxType: after-tax.
+[2026] INVEST | INVESTMENTS | Investment ID: 67fdbbb54b5dd306003890c1, value: $1,192.28, taxType: after-tax.
+[2026] INVEST | Excess cash: "$111,735.89".
+[2026] REBALANCE | The investments are of type: pre-tax
+[2026] REBALANCE | Initial investment ID: 67e084385ca2a5376ad2efb7, percentage: 60.00%.
+[2026] REBALANCE | Initial investment ID: 67e084385ca2a5376ad2efbd, percentage: 40.00%.
+[2026] REBALANCE | Final investment ID: 67e084385ca2a5376ad2efb7, percentage: 30.00%.
+[2026] REBALANCE | Final investment ID: 67e084385ca2a5376ad2efbd, percentage: 70.00%.
+[2026] REBALANCE | Glide path calculated investment ID: 67e084385ca2a5376ad2efb7, percentage: 57.00%. Glide path started year: 2025 and ends in year: 2035
+[2026] REBALANCE | Glide path calculated investment ID: 67e084385ca2a5376ad2efbd, percentage: 43.00%. Glide path started year: 2025 and ends in year: 2035
+[2026] REBALANCE | The investments before rebalancing.
+[2026] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $578.91, taxType: non-retirement.
+[2026] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $14,121.88, taxType: after-tax.
+[2026] REBALANCE | The investments after rebalancing.
+[2026] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $8,379.45, taxType: non-retirement.
+[2026] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $6,321.34, taxType: after-tax.
+[2026] REBALANCE | The rebalance has now been done.
+[2027] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $1,452.Amount owed in taxes: "$22,106.98"Amount of cash you have to spend: "$197,909.37".
+[2027] NON-DISCRETIONARY |  EXPENSE ID: 67fc94b54b5dd3060038908a | Value: $1,452
+[2027] NON-DISCRETIONARY | You paid all your non-discretionary expenses with cash...wow!.Amount of cash you have to spend: "$174,350.39".
+[2027] DISCRETIONARY | Amount of cash you have to spend: "$174,350.39".
+[2027] DISCRETIONARY |  EXPENSE ID: 67e084385ca2a5376ad2efc7 | Value: $1,452
+[2027] DISCRETIONARY | You paid expense ID: 67e084385ca2a5376ad2efc7 all with cash..Amount of cash you have to spend: "$172,898.39".
+[2027] INVEST | Amount of cash you have to spend: "$172,898.39".Excess cash: "$172,598.39".Maximum cash to keep: "$300".
+[2027] INVEST | Fixed investment ID: 67fdbb984b5dd306003890be, percentage: 40.00%.
+[2027] INVEST | Fixed investment ID: 67fdbbb54b5dd306003890c1, percentage: 60.00%.
+[2027] INVEST | The investments before investing.
+[2027] INVEST | INVESTMENTS | Investment ID: 67fdbb984b5dd306003890be, value: $677.4, taxType: after-tax.
+[2027] INVEST | INVESTMENTS | Investment ID: 67fdbbb54b5dd306003890c1, value: $946.11, taxType: after-tax.
+[2027] INVEST | IRS Limit: "$1,000".After tax ratio: 0.005793796672111453.
+[2027] INVEST | The investments after investing.
+[2027] INVEST | INVESTMENTS | Investment ID: 67fdbb984b5dd306003890be, value: $1,077.4, taxType: after-tax.
+[2027] INVEST | INVESTMENTS | Investment ID: 67fdbbb54b5dd306003890c1, value: $1,546.11, taxType: after-tax.
+[2027] INVEST | Excess cash: "$171,598.39".
+[2027] REBALANCE | The investments are of type: pre-tax
+[2027] REBALANCE | Initial investment ID: 67e084385ca2a5376ad2efb7, percentage: 60.00%.
+[2027] REBALANCE | Initial investment ID: 67e084385ca2a5376ad2efbd, percentage: 40.00%.
+[2027] REBALANCE | Final investment ID: 67e084385ca2a5376ad2efb7, percentage: 30.00%.
+[2027] REBALANCE | Final investment ID: 67e084385ca2a5376ad2efbd, percentage: 70.00%.
+[2027] REBALANCE | Glide path calculated investment ID: 67e084385ca2a5376ad2efb7, percentage: 54.00%. Glide path started year: 2025 and ends in year: 2035
+[2027] REBALANCE | Glide path calculated investment ID: 67e084385ca2a5376ad2efbd, percentage: 46.00%. Glide path started year: 2025 and ends in year: 2035
+[2027] REBALANCE | The investments before rebalancing.
+[2027] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $7,769.25, taxType: non-retirement.
+[2027] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $5,702.74, taxType: after-tax.
+[2027] REBALANCE | The investments after rebalancing.
+[2027] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $7,274.87, taxType: non-retirement.
+[2027] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $6,197.11, taxType: after-tax.
+[2027] REBALANCE | The rebalance has now been done.
+Log started at 2025-04-30T05:38:30.601Z
+[2025] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $1,200.Amount of cash you have to spend: "$60,680.34".
+[2025] NON-DISCRETIONARY |  EXPENSE ID: 67fc94b54b5dd3060038908a | Value: $1,200
+[2025] NON-DISCRETIONARY | You paid all your non-discretionary expenses with cash...wow!.Amount of cash you have to spend: "$59,480.34".
+[2025] DISCRETIONARY | Amount of cash you have to spend: "$59,480.34".
+[2025] DISCRETIONARY |  EXPENSE ID: 67e084385ca2a5376ad2efc7 | Value: $1,200
+[2025] DISCRETIONARY | You paid expense ID: 67e084385ca2a5376ad2efc7 all with cash..Amount of cash you have to spend: "$58,280.34".
+[2025] INVEST | Amount of cash you have to spend: "$58,280.34".Excess cash: "$57,980.34".Maximum cash to keep: "$300".
+[2025] INVEST | Fixed investment ID: 67fdbb984b5dd306003890be, percentage: 40.00%.
+[2025] INVEST | Fixed investment ID: 67fdbbb54b5dd306003890c1, percentage: 60.00%.
+[2025] INVEST | The investments before investing.
+[2025] INVEST | INVESTMENTS | Investment ID: 67fdbb984b5dd306003890be, value: $84.06, taxType: after-tax.
+[2025] INVEST | INVESTMENTS | Investment ID: 67fdbbb54b5dd306003890c1, value: $124.93, taxType: after-tax.
+[2025] INVEST | IRS Limit: "$1,000".After tax ratio: 0.01724722643248745.
+[2025] INVEST | The investments after investing.
+[2025] INVEST | INVESTMENTS | Investment ID: 67fdbb984b5dd306003890be, value: $484.06, taxType: after-tax.
+[2025] INVEST | INVESTMENTS | Investment ID: 67fdbbb54b5dd306003890c1, value: $724.93, taxType: after-tax.
+[2025] INVEST | Excess cash: "$56,980.34".
+[2025] REBALANCE | The investments are of type: pre-tax
+[2025] REBALANCE | Initial investment ID: 67e084385ca2a5376ad2efb7, percentage: 60.00%.
+[2025] REBALANCE | Initial investment ID: 67e084385ca2a5376ad2efbd, percentage: 40.00%.
+[2025] REBALANCE | Final investment ID: 67e084385ca2a5376ad2efb7, percentage: 30.00%.
+[2025] REBALANCE | Final investment ID: 67e084385ca2a5376ad2efbd, percentage: 70.00%.
+[2025] REBALANCE | Glide path calculated investment ID: 67e084385ca2a5376ad2efb7, percentage: 60.00%. Glide path started year: 2025 and ends in year: 2035
+[2025] REBALANCE | Glide path calculated investment ID: 67e084385ca2a5376ad2efbd, percentage: 40.00%. Glide path started year: 2025 and ends in year: 2035
+[2025] REBALANCE | The investments before rebalancing.
+[2025] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $28,881.37, taxType: after-tax.
+[2025] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $10,777.02, taxType: pre-tax.
+[2025] REBALANCE | The investments after rebalancing.
+[2025] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $23,795.03, taxType: after-tax.
+[2025] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $15,863.36, taxType: pre-tax.
+[2025] REBALANCE | The rebalance has now been done.
+[2026] RMD | RMD amount - $622.09. Previous year's income amount - $15,863.36 at age 74
+[2026] RMD | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $23,795.03, taxType: after-tax.
+[2026] RMD | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $15,863.36, taxType: pre-tax.
+[2026] RMD | Transferred "622.0923946227537" from pretax investment to non-retirement. Add amount to new non-retirement investment[nonRetirementInvestment ID: 67e084385ca2a5376ad2efb7]
+[2026] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $1,320.Amount owed in taxes: "$14,763.5"Amount of cash you have to spend: "$130,439.39".
+[2026] NON-DISCRETIONARY |  EXPENSE ID: 67fc94b54b5dd3060038908a | Value: $1,320
+[2026] NON-DISCRETIONARY | You paid all your non-discretionary expenses with cash...wow!.Amount of cash you have to spend: "$114,355.89".
+[2026] DISCRETIONARY | Amount of cash you have to spend: "$114,355.89".
+[2026] DISCRETIONARY |  EXPENSE ID: 67e084385ca2a5376ad2efc7 | Value: $1,320
+[2026] DISCRETIONARY | You paid expense ID: 67e084385ca2a5376ad2efc7 all with cash..Amount of cash you have to spend: "$113,035.89".
+[2026] INVEST | Amount of cash you have to spend: "$113,035.89".Excess cash: "$112,735.89".Maximum cash to keep: "$300".
+[2026] INVEST | Fixed investment ID: 67fdbb984b5dd306003890be, percentage: 40.00%.
+[2026] INVEST | Fixed investment ID: 67fdbbb54b5dd306003890c1, percentage: 60.00%.
+[2026] INVEST | The investments before investing.
+[2026] INVEST | INVESTMENTS | Investment ID: 67fdbb984b5dd306003890be, value: $396.98, taxType: after-tax.
+[2026] INVEST | INVESTMENTS | Investment ID: 67fdbbb54b5dd306003890c1, value: $592.28, taxType: after-tax.
+[2026] INVEST | IRS Limit: "$1,000".After tax ratio: 0.00887028958692479.
+[2026] INVEST | The investments after investing.
+[2026] INVEST | INVESTMENTS | Investment ID: 67fdbb984b5dd306003890be, value: $796.98, taxType: after-tax.
+[2026] INVEST | INVESTMENTS | Investment ID: 67fdbbb54b5dd306003890c1, value: $1,192.28, taxType: after-tax.
+[2026] INVEST | Excess cash: "$111,735.89".
+[2026] REBALANCE | The investments are of type: pre-tax
+[2026] REBALANCE | Initial investment ID: 67e084385ca2a5376ad2efb7, percentage: 60.00%.
+[2026] REBALANCE | Initial investment ID: 67e084385ca2a5376ad2efbd, percentage: 40.00%.
+[2026] REBALANCE | Final investment ID: 67e084385ca2a5376ad2efb7, percentage: 30.00%.
+[2026] REBALANCE | Final investment ID: 67e084385ca2a5376ad2efbd, percentage: 70.00%.
+[2026] REBALANCE | Glide path calculated investment ID: 67e084385ca2a5376ad2efb7, percentage: 57.00%. Glide path started year: 2025 and ends in year: 2035
+[2026] REBALANCE | Glide path calculated investment ID: 67e084385ca2a5376ad2efbd, percentage: 43.00%. Glide path started year: 2025 and ends in year: 2035
+[2026] REBALANCE | The investments before rebalancing.
+[2026] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $578.91, taxType: non-retirement.
+[2026] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $14,121.88, taxType: after-tax.
+[2026] REBALANCE | The investments after rebalancing.
+[2026] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $8,379.45, taxType: non-retirement.
+[2026] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $6,321.34, taxType: after-tax.
+[2026] REBALANCE | The rebalance has now been done.
+[2027] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $1,452.Amount owed in taxes: "$22,106.98"Amount of cash you have to spend: "$197,909.37".
+[2027] NON-DISCRETIONARY |  EXPENSE ID: 67fc94b54b5dd3060038908a | Value: $1,452
+[2027] NON-DISCRETIONARY | You paid all your non-discretionary expenses with cash...wow!.Amount of cash you have to spend: "$174,350.39".
+[2027] DISCRETIONARY | Amount of cash you have to spend: "$174,350.39".
+[2027] DISCRETIONARY |  EXPENSE ID: 67e084385ca2a5376ad2efc7 | Value: $1,452
+[2027] DISCRETIONARY | You paid expense ID: 67e084385ca2a5376ad2efc7 all with cash..Amount of cash you have to spend: "$172,898.39".
+[2027] INVEST | Amount of cash you have to spend: "$172,898.39".Excess cash: "$172,598.39".Maximum cash to keep: "$300".
+[2027] INVEST | Fixed investment ID: 67fdbb984b5dd306003890be, percentage: 40.00%.
+[2027] INVEST | Fixed investment ID: 67fdbbb54b5dd306003890c1, percentage: 60.00%.
+[2027] INVEST | The investments before investing.
+[2027] INVEST | INVESTMENTS | Investment ID: 67fdbb984b5dd306003890be, value: $677.4, taxType: after-tax.
+[2027] INVEST | INVESTMENTS | Investment ID: 67fdbbb54b5dd306003890c1, value: $946.11, taxType: after-tax.
+[2027] INVEST | IRS Limit: "$1,000".After tax ratio: 0.005793796672111453.
+[2027] INVEST | The investments after investing.
+[2027] INVEST | INVESTMENTS | Investment ID: 67fdbb984b5dd306003890be, value: $1,077.4, taxType: after-tax.
+[2027] INVEST | INVESTMENTS | Investment ID: 67fdbbb54b5dd306003890c1, value: $1,546.11, taxType: after-tax.
+[2027] INVEST | Excess cash: "$171,598.39".
+[2027] REBALANCE | The investments are of type: pre-tax
+[2027] REBALANCE | Initial investment ID: 67e084385ca2a5376ad2efb7, percentage: 60.00%.
+[2027] REBALANCE | Initial investment ID: 67e084385ca2a5376ad2efbd, percentage: 40.00%.
+[2027] REBALANCE | Final investment ID: 67e084385ca2a5376ad2efb7, percentage: 30.00%.
+[2027] REBALANCE | Final investment ID: 67e084385ca2a5376ad2efbd, percentage: 70.00%.
+[2027] REBALANCE | Glide path calculated investment ID: 67e084385ca2a5376ad2efb7, percentage: 54.00%. Glide path started year: 2025 and ends in year: 2035
+[2027] REBALANCE | Glide path calculated investment ID: 67e084385ca2a5376ad2efbd, percentage: 46.00%. Glide path started year: 2025 and ends in year: 2035
+[2027] REBALANCE | The investments before rebalancing.
+[2027] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $7,769.25, taxType: non-retirement.
+[2027] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $5,702.74, taxType: after-tax.
+[2027] REBALANCE | The investments after rebalancing.
+[2027] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $7,274.87, taxType: non-retirement.
+[2027] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $6,197.11, taxType: after-tax.
+[2027] REBALANCE | The rebalance has now been done.
+Log started at 2025-04-30T05:40:49.021Z
+[2025] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $1,200.Amount of cash you have to spend: "$60,680.34".
+[2025] NON-DISCRETIONARY |  EXPENSE ID: 67fc94b54b5dd3060038908a | Value: $1,200
+[2025] NON-DISCRETIONARY | You paid all your non-discretionary expenses with cash...wow!.Amount of cash you have to spend: "$59,480.34".
+[2025] DISCRETIONARY | Amount of cash you have to spend: "$59,480.34".
+[2025] DISCRETIONARY |  EXPENSE ID: 67e084385ca2a5376ad2efc7 | Value: $1,200
+[2025] DISCRETIONARY | You paid expense ID: 67e084385ca2a5376ad2efc7 all with cash..Amount of cash you have to spend: "$58,280.34".
+[2025] INVEST | Amount of cash you have to spend: "$58,280.34".Excess cash: "$57,980.34".Maximum cash to keep: "$300".
+[2025] INVEST | Fixed investment ID: 67fdbb984b5dd306003890be, percentage: 40.00%.
+[2025] INVEST | Fixed investment ID: 67fdbbb54b5dd306003890c1, percentage: 60.00%.
+[2025] INVEST | The investments before investing.
+[2025] INVEST | INVESTMENTS | Investment ID: 67fdbb984b5dd306003890be, value: $84.06, taxType: after-tax.
+[2025] INVEST | INVESTMENTS | Investment ID: 67fdbbb54b5dd306003890c1, value: $124.93, taxType: after-tax.
+[2025] INVEST | IRS Limit: "$1,000".After tax ratio: 0.01724722643248745.
+[2025] INVEST | The investments after investing.
+[2025] INVEST | INVESTMENTS | Investment ID: 67fdbb984b5dd306003890be, value: $484.06, taxType: after-tax.
+[2025] INVEST | INVESTMENTS | Investment ID: 67fdbbb54b5dd306003890c1, value: $724.93, taxType: after-tax.
+[2025] INVEST | Excess cash: "$56,980.34".
+[2025] REBALANCE | The investments are of type: pre-tax
+[2025] REBALANCE | Initial investment ID: 67e084385ca2a5376ad2efb7, percentage: 60.00%.
+[2025] REBALANCE | Initial investment ID: 67e084385ca2a5376ad2efbd, percentage: 40.00%.
+[2025] REBALANCE | Final investment ID: 67e084385ca2a5376ad2efb7, percentage: 30.00%.
+[2025] REBALANCE | Final investment ID: 67e084385ca2a5376ad2efbd, percentage: 70.00%.
+[2025] REBALANCE | Glide path calculated investment ID: 67e084385ca2a5376ad2efb7, percentage: 60.00%. Glide path started year: 2025 and ends in year: 2035
+[2025] REBALANCE | Glide path calculated investment ID: 67e084385ca2a5376ad2efbd, percentage: 40.00%. Glide path started year: 2025 and ends in year: 2035
+[2025] REBALANCE | The investments before rebalancing.
+[2025] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $28,881.37, taxType: after-tax.
+[2025] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $10,777.02, taxType: pre-tax.
+[2025] REBALANCE | The investments after rebalancing.
+[2025] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $23,795.03, taxType: after-tax.
+[2025] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $15,863.36, taxType: pre-tax.
+[2025] REBALANCE | The rebalance has now been done.
+[2026] RMD | RMD amount - $622.09. Previous year's income amount - $15,863.36 at age 74
+[2026] RMD | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $23,795.03, taxType: after-tax.
+[2026] RMD | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $15,863.36, taxType: pre-tax.
+[2026] RMD | Transferred "622.0923946227537" from pretax investment to non-retirement. Add amount to new non-retirement investment[nonRetirementInvestment ID: 67e084385ca2a5376ad2efb7]
+[2026] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $1,320.Amount owed in taxes: "$14,763.5"Amount of cash you have to spend: "$130,439.39".
+[2026] NON-DISCRETIONARY |  EXPENSE ID: 67fc94b54b5dd3060038908a | Value: $1,320
+[2026] NON-DISCRETIONARY | You paid all your non-discretionary expenses with cash...wow!.Amount of cash you have to spend: "$114,355.89".
+[2026] DISCRETIONARY | Amount of cash you have to spend: "$114,355.89".
+[2026] DISCRETIONARY |  EXPENSE ID: 67e084385ca2a5376ad2efc7 | Value: $1,320
+[2026] DISCRETIONARY | You paid expense ID: 67e084385ca2a5376ad2efc7 all with cash..Amount of cash you have to spend: "$113,035.89".
+[2026] INVEST | Amount of cash you have to spend: "$113,035.89".Excess cash: "$112,735.89".Maximum cash to keep: "$300".
+[2026] INVEST | Fixed investment ID: 67fdbb984b5dd306003890be, percentage: 40.00%.
+[2026] INVEST | Fixed investment ID: 67fdbbb54b5dd306003890c1, percentage: 60.00%.
+[2026] INVEST | The investments before investing.
+[2026] INVEST | INVESTMENTS | Investment ID: 67fdbb984b5dd306003890be, value: $396.98, taxType: after-tax.
+[2026] INVEST | INVESTMENTS | Investment ID: 67fdbbb54b5dd306003890c1, value: $592.28, taxType: after-tax.
+[2026] INVEST | IRS Limit: "$1,000".After tax ratio: 0.00887028958692479.
+[2026] INVEST | The investments after investing.
+[2026] INVEST | INVESTMENTS | Investment ID: 67fdbb984b5dd306003890be, value: $796.98, taxType: after-tax.
+[2026] INVEST | INVESTMENTS | Investment ID: 67fdbbb54b5dd306003890c1, value: $1,192.28, taxType: after-tax.
+[2026] INVEST | Excess cash: "$111,735.89".
+[2026] REBALANCE | The investments are of type: pre-tax
+[2026] REBALANCE | Initial investment ID: 67e084385ca2a5376ad2efb7, percentage: 60.00%.
+[2026] REBALANCE | Initial investment ID: 67e084385ca2a5376ad2efbd, percentage: 40.00%.
+[2026] REBALANCE | Final investment ID: 67e084385ca2a5376ad2efb7, percentage: 30.00%.
+[2026] REBALANCE | Final investment ID: 67e084385ca2a5376ad2efbd, percentage: 70.00%.
+[2026] REBALANCE | Glide path calculated investment ID: 67e084385ca2a5376ad2efb7, percentage: 57.00%. Glide path started year: 2025 and ends in year: 2035
+[2026] REBALANCE | Glide path calculated investment ID: 67e084385ca2a5376ad2efbd, percentage: 43.00%. Glide path started year: 2025 and ends in year: 2035
+[2026] REBALANCE | The investments before rebalancing.
+[2026] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $578.91, taxType: non-retirement.
+[2026] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $14,121.88, taxType: after-tax.
+[2026] REBALANCE | The investments after rebalancing.
+[2026] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $8,379.45, taxType: non-retirement.
+[2026] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $6,321.34, taxType: after-tax.
+[2026] REBALANCE | The rebalance has now been done.
+[2027] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $1,452.Amount owed in taxes: "$22,106.98"Amount of cash you have to spend: "$197,909.37".
+[2027] NON-DISCRETIONARY |  EXPENSE ID: 67fc94b54b5dd3060038908a | Value: $1,452
+[2027] NON-DISCRETIONARY | You paid all your non-discretionary expenses with cash...wow!.Amount of cash you have to spend: "$174,350.39".
+[2027] DISCRETIONARY | Amount of cash you have to spend: "$174,350.39".
+[2027] DISCRETIONARY |  EXPENSE ID: 67e084385ca2a5376ad2efc7 | Value: $1,452
+[2027] DISCRETIONARY | You paid expense ID: 67e084385ca2a5376ad2efc7 all with cash..Amount of cash you have to spend: "$172,898.39".
+[2027] INVEST | Amount of cash you have to spend: "$172,898.39".Excess cash: "$172,598.39".Maximum cash to keep: "$300".
+[2027] INVEST | Fixed investment ID: 67fdbb984b5dd306003890be, percentage: 40.00%.
+[2027] INVEST | Fixed investment ID: 67fdbbb54b5dd306003890c1, percentage: 60.00%.
+[2027] INVEST | The investments before investing.
+[2027] INVEST | INVESTMENTS | Investment ID: 67fdbb984b5dd306003890be, value: $677.4, taxType: after-tax.
+[2027] INVEST | INVESTMENTS | Investment ID: 67fdbbb54b5dd306003890c1, value: $946.11, taxType: after-tax.
+[2027] INVEST | IRS Limit: "$1,000".After tax ratio: 0.005793796672111453.
+[2027] INVEST | The investments after investing.
+[2027] INVEST | INVESTMENTS | Investment ID: 67fdbb984b5dd306003890be, value: $1,077.4, taxType: after-tax.
+[2027] INVEST | INVESTMENTS | Investment ID: 67fdbbb54b5dd306003890c1, value: $1,546.11, taxType: after-tax.
+[2027] INVEST | Excess cash: "$171,598.39".
+[2027] REBALANCE | The investments are of type: pre-tax
+[2027] REBALANCE | Initial investment ID: 67e084385ca2a5376ad2efb7, percentage: 60.00%.
+[2027] REBALANCE | Initial investment ID: 67e084385ca2a5376ad2efbd, percentage: 40.00%.
+[2027] REBALANCE | Final investment ID: 67e084385ca2a5376ad2efb7, percentage: 30.00%.
+[2027] REBALANCE | Final investment ID: 67e084385ca2a5376ad2efbd, percentage: 70.00%.
+[2027] REBALANCE | Glide path calculated investment ID: 67e084385ca2a5376ad2efb7, percentage: 54.00%. Glide path started year: 2025 and ends in year: 2035
+[2027] REBALANCE | Glide path calculated investment ID: 67e084385ca2a5376ad2efbd, percentage: 46.00%. Glide path started year: 2025 and ends in year: 2035
+[2027] REBALANCE | The investments before rebalancing.
+[2027] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $7,769.25, taxType: non-retirement.
+[2027] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $5,702.74, taxType: after-tax.
+[2027] REBALANCE | The investments after rebalancing.
+[2027] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efb7, value: $7,274.87, taxType: non-retirement.
+[2027] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $6,197.11, taxType: after-tax.
+[2027] REBALANCE | The rebalance has now been done.
