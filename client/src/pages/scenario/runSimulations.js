@@ -88,6 +88,7 @@ const RunSimulation = () => {
           scenarioId: currScenario._id,
         },
       });
+      console.log(response);
       console.log(response.data);
       navigate("/charts", {
         state: { chartData: response.data }
