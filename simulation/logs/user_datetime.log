@@ -83,5 +83,148 @@ Amount of cash you have to spend: "$71,905.083".
 Amount of cash you have to spend: "$70,705.083".
 [2025] DISCRETIONARY | You paid expense ID: 680d545faa08c6d19af7e587 all with cash.
 Amount of cash you have to spend: "$70,205.083".
+<<<<<<< Updated upstream
 
-Log started at 2025-04-30T02:23:04.865Z
+=======
+[2025] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $5,000.00.Amount of cash you have to spend: "$76,902.029".Amount you need to withdraw: "$5,000.00".
+[2025] NON-DISCRETIONARY |  INVESTMENT ID: 680d545faa08c6d19af7e574 | Value: $10,003.785
+[2025] NON-DISCRETIONARY |  INVESTMENT ID: 680d545faa08c6d19af7e580 | Value: $2,000.907
+[2025] NON-DISCRETIONARY |  EXPENSE ID: 680d545faa08c6d19af7e585 | Value: $5,000.00
+[2025] NON-DISCRETIONARY | You paid all your non-discretionary expenses with cash...wow!
+Amount of cash you have to spend: "$71,902.029".
+[2025] DISCRETIONARY |  EXPENSE ID: 680d545faa08c6d19af7e586 | Value: $1,200.00
+[2025] DISCRETIONARY |  EXPENSE ID: 680d545faa08c6d19af7e587 | Value: $500.00
+[2025] DISCRETIONARY | Amount of cash you have to spend: "$71,902.029".
+[2025] DISCRETIONARY | You paid expense ID: 680d545faa08c6d19af7e586 all with cash.
+Amount of cash you have to spend: "$70,702.029".
+[2025] DISCRETIONARY | You paid expense ID: 680d545faa08c6d19af7e587 all with cash.
+Amount of cash you have to spend: "$70,202.029".
+[2025] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $5,000.00.Amount of cash you have to spend: "$76,667.993".Amount you need to withdraw: "$5,000.00".
+[2025] NON-DISCRETIONARY |  INVESTMENT ID: 680d545faa08c6d19af7e574 | Value: $10,004.792
+[2025] NON-DISCRETIONARY |  INVESTMENT ID: 680d545faa08c6d19af7e580 | Value: $2,000.733
+[2025] NON-DISCRETIONARY |  EXPENSE ID: 680d545faa08c6d19af7e585 | Value: $5,000.00
+[2025] NON-DISCRETIONARY | You paid all your non-discretionary expenses with cash...wow!
+Amount of cash you have to spend: "$71,667.993".
+[2025] DISCRETIONARY |  EXPENSE ID: 680d545faa08c6d19af7e586 | Value: $1,200.00
+[2025] DISCRETIONARY |  EXPENSE ID: 680d545faa08c6d19af7e587 | Value: $500.00
+[2025] DISCRETIONARY | Amount of cash you have to spend: "$71,667.993".
+[2025] DISCRETIONARY | You paid expense ID: 680d545faa08c6d19af7e586 all with cash.
+Amount of cash you have to spend: "$70,467.993".
+[2025] DISCRETIONARY | You paid expense ID: 680d545faa08c6d19af7e587 all with cash.
+Amount of cash you have to spend: "$69,967.993".
+[2025] INVEST | Amount of cash you have to spend: "$69,967.993".Excess cash: "$68,967.993".After invest the excess cash to distribute to non-retirement accounts that were in the allocation is: $68,967.993.
+[2025] INVEST | Initial investment ID: 680d545faa08c6d19af7e574, percentage: 60.00%.
+[2025] INVEST | Initial investment ID: 680d545faa08c6d19af7e580, percentage: 40.00%.
+[2025] INVEST | Final investment ID: 680d545faa08c6d19af7e574, percentage: 80.00%.
+[2025] INVEST | Final investment ID: 680d545faa08c6d19af7e580, percentage: 20.00%.
+[2025] INVEST | INVESTMENTS | Investment ID: 680d545faa08c6d19af7e570, value: $69,967.993.
+[2025] INVEST | INVESTMENTS | Investment ID: 680d545faa08c6d19af7e574, value: $10,004.792.
+[2025] INVEST | INVESTMENTS | Investment ID: 680d545faa08c6d19af7e578, value: $1,999.92.
+[2025] INVEST | INVESTMENTS | Investment ID: 680d545faa08c6d19af7e57c, value: $10,005.087.
+[2025] INVEST | INVESTMENTS | Investment ID: 680d545faa08c6d19af7e580, value: $2,000.733.
+[2025] INVEST | Glide path calculated investment ID: 680d545faa08c6d19af7e574, percentage: 80.00%.
+[2025] INVEST | Glide path calculated investment ID: 680d545faa08c6d19af7e580, percentage: 20.00%.
+[2025] INVEST | IRS Limit: "$7,000.00".After tax ratio: "$0.507".
+[2025] INVEST | Excess cash: "$6,793.599".After invest the excess cash to distribute to non-retirement accounts that were in the allocation is: $6,793.599.
+[2025] INVEST | INVESTMENTS | non-retirement Investment ID: 680d545faa08c6d19af7e574, purchased: $6,793.599.The investments are of type: non-retirement
+[2025] INVEST | INVESTMENTS | Investment ID: 680d545faa08c6d19af7e570, value: $69,967.993.
+[2025] INVEST | INVESTMENTS | Investment ID: 680d545faa08c6d19af7e574, value: $71,972.785.
+[2025] INVEST | INVESTMENTS | Investment ID: 680d545faa08c6d19af7e578, value: $1,999.92.
+[2025] INVEST | INVESTMENTS | Investment ID: 680d545faa08c6d19af7e57c, value: $10,005.087.
+[2025] INVEST | INVESTMENTS | Investment ID: 680d545faa08c6d19af7e580, value: $9,000.733.
+[2026] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $NaN.Amount of cash you have to spend: "$147,852.125".
+[2026] NON-DISCRETIONARY |  INVESTMENT ID: 680d545faa08c6d19af7e574 | Value: $71,999.603
+[2026] NON-DISCRETIONARY |  INVESTMENT ID: 680d545faa08c6d19af7e580 | Value: $9,005.377
+[2026] NON-DISCRETIONARY | 
+[2026] NON-DISCRETIONARY |  INVESTMENTS ID: 680d545faa08c6d19af7e574 | Value: $71,999.603
+[2026] NON-DISCRETIONARY |  INVESTMENTS ID: 680d545faa08c6d19af7e580 | Value: $9,005.377
+[2026] NON-DISCRETIONARY | 
+[2026] NON-DISCRETIONARY | You paid all your non-discretionary expenses...phew
+
+[2026] DISCRETIONARY | 
+[2026] DISCRETIONARY | 
+[2026] DISCRETIONARY | 
+[2026] DISCRETIONARY |  INVESTMENTS ID: 680d545faa08c6d19af7e574 | Value: $71,999.603
+[2026] DISCRETIONARY |  INVESTMENTS ID: 680d545faa08c6d19af7e580 | Value: $9,005.377
+[2026] DISCRETIONARY | 
+[2026] DISCRETIONARY |  INVESTMENTS ID: 680d545faa08c6d19af7e580 | Value: $9,005.377
+[2026] DISCRETIONARY | You were able to pay all your discretionary expenses without violating your financial goal.
+
+[2026] DISCRETIONARY | 
+[2026] DISCRETIONARY |  INVESTMENTS ID: 680d545faa08c6d19af7e580 | Value: $9,005.377
+[2026] DISCRETIONARY | 
+[2026] DISCRETIONARY |  INVESTMENTS ID: 680d545faa08c6d19af7e580 | Value: $9,005.377
+[2026] DISCRETIONARY | You were able to pay all your discretionary expenses without violating your financial goal.
+
+[2026] INVEST | Excess cash: "$-1,000.00".After invest the excess cash to distribute to non-retirement accounts that were in the allocation is: $-1,000.00.
+[2026] INVEST | Initial investment ID: 680d545faa08c6d19af7e574, percentage: 60.00%.
+[2026] INVEST | Initial investment ID: 680d545faa08c6d19af7e580, percentage: 40.00%.
+[2026] INVEST | Final investment ID: 680d545faa08c6d19af7e574, percentage: 80.00%.
+[2026] INVEST | Final investment ID: 680d545faa08c6d19af7e580, percentage: 20.00%.
+[2026] INVEST | 
+[2026] INVEST | 
+[2026] INVEST | INVESTMENTS | Investment ID: 680d545faa08c6d19af7e578, value: $1,999.84.
+[2026] INVEST | INVESTMENTS | Investment ID: 680d545faa08c6d19af7e57c, value: $10,013.308.
+[2026] INVEST | INVESTMENTS | Investment ID: 680d545faa08c6d19af7e580, value: $9,005.377.
+[2027] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $NaN.Amount of cash you have to spend: "$79,026.023".
+[2027] NON-DISCRETIONARY | 
+[2027] NON-DISCRETIONARY |  INVESTMENT ID: 680d545faa08c6d19af7e580 | Value: $9,008.467
+[2027] NON-DISCRETIONARY | 
+[2027] NON-DISCRETIONARY | 
+[2027] NON-DISCRETIONARY |  INVESTMENTS ID: 680d545faa08c6d19af7e580 | Value: $9,008.467
+[2027] NON-DISCRETIONARY | 
+[2027] NON-DISCRETIONARY | You paid all your non-discretionary expenses...phew
+
+[2027] DISCRETIONARY | 
+[2027] DISCRETIONARY | 
+[2027] DISCRETIONARY | 
+[2027] DISCRETIONARY | 
+[2027] DISCRETIONARY |  INVESTMENTS ID: 680d545faa08c6d19af7e580 | Value: $9,008.467
+Hello, this is a test log.
+[2025] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $5,000.00.Amount of cash you have to spend: "$76,329.43".Amount you need to withdraw: "$5,000.00".
+[2025] NON-DISCRETIONARY |  INVESTMENT ID: 6811a237f0dff0346d46af20 | Value: $10,007.744
+[2025] NON-DISCRETIONARY |  INVESTMENT ID: 6811a237f0dff0346d46af2c | Value: $2,000.926
+[2025] NON-DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af31 | Value: $5,000.00
+[2025] NON-DISCRETIONARY | You paid all your non-discretionary expenses with cash...wow!
+Amount of cash you have to spend: "$71,329.43".
+[2025] DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af32 | Value: $1,200.00
+[2025] DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af33 | Value: $500.00
+[2025] DISCRETIONARY | Amount of cash you have to spend: "$71,329.43".
+[2025] DISCRETIONARY | You paid expense ID: 6811a238f0dff0346d46af32 all with cash.
+Amount of cash you have to spend: "$70,129.43".
+[2025] DISCRETIONARY | You paid expense ID: 6811a238f0dff0346d46af33 all with cash.
+Amount of cash you have to spend: "$69,629.43".
+[2025] INVEST | Amount of cash you have to spend: "$69,629.43".Excess cash: "$68,629.43".After invest the excess cash to distribute to non-retirement accounts that were in the allocation is: $68,629.43.
+[2025] INVEST | Initial investment ID: 6811a237f0dff0346d46af20, percentage: 60.00%.
+[2025] INVEST | Initial investment ID: 6811a237f0dff0346d46af2c, percentage: 40.00%.
+[2025] INVEST | Final investment ID: 6811a237f0dff0346d46af20, percentage: 80.00%.
+[2025] INVEST | Final investment ID: 6811a237f0dff0346d46af2c, percentage: 20.00%.
+[2025] INVEST | INVESTMENTS | Investment ID: 6811a237f0dff0346d46af1c, value: $69,629.43.
+[2025] INVEST | INVESTMENTS | Investment ID: 6811a237f0dff0346d46af20, value: $10,007.744.
+[2025] INVEST | INVESTMENTS | Investment ID: 6811a237f0dff0346d46af24, value: $1,999.92.
+[2025] INVEST | INVESTMENTS | Investment ID: 6811a237f0dff0346d46af28, value: $10,004.216.
+[2025] INVEST | INVESTMENTS | Investment ID: 6811a237f0dff0346d46af2c, value: $2,000.926.
+[2025] INVEST | Glide path calculated investment ID: 6811a237f0dff0346d46af20, percentage: 80.00%.
+[2025] INVEST | Glide path calculated investment ID: 6811a237f0dff0346d46af2c, percentage: 20.00%.
+[2025] INVEST | IRS Limit: "$7,000.00".After tax ratio: "$0.51".
+[2025] INVEST | Excess cash: "$6,725.886".After invest the excess cash to distribute to non-retirement accounts that were in the allocation is: $6,725.886.
+[2025] INVEST | INVESTMENTS | non-retirement Investment ID: 6811a237f0dff0346d46af20, purchased: $6,725.886.The investments are of type: non-retirement
+[2025] INVEST | INVESTMENTS | Investment ID: 6811a237f0dff0346d46af1c, value: $69,629.43.
+[2025] INVEST | INVESTMENTS | Investment ID: 6811a237f0dff0346d46af20, value: $71,637.173.
+[2025] INVEST | INVESTMENTS | Investment ID: 6811a237f0dff0346d46af24, value: $1,999.92.
+[2025] INVEST | INVESTMENTS | Investment ID: 6811a237f0dff0346d46af28, value: $10,004.216.
+[2025] INVEST | INVESTMENTS | Investment ID: 6811a237f0dff0346d46af2c, value: $9,000.926.
+[2025] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $5,000.00.Amount of cash you have to spend: "$76,553.015".Amount you need to withdraw: "$5,000.00".
+[2025] NON-DISCRETIONARY |  INVESTMENT ID: 6811a237f0dff0346d46af20 | Value: $10,010.981
+[2025] NON-DISCRETIONARY |  INVESTMENT ID: 6811a237f0dff0346d46af2c | Value: $2,001.434
+[2025] NON-DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af31 | Value: $5,000.00
+[2025] NON-DISCRETIONARY | You paid all your non-discretionary expenses with cash...wow!
+Amount of cash you have to spend: "$71,553.015".
+[2025] DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af32 | Value: $1,200.00
+[2025] DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af33 | Value: $500.00
+[2025] DISCRETIONARY | Amount of cash you have to spend: "$71,553.015".
+[2025] DISCRETIONARY | You paid expense ID: 6811a238f0dff0346d46af32 all with cash.
+Amount of cash you have to spend: "$70,353.015".
+[2025] DISCRETIONARY | You paid expense ID: 6811a238f0dff0346d46af33 all with cash.
+Amount of cash you have to spend: "$69,853.015".
+>>>>>>> Stashed changes
