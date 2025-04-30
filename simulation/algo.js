@@ -53,7 +53,10 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
   // console.log("fedIncomeTaxBracket :>> ", federalIncomeTax);
   let u = findUpperFedTaxBracket(curYearFedTaxableIncome, federalIncomeTax);
   // roth conversation amount
-  rc = u - (curYearFedTaxableIncome - fedDeduction);
+  console.log("u :>> ", u);
+  console.log("fedDeduction :>> ", fedDeduction);
+  console.log("curYearFedTaxableIncome :>> ", curYearFedTaxableIncome);
+  let rc = u - (curYearFedTaxableIncome - fedDeduction);
   let rcCopy = rc;
   // transfer from pre-tax to after-tax retirement
   for (let investment of rothConversionStrategyInvestments) {

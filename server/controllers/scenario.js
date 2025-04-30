@@ -314,16 +314,18 @@ function formatIssues(data) {
   }
 }
 
+
 exports.simulateScenario = async (req, res) => {
   try {
-    const { scenarioId, userId, simulationCount = 1 } = req.query;
+    const { investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, simulationCount = 1, scenarioId } = req.query;
 
     if (!scenarioId || !userId) {
       return res.status(400).json({ error: "Missing scenarioId or userId" });
     }
 
     // Run the simulation
-    const { shadedChart, probabilityChart, barChartAverage, barChartMedian } = await main(simulationCount, scenarioId, userId);
+    const { shadedChart, probabilityChart, barChartAverage, barChartMedian } = await main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, simulationCount, scenarioId);
+    // const { shadedChart, probabilityChart, barChartAverage, barChartMedian } = await main(simulationCount, scenarioId, userId);
 
     // Send results to frontend
     res.status(200).json({
