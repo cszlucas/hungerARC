@@ -116,6 +116,14 @@ exports.importUserData = async (req, res) => {
     rmdStrategy, optimizerSettings, rothConversionStrategy, financialGoal, stateResident,
   } = req.body;
 
+  if (inflationAssumption) {
+    inflationAssumption.inflationAssumptionType = inflationAssumption.type;
+  
+    if (inflationAssumption.inflationAssumptionType === "fixed") {
+      inflationAssumption.fixedRate = inflationAssumption.value;
+    }
+  }
+  
   const basicInfoData = {
     name,
     filingStatus, //: maritalStatus === "couple" ? "married" : "single",
