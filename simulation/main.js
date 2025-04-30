@@ -123,7 +123,19 @@ function getEvent(type, data) {
   }
 }
 
-async function main(numScenarioTimes, scenarioId, userId) {
+//   investmentType: currInvestmentTypes,
+// invest: currInvest,
+// rebalance: currRebalance,
+// expense: currExpense,
+// income: currIncome,
+// investment: currInvestments,
+// scenario: currScenario,
+// exploration: tempExploration,
+// userId: user._id,
+// simulationCount: numSimulations,
+
+async function main(investmentType2, invest2, rebalance2, expense2, income2, investment2, scenario2, exploration, userId, numScenarioTimes, scenarioId) {
+  console.log("exploration", exploration);
   // not sure how to get a value using this, not needed
   var distributions = require("distributions");
   const dataStore = new DataStore();
