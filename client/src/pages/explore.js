@@ -1,4 +1,4 @@
-import React, { useState, useContext, useMemo, useEffect } from "react";
+import React, { useState, useContext, useMemo, useEffect, useCallback } from "react";
 import { 
   ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, List, MenuItem,
   ListItem, ListItemText, IconButton, Backdrop, Paper, Switch 
@@ -25,9 +25,15 @@ const DimensionalExploration = () => {
   const { user } = useContext(AuthContext);
 
   const [openBackdrop, setOpenBackdrop] = useState(false);
-  const [tempExplorationForm, setTempExplorationForm] = useState({type: "", itemIndex: "", setting: "", data: {}});
+  const [tempExplorationForm, setTempExplorationForm] = useState({
+    type: "", 
+    id: "", 
+    parameter: "", 
+    range: { lower: "", upper: "", steps: "" }, 
+    data: {}
+  });
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = useCallback((field, value) => {
     const keys = field.split(".");
     setTempExplorationForm((prev) => {
       const updated = { ...prev };
@@ -39,53 +45,50 @@ const DimensionalExploration = () => {
       current[keys[keys.length - 1]] = value;
       return updated;
     });
-  };
+  }, []);
 
-  // const investmentTypeMap = useMemo(() => (
-  //   Object.fromEntries(currInvestmentTypes.map(i => [i._id, i]))
-  // ), [currInvestmentTypes]);
-
-  // const investmentMap = useMemo(() => (
-  //   Object.fromEntries(currInvestments.map(i => [i._id, i]))
-  // ), [currInvestments]);
-
-  // const getInvestmentTypeById = (id) => investmentTypeMap[id] || { _id: "NULL", name: "Unknown Type" };
-  // const getInvestmentById = (id) => investmentMap[id] || null;
-  // const getIncomeById = (id) => currIncome.find(e => e._id === id) || null;
-  // const getExpenseById = (id) => currExpense.find(e => e._id === id) || null;
-  // const getInvestById = (id) => currInvest.find(e => e._id === id) || null;
-  // const getRebalanceById = (id) => currRebalance.find(e => e._id === id) || null;
+  const getIncomeById = (id) => currIncome.find(e => e._id === id) || null;
+  const getExpenseById = (id) => currExpense.find(e => e._id === id) || null;
+  const getInvestById = (id) => currInvest.find(e => e._id === id) || null;
+  const getRebalanceById = (id) => currRebalance.find(e => e._id === id) || null;
 
   const incomeItems = [[], []]; 
   const expenseItems = [[], []]; 
   const investItems = [[], []]; 
   const rebalanceItems = [[], []]; 
   
-  (currIncome || []).forEach((e, i) => { incomeItems[0].push(i); incomeItems[1].push(e.eventSeriesName); });
-  (currExpense || []).forEach((e, i) => { expenseItems[0].push(i); expenseItems[1].push(e.eventSeriesName); });
-  (currInvest || []).forEach((e, i) => { investItems[0].push(i); investItems[1].push(e.eventSeriesName); });
-  (currRebalance || []).forEach((e, i) => { rebalanceItems[0].push(i); rebalanceItems[1].push(e.eventSeriesName); });
+  (currIncome || []).forEach((e) => { incomeItems[0].push(e._id); incomeItems[1].push(e.eventSeriesName); });
+  (currExpense || []).forEach((e) => { expenseItems[0].push(e._id); expenseItems[1].push(e.eventSeriesName); });
+  (currInvest || []).forEach((e) => { investItems[0].push(e._id); investItems[1].push(e.eventSeriesName); });
+  (currRebalance || []).forEach((e) => { rebalanceItems[0].push(e._id); rebalanceItems[1].push(e.eventSeriesName); });
 
   const [dropDownItems, setDropDownItems] = useState([[], []]);
 
-  useEffect(()=>{
-    handleInputChange("itemIndex", "");
-    if (tempExplorationForm.type === "Income") setDropDownItems(incomeItems);
-    else if (tempExplorationForm.type === "Expense") setDropDownItems(expenseItems);
-    else if (tempExplorationForm.type === "Invest") setDropDownItems(investItems);
-    else if (tempExplorationForm.type === "Rebalance") setDropDownItems(rebalanceItems);
-  }, [tempExplorationForm.type]);
+  useEffect(() => {
+    if (tempExplorationForm.type === "Income") {
+      handleInputChange("id", "");
+      setDropDownItems(incomeItems);
+    } else if (tempExplorationForm.type === "Expense") {
+      handleInputChange("id", "");
+      setDropDownItems(expenseItems);
+    } else if (tempExplorationForm.type === "Invest") {
+      handleInputChange("id", "");
+      setDropDownItems(investItems);
+    } else if (tempExplorationForm.type === "Rebalance") {
+      handleInputChange("id", "");
+      setDropDownItems(rebalanceItems);
+    }
+  }, [tempExplorationForm.type, handleInputChange]);
 
-  useEffect(()=>{
-    handleInputChange("setting", "");
-    if (tempExplorationForm.type === "Income") handleInputChange("data", currIncome[tempExplorationForm.itemIndex]);
-    else if (tempExplorationForm.type === "Expense") handleInputChange("data", currExpense[tempExplorationForm.itemIndex]);
-    else if (tempExplorationForm.type === "Invest") handleInputChange("data", currInvest[tempExplorationForm.itemIndex]);
-    else if (tempExplorationForm.type === "Rebalance") handleInputChange("data", currRebalance[tempExplorationForm.itemIndex]);
-    setEventEditMode({id: currExpense[tempExplorationForm.itemIndex] });
-  }, [tempExplorationForm.itemIndex]);
+  useEffect(() => {
+    handleInputChange("parameter", "");
+    if (tempExplorationForm.type === "Income") handleInputChange("data", getIncomeById(tempExplorationForm.id));
+    else if (tempExplorationForm.type === "Expense") handleInputChange("data", getExpenseById(tempExplorationForm.id));
+    else if (tempExplorationForm.type === "Invest") handleInputChange("data", getInvestById(tempExplorationForm.id));
+    else if (tempExplorationForm.type === "Rebalance") handleInputChange("data", getRebalanceById(tempExplorationForm.id));
+  }, [tempExplorationForm.id, tempExplorationForm.type, handleInputChange]);
 
-
+  useEffect(() => { console.log(tempExplorationForm); }, [tempExplorationForm.range]);
 
   const handleOpenBackdrop = () => {
     setOpenBackdrop(true);
@@ -95,44 +98,45 @@ const DimensionalExploration = () => {
     setOpenBackdrop(false);
   };
 
-  const handleDeleteExploration = (index) => {
-    // To be implemented
+  const handleAddExploration = () => {
+    if (eventEditMode && eventEditMode.event === "Exploration") {
+      setTempExploration((prev) => 
+        prev.map((e) => 
+          e.id === eventEditMode.id ? tempExplorationForm : e
+        )
+      );
+    } else {
+      setTempExploration((prev) => [...prev, tempExplorationForm]);
+    }
+    setEventEditMode(null);
+    setOpenBackdrop(false);
   };
 
   const handleEditExploration = (index) => {
-    // To be implemented
+    const selected = tempExploration[index];
+    setTempExplorationForm({ ...selected });
+    setEventEditMode({ id: selected.id, event: "Exploration" });
+    setOpenBackdrop(true);
+  };
+
+  const handleDeleteExploration = (index) => {
+    setTempExploration((prev) => prev.filter((_, i) => i !== index));
   };
 
   const DimensionalExplorationList = () => {
-    const displayList = [{name: "Hi", description: "Testing"}, {name: "hi2", description: "Testing"}];
-
-    if (tempExploration.length !== 0) {
-      Object.keys(tempExploration).forEach((explore) => {
-        if (explore.type === "rothOptimizerFlag") {
-          displayList.push({
-            name: "Roth Optimizer Flag",
-            description: `${currScenario.optimizerSettings.enabled} → ${explore.data.optimizerSettings.enabled}`
-          });
-        } else {
-          if (explore.setting === "initalAmount") {
-            displayList.push({
-              name: `${explore.name} - ${explore.type}`,
-              description: "Initial Amount Changes"
-            });
-          } else if (explore.setting === "timeRange") {
-            displayList.push({
-              name: `${explore.name} - ${explore.type}`,
-              description: "Start Year / Duration Changes"
-            });
-          } else if (explore.setting === "assetAllocation") {
-            displayList.push({
-              name: `${explore.name} - ${explore.type}`,
-              description: "Asset Allocation % Adjustments"
-            });
-          }
-        }
-      });
-    }
+    const displayList = (tempExploration || []).map((explore) => {
+      if (explore.type === "Roth Optimizer Flag") {
+        return {
+          name: "Roth Optimizer Flag",
+          description: `${currScenario.optimizerSettings.enabled} → ${explore.data?.optimizerSettings?.enabled}`
+        };
+      } else {
+        return {
+          name: `${explore.data?.eventSeriesName || "Unknown"} - ${explore.type} - ${explore.parameter}`,
+          description: `${explore.range.lower} → ${explore.range.upper} by taking ${explore.range.steps} increments`
+        };
+      }
+    });
 
     return (
       <List>
@@ -175,7 +179,7 @@ const DimensionalExploration = () => {
           color="primary"
           sx={{ textTransform: "none" }}
           onClick={handleOpenBackdrop}
-          disabled={tempExploration.length >= 2}
+          disabled={(tempExploration?.length || 0) >= 2}
         >
           Add
         </Button>
@@ -195,8 +199,8 @@ const DimensionalExploration = () => {
       >
         <Paper
           elevation={4}
-          onClick={(e) => e.stopPropagation()} // prevent backdrop from closing when clicking inside box
-          sx={{ p: 4, minWidth: 400, width: "60vw", borderRadius: 2 }}
+          onClick={(e) => e.stopPropagation()}
+          sx={{ p: 4, minWidth: 400, width: "50vw", borderRadius: 2 }}
         >
           <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
             Add Dimensional Exploration
@@ -209,48 +213,50 @@ const DimensionalExploration = () => {
                 value={tempExplorationForm.type}
                 menuItems={["Roth Optimizer Flag", "Income", "Expense", "Invest", "Rebalance"]}
                 setValue={(value) => { 
-                  if (value === "Roth Optimizer Flag") handleInputChange("data", currScenario); 
+                  if (value === "Roth Optimizer Flag") {
+                    handleInputChange("id", "roth-optimizer");
+                    handleInputChange("data", currScenario);
+                  }
                   handleInputChange("type", value);
                 }}
               />
 
               { tempExplorationForm.type === "Roth Optimizer Flag" && (<>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{mt: 4, minWidth: 370}}>
+                <Stack direction="row" alignItems="center" sx={{mt: 4, minWidth: 370}}>
                   <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                    Roth Conversion Strategy:
+                    Roth Conversion Optimizer:
                   </Typography>
                   <Switch 
-                    checked={tempExplorationForm.data.optimizerSettings.enabled || false} 
+                    checked={tempExplorationForm.data?.optimizerSettings?.enabled || false} 
                     onChange={()=>{
-                      handleInputChange("data.optimizerSettings.enabled", !tempExplorationForm.data.optimizerSettings.enabled);
+                      handleInputChange("data.optimizerSettings.enabled", 
+                        !tempExplorationForm.data?.optimizerSettings?.enabled);
                     }} 
                     color="secondary" 
                   />
                 </Stack>
-                {tempExplorationForm.data.optimizerSettings.enabled && (
-                  <>
-                    <Box sx={{...rowBoxStyles, mt: 2}}>
-                      <CustomInput
-                        title="Start Year"
-                        type="number"
-                        value={tempExplorationForm.data.optimizerSettings.startYear}
-                        setValue={(value)=>{ 
-                          handleInputChange("data.optimizerSettings.startYear", value);
-                        }}
-                        inputProps={{ min: 0 }}
-                      />
-                      <CustomInput
-                        title="End Year"
-                        type="number"
-                        value={tempExplorationForm.data.optimizerSettings.endYear}
-                        setValue={(value)=>{ 
-                          handleInputChange("data.optimizerSettings.endYear", value);
-                        }}
-                        inputProps={{ min: 0 }}
-                      />
-                    </Box>
-                  </>)
-                }
+                {tempExplorationForm.data?.optimizerSettings?.enabled && (
+                  <Box sx={{ mt: 2, ...rowBoxStyles }}>
+                    <CustomInput
+                      title="Start Year"
+                      type="number"
+                      value={tempExplorationForm.data?.optimizerSettings?.startYear || ""}
+                      setValue={(value)=>{ 
+                        handleInputChange("data.optimizerSettings.startYear", value);
+                      }}
+                      inputProps={{ min: 0 }}
+                    />
+                    <CustomInput
+                      title="End Year"
+                      type="number"
+                      value={tempExplorationForm.data?.optimizerSettings?.endYear || ""}
+                      setValue={(value)=>{ 
+                        handleInputChange("data.optimizerSettings.endYear", value);
+                      }}
+                      inputProps={{ min: 0 }}
+                    />
+                  </Box>
+                )}
               </>)}
             </Box>
             
@@ -260,78 +266,83 @@ const DimensionalExploration = () => {
                   <Box>
                     <CustomDropdown
                       label={`${tempExplorationForm.type} Event Series`}
-                      value={tempExplorationForm.itemIndex}
+                      value={tempExplorationForm.id}
                       menuLabels={dropDownItems[1]}
                       menuItems={dropDownItems[0]}
-                      setValue={(value) => { handleInputChange("itemIndex", value); }}
+                      setValue={(value) => { handleInputChange("id", value); }}
                     />
                   </Box>
                 )}
 
-                {tempExplorationForm.itemIndex !== "" && (
+                {tempExplorationForm.id !== "" && (
                   <Box>
                     <CustomDropdown
                       label="Parameter to Explore"
-                      value={tempExplorationForm.setting}
+                      value={tempExplorationForm.parameter}
                       menuItems={
                         tempExplorationForm.type === "Income" || tempExplorationForm.type === "Expense"
-                          ? ["Start Year / Duration", "Initial Amount"]
+                          ? ["Start Year", "Duration", "Initial Amount"]
                           : tempExplorationForm.type === "Invest"
-                            ? ["Start Year / Duration", "Asset Allocation"]
-                            : ["Start Year / Duration"]
+                            ? ["Start Year", "Duration", "Asset Allocation"]
+                            : ["Start Year", "Duration"]
                       }
-                      setValue={(value) => handleInputChange("setting", value)}
+                      setValue={(value) => handleInputChange("parameter", value)}
                     />
                   </Box>
                 )}
 
-                {tempExplorationForm.setting === "Initial Amount" && (
-                  <Box>
+                {tempExplorationForm.parameter !== "" && (<Box>
+                  <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
+                    Parameter Exploration Range:
+                  </Typography>
+                  <Box sx={{display: "flex", alignItems: "flex-start", flexWrap: "wrap", columnGap: 4}}>
                     <CustomInput
-                      title="Initial Income Amount"
+                      title="Lower Bound"
                       type="number"
-                      adornment="$"
-                      value={tempExplorationForm.data?.initialAmount || ""}
-                      setValue={(value) => handleInputChange("data.initialAmount", value)}
-                      inputProps={{ min: 0 }}
-                    />
-                  </Box>
-                )}
-                {tempExplorationForm.setting === "Start Year / Duration" && (
-                  <Box>
-                    <EventSeries
-                      formValues={tempExplorationForm.data}
-                      setFormValues={(updater) => {
-                        setTempExplorationForm(prev => ({
-                          ...prev,
-                          data: typeof updater === "function" ? updater(prev.data) : updater
-                        }));
+                      adornment={tempExplorationForm.parameter === "Asset Allocation" ? "%" : ""}
+                      value={tempExplorationForm.range.lower || ""}
+                      setValue={(value) => handleInputChange("range.lower", value)}
+                      inputProps={{
+                        min: 0,
+                        ...(tempExplorationForm.parameter === "Asset Allocation" ? { max: 100 } : {})
                       }}
-                      dimensionalExplorationMode={true}
                     />
-                  </Box>
-                )}
-                {tempExplorationForm.setting === "Asset Allocation" && (
-                  <Box>
                     <CustomInput
-                      title="Initial Income Amount"
+                      title="Upper Bound"
                       type="number"
-                      adornment="$"
-                      value={tempExplorationForm.data?.initialAmount || ""}
-                      setValue={(value) => handleInputChange("data.initialAmount", value)}
-                      inputProps={{ min: 0 }}
+                      adornment={tempExplorationForm.parameter === "Asset Allocation" ? "%" : ""}
+                      value={tempExplorationForm.range.upper || ""}
+                      setValue={(value) => handleInputChange("range.upper", value)}
+                      inputProps={{
+                        min: 0,
+                        ...(tempExplorationForm.parameter === "Asset Allocation" ? { max: 100 } : {})
+                      }}
+                    />
+                    <CustomInput
+                      title="Step Size"
+                      type="number"
+                      adornment={tempExplorationForm.parameter === "Asset Allocation" ? "%" : ""}
+                      value={tempExplorationForm.range.steps || ""}
+                      setValue={(value) => handleInputChange("range.steps", value)}
+                      inputProps={{
+                        min: 0,
+                        ...(tempExplorationForm.parameter === "Asset Allocation" ? { max: 100 } : {})
+                      }}
                     />
                   </Box>
-                )}
+                </Box>)}
               </>
             )}
           </Box>
           
-
-          {/* You can put form elements here later */}
-          <Button variant="contained" color="primary" sx={{ textTransform: "none" }} onClick={handleCloseBackdrop}>
-            Close
-          </Button>
+          <Box sx={{display: "flex", justifyContent: "space-between"}}>
+            <Button variant="contained" color="primary" sx={{ textTransform: "none" }} onClick={handleCloseBackdrop}>
+              Cancel
+            </Button>
+            <Button variant="contained" color="secondary" sx={{ textTransform: "none" }} onClick={handleAddExploration}>
+              Add
+            </Button>
+          </Box>
         </Paper>
       </Backdrop>
     </Box>
