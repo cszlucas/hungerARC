@@ -324,15 +324,19 @@ exports.simulateScenario = async (req, res) => {
     }
 
     // Run the simulation
-    const { shadedChart, probabilityChart, barChartAverage, barChartMedian } = await main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, simulationCount, scenarioId);
+    years = await main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, simulationCount, scenarioId);
+    // const { shadedChart, probabilityChart, barChartAverage, barChartMedian } = await main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, simulationCount, scenarioId);
     // const { shadedChart, probabilityChart, barChartAverage, barChartMedian } = await main(simulationCount, scenarioId, userId);
 
     // Send results to frontend
+    // res.status(200).json({
+    //   shadedChart,
+    //   probabilityChart,
+    //   barChartAverage,
+    //   barChartMedian,
+    // });
     res.status(200).json({
-      shadedChart,
-      probabilityChart,
-      barChartAverage,
-      barChartMedian,
+      years
     });
   } catch (err) {
     console.error("Simulation error:", err);
