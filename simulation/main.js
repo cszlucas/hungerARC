@@ -82,19 +82,19 @@ class DataStore {
   }
 }
 
-function scenarioExploration(foundData, parameter, stepSize, year) {
+function scenarioExploration(foundData, parameter, value) {
   if (parameter == "Start Year" || parameter == "Duration") {
-    foundData.startYear.calculated += stepSize * year;
+    foundData.startYear.calculated += value;
   } else if (parameter == "Initial Amount") {
-    foundData.initialAmount += stepSize * year;
+    foundData.initialAmount += value;
   } else if (parameter == "Asset Allocation") {
     if (foundData.assetAllocation.fixedPercentages.length != 0) {
       // Fixed allocation
-      foundData.assetAllocation.fixedPercentages[0].value = stepSize * year;
-      foundData.assetAllocation.fixedPercentages[1].value = 100 - foundData.assetAllocation.fixedPercentages[0].value;
+      foundData.assetAllocation.fixedPercentages[0].value += value;
+      foundData.assetAllocation.fixedPercentages[1].value += 100 - foundData.assetAllocation.fixedPercentages[0].value;
     } else if (foundData.assetAllocation.initialPercentages.length != 0) {
       // Glide Path allocation
-      foundData.assetAllocation.glidePath.calculated[0].value = stepSize * year;
+      foundData.assetAllocation.glidePath.calculated[0].value += value;
       foundData.assetAllocation.glidePath.calculated[1].value = 100 - foundData.assetAllocation.glidePath.calculated[0].value;
     }
   }
@@ -169,7 +169,7 @@ async function main(numScenarioTimes, scenarioId, userId) {
         isFirstIteration = false;
       }
 
-      scenarioExploration(foundData, parameter, stepSize);
+      scenarioExploration(foundData, parameter, value);
     }
     for (let x = 0; x < numScenarioTimes; x++) {
       const clonedData = {
