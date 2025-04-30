@@ -295,6 +295,7 @@ const GroupedStackedBarChart = ({ data, threshold = 0 }) => {
 
 function parseProbabilityLineChartData(rawData, financialGoal) {
   const startYear = rawData[0]?.year ?? 2025;
+  console.log(startYear);
   const endYear = rawData[rawData.length - 1]?.year ?? startYear;
 
   const probabilities = rawData.map((yearData) => {
@@ -379,6 +380,19 @@ function parseGroupedStackedBarChartData(rawData) {
 
 
 function parseShadedLineChartBands(rawData, quantity) {
+  if (!Array.isArray(rawData)) {
+    console.error("❌ rawData is not an array:", rawData);
+    return {
+      startYear: 2025,
+      endYear: 2025,
+      p10_90: { lower: [], upper: [] },
+      p20_80: { lower: [], upper: [] },
+      p30_70: { lower: [], upper: [] },
+      p40_60: { lower: [], upper: [] },
+      median: []
+    };
+  } 
+
   const getCategory = (entry) => {
     if (quantity === "Total Investments") return entry.investments;
     if (quantity === "Total Income") return entry.income;
@@ -483,469 +497,8 @@ function parseShadedLineChartBands(rawData, quantity) {
 
 const Charts = () => {
     const location = useLocation();
-    // const chartData = location.state?.chartData || [];
-    // console.log(chartData);
-    const chartData = [
-      {
-        "year": 2025,
-        "income": [
-          [
-            {
-              "name": "salary",
-              "value": 75829.14175491624
-            }
-          ],
-          [
-            {
-              "name": "salary",
-              "value": 76559.87176177483
-            }
-          ],
-          [
-            {
-              "name": "salary",
-              "value": 76411.21799101612
-            }
-          ]
-        ],
-        "investments": [
-          [
-            {
-              "name": "Cash",
-              "value": 69229.14175491624
-            },
-            {
-              "name": "S&P 500",
-              "value": 51262.884769215816
-            },
-            {
-              "name": "tax-exempt bonds",
-              "value": 21969.80775823535
-            },
-            {
-              "name": "S&P 500",
-              "value": 10004.497763995649
-            },
-            {
-              "name": "S&P 500",
-              "value": 9000.976529981806
-            }
-          ],
-          [
-            {
-              "name": "Cash",
-              "value": 69959.87176177483
-            },
-            {
-              "name": "S&P 500",
-              "value": 51776.504094846954
-            },
-            {
-              "name": "tax-exempt bonds",
-              "value": 22189.930326362977
-            },
-            {
-              "name": "S&P 500",
-              "value": 10007.73072221461
-            },
-            {
-              "name": "S&P 500",
-              "value": 9000.706013969817
-            }
-          ],
-          [
-            {
-              "name": "Cash",
-              "value": 69811.21799101612
-            },
-            {
-              "name": "S&P 500",
-              "value": 51672.72017566182
-            },
-            {
-              "name": "tax-exempt bonds",
-              "value": 22145.451503855067
-            },
-            {
-              "name": "S&P 500",
-              "value": 10005.422843879292
-            },
-            {
-              "name": "S&P 500",
-              "value": 9001.717833270548
-            }
-          ]
-        ],
-        "discretionary": [
-          [
-            {
-              "name": "vacation",
-              "value": 1200
-            },
-            {
-              "name": "streaming services",
-              "value": 500
-            }
-          ],
-          [
-            {
-              "name": "vacation",
-              "value": 1200
-            },
-            {
-              "name": "streaming services",
-              "value": 500
-            }
-          ],
-          [
-            {
-              "name": "vacation",
-              "value": 1200
-            },
-            {
-              "name": "streaming services",
-              "value": 500
-            }
-          ]
-        ],
-        "nonDiscretionary": [
-          [
-            {
-              "name": "food",
-              "value": 5000
-            }
-          ],
-          [
-            {
-              "name": "food",
-              "value": 5000
-            }
-          ],
-          [
-            {
-              "name": "food",
-              "value": 5000
-            }
-          ]
-        ],
-        "taxes": [
-          0,
-          0,
-          0
-        ],
-        "earlyWithdrawals": [
-          0,
-          0,
-          0
-        ]
-      },
-      {
-        "year": 2026,
-        "income": [
-          [
-            {
-              "name": "salary",
-              "value": 78020.31355155479
-            }
-          ],
-          [
-            {
-              "name": "salary",
-              "value": 79288.52902363286
-            }
-          ],
-          [
-            {
-              "name": "salary",
-              "value": 77643.61813862572
-            }
-          ]
-        ],
-        "investments": [
-          [
-            {
-              "name": "Cash",
-              "value": 122895.43774174283
-            },
-            {
-              "name": "S&P 500",
-              "value": 131705.38656053878
-            },
-            {
-              "name": "tax-exempt bonds",
-              "value": 56445.165668802336
-            },
-            {
-              "name": "S&P 500",
-              "value": 10010.63527676521
-            },
-            {
-              "name": "S&P 500",
-              "value": 16006.839770962168
-            }
-          ],
-          [
-            {
-              "name": "Cash",
-              "value": 123610.52870029311
-            },
-            {
-              "name": "S&P 500",
-              "value": 132727.39694459335
-            },
-            {
-              "name": "tax-exempt bonds",
-              "value": 56883.17011911144
-            },
-            {
-              "name": "S&P 500",
-              "value": 10013.844699805872
-            },
-            {
-              "name": "S&P 500",
-              "value": 16007.04155573195
-            }
-          ],
-          [
-            {
-              "name": "Cash",
-              "value": 123133.54511392185
-            },
-            {
-              "name": "S&P 500",
-              "value": 132301.35518949866
-            },
-            {
-              "name": "tax-exempt bonds",
-              "value": 56700.58079549943
-            },
-            {
-              "name": "S&P 500",
-              "value": 10012.710745800456
-            },
-            {
-              "name": "S&P 500",
-              "value": 16003.043417260906
-            }
-          ]
-        ],
-        "discretionary": [
-          [
-            {
-              "name": "vacation",
-              "value": 1200.36
-            },
-            {
-              "name": "streaming services",
-              "value": 500.15
-            }
-          ],
-          [
-            {
-              "name": "vacation",
-              "value": 1200.36
-            },
-            {
-              "name": "streaming services",
-              "value": 500.15
-            }
-          ],
-          [
-            {
-              "name": "vacation",
-              "value": 1200.36
-            },
-            {
-              "name": "streaming services",
-              "value": 500.15
-            }
-          ]
-        ],
-        "nonDiscretionary": [
-          [
-            {
-              "name": "food",
-              "value": 5001.5
-            }
-          ],
-          [
-            {
-              "name": "food",
-              "value": 5001.5
-            }
-          ],
-          [
-            {
-              "name": "food",
-              "value": 5001.5
-            }
-          ]
-        ],
-        "taxes": [
-          16838.013982601966,
-          17038.96473448808,
-          16998.08494752943
-        ],
-        "earlyWithdrawals": [
-          0,
-          0,
-          0
-        ]
-      },
-      {
-        "year": 2027,
-        "income": [
-          [
-            {
-              "name": "salary",
-              "value": 80017.90265410267
-            }
-          ],
-          [
-            {
-              "name": "salary",
-              "value": 81441.30274355428
-            }
-          ],
-          [
-            {
-              "name": "salary",
-              "value": 80772.60784396705
-            }
-          ]
-        ],
-        "investments": [
-          [
-            {
-              "name": "Cash",
-              "value": 177340.65883686207
-            },
-            {
-              "name": "S&P 500",
-              "value": 250253.9714146676
-            },
-            {
-              "name": "tax-exempt bonds",
-              "value": 107251.70203485756
-            },
-            {
-              "name": "S&P 500",
-              "value": 10014.236522558625
-            },
-            {
-              "name": "S&P 500",
-              "value": 23013.66443446045
-            }
-          ],
-          [
-            {
-              "name": "Cash",
-              "value": 178540.77595813805
-            },
-            {
-              "name": "S&P 500",
-              "value": 252163.9616554508
-            },
-            {
-              "name": "tax-exempt bonds",
-              "value": 108070.2692809075
-            },
-            {
-              "name": "S&P 500",
-              "value": 10017.300399837322
-            },
-            {
-              "name": "S&P 500",
-              "value": 23017.31830129335
-            }
-          ],
-          [
-            {
-              "name": "Cash",
-              "value": 177770.84861988502
-            },
-            {
-              "name": "S&P 500",
-              "value": 251202.19150986904
-            },
-            {
-              "name": "tax-exempt bonds",
-              "value": 107658.08207565815
-            },
-            {
-              "name": "S&P 500",
-              "value": 10018.395155013714
-            },
-            {
-              "name": "S&P 500",
-              "value": 23010.61839739872
-            }
-          ]
-        ],
-        "discretionary": [
-          [
-            {
-              "name": "vacation",
-              "value": 1200.7201079999998
-            },
-            {
-              "name": "streaming services",
-              "value": 500.3000449999999
-            }
-          ],
-          [
-            {
-              "name": "vacation",
-              "value": 1200.7201079999998
-            },
-            {
-              "name": "streaming services",
-              "value": 500.3000449999999
-            }
-          ],
-          [
-            {
-              "name": "vacation",
-              "value": 1200.7201079999998
-            },
-            {
-              "name": "streaming services",
-              "value": 500.3000449999999
-            }
-          ]
-        ],
-        "nonDiscretionary": [
-          [
-            {
-              "name": "food",
-              "value": 5003.00045
-            }
-          ],
-          [
-            {
-              "name": "food",
-              "value": 5003.00045
-            }
-          ],
-          [
-            {
-              "name": "food",
-              "value": 5003.00045
-            }
-          ]
-        ],
-        "taxes": [
-          17216.73799159285,
-          17267.698710076747,
-          17166.166069369665
-        ],
-        "earlyWithdrawals": [
-          0,
-          0,
-          0
-        ]
-      }
-    ];
+    const chartData = location.state?.chartData || [];
+    console.log(chartData.years);
     const [currChart, setCurrChart] = useState("");
     const [currQuantity, setCurrQuantity] = useState("Total Investments");
     const [currStat, setCurrStat] = useState("Median");
@@ -955,9 +508,11 @@ const Charts = () => {
     
     console.log(currScenario);
 
-    const probabilityLineChart = parseProbabilityLineChartData(chartData, currScenario.financialGoal);
-    // console.log(probabilityLineChart);
-    const {meanData, medianData} = parseGroupedStackedBarChartData(chartData);
+    console.log("chartData isArray?", Array.isArray(chartData));
+    console.log("chartData:", chartData);
+    const probabilityLineChart = parseProbabilityLineChartData(chartData.years, currScenario.financialGoal);
+    console.log(probabilityLineChart);
+    const {meanData, medianData} = parseGroupedStackedBarChartData(chartData.years);
     // console.log(meanData);
     // console.log(medianData);
     
@@ -966,7 +521,7 @@ const Charts = () => {
     const chartTypes = ["Line Chart", "Shaded Line Chart", "Stacked Bar Chart"];
     const shadedQuantities = ["Total Investments", "Total Income", "Total Expenses", "Early Withdrawal Tax", "Percentage of Total Discretionary Expenses Incurred"];
     
-    const shadedLineChartData = parseShadedLineChartBands(chartData, currQuantity);
+    const shadedLineChartData = parseShadedLineChartBands(chartData.years, currQuantity);
     console.log(shadedLineChartData);
 
     const quantityKeyMap = {
@@ -1058,7 +613,7 @@ const Charts = () => {
 
                     {currChart === "Shaded Line Chart" && (
                         <ChartWithBands
-                            shadedLineChart={parseShadedLineChartBands(chartData, currQuantity)}
+                            shadedLineChart={parseShadedLineChartBands(chartData.years, currQuantity)}
                         />
                         // <>Testing Something</>
                         // <ShadedConfidenceChart/>
