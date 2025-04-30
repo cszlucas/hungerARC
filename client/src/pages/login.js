@@ -43,6 +43,7 @@ const GoogleAuth = () => {
                 email: data.user.email || "",
                 guest: data.user.guest ?? false, // Ensures boolean type
                 scenarios: Array.isArray(data.user.scenarios) ? data.user.scenarios : [], // Ensures array type
+                stateYaml: data.user.stateYaml || [],
                 lastLogin: data.user.lastLogin || new Date().toISOString(), // Defaults to current time if missing
                 __v: data.user.__v ?? 0 // Ensures numeric type
             };
@@ -60,7 +61,8 @@ const GoogleAuth = () => {
             googleId: null,
             email: "Guest@hungerArc.com", // No profile image for guest users
             guest: true,
-            scenarios: []
+            scenarios: [],
+            stateYaml: []
         };
 
         setUser(guestUser);

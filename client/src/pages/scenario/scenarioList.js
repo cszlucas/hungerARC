@@ -213,13 +213,13 @@ const ScenarioList = () => {
         const reader = new FileReader();
         reader.onload = async (ev) => {
             try {
-              const raw = yaml.load(ev.target.result);
-              const parsed = parseScenarioYAML(raw);
-              console.log("✅ Parsed YAML:", parsed);
-              const response = await axios.post(`http://localhost:8080/importScenario/user/${user._id}`, parsed);
-              console.log(response);
+            const raw = yaml.load(ev.target.result);
+            const parsed = parseScenarioYAML(raw);
+            console.log("✅ Parsed YAML:", parsed);
+            const response = await axios.post(`http://localhost:8080/importScenario/user/${user._id}`, parsed);
+            console.log(response.data);
 
-              setScenarioData((prev) => [...(prev || []), response.data.scenario]);
+            setScenarioData((prev) => [...(prev || []), response.data.scenario]);
             } catch (err) {
               console.error("❌ YAML import failed:", err);
             }
