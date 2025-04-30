@@ -1,4 +1,6 @@
 //This file ensures objects delivered in correct format and for current year. Ex: uniform/normal
+const seed = 12345;
+const rand = mulberry32(seed);
 
 function getCurrentEvent(year, incomeEvent = [], expenseEvent = [], investEvent = [], rebalanceEvent = []) {
   let curIncomeEvent = [];
@@ -84,15 +86,24 @@ function setValues(events) {
 }
 
 function randomNormal(mean, stdDev) {
-  // Using Box-Muller Transform
-  let u = Math.random();
-  let v = Math.random();
+  // Using Box-Muller Transform with seeded PRNG
+  let u = rand();
+  let v = rand();
   let z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
   return mean + z * stdDev;
 }
 
 function randomUniform(min, max) {
-  return min + Math.random() * (max - min);
+  return min + rand() * (max - min);
+}
+
+function mulberry32(seed) {
+  return function() {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
 }
 
 function duration(event) {
