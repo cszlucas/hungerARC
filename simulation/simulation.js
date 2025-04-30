@@ -237,7 +237,7 @@ function updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, c
 
   updateYearDataBucket(yearDataBuckets, yearIndex, {
     investments: investments.map((event) => ({
-      name: lookup[event.investmentType.toString()] || "Unknown",
+      name: lookup[event.investmentType.toString()] ? `${lookup[event.investmentType.toString()]} (${event.accountTaxStatus})` : "Unknown",
       value: event.value,
     })),
     income: curIncomeEvent.map((event) => ({
