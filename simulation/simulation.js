@@ -80,6 +80,7 @@ async function runSimulation(
   let prevYearGains = 0;
 
   let cashInvestmentType = investmentTypes.find((inv) => inv.name === "Cash");
+  // console.log(cashInvestmentType);
   let cashInvestment;
   if (cashInvestmentType) {
     let cashId = cashInvestmentType._id;

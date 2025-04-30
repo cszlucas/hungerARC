@@ -70,7 +70,7 @@ const TAX_MAP = {
   "after-tax": "Tax-Free",
 };
 
-const AssetAllocation = ({ formValues, setFormValues }) => {
+const AssetAllocation = ({ formValues, setFormValues, isRebalance = false }) => {
   const { currRebalance, setCurrRebalance, currInvestments, currInvestmentTypes, setCurrScenario, editMode } = useContext(AppContext);
   const { eventEditMode, setEventEditMode } = useContext(AppContext);
   const { user } = useContext(AuthContext);
@@ -119,10 +119,12 @@ const AssetAllocation = ({ formValues, setFormValues }) => {
       };
     });
   };
-
+  console.log(allowedInvestments);
   const filteredInvestments = allowedInvestments.filter((investment) => {
-    const matchesTaxStatus = investment.accountTaxStatus === formValues.taxStatus;
-  
+    const matchesTaxStatus = isRebalance 
+      ? (investment.accountTaxStatus === formValues.taxStatus) 
+      : (investment.accountTaxStatus !== "pre-tax");
+    
     const { type, fixedPercentages = {}, initialPercentages = {} } = formValues.assetAllocation;
   
     const alreadyAllocated =
@@ -132,7 +134,7 @@ const AssetAllocation = ({ formValues, setFormValues }) => {
   
     return matchesTaxStatus && !alreadyAllocated; // If investment matches with given tax status as well its not already allocated
   });
-
+  console.log(filteredInvestments);
   const [pendingPercentage, setPendingPercentage] = useState("");
   const [pendingInitial, setPendingInitial] = useState("");
   const [pendingFinal, setPendingFinal] = useState("");
@@ -144,23 +146,23 @@ const AssetAllocation = ({ formValues, setFormValues }) => {
     if (!investment) return;
   
     setFormValues((prev) => {
-      const updatedRebalance = { ...prev.assetAllocation };
+      const updatedAssetAllocation = { ...prev.assetAllocation };
       const allocationType = prev.assetAllocation.type;
   
       if (allocationType === "fixed") {
-        if (!updatedRebalance.fixedPercentages) updatedRebalance.fixedPercentages = {};
-        updatedRebalance.fixedPercentages[selectedInvestment] = pendingPercentage;
+        if (!updatedAssetAllocation.fixedPercentages) updatedAssetAllocation.fixedPercentages = {};
+        updatedAssetAllocation.fixedPercentages[selectedInvestment] = pendingPercentage;
       } else if (allocationType === "glidePath") {
-        if (!updatedRebalance.initialPercentages) updatedRebalance.initialPercentages = {};
-        if (!updatedRebalance.finalPercentages) updatedRebalance.finalPercentages = {};
+        if (!updatedAssetAllocation.initialPercentages) updatedAssetAllocation.initialPercentages = {};
+        if (!updatedAssetAllocation.finalPercentages) updatedAssetAllocation.finalPercentages = {};
   
-        updatedRebalance.initialPercentages[selectedInvestment] = pendingInitial;
-        updatedRebalance.finalPercentages[selectedInvestment] = pendingFinal;
+        updatedAssetAllocation.initialPercentages[selectedInvestment] = pendingInitial;
+        updatedAssetAllocation.finalPercentages[selectedInvestment] = pendingFinal;
       }
   
       return {
         ...prev,
-        assetAllocation: updatedRebalance,
+        assetAllocation: updatedAssetAllocation,
       };
     });
   

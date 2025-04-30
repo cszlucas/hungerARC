@@ -206,7 +206,7 @@ const Rebalance = () => {
           </Box>
           {/* Right Column - Investment List for the selected tax type */}
           <Box sx={{width: 350}}>
-            <AssetAllocation formValues={formValues} setFormValues={setFormValues}/>
+            <AssetAllocation formValues={formValues} setFormValues={setFormValues} isRebalance={true}/>
           </Box>
         </Box>
 
