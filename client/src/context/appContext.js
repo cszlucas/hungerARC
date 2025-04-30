@@ -119,7 +119,7 @@ export const AppProvider = ({ children }) => {
   const [currInvest, setCurrInvest] = useState(readStateFromLS("currentInvest") || []);  // investEvents[],    // invest event series
   const [currRebalance, setCurrRebalance] = useState(readStateFromLS("currentRebalance") || []);   // rebalanceEvents[], // rebalance event series
   
-
+  const [tempExploration, setTempExploration] = useState(readStateFromLS("tempExploration") || []); 
   const { user } = useContext(AuthContext);
   
   useEffect(() => {
@@ -167,6 +167,7 @@ export const AppProvider = ({ children }) => {
       }, {});
   
       setTakenTaxStatusAccounts(takenTaxStatusAccounts);
+      setTempExploration([]);
     };
   
     loadScenarioData();
@@ -177,7 +178,7 @@ export const AppProvider = ({ children }) => {
   }, [scenarioData]);
 
   useEffect(() => {
-    if (currScenario) localStorage.setItem("currentScenario", JSON.stringify(currScenario));
+    localStorage.setItem("currentScenario", JSON.stringify(currScenario));
   }, [currScenario]);
 
   useEffect(() => {
@@ -205,12 +206,17 @@ export const AppProvider = ({ children }) => {
   }, [currInvestmentTypes]);
 
   useEffect(() => {
-    if (eventEditMode) localStorage.setItem("editEvent", JSON.stringify(eventEditMode));
+    localStorage.setItem("editEvent", JSON.stringify(eventEditMode));
   }, [eventEditMode]);
 
   useEffect(() => {
     if (takenTaxStatusAccounts) localStorage.setItem("takenTaxStatusAccounts", JSON.stringify(takenTaxStatusAccounts));
   }, [takenTaxStatusAccounts]);
+
+  useEffect(() => {
+    if (tempExploration) localStorage.setItem("tempExploration", JSON.stringify(tempExploration));
+  }, [tempExploration]);
+  
 
   return (
     <AppContext.Provider value={{ 
@@ -225,6 +231,7 @@ export const AppProvider = ({ children }) => {
       currRebalance, setCurrRebalance,
       currInvestmentTypes, setCurrInvestmentTypes,
       takenTaxStatusAccounts, setTakenTaxStatusAccounts,
+      tempExploration, setTempExploration,
     }}>
         {children}
     </AppContext.Provider>

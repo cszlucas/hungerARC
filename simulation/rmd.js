@@ -1,4 +1,5 @@
 import RMD from "../server/models/rmd-schema.js";
+import { logFinancialEvent, printInvestments, printStrategy } from "./logs.js";
 import structuredClone from "structured-clone";
 import { v4 as uuidv4 } from "uuid";
 import { logFinancialEvent, printInvestments, printStrategy } from "./logs.js";
@@ -23,65 +24,34 @@ async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOr
     logFinancialEvent({
       year: year,
       type: "rmd",
-      description: "Performing RMD",
       details: {
         amount: rmdCount,
+        incomeAmount: sumInvestmentsPreTaxRMD,
         userAge: userAge,
       },
     });
-
+    printInvestments(RMDStrategyInvestOrder, year, "rmd", "investments");
     for (let preTaxInvest of RMDStrategyInvestOrder) {
       if (rmdCount > 0) {
-        logFinancialEvent({
-          year: year,
-          type: "rmd",
-          details: {
-            rmdCount: rmdCount,
-            preTaxInvestmentValue: preTaxInvest.value,
-            preTaxInvestmentID: preTaxInvest._id,
-          },
-        });
         //console.log("The rmd count: ", rmdCount, "and the pretax investment", preTaxInvest._id, "has value:", preTaxInvest.value);
         if (preTaxInvest.value - rmdCount >= 0) {
           transferInvestment(preTaxInvest, allInvestmentsNonRetirement, rmdCount, investments, year);
           preTaxInvest.value -= rmdCount;
-
-          logFinancialEvent({
-            year: year,
-            type: "rmd",
-            description: "Performed all rmd this round. The new pretax investment values are:",
-            details: {
-              rmdCount: rmdCount,
-              preTaxInvestmentValue: preTaxInvest.value,
-              preTaxInvestmentID: preTaxInvest._id,
-            },
-          });
           //console.log("can perform rmd all this round. The old pretax investment", preTaxInvest._id, " now has", preTaxInvest.value);
           break;
         } else {
           transferInvestment(preTaxInvest, allInvestmentsNonRetirement, preTaxInvest.value, investments, year);
           rmdCount -= preTaxInvest.value;
           preTaxInvest.value = 0;
-
-          logFinancialEvent({
-            year: year,
-            type: "rmd",
-            description: "can NOT pay all this round. Transferred all of pretax investment to non-retirement.",
-            details: {
-              rmdCount: rmdCount,
-              preTaxInvestmentValue: preTaxInvest.value,
-              preTaxInvestmentID: preTaxInvest._id,
-            },
-          });
           //console.log("can NOT pay all this round. Transfer all of pretax investment. The rmd amount left to transfer: ", rmdCount);
         }
       } else {
         //console.log("RMD transferred");
+        printInvestments(RMDStrategyInvestOrder, year, "rmd", "investments");
         logFinancialEvent({
           year: year,
           type: "rmd",
-          description: "All RMD transferred.",
-          rmdCount: rmdCount,
+          description: "All RMD transferred."
         });
         break;
       }
@@ -102,7 +72,6 @@ function transferInvestment(preTaxInvest, allInvestmentsNonRetirement, amountTra
       description: "Add amount to old non-retirement investment",
       details: {
         amountTransfer: amountTransfer,
-        nonRetirementInvestmentValue: nonRetirementInvestment.value,
         nonRetirementInvestmentID: nonRetirementInvestment._id,
       },
     });

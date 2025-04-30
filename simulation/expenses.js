@@ -36,11 +36,9 @@ function payNonDiscretionaryExpenses(
     details: {
       amount: expenseAmt,
       taxes: taxes,
-      cash: cashInvestment.value,
-      withdrawalAmt: withdrawalAmt,
+      cash: cashInvestment.value
     },
   });
-  printInvestments(withdrawalStrategy, year, "non-discretionary", "investment");
   printEvents(nonDiscretionaryExpenses, year, "non-discretionary", "expense", inflationRate, spouseDeath);
   //console.log("nonDiscretionaryExpenses Amt: ", expenseAmt, "and taxes: ", taxes);
   //console.log("My cash investment: ", cashInvestment.value, "Amount I need to withdraw: ", withdrawalAmt);
@@ -56,21 +54,19 @@ function payNonDiscretionaryExpenses(
     });
     withdrawalAmt = 0;
   } else {
+    printInvestments(withdrawalStrategy, year, "non-discretionary", "investments");
     withdrawalAmt -= cashInvestment.value;
     cashInvestment.value = 0; //use up cash
     for (let investment of withdrawalStrategy) {
       if (withdrawalAmt > 0) {
         //console.log("Still left to withdraw: ", withdrawalAmt);
         //console.log("investment to withdraw from ID:", investment._id, ",type:", investment.accountTaxStatus, ",value:", investment.value);
-        const amtPaid = payFromInvestment(withdrawalAmt, investment, userAge, yearTotals);
+        const amtPaid = payFromInvestment(withdrawalAmt, investment, userAge, yearTotals, year, "non-discretionary");
         withdrawalAmt -= amtPaid;
       } else {
         break;
       }
     }
-
-    printInvestments(withdrawalStrategy, year, "non-discretionary", "investments");
-    printEvents(nonDiscretionaryExpenses, year, "non-discretionary", "expense", inflationRate, spouseDeath);
 
     if (withdrawalAmt > 0) {
       logFinancialEvent({
@@ -85,6 +81,7 @@ function payNonDiscretionaryExpenses(
         type: "non-discretionary",
         description: "You paid all your non-discretionary expenses...phew",
       });
+      printInvestments(withdrawalStrategy, year, "non-discretionary", "investments");
       //console.log("You paid all your non-discretionary expenses...phew");
     }
   }
@@ -132,7 +129,6 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
   console.log("\nPAY DISCRETIONARY EXPENSES");
   let goalRemaining = financialGoal;
   let expensesPaid = 0;
-  printEvents(spendingStrategy, year, "discretionary", "expense", inflationRate, spouseDeath);
   logFinancialEvent({
     year: year,
     type: "discretionary",
@@ -141,8 +137,9 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
     },
   });
   for (let expense of spendingStrategy) {
+    printEvents([expense], year, "discretionary", "expense", inflationRate, spouseDeath);
     let expenseVal = getValueInYear(expense, year, inflationRate, spouseDeath);
-    console.log("Expense:", expense._id, "Amount:", expenseVal, "Cash available:", cashInvestment.value);
+    //console.log("Expense:", expense._id, "Amount:", expenseVal, "Cash available:", cashInvestment.value);
 
     if (cashInvestment.value >= expenseVal) {
       cashInvestment.value -= expenseVal;
@@ -162,22 +159,23 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
 
     expenseVal -= cashInvestment.value;
     cashInvestment.value = 0;
+    console.log("withdrawalStrategy", withdrawalStrategy);
     printInvestments(withdrawalStrategy, year, "discretionary", "investments");
     for (let investment of withdrawalStrategy) {
       if (expenseVal <= 0) break;
-      console.log("Expense value now is: ", expenseVal);
+      //console.log("Expense value now is: ", expenseVal);
       if (goalRemaining >= expenseVal) {
-        let amtPaid = payFromInvestment(expenseVal, investment, userAge, yearTotals);
+        let amtPaid = payFromInvestment(expenseVal, investment, userAge, yearTotals, year, "discretionary");
         expensesPaid += amtPaid;
         expenseVal -= amtPaid;
         goalRemaining -= amtPaid;
       } else if (goalRemaining > 0) {
         let partialAmt = Math.min(expenseVal, goalRemaining);
         expensesPaid += partialAmt;
-        let amtPaid = payFromInvestment(partialAmt, investment, userAge, yearTotals);
+        let amtPaid = payFromInvestment(partialAmt, investment, userAge, yearTotals, year, "discretionary");
         expenseVal -= amtPaid;
         goalRemaining -= amtPaid;
-        console.log("You paid some of the expense and then was forced to stop", expenseVal);
+        //console.log("You paid some of the expense and then was forced to stop to not violate financial goal.", expenseVal);
       }
     }
     printInvestments(withdrawalStrategy, year, "discretionary", "investments");
@@ -196,19 +194,19 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
       logFinancialEvent({
         year: year,
         type: "discretionary",
-        description: "You were able to pay all your discretionary expenses without violating your financial goal.",
+        description: "You were able to pay your discretionary expense without violating your financial goal.",
       });
     }
   }
   return expensesPaid;
 }
 
-function payFromInvestment(withdrawalAmt, investment, userAge, yearTotals) {
+function payFromInvestment(withdrawalAmt, investment, userAge, yearTotals, year, type) {
   if (investment.value == 0) {
-    //console.log("This investment: ", investment._id, "is already empty", investment.value);
+    console.log("This investment: ", investment._id, "is already empty", investment.value);
     logFinancialEvent({
       year: year,
-      type: "non-discretionary",
+      type: type,
       description: "This investment is already empty.",
     });
     return 0;
