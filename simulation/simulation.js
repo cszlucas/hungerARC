@@ -34,7 +34,6 @@ async function runSimulation(
   eventLog
 ) {
   // previous year
-
   let irsLimit = scenario.irsLimit;
   let filingStatus = scenario.filingStatus;
   let spouseDeath = false;
@@ -187,7 +186,7 @@ async function runSimulation(
 
     // PRELIMINARIES
     // can differ each year if sampled from distribution
-    preliminaries(federalIncomeTax, inflationRate, fedDeduction, capitalGains, stateTax, filingStatus, tax, irsLimit, stateIncomeTaxBracket);
+    preliminaries(federalIncomeTax, inflationRate, fedDeduction, capitalGains, stateTax, filingStatus, tax, irsLimit, stateIncomeTaxBracket, startYearPrev);
 
     // CHARTS
     updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, curIncomeEvent, discretionary, nonDiscretionary, taxes, yearTotals, year, inflationRate, spouseDeath);
@@ -210,7 +209,7 @@ async function runSimulation(
   return yearDataBuckets;
 }
 
-function preliminaries(federalIncomeTax, inflationRate, fedDeduction, capitalGains, stateTax, filingStatus, tax, irsLimit, stateIncomeTaxBracket) {
+function preliminaries(federalIncomeTax, inflationRate, fedDeduction, capitalGains, stateTax, filingStatus, tax, irsLimit, stateIncomeTaxBracket, startYearPrev) {
   // can differ each year if sampled from distribution
   federalIncomeTax = updateFedIncomeTaxBracket(federalIncomeTax, inflationRate);
   fedDeduction = updateFedDeduction(fedDeduction, inflationRate);

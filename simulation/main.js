@@ -128,7 +128,7 @@ async function main(numScenarioTimes, scenarioId, userId) {
   var distributions = require("distributions");
   const dataStore = new DataStore();
   await Promise.all([dataStore.populateData(scenarioId, userId)]);
-  console.log("our scenario \n\n", dataStore);
+  //console.log("our scenario \n\n", dataStore);
 
   const csvLog = []; // For user_datetime.csv
   const eventLog = []; // For user_datetime.log

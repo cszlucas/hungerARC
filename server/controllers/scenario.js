@@ -135,7 +135,6 @@ exports.importUserData = async (req, res) => {
 
     const investmentTypeMap = {};
     const investmentMap = {};
-
     // Handle investment types
     for (const type of setOfinvestmentTypes) {
       formatIssues([type]);
@@ -152,7 +151,7 @@ exports.importUserData = async (req, res) => {
         accountTaxStatus: inv.accountTaxStatus,
       };
       const { data: res } = await axios.post(`http://localhost:8080/scenario/${scenarioId}/investment`, investmentToCreate);
-      investmentMap[`${inv.investmentType} ${inv.accountTaxStatus}`] = res._id;
+      investmentMap[`${inv.id}`] = res._id;
     }
     
     // Convert asset allocation to IDs Mappings
@@ -221,10 +220,10 @@ function logAxiosError(context, error) {
 }
 
 async function assetAllocationToID(investmentMap, assetAllocation) {
-  function mapKeysToIds(percentagesObj, nameToIdMap) {
+  function mapKeysToIds(percentagesObj, nameIdToInvestmentId) {
     const result = {};
     for (const [name, value] of Object.entries(percentagesObj)) {
-      const id = nameToIdMap[name]; // Use name directly
+      const id = nameIdToInvestmentId[name]; // Use name directly
       if (id) {
         result[id] = value;
       } else {
