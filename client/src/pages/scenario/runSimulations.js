@@ -75,19 +75,20 @@ const RunSimulation = () => {
       console.log(currScenario._id);
       const response = await axios.get("http://localhost:8080/runSimulation", {
         params: {
-          // scenarioId: currScenario._id,
-          investmentType: currInvestmentTypes,
-          invest: currInvest,
-          rebalance: currRebalance,
-          expense: currExpense,
-          income: currIncome,
-          investment: currInvestments,
-          scenario: currScenario,
-          exploration: tempExploration,
+          scenarioId: currScenario._id,
+          // investmentType: currInvestmentTypes,
+          // invest: currInvest,
+          // rebalance: currRebalance,
+          // expense: currExpense,
+          // income: currIncome,
+          // investment: currInvestments,
+          // scenario: currScenario,
+          // exploration: tempExploration,
           userId: user._id,
           simulationCount: numSimulations,
         },
       });
+      console.log(response);
       console.log(response.data);
       navigate("/charts", {
         state: { chartData: response.data }

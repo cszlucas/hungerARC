@@ -25,7 +25,124 @@ import {
 import { useLocation } from "react-router-dom";
 import { AppContext } from "../context/appContext";
 
+
+function calculateYearlySuccessProbabilities(data, financialGoal) {
+    const result = {};
+  
+    data.values.forEach(({ value, simulations }) => {
+      const yearlyCounts = {};    // { year: { success: x, total: y } }
+  
+      simulations.forEach(simulation => {
+        simulation.forEach(({ year, investment }) => {
+          const total = investment.reduce((sum, i) => sum + (i?.value ?? 0), 0);
+          if (!yearlyCounts[year]) {
+            yearlyCounts[year] = { success: 0, total: 0 };
+          }
+          yearlyCounts[year].total += 1;
+          if (total >= financialGoal) {
+            yearlyCounts[year].success += 1;
+          }
+        });
+      });
+  
+      result[value] = {};
+  
+      Object.entries(yearlyCounts).forEach(([year, { success, total }]) => {
+        result[value][year] = success / total;
+      });
+    });
+  
+    return result;
+}
+
+function median(arr) {
+    const sorted = [...arr].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 0
+      ? (sorted[mid - 1] + sorted[mid]) / 2
+      : sorted[mid];
+}
+
+function calculateYearlyMedianInvestments(data) {
+    const result = {};
+  
+    data.values.forEach(({ value, simulations }) => {
+      const yearlyTotals = {}; // { year: [totals] }
+  
+      simulations.forEach(simulation => {
+        simulation.forEach(({ year, investment }) => {
+          const total = investment.reduce((sum, i) => sum + (i?.value ?? 0), 0);
+          if (!yearlyTotals[year]) {
+            yearlyTotals[year] = [];
+          }
+          yearlyTotals[year].push(total);
+        });
+      });
+  
+      result[value] = {};
+      for (const year in yearlyTotals) {
+        result[value][year] = median(yearlyTotals[year]);
+      }
+    });
+  
+    return result;
+}
+  
+  
+
 const OneDimensionalCharts = () => {
+    const location = useLocation();
+    // const odeData = location.state?.odeData || [];
+    const financialGoal = 9000;
+    const odeData = {
+        "parameter": "duration",
+        "values": [
+          {
+            "value": 20,
+            "simulations": [
+              [
+                { "year": 2025, "investment": [{ "name": "Roth IRA", "value": 3000 }, { "name": "Brokerage", "value": 5000 }] },
+                { "year": 2026, "investment": [{ "name": "Roth IRA", "value": 3500 }, { "name": "Brokerage", "value": 6000 }] }
+              ],
+              [
+                { "year": 2025, "investment": [{ "name": "Roth IRA", "value": 2800 }, { "name": "Brokerage", "value": 5200 }] },
+                { "year": 2026, "investment": [{ "name": "Roth IRA", "value": 3600 }, { "name": "Brokerage", "value": 5800 }] }
+              ]
+            ]
+          },
+          {
+            "value": 25,
+            "simulations": [
+              [
+                { "year": 2025, "investment": [{ "name": "Roth IRA", "value": 3200 }, { "name": "Brokerage", "value": 5100 }] },
+                { "year": 2026, "investment": [{ "name": "Roth IRA", "value": 3600 }, { "name": "Brokerage", "value": 6300 }] }
+              ],
+              [
+                { "year": 2025, "investment": [{ "name": "Roth IRA", "value": 3000 }, { "name": "Brokerage", "value": 5000 }] },
+                { "year": 2026, "investment": [{ "name": "Roth IRA", "value": 3400 }, { "name": "Brokerage", "value": 6200 }] }
+              ]
+            ]
+          },
+          {
+            "value": 30,
+            "simulations": [
+              [
+                { "year": 2025, "investment": [{ "name": "Roth IRA", "value": 3100 }, { "name": "Brokerage", "value": 5600 }] },
+                { "year": 2026, "investment": [{ "name": "Roth IRA", "value": 3900 }, { "name": "Brokerage", "value": 5900 }] }
+              ],
+              [
+                { "year": 2025, "investment": [{ "name": "Roth IRA", "value": 3500 }, { "name": "Brokerage", "value": 5700 }] },
+                { "year": 2026, "investment": [{ "name": "Roth IRA", "value": 3700 }, { "name": "Brokerage", "value": 6000 }] }
+              ]
+            ]
+          }
+        ]
+    };
+    
+    const probabilityOfSuccessData = calculateYearlySuccessProbabilities(odeData, financialGoal);
+    const medians = calculateYearlyMedianInvestments(odeData);
+
+    console.log(odeData);
     const [currChart, setCurrChart] = useState("");
     const [selectedQuantity, setSelectedQuantity] = useState("");
 
@@ -69,6 +186,7 @@ const OneDimensionalCharts = () => {
                             </>
                         )}
                     </Stack>
+
 
 
                     {/* {currChart === "Line Chart" && (
