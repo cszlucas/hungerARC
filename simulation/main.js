@@ -94,8 +94,8 @@ function scenarioExploration(foundData, parameter, value) {
       foundData.assetAllocation.fixedPercentages[1].value += 100 - foundData.assetAllocation.fixedPercentages[0].value;
     } else if (foundData.assetAllocation.initialPercentages.length != 0) {
       // Glide Path allocation
-      foundData.assetAllocation.glidePath.calculated[0].value += value;
-      foundData.assetAllocation.glidePath.calculated[1].value = 100 - foundData.assetAllocation.glidePath.calculated[0].value;
+      foundData.assetAllocation.initialPercentages[0].value += value;
+      foundData.assetAllocation.initialPercentages[1].value = 100 - foundData.assetAllocation.initialPercentages[0].value;
     }
   }
   return foundData;
@@ -128,6 +128,7 @@ async function main(numScenarioTimes, scenarioId, userId) {
   var distributions = require("distributions");
   const dataStore = new DataStore();
   await Promise.all([dataStore.populateData(scenarioId, userId)]);
+  console.log("our scenario \n\n", dataStore);
 
   const csvLog = []; // For user_datetime.csv
   const eventLog = []; // For user_datetime.log
@@ -156,12 +157,13 @@ async function main(numScenarioTimes, scenarioId, userId) {
   // let stateTaxData = stateTax.find((state) => state.state === scenario.stateResident);
 
   //default values if no scenario exploration
+  let oneScenarioExploration=false;
   let lowerBound = 1;
   let upperBound = 1;
   let stepSize = 1;
   let isFirstIteration = true;
   for (let value = lowerBound; value <= upperBound; value += stepSize) {
-    console.log(`Running ${numScenarioTimes} simulations for ${parameter}: ${value}`);
+   // console.log(`Running ${numScenarioTimes} simulations for ${parameter}: ${value}`);
     if (oneScenarioExploration) {
       let foundData;
       if (isFirstIteration) {
