@@ -22,7 +22,7 @@ import axios from "axios";
 import { exportToYAML } from "./import-export/export";
 import CustomSave from "../../components/customSaveBtn";
 import DimensionalExploration from "../explore";
-import investment from "../../../../server/models/investment";
+// import investment from "../../../../server/models/investment";
 
 
 const RunSimulation = () => {

@@ -119,7 +119,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false }) => 
       };
     });
   };
-
+  console.log(allowedInvestments);
   const filteredInvestments = allowedInvestments.filter((investment) => {
     const matchesTaxStatus = isRebalance 
       ? (investment.accountTaxStatus === formValues.taxStatus) 
@@ -134,7 +134,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false }) => 
   
     return matchesTaxStatus && !alreadyAllocated; // If investment matches with given tax status as well its not already allocated
   });
-
+  console.log(filteredInvestments);
   const [pendingPercentage, setPendingPercentage] = useState("");
   const [pendingInitial, setPendingInitial] = useState("");
   const [pendingFinal, setPendingFinal] = useState("");
