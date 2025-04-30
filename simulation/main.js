@@ -246,8 +246,8 @@ async function main(investmentType2, invest2, rebalance2, expense2, income2, inv
       earlyWithdrawals: data.earlyWithdrawals[i],
     });
   }
-
-  //console.log("YEARS", JSON.stringify(years, null, 2));
+  console.log("whyyy");
+  console.log("YEARS", JSON.stringify(years, null, 2));
 
   // console.log(years);
 

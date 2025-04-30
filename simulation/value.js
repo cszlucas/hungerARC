@@ -6,7 +6,6 @@ function getValueInYear(event, year, inflationRate, spouseDeath) {
   let startSimYear = new Date().getFullYear();
   const yearsSinceStart = year - startSimYear;
   const yearsActive = year - startYear.calculated;
-
   // Apply inflation to base amount only if inflationAdjustment is true
   let amount = inflationAdjustment ? initialAmount * Math.pow(1 + inflationRate, yearsSinceStart) : initialAmount;
 
@@ -22,7 +21,7 @@ function getValueInYear(event, year, inflationRate, spouseDeath) {
 
       switch (annualChange.distribution) {
         case "none":
-          amount += annualChange.type === "percentage" ? amount * annualChange.value * 0.01 : annualChange.value;
+          amount += annualChange.type === "percentage" ? amount * (annualChange.amount ?? 0) * 0.01 : annualChange.amount ?? 0;
           break;
 
         case "normal":
@@ -43,7 +42,6 @@ function getValueInYear(event, year, inflationRate, spouseDeath) {
     // If not in active years, set amount to 0
     amount = 0;
   }
-
   return amount;
 }
 

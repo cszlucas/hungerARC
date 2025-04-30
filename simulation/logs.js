@@ -125,6 +125,7 @@ function formatNonDiscretionaryDetails(details, amount, description = "") {
     line += `Investment to withdraw from ID "${details.investmentID}" with value "${formatCurrency(details.investmentValue)}".`;
   }
   if (details?.type && details?.ID && details?.value!=undefined) {
+    console.log("details.value", details.value);
     const valueFormatted = formatCurrency(details.value);
     line += ` ${details.type.toUpperCase()} ID: ${details.ID} | Value: ${valueFormatted}`;
   }
