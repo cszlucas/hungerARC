@@ -88,6 +88,57 @@ function calculateYearlyMedianInvestments(data) {
     return result;
 }
   
+function calculateFinalYearSuccessProbabilities(data, financialGoal) {
+    const result = {};
+  
+    data.values.forEach(({ value, simulations }) => {
+      let successCount = 0;
+  
+      simulations.forEach(simulation => {
+        const finalYear = simulation[simulation.length - 1];
+        const total = finalYear.investment.reduce((sum, i) => sum + (i?.value ?? 0), 0);
+        if (total >= financialGoal) successCount += 1;
+      });
+  
+      result[value] = successCount / simulations.length;
+    });
+  
+    return result;
+}
+    
+function calculateFinalYearMedianInvestments(data) {
+    const result = {};
+  
+    data.values.forEach(({ value, simulations }) => {
+      const finalYearTotals = simulations.map(sim => {
+        const finalYear = sim[sim.length - 1];
+        return finalYear.investment.reduce((sum, i) => sum + (i?.value ?? 0), 0);
+      });
+  
+      result[value] = median(finalYearTotals);
+    });
+  
+    return result;
+}
+
+function transformForLineChart(metricData) {
+    const yearsSet = new Set();
+  
+    // Collect all years across all parameter values
+    Object.values(metricData).forEach(yearDict => {
+      Object.keys(yearDict).forEach(year => yearsSet.add(Number(year)));
+    });
+  
+    const years = Array.from(yearsSet).sort((a, b) => a - b);
+  
+    const series = Object.entries(metricData).map(([paramValue, yearData]) => ({
+      name: `duration = ${paramValue}`,
+      type: "line",
+      data: years.map(year => yearData[year] ?? null), // fill missing with null
+    }));
+  
+    return { years, series };
+}
   
 
 const OneDimensionalCharts = () => {
@@ -141,6 +192,10 @@ const OneDimensionalCharts = () => {
     
     const probabilityOfSuccessData = calculateYearlySuccessProbabilities(odeData, financialGoal);
     const medians = calculateYearlyMedianInvestments(odeData);
+    const finalYearProbabilities = calculateFinalYearSuccessProbabilities(odeData, financialGoal);
+    const finalMedians = calculateFinalYearMedianInvestments(odeData);
+
+
 
     console.log(odeData);
     const [currChart, setCurrChart] = useState("");
