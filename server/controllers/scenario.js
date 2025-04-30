@@ -116,6 +116,14 @@ exports.importUserData = async (req, res) => {
     rmdStrategy, optimizerSettings, rothConversionStrategy, financialGoal, stateResident,
   } = req.body;
 
+  if (inflationAssumption) {
+    inflationAssumption.inflationAssumptionType = inflationAssumption.type;
+  
+    if (inflationAssumption.inflationAssumptionType === "fixed") {
+      inflationAssumption.fixedRate = inflationAssumption.value;
+    }
+  }
+  
   const basicInfoData = {
     name,
     filingStatus, //: maritalStatus === "couple" ? "married" : "single",
@@ -135,7 +143,6 @@ exports.importUserData = async (req, res) => {
 
     const investmentTypeMap = {};
     const investmentMap = {};
-
     // Handle investment types
     for (const type of setOfinvestmentTypes) {
       formatIssues([type]);
@@ -152,7 +159,7 @@ exports.importUserData = async (req, res) => {
         accountTaxStatus: inv.accountTaxStatus,
       };
       const { data: res } = await axios.post(`http://localhost:8080/scenario/${scenarioId}/investment`, investmentToCreate);
-      investmentMap[`${inv.investmentType} ${inv.accountTaxStatus}`] = res._id;
+      investmentMap[`${inv.id}`] = res._id;
     }
     
     // Convert asset allocation to IDs Mappings
@@ -162,8 +169,8 @@ exports.importUserData = async (req, res) => {
       }
     }
     for (const event of rebalance) {
-      if (event?.rebalanceAllocation) {
-        event.rebalanceAllocation = await assetAllocationToID(investmentMap, event.rebalanceAllocation);
+      if (event?.assetAllocation) {
+        event.assetAllocation = await assetAllocationToID(investmentMap, event.assetAllocation);
       }
     }
 
@@ -221,10 +228,10 @@ function logAxiosError(context, error) {
 }
 
 async function assetAllocationToID(investmentMap, assetAllocation) {
-  function mapKeysToIds(percentagesObj, nameToIdMap) {
+  function mapKeysToIds(percentagesObj, nameIdToInvestmentId) {
     const result = {};
     for (const [name, value] of Object.entries(percentagesObj)) {
-      const id = nameToIdMap[name]; // Use name directly
+      const id = nameIdToInvestmentId[name]; // Use name directly
       if (id) {
         result[id] = value;
       } else {

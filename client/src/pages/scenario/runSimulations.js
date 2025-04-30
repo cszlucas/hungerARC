@@ -22,6 +22,7 @@ import axios from "axios";
 import { exportToYAML } from "./import-export/export";
 import CustomSave from "../../components/customSaveBtn";
 import DimensionalExploration from "../explore";
+// import investment from "../../../../server/models/investment";
 
 
 const RunSimulation = () => {
@@ -31,7 +32,7 @@ const RunSimulation = () => {
   const [permission, setPermission] = useState([]);
 
 
-  const {currScenario, currInvestmentTypes, currInvestments, currIncome, currExpense, currInvest, currRebalance} = useContext(AppContext);
+  const {currScenario, currInvestmentTypes, currInvestments, currIncome, currExpense, currInvest, currRebalance, tempExploration} = useContext(AppContext);
   const {user} = useContext(AuthContext);
   // console.log(currScenario);
   
@@ -74,12 +75,19 @@ const RunSimulation = () => {
       console.log(currScenario._id);
       const response = await axios.get("http://localhost:8080/runSimulation", {
         params: {
-          scenarioId: currScenario._id,
+          // scenarioId: currScenario._id,
+          investmentType: currInvestmentTypes,
+          invest: currInvest,
+          rebalance: currRebalance,
+          expense: currExpense,
+          income: currIncome,
+          investment: currInvestments,
+          scenario: currScenario,
+          exploration: tempExploration,
           userId: user._id,
           simulationCount: numSimulations,
         },
       });
-
       console.log(response.data);
       navigate("/charts", {
         state: { chartData: response.data }

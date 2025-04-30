@@ -1,20 +1,15 @@
-import React, { useState, useContext, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useContext, useEffect, useCallback } from "react";
 import { 
-  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, List, MenuItem,
+  Typography, Button, Stack, Box, List,
   ListItem, ListItemText, IconButton, Backdrop, Paper, Switch 
 } from "@mui/material";
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
-import EventSeries from "./scenario/events/eventSeries";
 import CustomInput from "../components/customInputBox";
 import CustomDropdown from "../components/customDropDown";
-import {
-  stackStyles, titleStyles, textFieldStyles, backContinueContainerStyles, buttonStyles, rowBoxStyles,
-} from "../components/styles";
+import { rowBoxStyles } from "../components/styles";
 
 import { AppContext } from "../context/appContext";
 import { AuthContext } from "../context/authContext";
-import theme from "../components/theme";
-import { useNavigate } from "react-router-dom";
 
 const DimensionalExploration = () => {
   const { 

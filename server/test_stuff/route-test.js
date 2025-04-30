@@ -300,7 +300,7 @@ async function RebalanceStrat() {
         value: 2,
       },
       taxStatus: "non-retirement",
-      rebalanceAllocation: {
+      assetAllocation: {
         type: newAssetAllocation.type,  // Use the type from the request
         initialPercentages: newAssetAllocation.initialPercentages,
         finalPercentages: newAssetAllocation.finalPercentages,

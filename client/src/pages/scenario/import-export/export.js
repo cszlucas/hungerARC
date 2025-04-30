@@ -236,16 +236,16 @@ export function exportToYAML({
           ...(e.maxCash !== undefined && { maxCash: parseFloat(e.maxCash) }),
         };
       }),
-      ...(currRebalance || []).filter(e => e?.startYear && e?.duration && e?.rebalanceAllocation).map(e => {
-        const isGlide = e.rebalanceAllocation.type === "glidePath";
+      ...(currRebalance || []).filter(e => e?.startYear && e?.duration && e?.assetAllocation).map(e => {
+        const isGlide = e.assetAllocation.type === "glidePath";
         const allocation = convertAllocationKeys(
-          isGlide ? e.rebalanceAllocation.initialPercentages ?? {} : e.rebalanceAllocation.fixedPercentages ?? {},
+          isGlide ? e.assetAllocation.initialPercentages ?? {} : e.assetAllocation.fixedPercentages ?? {},
           currInvestments,
           currInvestmentTypes
         );
     
         const allocation2 = isGlide
-          ? convertAllocationKeys(e.rebalanceAllocation.finalPercentages ?? {}, currInvestments, currInvestmentTypes)
+          ? convertAllocationKeys(e.assetAllocation.finalPercentages ?? {}, currInvestments, currInvestmentTypes)
           : undefined;
         
         return {

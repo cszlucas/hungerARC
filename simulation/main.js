@@ -82,11 +82,53 @@ class DataStore {
   }
 }
 
+function scenarioExploration(foundData, parameter, value) {
+  if (parameter == "Start Year" || parameter == "Duration") {
+    foundData.startYear.calculated += value;
+  } else if (parameter == "Initial Amount") {
+    foundData.initialAmount += value;
+  } else if (parameter == "Asset Allocation") {
+    if (foundData.assetAllocation.fixedPercentages.length != 0) {
+      // Fixed allocation
+      foundData.assetAllocation.fixedPercentages[0].value += value;
+      foundData.assetAllocation.fixedPercentages[1].value += 100 - foundData.assetAllocation.fixedPercentages[0].value;
+    } else if (foundData.assetAllocation.initialPercentages.length != 0) {
+      // Glide Path allocation
+      foundData.assetAllocation.initialPercentages[0].value += value;
+      foundData.assetAllocation.initialPercentages[1].value = 100 - foundData.assetAllocation.initialPercentages[0].value;
+    }
+  }
+  return foundData;
+}
+
+function getEvent(type, data) {
+  const id = data._id;
+  let collection;
+  if (type === "Income") {
+    collection = incomeevents;
+  } else if (type === "Expense") {
+    collection = expenseevents;
+  } else if (type === "Invest") {
+    collection = investevents;
+  } else if (type === "Rebalance") {
+    collection = rebalanceevents;
+  }
+  const event = collection.find((item) => item._id === id);
+  if (event) {
+    console.log("Event found:", event);
+    return event;
+  } else {
+    console.log("Event not found.");
+    return null;
+  }
+}
+
 async function main(numScenarioTimes, scenarioId, userId) {
   // not sure how to get a value using this, not needed
   var distributions = require("distributions");
   const dataStore = new DataStore();
   await Promise.all([dataStore.populateData(scenarioId, userId)]);
+  //console.log("our scenario \n\n", dataStore);
 
   const csvLog = []; // For user_datetime.csv
   const eventLog = []; // For user_datetime.log
@@ -162,7 +204,6 @@ function payNonDiscretionaryExpenses(
     investment: dataStore.getData("investment"),
     investmentType: dataStore.getData("investmentType"),
     user: dataStore.getData("user"),
->>>>>>> main
   };
   // console.log("scenario: ", scenario);
   // console.log("stateTax :>> ", dataStore.stateTax);
@@ -175,7 +216,7 @@ function payNonDiscretionaryExpenses(
   // find the user's state tax data
   // let stateTaxData = stateTax.find((state) => state.state === scenario.stateResident);
 
-<<<<<<< HEAD
+
   const ssTax = taxAmt(prevYearSS * 0.85, federalIncomeRange);
 
   let earlyWithdrawalTax = 0;
@@ -473,19 +514,65 @@ function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals) {
       clonedData.investmentType,
       csvLog,
       eventLog
->>>>>>> main
     );
     allYearDataBuckets.push(yearDataBuckets);
+  //default values if no scenario exploration
+  let oneScenarioExploration=false;
+  let lowerBound = 1;
+  let upperBound = 1;
+  let stepSize = 1;
+  let isFirstIteration = true;
+  for (let value = lowerBound; value <= upperBound; value += stepSize) {
+   // console.log(`Running ${numScenarioTimes} simulations for ${parameter}: ${value}`);
+    if (oneScenarioExploration) {
+      let foundData;
+      if (isFirstIteration) {
+        foundData = getEvent(type, data._id);
+        isFirstIteration = false;
+      }
 
-    // logs only for the first simulation
-    if (x == 0) {
-      const userName = user.email.split("@")[0];
-      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const baseFilename = `${userName}_${timestamp}`;
-      const csvFile = path.join(__dirname, "../server/logs", `${baseFilename}.csv`);
-      const logFile = path.join(__dirname, "../server/logs", `${baseFilename}.log`);
-      // writeCSVLog(csvFile, csvLog);
-      // writeEventLog(logFilename, simulationResult.eventLog);
+      scenarioExploration(foundData, parameter, value);
+    }
+    for (let x = 0; x < numScenarioTimes; x++) {
+      const clonedData = {
+        scenario: JSON.parse(JSON.stringify(scenario)),
+        stateTax: JSON.parse(JSON.stringify(stateTax)),
+        investment: JSON.parse(JSON.stringify(investment)),
+        expense: JSON.parse(JSON.stringify(expense)),
+        income: JSON.parse(JSON.stringify(income)),
+        invest: JSON.parse(JSON.stringify(invest)),
+        rebalance: JSON.parse(JSON.stringify(rebalance)),
+        taxData: JSON.parse(JSON.stringify(taxData)),
+        investmentType: JSON.parse(JSON.stringify(investmentType)),
+      };
+      const yearDataBuckets = await runSimulation(
+        clonedData.scenario,
+        clonedData.taxData[0],
+        clonedData.stateTax,
+        startYearPrev,
+        lifeExpectancyUser,
+        lifeExpectancySpouse,
+        clonedData.investment,
+        clonedData.income,
+        clonedData.expense,
+        clonedData.invest,
+        clonedData.rebalance,
+        clonedData.investmentType,
+        csvLog,
+        eventLog
+      );
+      allYearDataBuckets.push(yearDataBuckets);
+
+      // logs only for the first simulation
+      if (x == 0) {
+        const userName = user.email.split("@")[0];
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const baseFilename = `${userName}_${timestamp}`;
+        const csvFile = path.join(__dirname, "../server/logs", `${baseFilename}.csv`);
+        const logFile = path.join(__dirname, "../server/logs", `${baseFilename}.log`);
+        // writeCSVLog(csvFile, csvLog);
+        // writeEventLog(logFilename, simulationResult.eventLog);
+      }
     }
   }
   //console.log("allYearDataBuckets", JSON.stringify(allYearDataBuckets, null, 2));

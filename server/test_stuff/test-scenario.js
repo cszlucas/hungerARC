@@ -208,7 +208,7 @@ async function createScenario() {
         value: 2,
       },
       taxStatus: "non-retirement",
-      rebalanceAllocation: {
+      assetAllocation: {
         type: "glidePath",
         initialPercentages: {
           [investment1._id]: .6,
