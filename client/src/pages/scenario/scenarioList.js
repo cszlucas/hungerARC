@@ -135,7 +135,7 @@ const ScenarioList = () => {
             rebalance.push({
               ...base,
               taxStatus: "", // not present in YAML
-              rebalanceAllocation: {
+              assetAllocation: {
                 type: isGlide ? "glidePath" : "fixed",
                 fixedPercentages: !isGlide ? e.assetAllocation : {},
                 initialPercentages: isGlide ? e.assetAllocation : {},

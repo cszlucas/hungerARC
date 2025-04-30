@@ -117,7 +117,7 @@ var InvestEventSchema = new Schema({
 var RebalanceEventSchema = new Schema({
   ...BaseEventSchema.obj,
   taxStatus: { type: String },
-  rebalanceAllocation: { type: AssetAllocationSchema },
+  assetAllocation: { type: AssetAllocationSchema },
 });
 
 // export mongoose model for difference event series and annual change
