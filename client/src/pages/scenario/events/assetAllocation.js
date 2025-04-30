@@ -56,7 +56,7 @@ import { ObjectId } from "bson";
 //     max: ""
 //   },
 //   taxStatus: "non-retirement",
-//   rebalanceAllocation: {
+//   assetAllocation: {
 //     type: "fixed",
 //     fixedPercentages: {},
 //     initialPercenatages: {},
@@ -87,7 +87,7 @@ const AssetAllocation = ({ formValues, setFormValues }) => {
   
   const allowedInvestments = currInvestments.filter((item) => getInvestmentTypeById(item.investmentType).name?.toLowerCase() !== "cash");
   const [selectedInvestment, setSelectedInvestment] = useState("");
-  const displayedList = formValues.rebalanceAllocation;
+  const displayedList = formValues.assetAllocation;
   
   const [openBackdrop, setOpenBackdrop] = useState(false);
   const handleOpenBackdrop = () => { setOpenBackdrop(true); };
@@ -123,7 +123,7 @@ const AssetAllocation = ({ formValues, setFormValues }) => {
   const filteredInvestments = allowedInvestments.filter((investment) => {
     const matchesTaxStatus = investment.accountTaxStatus === formValues.taxStatus;
   
-    const { type, fixedPercentages = {}, initialPercentages = {} } = formValues.rebalanceAllocation;
+    const { type, fixedPercentages = {}, initialPercentages = {} } = formValues.assetAllocation;
   
     const alreadyAllocated =
       type === "fixed"
@@ -144,8 +144,8 @@ const AssetAllocation = ({ formValues, setFormValues }) => {
     if (!investment) return;
   
     setFormValues((prev) => {
-      const updatedRebalance = { ...prev.rebalanceAllocation };
-      const allocationType = prev.rebalanceAllocation.type;
+      const updatedRebalance = { ...prev.assetAllocation };
+      const allocationType = prev.assetAllocation.type;
   
       if (allocationType === "fixed") {
         if (!updatedRebalance.fixedPercentages) updatedRebalance.fixedPercentages = {};
@@ -160,7 +160,7 @@ const AssetAllocation = ({ formValues, setFormValues }) => {
   
       return {
         ...prev,
-        rebalanceAllocation: updatedRebalance,
+        assetAllocation: updatedRebalance,
       };
     });
   
@@ -174,22 +174,22 @@ const AssetAllocation = ({ formValues, setFormValues }) => {
   const handleDeleteInvestment = (investmentId) => {
     setFormValues((prev) => {
       const updated = { ...prev };
-      const type = updated.rebalanceAllocation.type;
+      const type = updated.assetAllocation.type;
       
       // Parse, delete, then update allocation
       if (type === "fixed") {
-        const updatedFixed = { ...updated.rebalanceAllocation.fixedPercentages };
+        const updatedFixed = { ...updated.assetAllocation.fixedPercentages };
         delete updatedFixed[investmentId];
 
-        updated.rebalanceAllocation.fixedPercentages = updatedFixed;
+        updated.assetAllocation.fixedPercentages = updatedFixed;
       } else if (type === "glidePath") {
-        const updatedInitial = { ...updated.rebalanceAllocation.initialPercentages };
-        const updatedFinal = { ...updated.rebalanceAllocation.finalPercentages };
+        const updatedInitial = { ...updated.assetAllocation.initialPercentages };
+        const updatedFinal = { ...updated.assetAllocation.finalPercentages };
         delete updatedInitial[investmentId];
         delete updatedFinal[investmentId];
 
-        updated.rebalanceAllocation.initialPercentages = updatedInitial;
-        updated.rebalanceAllocation.finalPercentages = updatedFinal;
+        updated.assetAllocation.initialPercentages = updatedInitial;
+        updated.assetAllocation.finalPercentages = updatedFinal;
       }
 
       return updated;
@@ -197,7 +197,7 @@ const AssetAllocation = ({ formValues, setFormValues }) => {
   };
   
   const handleEditInvestment = (investmentId) => {
-    const { type, fixedPercentages, initialPercentages, finalPercentages } = formValues.rebalanceAllocation;
+    const { type, fixedPercentages, initialPercentages, finalPercentages } = formValues.assetAllocation;
     if (type === "fixed") {
       setPendingPercentage(fixedPercentages[investmentId] ?? "");
     } else if (type === "glidePath") {
@@ -209,14 +209,14 @@ const AssetAllocation = ({ formValues, setFormValues }) => {
     setOpenBackdrop(true);
   };
   
-  const InvestList = ({ rebalanceAllocation, getInvestmentNameById }) => {
+  const InvestList = ({ assetAllocation, getInvestmentNameById }) => {
     const displayList = [];
 
-    if (!rebalanceAllocation || !rebalanceAllocation.type) {
+    if (!assetAllocation || !assetAllocation.type) {
       return <div>No allocation data to display</div>;
     }
   
-    const { type, fixedPercentages = {}, initialPercentages = {}, finalPercentages = {} } = rebalanceAllocation;
+    const { type, fixedPercentages = {}, initialPercentages = {}, finalPercentages = {} } = assetAllocation;
   
     if (type === "glidePath") {
       Object.keys(initialPercentages).forEach((id) => {
@@ -295,7 +295,7 @@ const AssetAllocation = ({ formValues, setFormValues }) => {
             </Stack>
             
             <InvestList
-              rebalanceAllocation={displayedList}
+              assetAllocation={displayedList}
               getInvestmentNameById={getInvestmentById}
             />
           </Box>
@@ -352,9 +352,9 @@ const AssetAllocation = ({ formValues, setFormValues }) => {
                   values={["fixed", "glidePath"]}
                   sideView={false}
                   width={100}
-                  value={formValues.rebalanceAllocation.type}
+                  value={formValues.assetAllocation.type}
                   setValue={(value) =>
-                    handleInputChange("rebalanceAllocation.type", value)
+                    handleInputChange("assetAllocation.type", value)
                   }
                 />
               </Box>
@@ -362,7 +362,7 @@ const AssetAllocation = ({ formValues, setFormValues }) => {
           
             <Box sx={{mt: -3}}>
               {/* Input Fields Below in Columns */}
-              {formValues.rebalanceAllocation.type === "fixed" && (
+              {formValues.assetAllocation.type === "fixed" && (
                 <CustomInput
                   title="Value"
                   type="number"
@@ -371,7 +371,7 @@ const AssetAllocation = ({ formValues, setFormValues }) => {
                   setValue={setPendingPercentage}
                 />
               )}
-              {formValues.rebalanceAllocation.type === "glidePath" && (
+              {formValues.assetAllocation.type === "glidePath" && (
                 <Box sx={{display: "flex", alignItems: "flex-start", flexWrap: "wrap", columnGap: 4 }}>
                   <CustomInput
                     title="Initial Percentage"
@@ -401,8 +401,8 @@ const AssetAllocation = ({ formValues, setFormValues }) => {
                 sx={{ textTransform: "none" }} 
                 onClick={handleAddInvestment}
                 disabled={!selectedInvestment 
-                  || (formValues.rebalanceAllocation.type == "fixed" && !pendingPercentage)
-                  || (formValues.rebalanceAllocation.type == "glidePath" && (!pendingInitial || !pendingFinal))
+                  || (formValues.assetAllocation.type == "fixed" && !pendingPercentage)
+                  || (formValues.assetAllocation.type == "glidePath" && (!pendingInitial || !pendingFinal))
                 } // Disable if no investment selected
               >
                 Save

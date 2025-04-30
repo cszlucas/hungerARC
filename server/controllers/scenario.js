@@ -162,8 +162,8 @@ exports.importUserData = async (req, res) => {
       }
     }
     for (const event of rebalance) {
-      if (event?.rebalanceAllocation) {
-        event.rebalanceAllocation = await assetAllocationToID(investmentMap, event.rebalanceAllocation);
+      if (event?.assetAllocation) {
+        event.assetAllocation = await assetAllocationToID(investmentMap, event.assetAllocation);
       }
     }
 

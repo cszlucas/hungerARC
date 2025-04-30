@@ -55,7 +55,7 @@ const DEFAULT_FORM_VALUES = {
     max: ""
   },
   taxStatus: "non-retirement",
-  rebalanceAllocation: {
+  assetAllocation: {
     type: "fixed",
     fixedPercentages: {},
     initialPercenatages: {},
@@ -115,10 +115,10 @@ const Rebalance = () => {
   const navigate = useNavigate();
 
   const handleSave = async () => {
-    const cleanedAllocation = formValues.rebalanceAllocation.type === "fixed"
-            ? { ...formValues.rebalanceAllocation, initialPercentages: {}, finalPercentages: {} }
-            : { ...formValues.rebalanceAllocation, fixedPercentages: {} };
-    const cleanedFormValues = { ...formValues, rebalanceAllocation: cleanedAllocation };
+    const cleanedAllocation = formValues.assetAllocation.type === "fixed"
+            ? { ...formValues.assetAllocation, initialPercentages: {}, finalPercentages: {} }
+            : { ...formValues.assetAllocation, fixedPercentages: {} };
+    const cleanedFormValues = { ...formValues, assetAllocation: cleanedAllocation };
     setFormValues(cleanedFormValues);
 
     if (eventEditMode.id === "new") {

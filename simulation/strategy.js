@@ -199,21 +199,21 @@ function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals, ty
     },
   });
   rebalanceStrategy = rebalanceStrategy[0];
-  printStrategy(rebalanceStrategy.rebalanceAllocation, "rebalance", year);
+  printStrategy(rebalanceStrategy.assetAllocation, "rebalance", year);
 
   let allocations = [];
-  if (rebalanceStrategy.rebalanceAllocation.type === "glidePath") {
+  if (rebalanceStrategy.assetAllocation.type === "glidePath") {
     console.log("you chose glidepath woohoo");
     allocations = getGlidePathAllocation(
       year,
       rebalanceStrategy.startYear.calculated,
       rebalanceStrategy.startYear.calculated + rebalanceStrategy.duration.calculated,
-      rebalanceStrategy.rebalanceAllocation.initialPercentages,
-      rebalanceStrategy.rebalanceAllocation.finalPercentages
+      rebalanceStrategy.assetAllocation.initialPercentages,
+      rebalanceStrategy.assetAllocation.finalPercentages
     );
     printStrategy(allocations, "rebalance", year, true, rebalanceStrategy.startYear.calculated, rebalanceStrategy.startYear.calculated + rebalanceStrategy.duration.calculated);
-  } else if (rebalanceStrategy.rebalanceAllocation.type === "fixed") {
-    allocations = rebalanceStrategy.rebalanceAllocation.fixedPercentages;
+  } else if (rebalanceStrategy.assetAllocation.type === "fixed") {
+    allocations = rebalanceStrategy.assetAllocation.fixedPercentages;
   }
   console.log(allocations);
   let investmentsWithAllocations = allocationIDToObject(allocations, investments);

@@ -72,6 +72,13 @@ const RunSimulation = () => {
     try {
       console.log(user._id);
       console.log(currScenario._id);
+      // const response = await axios.get("http://localhost:8080/runSimulation", {
+      //   params: {
+      //     scenarioId: currScenario._id,
+      //     userId: user._id,
+      //     simulationCount: numSimulations,
+      //   },
+      // });
       const response = await axios.get("http://localhost:8080/runSimulation", {
         params: {
           scenarioId: currScenario._id,
@@ -79,7 +86,6 @@ const RunSimulation = () => {
           simulationCount: numSimulations,
         },
       });
-
       console.log(response.data);
       navigate("/charts", {
         state: { chartData: response.data }
