@@ -169,7 +169,6 @@ const EventSeries = ({ formValues, setFormValues }) => {
                             type="number"
                             value={formValues.startYear.value}
                             setValue={(value) => handleInputChange("startYear.value", value)}
-                            disable={true}
                         />
                     </Stack>
                 )}
