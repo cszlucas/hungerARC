@@ -70,7 +70,7 @@ const TAX_MAP = {
   "after-tax": "Tax-Free",
 };
 
-const AssetAllocation = ({ formValues, setFormValues, isRebalance = false }) => {
+const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPercentError }) => {
   const { currRebalance, setCurrRebalance, currInvestments, currInvestmentTypes, setCurrScenario, editMode } = useContext(AppContext);
   const { eventEditMode, setEventEditMode } = useContext(AppContext);
   const { user } = useContext(AuthContext);
@@ -97,6 +97,21 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false }) => 
     setSelectedInvestment("");
   }, [formValues._id]);
 
+  useEffect(() => {
+    if (formValues.assetAllocation.type === "fixed") {
+      const total = Object.values(formValues.assetAllocation.fixedPercentages)
+          .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+      setPercentError(Math.round(total) !== 100);
+    } else {
+      const total_intial = Object.values(formValues.assetAllocation.fixedPercentages)
+          .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+      const total_final = Object.values(formValues.assetAllocation.fixedPercentages)
+          .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+      
+      setPercentError(Math.round(total_intial) !== 100 || Math.round(total_final) !== 100);
+    }
+  }, [formValues.assetAllocation]);
+
   const handleInputChange = (field, value) => {
     const fieldParts = field.split("."); // Split the field into parts (e.g., "lifeExpectancy.mean")
   
@@ -119,7 +134,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false }) => 
       };
     });
   };
-  console.log(allowedInvestments);
+  // console.log(allowedInvestments);
   const filteredInvestments = allowedInvestments.filter((investment) => {
     const matchesTaxStatus = isRebalance 
       ? (investment.accountTaxStatus === formValues.taxStatus) 
@@ -134,7 +149,10 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false }) => 
   
     return matchesTaxStatus && !alreadyAllocated; // If investment matches with given tax status as well its not already allocated
   });
-  console.log(filteredInvestments);
+  // console.log(filteredInvestments);
+  // console.log( selectedInvestment && typeof selectedInvestment === "string" && selectedInvestment.trim() !== ""
+  // ? [...filteredInvestments, getInvestmentById(selectedInvestment)]
+  // : [...filteredInvestments]);
   const [pendingPercentage, setPendingPercentage] = useState("");
   const [pendingInitial, setPendingInitial] = useState("");
   const [pendingFinal, setPendingFinal] = useState("");
@@ -328,13 +346,16 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false }) => 
                   onChange={(e) => setSelectedInvestment(e.target.value)}
                   fullWidth
                   sx={textFieldStyles}
-                  disabled={!formValues.taxStatus}
                 >
                   <MenuItem value="" disabled>
                     Select
                   </MenuItem>
-                  {[...filteredInvestments, selectedInvestment && getInvestmentById(selectedInvestment)]
-                    .filter(Boolean)
+                  {(
+                    selectedInvestment && typeof selectedInvestment === "string" && selectedInvestment.trim() !== ""
+                      ? [...filteredInvestments, getInvestmentById(selectedInvestment)]
+                      : [...filteredInvestments]
+                  )
+                    .filter((inv) => inv && typeof inv === "object")
                     .reduce((unique, inv) => {
                       if (!unique.some((i) => i._id === inv._id)) unique.push(inv);
                       return unique;

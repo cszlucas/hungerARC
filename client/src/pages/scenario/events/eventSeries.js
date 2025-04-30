@@ -56,7 +56,12 @@ const EventSeries = ({ formValues, setFormValues }) => {
         }
 
         const validSet = new Set();
-        const notValidSet = new Set([eventEditMode.id]);
+        // const notValidSet = new Set([eventEditMode.id]);
+        const notValidSet = new Set();
+
+        if (eventEditMode !== "new" && eventEditMode?.id) {
+            notValidSet.add(eventEditMode.id);
+        }
 
         const resolveValue = (key, path = new Set()) => {
             if (notValidSet.has(key)) {
