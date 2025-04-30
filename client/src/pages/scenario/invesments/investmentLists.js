@@ -112,7 +112,10 @@ const InvestmentLists = () => {
     setNewInvestment(defaultInvestment);
     setOpen(true);
   };
-  const handleClose = () => setOpen(false);
+  const handleClose = () => { 
+    setOpen(false); 
+    setEditing(false);
+  };
 
   // Handle form input changes
   const handleInputChange = (field, value) => {
@@ -324,7 +327,7 @@ const InvestmentLists = () => {
                     onChange={(e) => handleInputChange("investmentTypeId", e.target.value)}
                     sx={{ ...textFieldStyles, width: 350 }}
                     fullWidth
-                    disabled={investmentTypeMap[newInvestment.investmentTypeId]?.toLowerCase() === "cash"}
+                    disabled={investmentTypeMap[newInvestment.investmentTypeId]?.toLowerCase() === "cash" || editing}
                   >
                     {Array.isArray(currInvestmentTypes) && currInvestmentTypes.length > 0 ? (
                       currInvestmentTypes.map((it) =>
