@@ -266,7 +266,7 @@ function savePrevYr(investments, investmentTypes, year, csvLog, yearTotals, prev
 
   // console.log('investments :>> ', investments);
   logInvestment(investments, year, csvLog, investmentTypes);
-  console.log("logInvestment :>> ", csvLog, "for year: ", year);
+  //console.log("logInvestment :>> ", csvLog, "for year: ", year);
   prevYearIncome = yearTotals.curYearIncome;
   prevYearSS = yearTotals.curYearSS;
   prevYearEarlyWithdrawals = yearTotals.curYearEarlyWithdrawals;
