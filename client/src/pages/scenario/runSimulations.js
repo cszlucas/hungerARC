@@ -75,7 +75,6 @@ const RunSimulation = () => {
       console.log(currScenario._id);
       const response = await axios.get("http://localhost:8080/runSimulation", {
         params: {
-          // scenarioId: currScenario._id,
           investmentType: currInvestmentTypes,
           invest: currInvest,
           rebalance: currRebalance,
@@ -86,6 +85,7 @@ const RunSimulation = () => {
           exploration: tempExploration,
           userId: user._id,
           simulationCount: numSimulations,
+          scenarioId: currScenario._id,
         },
       });
       console.log(response.data);

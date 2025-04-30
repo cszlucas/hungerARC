@@ -191,25 +191,38 @@ const EventSeriesList = () => {
 
             <DialogContent>
               <Stack direction="row" spacing={3} sx={{ justifyContent: "center" }}>
-                <Button variant="contained" onClick={handleAddIncome} 
-                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}>
+                <Button 
+                  variant="contained" 
+                  onClick={handleAddIncome} 
+                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}
+                >
                   <PaymentsIcon sx={{ fontSize: 60, marginBottom: 1 }} />
                   Income
                 </Button>
-                <Button variant="contained" onClick={handleAddExpense}
-                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}>
+                <Button 
+                  variant="contained" 
+                  onClick={handleAddExpense}
+                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}
+                >
                   <SellIcon sx={{ fontSize: 60, marginBottom: 1 }} />
                   Expense
                 </Button>
               </Stack>
               <Stack direction="row" spacing={3} sx={{ justifyContent: "center", mt: 2 }}>
-                <Button variant="contained" onClick={handleAddInvest}
-                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}>
+                <Button 
+                  variant="contained" 
+                  onClick={handleAddInvest}
+                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}
+                >
                   <AccountBalanceIcon sx={{ fontSize: 60, marginBottom: 1 }} />
                   Invest
                 </Button>
-                <Button variant="contained" onClick={handleAddRebalance}
-                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}>
+                <Button 
+                  variant="contained" 
+                  onClick={handleAddRebalance}
+                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}
+                  disabled={currRebalance.length >= 3}
+                >
                   <BalanceIcon sx={{ fontSize: 60, marginBottom: 1 }} />
                   Rebalance
                 </Button>

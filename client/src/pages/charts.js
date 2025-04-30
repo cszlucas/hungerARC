@@ -23,6 +23,7 @@ import {
   Legend,
 } from "chart.js";
 import { useLocation } from "react-router-dom";
+import { AppContext } from "../context/appContext";
 
 ChartJS.register(LineElement, PointElement, LinearScale, Title, CategoryScale, Tooltip, Filler, Legend);
 
@@ -290,37 +291,28 @@ const GroupedStackedBarChart = ({ data, threshold = 0 }) => {
     />
   );
 };
-
-
-
-
-
-
-
-
-
-
-
   
 
-function parseProbabilityLineChartData(rawData) {
+function parseProbabilityLineChartData(rawData, financialGoal) {
   const startYear = rawData[0]?.year ?? 2025;
   const endYear = rawData[rawData.length - 1]?.year ?? startYear;
 
   const probabilities = rawData.map((yearData) => {
-    const sims = yearData.income ?? [];
+    const simulations = yearData.investments ?? [];
 
-    if (sims.length === 0) return 0;
+    if (simulations.length === 0) return 0;
 
     let successCount = 0;
 
-    sims.forEach((sim) => {
-      // sim is an array of income items for a single run
-      const totalIncome = sim.reduce((sum, item) => sum + (item?.value ?? 0), 0);
-      if (totalIncome > 0) successCount += 1;
+    simulations.forEach((sim) => {
+      // sim is an array of investment items for a single run
+      const totalInvestment = sim.reduce((sum, item) => sum + (item?.value ?? 0), 0);
+      if (totalInvestment >= financialGoal) {
+        successCount += 1;
+      }
     });
 
-    return successCount / sims.length;
+    return successCount / simulations.length;
   });
 
   return {
@@ -329,6 +321,7 @@ function parseProbabilityLineChartData(rawData) {
     probabilities
   };
 }
+
    
 function parseGroupedStackedBarChartData(rawData) {
   const meanData = [];
@@ -953,18 +946,21 @@ const Charts = () => {
         ]
       }
     ];
-
-    const probabilityLineChart = parseProbabilityLineChartData(chartData);
-    // console.log(probabilityLineChart);
-    const {meanData, medianData} = parseGroupedStackedBarChartData(chartData);
-    // console.log(meanData);
-    // console.log(medianData);
-    
     const [currChart, setCurrChart] = useState("");
     const [currQuantity, setCurrQuantity] = useState("Total Investments");
     const [currStat, setCurrStat] = useState("Median");
     const [aggThres, setAggThres] = useState(false);
     const [limit, setLimit] = useState(0);
+    const {currScenario} = useContext(AppContext);
+    
+    console.log(currScenario);
+
+    const probabilityLineChart = parseProbabilityLineChartData(chartData, currScenario.financialGoal);
+    // console.log(probabilityLineChart);
+    const {meanData, medianData} = parseGroupedStackedBarChartData(chartData);
+    // console.log(meanData);
+    // console.log(medianData);
+    
     useEffect(() => {
     }, [limit]);
     const chartTypes = ["Line Chart", "Shaded Line Chart", "Stacked Bar Chart"];

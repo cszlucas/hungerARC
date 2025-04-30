@@ -2,19 +2,7 @@ import React, { useState, useContext, useMemo, useEffect, startTransition } from
 import { flushSync } from "react-dom";
 
 import {
-  ThemeProvider,
-  CssBaseline,
-  Container,
-  Typography,
-  Button,
-  Stack,
-  Box,
-  List,
-  MenuItem,
-  ListItem,
-  ListItemText,
-  TextField,
-  IconButton
+  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Alert, MenuItem, TextField,
 } from "@mui/material";
 import theme from "../../../components/theme";
 import Navbar from "../../../components/navbar";
@@ -74,18 +62,39 @@ const Rebalance = () => {
   const { user } = useContext(AuthContext);
 
   const getRebalanceById = (id) => currRebalance.find(r => r._id === id) || null;
-  const getRebalanceByTaxStatus = (status) => currRebalance.find(r => r.taxStatus === status) || DEFAULT_FORM_VALUES;
-  const [formValues, setFormValues] = useState(getRebalanceById(eventEditMode.id) || getRebalanceByTaxStatus("non-retirement"));
+  const getRebalanceByTaxStatus = (status) => {
+    const found = currRebalance.find(r => r.taxStatus === status);
+    if (found) return found;
+    return structuredClone({ ...DEFAULT_FORM_VALUES, taxStatus: status }); // or use JSON.parse(JSON.stringify(...))
+  };  
+  const [formValues, setFormValues] = useState(() => {
+    if (eventEditMode && eventEditMode.id) { return getRebalanceById(eventEditMode.id) || getRebalanceByTaxStatus("non-retirement"); }
+    return getRebalanceByTaxStatus("non-retirement");
+  });
+  const [disable, setDisable] = useState(true);
+  const [percentError, setPercentError] = useState(false);
+  const [showPercentError, setShowPercentError] = useState(false);
+  
+  // Enable Save button only if all required fields are filled correctly
+  useEffect(() => {
+      const expression = formValues.eventSeriesName 
+          && (formValues.startYear.type !== "fixedAmt" || formValues.startYear.value)
+          && (formValues.startYear.type !== "normal" || (formValues.startYear.mean && formValues.startYear.stdDev))
+          && (formValues.startYear.type !== "uniform" || (formValues.startYear.min && formValues.startYear.max))
+          && (["same", "after"].includes(formValues.startYear.type) ? formValues.startYear.refer : true)
+          && (formValues.duration.type !== "fixedAmt" || formValues.duration.value)
+          && (formValues.duration.type !== "normal" || (formValues.duration.mean && formValues.duration.stdDev))
+          && (formValues.duration.type !== "uniform" || (formValues.duration.min && formValues.duration.max))
+          && (formValues.assetAllocation.type === "fixed" ? Object.keys(formValues.assetAllocation.fixedPercentages).length > 0 : true)
+          && (formValues.assetAllocation.type === "glidePath" ? Object.keys(formValues.assetAllocation.initialPercentages).length > 0 : true);
+
+      setDisable(!expression);
+  }, [formValues]);
 
   const handleTaxStatusChange = (selectedTaxStatus) => {
-    const match = currRebalance?.find((r) => r.taxStatus === selectedTaxStatus);
-    
-    if (match) { setEventEditMode((prev) => ({ ...prev, id: match._id })); } 
-    else { setEventEditMode((prev) => ({ ...prev, id: "new" })); }
-    const updatedForms = {...DEFAULT_FORM_VALUES, taxStatus: selectedTaxStatus};
-    const newForm = match || updatedForms;
-  
-    setFormValues(newForm);
+    const match = getRebalanceByTaxStatus(selectedTaxStatus);
+    setEventEditMode((prev) => ({ ...prev, id: match._id ?? "new" }));
+    setFormValues(match);
   };
 
   const handleInputChange = (field, value) => {
@@ -147,11 +156,35 @@ const Rebalance = () => {
     }
   };
 
+  const triggerPercentError = () => {
+    setShowPercentError(true);
+    setTimeout(() => setShowPercentError(false), 10000); // Hide after 3s
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Navbar currentPage={""} />
       <Container>
+        {showPercentError && (
+          <Alert
+            severity="error"
+            variant="filled"
+            sx={{
+              position: "fixed",
+              top: 70,
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 1301,
+              width: "70vw",
+              maxWidth: 500,
+              boxShadow: 3,
+            }}
+          >
+            Fixed or initial and final allocation percentages must each sum to exactly 100%.
+          </Alert>
+        )}
+
         {/* Stack for title and save button */}
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={stackStyles}>
           <Stack direction="column">
@@ -206,7 +239,7 @@ const Rebalance = () => {
           </Box>
           {/* Right Column - Investment List for the selected tax type */}
           <Box sx={{width: 350}}>
-            <AssetAllocation formValues={formValues} setFormValues={setFormValues} isRebalance={true}/>
+            <AssetAllocation formValues={formValues} setFormValues={setFormValues} isRebalance={true} setPercentError={setPercentError}/>
           </Box>
         </Box>
 
@@ -229,9 +262,14 @@ const Rebalance = () => {
 
           <Button variant="contained" color="success" sx={buttonStyles} 
             onClick={()=> {
+              if (percentError) {
+                triggerPercentError();
+                return;
+              }
               handleSave();
               navigate("/scenario/event_series_list");
             }}
+            disabled={disable}
           >
             Save & Continue
           </Button>
