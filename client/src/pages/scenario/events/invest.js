@@ -28,6 +28,7 @@ import {
 // Contexts
 import { AppContext } from "../../../context/appContext";
 import { AuthContext } from "../../../context/authContext";
+import AssetAllocation from "./assetAllocation";
 
 // Utilities
 const mongoose = require("mongoose");
@@ -71,17 +72,17 @@ const Invest = () => {
     const navigate = useNavigate();
 
     // Memoized maps for faster lookup
-    const investmentTypeMap = useMemo(() => (
-        Object.fromEntries(currInvestmentTypes.map(i => [i._id, i]))
-    ), [currInvestmentTypes]);
+    // const investmentTypeMap = useMemo(() => (
+    //     Object.fromEntries(currInvestmentTypes.map(i => [i._id, i]))
+    // ), [currInvestmentTypes]);
 
-    const investmentMap = useMemo(() => (
-        Object.fromEntries(currInvestments.map(i => [i._id, i]))
-    ), [currInvestments]);
+    // const investmentMap = useMemo(() => (
+    //     Object.fromEntries(currInvestments.map(i => [i._id, i]))
+    // ), [currInvestments]);
 
     // Utility functions to retrieve investment and investment types
-    const getInvestmentTypeById = (id) => investmentTypeMap[id] || { _id: "NULL", name: "Unknown Type" };
-    const getInvestmentById = (id) => investmentMap[id] || { _id: "NULL", name: "Unknown Type" };
+    // const getInvestmentTypeById = (id) => investmentTypeMap[id] || { _id: "NULL", name: "Unknown Type" };
+    // const getInvestmentById = (id) => investmentMap[id] || { _id: "NULL", name: "Unknown Type" };
 
     // Finds investment object by id or returns default if new
     const getInvestById = (id) => {
@@ -107,45 +108,45 @@ const Invest = () => {
     };
 
     // Filters investments that are allowed (excluding 'Cash' or 'pre-tax')
-    const allowedInvestments = currInvestments
-        .filter((item) => getInvestmentTypeById(item.investmentType).name.toLowerCase() !== "cash")
-        .filter((item) => item.accountTaxStatus !== "pre-tax");
+    // const allowedInvestments = currInvestments
+    //     .filter((item) => getInvestmentTypeById(item.investmentType).name.toLowerCase() !== "cash")
+    //     .filter((item) => item.accountTaxStatus !== "pre-tax");
 
-    // Computes the list of currently allocated investments for display
-    const computeAssestAllocatedAccounts = () => {
-        const setIds = formValues.assetAllocation.type === "fixed" 
-            ? Object.keys(formValues.assetAllocation.fixedPercentages)
-            : Object.keys(formValues.assetAllocation.initialPercentages);
+    // // Computes the list of currently allocated investments for display
+    // const computeAssestAllocatedAccounts = () => {
+    //     const setIds = formValues.assetAllocation.type === "fixed" 
+    //         ? Object.keys(formValues.assetAllocation.fixedPercentages)
+    //         : Object.keys(formValues.assetAllocation.initialPercentages);
 
-        if (setIds.length === 0) return [];
+    //     if (setIds.length === 0) return [];
 
-        return setIds.map((investmentId) => {
-            const description = formValues.assetAllocation.type === "fixed"
-                ? `Allocation: ${formValues.assetAllocation.fixedPercentages[investmentId]}%`
-                : `Initial: ${formValues.assetAllocation.initialPercentages[investmentId]}%\t\tFinal: ${formValues.assetAllocation.finalPercentages[investmentId]}%`;
+    //     return setIds.map((investmentId) => {
+    //         const description = formValues.assetAllocation.type === "fixed"
+    //             ? `Allocation: ${formValues.assetAllocation.fixedPercentages[investmentId]}%`
+    //             : `Initial: ${formValues.assetAllocation.initialPercentages[investmentId]}%\t\tFinal: ${formValues.assetAllocation.finalPercentages[investmentId]}%`;
 
-            return {
-                id: investmentId,
-                name: getInvestmentTypeById(getInvestmentById(investmentId).investmentType).name,
-                description
-            };
-        });
-    };
+    //         return {
+    //             id: investmentId,
+    //             name: getInvestmentTypeById(getInvestmentById(investmentId).investmentType).name,
+    //             description
+    //         };
+    //     });
+    // };
 
     // Returns list of valid investments not yet added to allocation
-    const getValidInvestments = () => {
-        const setIds = formValues.assetAllocation.type === "fixed"
-            ? Object.keys(formValues.assetAllocation.fixedPercentages)
-            : Object.keys(formValues.assetAllocation.initialPercentages);
+    // const getValidInvestments = () => {
+    //     const setIds = formValues.assetAllocation.type === "fixed"
+    //         ? Object.keys(formValues.assetAllocation.fixedPercentages)
+    //         : Object.keys(formValues.assetAllocation.initialPercentages);
 
-        return allowedInvestments.filter((item) => !setIds.includes(item._id));
-    };
+    //     return allowedInvestments.filter((item) => !setIds.includes(item._id));
+    // };
 
     // State hooks
     const [formValues, setFormValues] = useState(getInvestById(eventEditMode ? eventEditMode.id : "new"));
-    const [AAAList, setAAAList] = useState(computeAssestAllocatedAccounts);
-    const [validInvestments, setValidInvestments] = useState(getValidInvestments);
-    const [newAAA, setNewAAA] = useState({ id: "", fixed: "", initial: "", final: "" });
+    // const [AAAList, setAAAList] = useState(computeAssestAllocatedAccounts);
+    // const [validInvestments, setValidInvestments] = useState(getValidInvestments);
+    // const [newAAA, setNewAAA] = useState({ id: "", fixed: "", initial: "", final: "" });
     const [disable, setDisable] = useState(true);
 
     // Enable Save button only if all required fields are filled correctly
@@ -199,74 +200,74 @@ const Invest = () => {
     };
 
     // Handles changes for new investment being added
-    const handleNewAAAChange = (field, value) => {
-        setNewAAA((prev) => ({ ...prev, [field]: value }));
-        console.log(newAAA);
-    };
+    // const handleNewAAAChange = (field, value) => {
+    //     setNewAAA((prev) => ({ ...prev, [field]: value }));
+    //     console.log(newAAA);
+    // };
 
     // Syncs list and investment options when assetAllocation.type changes
-    useEffect(() => {
-        setValidInvestments(getValidInvestments);
-        setAAAList(computeAssestAllocatedAccounts);
-    }, [formValues.assetAllocation.type]);
+    // useEffect(() => {
+    //     setValidInvestments(getValidInvestments);
+    //     setAAAList(computeAssestAllocatedAccounts);
+    // }, [formValues.assetAllocation.type]);
 
-    // Add new investment to allocation
-    const handleAddInvestment = () => {
-        if (!newAAA.id || (formValues.assetAllocation.type === "fixed" && newAAA.fixed === "")
-            || (formValues.assetAllocation.type === "glidePath" && newAAA.initial === "" && newAAA.final === "")) {
-            alert("Please select an investment and enter a valid allocation percentage.");
-            return;
-        }
+    // // Add new investment to allocation
+    // const handleAddInvestment = () => {
+    //     if (!newAAA.id || (formValues.assetAllocation.type === "fixed" && newAAA.fixed === "")
+    //         || (formValues.assetAllocation.type === "glidePath" && newAAA.initial === "" && newAAA.final === "")) {
+    //         alert("Please select an investment and enter a valid allocation percentage.");
+    //         return;
+    //     }
 
-        setValidInvestments((prev) => prev.filter((item) => item._id !== newAAA.id));
+    //     setValidInvestments((prev) => prev.filter((item) => item._id !== newAAA.id));
 
-        if (formValues.assetAllocation.type === "fixed") {
-            const updated = {
-                ...formValues.assetAllocation.fixedPercentages,
-                [new mongoose.Types.ObjectId(newAAA.id)]: newAAA.fixed
-            };
-            handleInputChange("assetAllocation.fixedPercentages", updated);
-        } else {
-            const updatedInitial = {
-                ...formValues.assetAllocation.initialPercentages,
-                [new mongoose.Types.ObjectId(newAAA.id)]: newAAA.initial
-            };
-            const updatedFinal = {
-                ...formValues.assetAllocation.finalPercentages,
-                [new mongoose.Types.ObjectId(newAAA.id)]: newAAA.final
-            };
-            handleInputChange("assetAllocation.initialPercentages", updatedInitial);
-            handleInputChange("assetAllocation.finalPercentages", updatedFinal);
-        }
+    //     if (formValues.assetAllocation.type === "fixed") {
+    //         const updated = {
+    //             ...formValues.assetAllocation.fixedPercentages,
+    //             [new mongoose.Types.ObjectId(newAAA.id)]: newAAA.fixed
+    //         };
+    //         handleInputChange("assetAllocation.fixedPercentages", updated);
+    //     } else {
+    //         const updatedInitial = {
+    //             ...formValues.assetAllocation.initialPercentages,
+    //             [new mongoose.Types.ObjectId(newAAA.id)]: newAAA.initial
+    //         };
+    //         const updatedFinal = {
+    //             ...formValues.assetAllocation.finalPercentages,
+    //             [new mongoose.Types.ObjectId(newAAA.id)]: newAAA.final
+    //         };
+    //         handleInputChange("assetAllocation.initialPercentages", updatedInitial);
+    //         handleInputChange("assetAllocation.finalPercentages", updatedFinal);
+    //     }
 
-        const description = formValues.assetAllocation.type === "fixed"
-            ? `Allocation: ${newAAA.fixed}%`
-            : `Initial: ${newAAA.initial}%\t\tFinal: ${newAAA.final}%`;
+    //     const description = formValues.assetAllocation.type === "fixed"
+    //         ? `Allocation: ${newAAA.fixed}%`
+    //         : `Initial: ${newAAA.initial}%\t\tFinal: ${newAAA.final}%`;
 
-        setAAAList((prev) => [...prev, {
-            id: newAAA.id,
-            name: getInvestmentTypeById(getInvestmentById(newAAA.id).investmentType).name,
-            description
-        }]);
+    //     setAAAList((prev) => [...prev, {
+    //         id: newAAA.id,
+    //         name: getInvestmentTypeById(getInvestmentById(newAAA.id).investmentType).name,
+    //         description
+    //     }]);
 
-        setNewAAA({ id: "", fixed: "", initial: "", final: "" });
-    };
+    //     setNewAAA({ id: "", fixed: "", initial: "", final: "" });
+    // };
 
-    // Remove an investment from allocation
-    const handleRemoveInvestment = (id) => {
-        if (formValues.assetAllocation.type === "fixed") {
-            const { [id]: _, ...remaining } = formValues.assetAllocation.fixedPercentages;
-            handleInputChange("assetAllocation.fixedPercentages", remaining);
-        } else {
-            const { [id]: _, ...remainingInitial } = formValues.assetAllocation.initialPercentages;
-            const { [id]: __, ...remainingFinal } = formValues.assetAllocation.finalPercentages;
-            handleInputChange("assetAllocation.initialPercentages", remainingInitial);
-            handleInputChange("assetAllocation.finalPercentages", remainingFinal);
-        }
+    // // Remove an investment from allocation
+    // const handleRemoveInvestment = (id) => {
+    //     if (formValues.assetAllocation.type === "fixed") {
+    //         const { [id]: _, ...remaining } = formValues.assetAllocation.fixedPercentages;
+    //         handleInputChange("assetAllocation.fixedPercentages", remaining);
+    //     } else {
+    //         const { [id]: _, ...remainingInitial } = formValues.assetAllocation.initialPercentages;
+    //         const { [id]: __, ...remainingFinal } = formValues.assetAllocation.finalPercentages;
+    //         handleInputChange("assetAllocation.initialPercentages", remainingInitial);
+    //         handleInputChange("assetAllocation.finalPercentages", remainingFinal);
+    //     }
 
-        setValidInvestments((prev) => [...prev, getInvestmentById(id)]);
-        setAAAList((prev) => prev.filter((item) => item.id !== id));
-    };
+    //     setValidInvestments((prev) => [...prev, getInvestmentById(id)]);
+    //     setAAAList((prev) => prev.filter((item) => item.id !== id));
+    // };
 
     // Save investment strategy to backend or local context
     const handleSave = async () => {
@@ -305,25 +306,25 @@ const Invest = () => {
         }
     };
 
-    // List component for displaying added asset allocations
-    const InvestList = ({ list, handleRemoveInvestment }) => (
-        <List>
-            {list.map((item, index) => (
-                <ListItem
-                    key={item.id}
-                    sx={{
-                        backgroundColor: index % 2 === 0 ? "#BBBBBB" : "#D9D9D9",
-                        "&:hover": { backgroundColor: "#B0B0B0" },
-                    }}
-                >
-                    <ListItemText primary={item.name} secondary={item.description} />
-                    <IconButton edge="end" aria-label="delete" onClick={() => handleRemoveInvestment(item.id)}>
-                        <DeleteIcon color="grey" />
-                    </IconButton>
-                </ListItem>
-            ))}
-        </List>
-    );
+    // // List component for displaying added asset allocations
+    // const InvestList = ({ list, handleRemoveInvestment }) => (
+    //     <List>
+    //         {list.map((item, index) => (
+    //             <ListItem
+    //                 key={item.id}
+    //                 sx={{
+    //                     backgroundColor: index % 2 === 0 ? "#BBBBBB" : "#D9D9D9",
+    //                     "&:hover": { backgroundColor: "#B0B0B0" },
+    //                 }}
+    //             >
+    //                 <ListItemText primary={item.name} secondary={item.description} />
+    //                 <IconButton edge="end" aria-label="delete" onClick={() => handleRemoveInvestment(item.id)}>
+    //                     <DeleteIcon color="grey" />
+    //                 </IconButton>
+    //             </ListItem>
+    //         ))}
+    //     </List>
+    // );
 
     return (
         <ThemeProvider theme={theme}>
@@ -361,89 +362,7 @@ const Invest = () => {
 
                     {/* Second Column - Investment List */}
                     <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                        <Typography variant="h6" sx={{ fontWeight: "bold", marginTop: 2, marginBottom: 2 }}>
-                            Add Asset Allocation
-                        </Typography>
-                        <Box sx={rowBoxStyles}>
-                            <Box>
-                                <CustomDropdown
-                                    label="Investment Name"
-                                    value={newAAA.id}
-                                    menuLabels={validInvestments.map((item)=>{ return getInvestmentTypeById(item.investmentType).name;})}
-                                    menuItems={validInvestments.map((item)=>{ return item._id;})}
-                                    setValue={(value) => {
-                                        handleNewAAAChange("id", value);
-                                    }}
-                                />
-                            </Box>
-                            {/* Toggle Button for Glide Path / Fixed Percentage */}
-                            <Box>
-                                <CustomToggle
-                                    title="Allocation Type"
-                                    labels={["Glide Path", "Fixed"]}
-                                    values={["glidePath", "fixed"]}
-                                    value={formValues.assetAllocation.type}
-                                    setValue={(value) => handleInputChange("assetAllocation.type", value)}
-                                />
-                            </Box>
-                        </Box>
-
-                        <Box sx={{mt: -1}}>
-                            {/* Show Initial & Final Fields if Glide Path is selected */}
-                            {formValues.assetAllocation.type === "glidePath" && (
-                                <Stack direction="row" spacing={4}>
-                                    <CustomInput
-                                        title="Initial Allocation"
-                                        type="number"
-                                        value={newAAA.initial}
-                                        adornment={"%"}
-                                        setValue={(value) => handleNewAAAChange("initial", value)}
-                                        inputProps={{ min: 0, max: 100 }}
-                                    />
-
-                                    <CustomInput
-                                        title="Final Allocation"
-                                        type="number"
-                                        value={newAAA.final}
-                                        adornment={"%"}
-                                        setValue={(value) => handleNewAAAChange("final", value)}
-                                        inputProps={{ min: 0, max: 100 }}
-                                    />
-                                </Stack>
-                            )}
-
-                            {/* Show only Initial Field if Fixed Percentage is selected */}
-                            {formValues.assetAllocation.type === "fixed" && (
-                                <Stack direction="row" spacing={4}>
-                                    <CustomInput
-                                        title="Fixed Allocation"
-                                        type="number"
-                                        value={newAAA.fixed}
-                                        adornment={"%"}
-                                        setValue={(value) => handleNewAAAChange("fixed", value)}
-                                        inputProps={{ min: 0, max: 100 }}
-                                    />
-                                </Stack>
-                            )}
-                        </Box>
-
-                        <Box sx={{ mt: 5, mb: 2, display: "flex", justifyContent: "space-between", gap: 2 }}>
-                            <Typography variant="h5" sx={{ fontWeight: "bold" }}>Accounts</Typography>
-                            <Button 
-                                variant="contained" 
-                                color="primary"
-                                sx={{ textTransform: "none", mt:-1 }}
-                                onClick={handleAddInvestment}
-                                disabled={
-                                    !newAAA.id || (formValues.assetAllocation.type === "fixed" && !newAAA.fixed) 
-                                    || (formValues.assetAllocation.type === "glidePath" && (!newAAA.initial || !newAAA.final)) 
-                                }
-                            >
-                                Add
-                            </Button>
-                        </Box>
-                    
-                        <InvestList list={AAAList} handleRemoveInvestment={handleRemoveInvestment}/>
+                        <AssetAllocation formValues={formValues} setFormValues={setFormValues}/>
                     </Box>
                 </Box>
             

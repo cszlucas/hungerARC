@@ -18,7 +18,8 @@ export const rowBoxStyles = {
   display: "flex",
   alignItems: "flex-start",
   flexWrap: "wrap", 
-  gap: 4,
+  columnGap: 4,
+  rowGap: 2,
   marginBottom: 4,
 };
 

@@ -1,6 +1,8 @@
 Hello, this is a test log.
 Hello, this is a test log.
 Hello, this is a test log.
+Log started at 2025-04-29T20:08:22.256Z
+Log started at 2025-04-30T01:19:38.052Z
 [2025] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $5,000.00.Amount of cash you have to spend: "$75,984.633".Amount you need to withdraw: "$5,000.00".
 [2025] NON-DISCRETIONARY |  INVESTMENT ID: 680d545faa08c6d19af7e574 | Value: $10,009.375
 [2025] NON-DISCRETIONARY |  INVESTMENT ID: 680d545faa08c6d19af7e580 | Value: $2,000.608
@@ -81,3 +83,4 @@ Amount of cash you have to spend: "$71,905.083".
 Amount of cash you have to spend: "$70,705.083".
 [2025] DISCRETIONARY | You paid expense ID: 680d545faa08c6d19af7e587 all with cash.
 Amount of cash you have to spend: "$70,205.083".
+

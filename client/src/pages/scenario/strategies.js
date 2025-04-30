@@ -1,5 +1,8 @@
-import React, { useState, useContext, useMemo } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, Box, Grid, List, ListItem, ListItemText, IconButton, Button, Stack, Switch } from "@mui/material";
+import React, { useState, useContext, useMemo, useEffect } from "react";
+import { 
+  ThemeProvider, CssBaseline, Container, Typography, Box, Grid, List, ListItem, 
+  ListItemText, IconButton, Button, Stack, Switch 
+} from "@mui/material";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -71,22 +74,14 @@ const StrategyList = ({ list, setList, fieldName, setScenario }) => {
 const Strategies = () => {
   const navigate = useNavigate();
   const { currScenario, setCurrScenario, scenarioData, setScenarioData, currInvestments, currExpense, currInvestmentTypes, editMode } = useContext(AppContext);
-  const [isRothOptimized, setIsRothOptimized] = useState(currScenario.isRothOptimized || false);
+  const [isRothOptimized, setIsRothOptimized] = useState(currScenario.optimizerSettings.enabled || false);
   const [startYear, setStartYear] = useState(currScenario.optimizerSettings?.startYear || "");
   const [endYear, setEndYear] = useState(currScenario.optimizerSettings?.endYear || "");
   const { user } = useContext(AuthContext);
 
-  // ✅ Toggle Handler for Roth Optimizer
-  const handleToggleRothOptimizer = () => {
-    setIsRothOptimized(prev => {
-      const newValue = !prev;
-      setCurrScenario(prevScenario => ({
-        ...prevScenario,
-        isRothOptimized: newValue,
-      }));
-      return newValue;
-    });
-  };
+  useEffect(() => {
+    setIsRothOptimized(currScenario.optimizerSettings.enabled);
+  }, [currScenario.optimizerSettings.enabled]);
 
   const handleCurrScenarioChange = (field, value) => {
     const fieldParts = field.split("."); // Split the field into parts (e.g., "lifeExpectancy.mean")
@@ -228,7 +223,12 @@ const Strategies = () => {
                 <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                   Roth Conversion Strategy:
                 </Typography>
-                <Switch checked={isRothOptimized} onChange={handleToggleRothOptimizer} color="secondary" />
+                <Switch 
+                  checked={isRothOptimized} 
+                  onChange={() => {
+                    handleCurrScenarioChange("optimizerSettings.enabled", !isRothOptimized);
+                  }} 
+                  color="secondary" />
               </Stack>
               {isRothOptimized && (
                 <>
