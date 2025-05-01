@@ -79,38 +79,48 @@ function getEvent(listData, data) {
 
 function formatToNumber(obj) {
   const numberFields = new Set([
-    'initialAmount', 'userPercentage',
-    'value', 'calculated',
-    'min', 'max',
-    'amount', 'mean', 'stdDev', 
-    'expenseRatio', 'maxCash', 'purchasePrice', 
-    'fixedPercentages', 'initialPercentages', 'finalPercentages', 'fixedPercentages', 'initialPercentages', 'finalPercentages'
+    "initialAmount",
+    "userPercentage",
+    "value",
+    "calculated",
+    "min",
+    "max",
+    "amount",
+    "mean",
+    "stdDev",
+    "expenseRatio",
+    "maxCash",
+    "purchasePrice",
+    "fixedPercentages",
+    "initialPercentages",
+    "finalPercentages",
+    "fixedPercentages",
+    "initialPercentages",
+    "finalPercentages",
   ]);
 
   //'fixedPercentages', 'initialPercentages', 'finalPercentages'
-  const booleanFields = new Set([
-    'inflationAdjustment', 'isSocialSecurity', 'isDiscretionary'
-  ]);
-  
+  const booleanFields = new Set(["inflationAdjustment", "isSocialSecurity", "isDiscretionary"]);
+
   function recurse(o) {
     if (Array.isArray(o)) {
       return o.map(recurse);
-    } else if (o && typeof o === 'object') {
+    } else if (o && typeof o === "object") {
       for (const key in o) {
-          if (numberFields.has(key)) {
-            if (typeof o[key] === 'object' && o[key] !== null) {
-              // Map-like object: convert all values
-              for (const subKey in o[key]) {
-                const num = Number(o[key][subKey]);
-                if (!isNaN(num)) o[key][subKey] = num;
-              }
-            } else {
-              const num = Number(o[key]);
-              if (!isNaN(num)) o[key] = num;
+        if (numberFields.has(key)) {
+          if (typeof o[key] === "object" && o[key] !== null) {
+            // Map-like object: convert all values
+            for (const subKey in o[key]) {
+              const num = Number(o[key][subKey]);
+              if (!isNaN(num)) o[key][subKey] = num;
             }
+          } else {
+            const num = Number(o[key]);
+            if (!isNaN(num)) o[key] = num;
+          }
         } else if (booleanFields.has(key)) {
-          o[key] = o[key] === 'true';
-        } else if (typeof o[key] === 'object' && o[key] !== null) {
+          o[key] = o[key] === "true";
+        } else if (typeof o[key] === "object" && o[key] !== null) {
           o[key] = recurse(o[key]); // recurse deeper
         }
       }
@@ -120,7 +130,6 @@ function formatToNumber(obj) {
 
   return recurse(obj);
 }
-
 
 
 async function main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, numScenarioTimes) {
@@ -141,31 +150,18 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   const { taxData, stateTax, user } = {
     taxData: dataStore.getData("taxData"),
     stateTax: dataStore.getData("stateTax"),
-    user: dataStore.getData("user")
+    user: dataStore.getData("user"),
   };
 
   // change numbers from string to number
-  //console.log('income before :>> ', income);
   formatToNumber(income);
-  //console.log("income after", income);
-  //console.log('expense before :>> ', expense);
   formatToNumber(expense);
-  //console.log("expense after", expense);
-  //console.log('rebalance before :>> ', rebalance);
   formatToNumber(rebalance);
   formatToNumber(invest);
-  //console.log("invest after", invest);
-  //console.dir(rebalance, { depth: null, colors: true });
-
-  //console.log("invesmtnet before >>", investment);
   formatToNumber(investment);
   investment.purchasePrice = 0;
-  //console.log("invesmtnet after >>", investment);
   formatToNumber(investmentType);
-  console.log("invesmtnetType after >>", investmentType);
-//    console.log("ALOCATE", JSON.stringify(invest, null, 2));
-//  console.log("ALOCATE2", JSON.stringify(rebalance, null, 2));
- 
+
   const startYearPrev = (new Date().getFullYear() - 1).toString();
   //calculate life expectancy
   const { lifeExpectancyUser, lifeExpectancySpouse } = calculateLifeExpectancy(scenario);
@@ -185,7 +181,13 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   let explore;
   let foundData;
   let parameter;
-  console.log('exploration :>> ', exploration);
+  const typeToData = {
+    Income: income,
+    Expense: expense,
+    Invest: invest,
+    Rebalance: rebalance,
+  };
+  console.log("exploration :>> ", exploration);
   if (exploration && exploration.length == 1) {
     oneScenarioExploration = true;
     type = exploration[0].type;
@@ -196,7 +198,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
     parameter = exploration[0].parameter;
     explorationData.parameter = parameter;
   }
-  
+
   let isFirstIteration = true;
   //return;
   for (let i = lowerBound; i <= upperBound; i += stepSize) {
@@ -206,7 +208,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
     let allYearDataBuckets = [];
     if (oneScenarioExploration) {
       if (isFirstIteration) {
-        foundData = getEvent(income2, dataExplore);
+        foundData = getEvent(typeToData[type], dataExplore);
         isFirstIteration = false;
       }
 
@@ -255,25 +257,21 @@ async function main(investmentType, invest, rebalance, expense, income, investme
         // writeCSVLog(csvFile, csvLog);
         // writeEventLog(logFilename, simulationResult.eventLog);
       }
-
-      if (oneScenarioExploration) {
-        explore = exploreData(allYearDataBuckets, explorationData, [i], currentYear);
-      }
     }
-
-    if (!oneScenarioExploration) {
+    if (oneScenarioExploration) {
+      explore = exploreData(allYearDataBuckets, explorationData, [i], currentYear);
+    } else {
       let years = chartData(allYearDataBuckets, numScenarioTimes);
       console.log("YEARS", JSON.stringify(years, null, 2));
       return years;
-    } else {
-      console.log("EXPLORE", JSON.stringify(explore, null, 2));
-      return explore;
     }
   }
-  // console.log("allYearDataBuckets hehe::>", allYearDataBuckets);
 
+  if (oneScenarioExploration) {
+    console.log("EXPLORE", JSON.stringify(explore, null, 2));
+    return explore;
+  }
 }
-
 
 // Call the main function to execute everything
 // main(1, "67df22db4996aba7bb6e8d73");
