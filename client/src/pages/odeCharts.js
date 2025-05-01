@@ -254,7 +254,10 @@ const OneDimensionalCharts = () => {
 
     const chartTypes = ["Multi-Line Chart", "Line Chart of Selected Quantity"];
     const multiQuantities = ["probability of success", "median total investments"];
-    const lineChartQuantities = ["final value of probability of success", "final value of median total investments"];
+    const lineChartQuantities = ["final probability of success", "final median total investments"];
+
+    // add edge case for when roth conversion is non numeric
+
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
@@ -311,7 +314,7 @@ const OneDimensionalCharts = () => {
                         />
                     )}
 
-                    {currChart === "Line Chart of Selected Quantity" && selectedQuantity === "final value of probability of success" && (
+                    {currChart === "Line Chart of Selected Quantity" && selectedQuantity === "final probability of success" && (
                         <SingleLineChart
                             title="Final-Year Probability of Success"
                             metricData={finalYearProbabilities}
@@ -319,7 +322,7 @@ const OneDimensionalCharts = () => {
                         />
                     )}
 
-                    {currChart === "Line Chart of Selected Quantity" && selectedQuantity === "final value of median total investments" && (
+                    {currChart === "Line Chart of Selected Quantity" && selectedQuantity === "final median total investments" && (
                         <SingleLineChart
                             title="Final-Year Median Investment"
                             metricData={finalMedians}
