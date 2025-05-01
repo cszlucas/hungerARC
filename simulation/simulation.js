@@ -92,7 +92,7 @@ async function runSimulation(
 
   //  // SIMULATION LOOP
   // manually adjusted for testing, should be year <= userEndYear !!
-  for (let year = currentYear; year <= 2027; year++) {
+  for (let year = currentYear; year <= 2026; year++) {
     console.log("\nSIMULATION YEAR", year);
     if (filingStatus == "married") {
       if (year == scenario.birthYearSpouse + lifeExpectancySpouse) {
@@ -266,7 +266,7 @@ function savePrevYr(investments, investmentTypes, year, csvLog, yearTotals, prev
 
   // console.log('investments :>> ', investments);
   logInvestment(investments, year, csvLog, investmentTypes);
-  console.log("logInvestment :>> ", csvLog, "for year: ", year);
+  //console.log("logInvestment :>> ", csvLog, "for year: ", year);
   prevYearIncome = yearTotals.curYearIncome;
   prevYearSS = yearTotals.curYearSS;
   prevYearEarlyWithdrawals = yearTotals.curYearEarlyWithdrawals;
