@@ -8,23 +8,68 @@ import {
   titleStyles,
 } from "../components/styles";  // Import your modular styles
 import CustomDropdown from "../components/customDropDown";
-import CustomInputBox from "../components/customInputBox";
 import ReactECharts from "echarts-for-react";
-import { Line } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  LineElement,
-  PointElement,
-  LinearScale,
-  Title,
-  CategoryScale,
-  Tooltip,
-  Filler,
-  Legend,
-} from "chart.js";
 import { useLocation } from "react-router-dom";
 import { AppContext } from "../context/appContext";
 
+
+function LineChart({ title, years, series, yLabel }) {
+    const option = {
+      title: { text: title },
+      tooltip: { trigger: "axis" },
+      legend: {},
+      xAxis: {
+        type: "category",
+        data: years,
+        name: "Year"
+      },
+      yAxis: {
+        type: "value",
+        name: yLabel
+      },
+      series
+    };
+  
+    return (
+      <ReactECharts
+        option={option}
+        style={{ width: "100%", height: "60vh" }} // 👈 Increased height to 80% of viewport height
+      />
+    );
+}
+
+function SingleLineChart({ title, metricData, yLabel }) {
+    const paramValues = Object.keys(metricData).map(Number).sort((a, b) => a - b);
+    const yData = paramValues.map(param => metricData[param]);
+  
+    const option = {
+      title: { text: title },
+      tooltip: { trigger: "axis" },
+      xAxis: {
+        type: "category",
+        data: paramValues,
+        name: "Parameter Value"
+      },
+      yAxis: {
+        type: "value",
+        name: yLabel
+      },
+      series: [
+        {
+          name: title,
+          type: "line",
+          data: yData
+        }
+      ]
+    };
+  
+    return (
+      <ReactECharts
+        option={option}
+        style={{ width: "100%", height: "60vh" }} // You can adjust height here
+      />
+    );
+}
 
 function calculateYearlySuccessProbabilities(data, financialGoal) {
     const result = {};
@@ -195,6 +240,12 @@ const OneDimensionalCharts = () => {
     const finalYearProbabilities = calculateFinalYearSuccessProbabilities(odeData, financialGoal);
     const finalMedians = calculateFinalYearMedianInvestments(odeData);
 
+    console.log(finalYearProbabilities);
+    console.log(finalMedians);
+
+    console.log(probabilityOfSuccessData);
+    const probData = transformForLineChart(probabilityOfSuccessData);
+    const medianData = transformForLineChart(medians);
 
 
     console.log(odeData);
@@ -242,27 +293,39 @@ const OneDimensionalCharts = () => {
                         )}
                     </Stack>
 
-
-
-                    {/* {currChart === "Line Chart" && (
-                        <ProbabilityLineChart lineChart={probabilityLineChart} />
+                    {currChart === "Multi-Line Chart" && selectedQuantity === "probability of success" && (
+                         <LineChart
+                            title="Per-Year Probability of Success"
+                            years={probData.years}
+                            series={probData.series}
+                            yLabel="Probability"
+                       />
                     )}
 
-                    {currChart === "Shaded Line Chart" && (
-                        <ChartWithBands
-                            shadedLineChart={parseShadedLineChartBands(chartData, currQuantity)}
+                    {currChart === "Multi-Line Chart" && selectedQuantity === "median total investments" && (
+                        <LineChart
+                            title="Per-Year Median Investment"
+                            years={medianData.years}
+                            series={medianData.series}
+                            yLabel="Investment ($)"
                         />
-                        // <>Testing Something</>
-                        // <ShadedConfidenceChart/>
-                        // <ShadedLineChart/>
                     )}
 
-                    {currChart === "Stacked Bar Chart" && (
-                        <GroupedStackedBarChart
-                            data={currStat === "Median" ? medianData : meanData}
-                            threshold={limit}
+                    {currChart === "Line Chart of Selected Quantity" && selectedQuantity === "final value of probability of success" && (
+                        <SingleLineChart
+                            title="Final-Year Probability of Success"
+                            metricData={finalYearProbabilities}
+                            yLabel="Probability"
                         />
-                    )} */}
+                    )}
+
+                    {currChart === "Line Chart of Selected Quantity" && selectedQuantity === "final value of median total investments" && (
+                        <SingleLineChart
+                            title="Final-Year Median Investment"
+                            metricData={finalMedians}
+                            yLabel="Investment ($)"
+                        />
+                    )}
 
                 </Stack>
             </Container>
