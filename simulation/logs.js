@@ -217,7 +217,7 @@ function printEvents(events, year, type, detailsType, inflationRate, spouseDeath
 }
 
 function printStrategy(allocations, type, year, calculated, start, end) {
-  console.log("ALLOCATIONS ..", allocations);
+  //console.log("ALLOCATIONS ..", allocations);
 
   const logDetails = (subType, key, value) =>
     logFinancialEvent({
