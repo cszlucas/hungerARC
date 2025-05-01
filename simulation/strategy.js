@@ -37,7 +37,7 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
     } else if (strategy.assetAllocation.type === "fixed") {
       allocations = strategy.assetAllocation.fixedPercentages;
     }
-    //console.log("moon", allocations);
+    console.log("moon", allocations);
     let investmentsWithAllocations = allocationIDToObject(allocations, investments);
     logFinancialEvent({
         year: year,
@@ -215,7 +215,7 @@ function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals, ty
   } else if (rebalanceStrategy.assetAllocation.type === "fixed") {
     allocations = rebalanceStrategy.assetAllocation.fixedPercentages;
   }
-  //console.log(allocations);
+  console.log("HELLO ALLOCATION", allocations);
   let investmentsWithAllocations = allocationIDToObject(allocations, investments);
 
   let sum = 0;

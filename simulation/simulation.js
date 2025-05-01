@@ -66,10 +66,10 @@ async function runSimulation(
   }
 
   setValues([...incomeEvent, ...expenseEvent, ...investEvent, ...rebalanceEvent]);
-  console.log("incomeEvent :>> ", incomeEvent);
-  console.log("expenseEvent :>> ", expenseEvent);
-  console.log("investEvent :>> ", investEvent);
-  console.log("rebalanceEvent :>> ", rebalanceEvent);
+  // console.log("incomeEvent :>> ", incomeEvent);
+  // console.log("expenseEvent :>> ", expenseEvent);
+  // console.log("investEvent :>> ", investEvent);
+  // console.log("rebalanceEvent :>> ", rebalanceEvent);
   let sumInvestmentsPreTaxRMD = 0;
   let yearTotals = {
     curYearGains: 0,
@@ -81,13 +81,15 @@ async function runSimulation(
   let prevYearSS = 0;
   let prevYearEarlyWithdrawals = 0;
   let prevYearGains = 0;
-
+  console.log('investmentTypes :>> ', investmentTypes);
   let cashInvestmentType = investmentTypes.find((inv) => inv.name === "Cash");
-  // console.log(cashInvestmentType);
+  console.log("CASH INVESTMENT TYPE: ", cashInvestmentType);
+  console.log('investments :>> ', investments);
   let cashInvestment;
   if (cashInvestmentType) {
     let cashId = cashInvestmentType._id;
     cashInvestment = investments.find((inv) => inv.investmentType === cashId);
+    clog("CASH INVESTMENT: ", cashInvestment);
   }
 
   let yearDataBuckets = createYearDataBuckets(3); //2 is numYears
