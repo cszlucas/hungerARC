@@ -5,9 +5,8 @@ import { updateValues } from "./expenses.js";
 //pre-tax is not part of invest
 function runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy) {
   console.log("\nINVEST STRATEGY");
-  //console.log("investStrategy :>> ", investStrategy);
+  //console.log("ALOCATE", JSON.stringify(investStrategy[0], null, 2));
   const strategy = Array.isArray(investStrategy) ? investStrategy[0] : investStrategy;
-  //console.log("strategy :>> ", strategy);
   //console.log("cashInvestment", cashInvestment.value, " maxCash to keep: ", strategy.maxCash);
 
   logFinancialEvent({
@@ -29,7 +28,7 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
       allocations = getGlidePathAllocation(
         year,
         strategy.startYear.calculated,
-        strategy.startYear.value + strategy.duration.calculated,
+        strategy.startYear.calculated + strategy.duration.calculated,
         strategy.assetAllocation.initialPercentages,
         strategy.assetAllocation.finalPercentages
       );
@@ -37,7 +36,6 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
     } else if (strategy.assetAllocation.type === "fixed") {
       allocations = strategy.assetAllocation.fixedPercentages;
     }
-    //console.log("moon", allocations);
     let investmentsWithAllocations = allocationIDToObject(allocations, investments);
     logFinancialEvent({
         year: year,
@@ -133,7 +131,7 @@ function getGlidePathAllocation(year, startYear, endYear, initial, final) {
     const finalVal = final[asset] || 0;
     allocation[asset] = (1 - t) * initVal + t * finalVal;
   }
-
+  console.log("allocation", allocation);
   return allocation;
 }
 
@@ -215,7 +213,7 @@ function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals, ty
   } else if (rebalanceStrategy.assetAllocation.type === "fixed") {
     allocations = rebalanceStrategy.assetAllocation.fixedPercentages;
   }
-  //console.log(allocations);
+  console.log("HELLO ALLOCATION", allocations);
   let investmentsWithAllocations = allocationIDToObject(allocations, investments);
 
   let sum = 0;
