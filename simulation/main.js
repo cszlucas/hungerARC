@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const StateTax = require("../server/models/stateTax.js");
 const Tax = require("../server/models/tax.js");
 const User = require("../server/models/user.js");
-const { buildChartDataFromBuckets } = require("./charts.js");
+const { buildChartDataFromBuckets, exploreData, chartData } = require("./charts.js");
 const { calculateLifeExpectancy } = require("./algo.js");
 const { runSimulation } = require("./simulation.js");
 const path = require("path");
@@ -134,7 +134,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   const csvLog = []; // For user_datetime.csv
   const eventLog = []; // For user_datetime.log
   const explorationData = {
-    parameter: "",
+    parameter: [],
     values: [],
   };
 
@@ -169,6 +169,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   const startYearPrev = (new Date().getFullYear() - 1).toString();
   //calculate life expectancy
   const { lifeExpectancyUser, lifeExpectancySpouse } = calculateLifeExpectancy(scenario);
+  let currentYear = new Date().getFullYear();
   // console.log('lifeExpectancySpouse here :>> ', lifeExpectancySpouse);
 
   // find the user's state tax data
@@ -185,8 +186,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   let foundData;
   let parameter;
   console.log('exploration :>> ', exploration);
-  if(exploration){
-  if (exploration.length == 1) {
+  if (exploration && exploration.length == 1) {
     oneScenarioExploration = true;
     type = exploration[0].type;
     lowerBound = Number(exploration[0].range.lower);
@@ -196,7 +196,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
     parameter = exploration[0].parameter;
     explorationData.parameter = parameter;
   }
-  }
+  
   let isFirstIteration = true;
   //return;
   for (let i = lowerBound; i <= upperBound; i += stepSize) {
@@ -241,7 +241,8 @@ async function main(investmentType, invest, rebalance, expense, income, investme
         clonedData.rebalance,
         clonedData.investmentType,
         csvLog,
-        eventLog
+        eventLog,
+        currentYear
       );
       allYearDataBuckets.push(yearDataBuckets);
       // logs only for the first simulation
@@ -254,84 +255,24 @@ async function main(investmentType, invest, rebalance, expense, income, investme
         // writeCSVLog(csvFile, csvLog);
         // writeEventLog(logFilename, simulationResult.eventLog);
       }
+
+      if (oneScenarioExploration) {
+        explore = exploreData(allYearDataBuckets, explorationData, [i], currentYear);
+      }
     }
-    if (oneScenarioExploration) {
-      explore = exploreData(allYearDataBuckets, explorationData, i);
-      console.log("EXPLORE", JSON.stringify(explore, null, 2));
-      return explore;
-    }
-      
+
     if (!oneScenarioExploration) {
       let years = chartData(allYearDataBuckets, numScenarioTimes);
       console.log("YEARS", JSON.stringify(years, null, 2));
       return years;
     } else {
+      console.log("EXPLORE", JSON.stringify(explore, null, 2));
       return explore;
     }
   }
   // console.log("allYearDataBuckets hehe::>", allYearDataBuckets);
 
 }
-
-function chartData(allYearDataBuckets, numScenarioTimes) {
-  //console.log("allYearDataBuckets", JSON.stringify(allYearDataBuckets, null, 2));
-  const flattenedBuckets = allYearDataBuckets.flat();
-  // console.log("flattenedBuckets", flattenedBuckets)
-
-  const { startYear, endYear, data } = buildChartDataFromBuckets(flattenedBuckets, 2025, numScenarioTimes);
-  // console.log("DATA", JSON.stringify(data, null, 2));
-  // console.log("DATA", data);
-  const years = [];
-  for (let i = 0; i <= endYear - startYear; i++) {
-    years.push({
-      year: startYear + i,
-      income: data.income[i],
-      investments: data.investments[i],
-      discretionary: data.discretionary[i],
-      nonDiscretionary: data.nonDiscretionary[i],
-      taxes: data.taxes[i],
-      earlyWithdrawals: data.earlyWithdrawals[i],
-    });
-  }
-  return years;
-}
-
-
-function exploreData(allYearDataBuckets, explorationData, parameterValue) {
-  // Make sure allYearDataBuckets contains data for each simulation and year
-  const numYears = allYearDataBuckets[0].length; // Assuming that the first simulation has all the years data
-  
-  // Iterate over each year in the allYearDataBuckets (using the first simulation as a reference)
-  const investmentByYear = [];
-
-  // Iterate over each year in the simulation data
-  for (let yearIndex = 0; yearIndex < numYears; yearIndex++) {
-    const year = allYearDataBuckets[0][yearIndex].year;
-
-    // Create an array to store simulations for this year
-    const simulationsForYear = allYearDataBuckets.map(simulation => {
-      return {
-        year: 2022,  // Add year explicitly here
-        investments: simulation[yearIndex].investments  // Capture investments for this year in simulations
-      };
-    });
-
-    // Push the data for this year (with its simulations) to the investmentByYear array
-    investmentByYear.push({
-      year,              // Add year directly here to each data entry
-      simulations: simulationsForYear  // Add simulations for this year
-    });
-  }
-
-  // Now add the final data to the explorationData
-  explorationData.values.push({
-    value: parameterValue,
-    investments: investmentByYear
-  });
-
-  return explorationData;
-}
-
 
 
 // Call the main function to execute everything
