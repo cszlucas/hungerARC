@@ -79,12 +79,14 @@ async function runSimulation(
   let prevYearEarlyWithdrawals = 0;
   let prevYearGains = 0;
 
+  console.log("investmentTypes", investmentTypes);
   let cashInvestmentType = investmentTypes.find((inv) => inv.name === "Cash");
-  // console.log(cashInvestmentType);
+  console.log("CASH", cashInvestmentType);
   let cashInvestment;
   if (cashInvestmentType) {
     let cashId = cashInvestmentType._id;
     cashInvestment = investments.find((inv) => inv.investmentType === cashId);
+    console.log("cashInvestment", cashInvestment);
   }
 
   let yearDataBuckets = createYearDataBuckets(2, currentYear); //2 is numYears

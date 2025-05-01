@@ -23,6 +23,7 @@ class DataStore {
         console.log("Scenario not found");
         return;
       }
+      //console.log("scenario", scenario);
       this.scenario = scenario;
       const investment = await Investment.find({
         _id: { $in: scenario.setOfInvestments },
@@ -71,6 +72,8 @@ class DataStore {
       const investmentType = await InvestmentType.find({
         _id: { $in: scenario.setOfInvestmentTypes },
       });
+      //console.log("scenario.setOfInvestmentTypes:: ", scenario.setOfInvestmentTypes );
+      //console.log("investmentType:: ", investmentType );
       this.investmentType = investmentType;
     } catch (err) {
       console.log("Error while populating data:", err);
@@ -160,7 +163,7 @@ async function main(investmentType2, invest2, rebalance2, expense2, income2, inv
   let dataExplore;
   let foundData;
   let parameter;
-  if (exploration.length == 1) {
+  if (exploration && exploration.length == 1) {
     oneScenarioExploration = true;
     type = exploration[0].type;
     lowerBound = Number(exploration[0].range.lower);
@@ -241,7 +244,7 @@ async function main(investmentType2, invest2, rebalance2, expense2, income2, inv
     return years;
   } else {
     console.log("EXPLORE", JSON.stringify(explore, null, 2));
-    return; //explorationData;
+    return explore;
   }
 }
 
