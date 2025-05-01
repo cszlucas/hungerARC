@@ -11,7 +11,7 @@ class DataStore {
   constructor() {
     this.taxData = this.stateTax = this.scenario = this.investment = this.income = this.expense = this.rebalance = this.invest = this.investmentType = this.user = {};
   }
-  async populateData(scenarioId, userId, residence) {
+  async populateData(userId, residence) {
     try {
       const tax = await Tax.find();
       this.taxData = tax;
@@ -123,12 +123,12 @@ function formatToNumber(obj) {
 
 
 
-async function main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, numScenarioTimes, scenarioId) {
+async function main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, numScenarioTimes) {
   //console.log("exploration",JSON.stringify(exploration, null, 2));
   // not sure how to get a value using this, not needed
   var distributions = require("distributions");
   const dataStore = new DataStore();
-  await Promise.all([dataStore.populateData(scenarioId, userId, scenario.stateResident)]);
+  await Promise.all([dataStore.populateData(userId, scenario.stateResident)]);
   //console.log("our scenario \n\n", dataStore);
 
   const csvLog = []; // For user_datetime.csv

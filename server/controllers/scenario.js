@@ -150,14 +150,14 @@ exports.importUserData = async (req, res) => {
 
 exports.simulateScenario = async (req, res) => {
   try {
-    const { investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, simulationCount = 1, scenarioId } = req.query;
+    const { investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, simulationCount = 1 } = req.query;
 
-    if (!scenarioId || !userId) {
-      return res.status(400).json({ error: "Missing scenarioId or userId" });
+    if (!userId) {
+      return res.status(400).json({ error: "Missing userId" });
     }
 
     // Run the simulation
-    years = await main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, simulationCount, scenarioId);
+    years = await main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, simulationCount);
     // const { shadedChart, probabilityChart, barChartAverage, barChartMedian } = await main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, simulationCount, scenarioId);
     // const { shadedChart, probabilityChart, barChartAverage, barChartMedian } = await main(simulationCount, scenarioId, userId);
 
