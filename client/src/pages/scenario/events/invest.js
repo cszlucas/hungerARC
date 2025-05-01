@@ -220,7 +220,7 @@ const Invest = () => {
 
         {/* Form Body */}
         <Box sx={rowBoxStyles}>
-          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, width: 400 }}>
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 400 }}>
             <EventSeries formValues={formValues} setFormValues={setFormValues} />
             <CustomInput
               title="Maximum Cash"

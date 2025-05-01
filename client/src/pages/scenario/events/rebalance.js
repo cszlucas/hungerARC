@@ -231,7 +231,7 @@ const Rebalance = () => {
 
         <Box sx={rowBoxStyles }>
           {/* Left Column - Tax Category & Investment Dropdowns */}
-          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, width: 350, maxWidth: 500 }}>
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 400, maxWidth: 500 }}>
             {/* Tax Category Dropdown */}
             <EventSeries formValues={formValues} setFormValues={setFormValues} />
           </Box>

@@ -48,14 +48,14 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
     if (formValues.assetAllocation.type === "fixed") {
       const total = Object.values(formValues.assetAllocation.fixedPercentages)
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-      setPercentError(Math.round(total) !== 100);
+      setPercentError(Math.round(total) !== 1);
     } else {
       const total_intial = Object.values(formValues.assetAllocation.fixedPercentages)
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
       const total_final = Object.values(formValues.assetAllocation.fixedPercentages)
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
       
-      setPercentError(Math.round(total_intial) !== 100 || Math.round(total_final) !== 100);
+      setPercentError(Math.round(total_intial) !== 1 || Math.round(total_final) !== 1);
     }
   }, [formValues.assetAllocation]);
 
@@ -116,13 +116,13 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
   
       if (allocationType === "fixed") {
         if (!updatedAssetAllocation.fixedPercentages) updatedAssetAllocation.fixedPercentages = {};
-        updatedAssetAllocation.fixedPercentages[selectedInvestment] = pendingPercentage;
+        updatedAssetAllocation.fixedPercentages[selectedInvestment] = parseFloat((pendingPercentage / 100).toFixed(2));
       } else if (allocationType === "glidePath") {
         if (!updatedAssetAllocation.initialPercentages) updatedAssetAllocation.initialPercentages = {};
         if (!updatedAssetAllocation.finalPercentages) updatedAssetAllocation.finalPercentages = {};
   
-        updatedAssetAllocation.initialPercentages[selectedInvestment] = pendingInitial;
-        updatedAssetAllocation.finalPercentages[selectedInvestment] = pendingFinal;
+        updatedAssetAllocation.initialPercentages[selectedInvestment] = parseFloat((pendingInitial / 100).toFixed(2));
+        updatedAssetAllocation.finalPercentages[selectedInvestment] = parseFloat((pendingFinal / 100).toFixed(2));
       }
   
       return {
@@ -130,7 +130,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
         assetAllocation: updatedAssetAllocation,
       };
     });
-  
+    console.log(formValues);
     setSelectedInvestment("");
     setPendingPercentage("");
     setPendingInitial("");
@@ -166,10 +166,10 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
   const handleEditInvestment = (investmentId) => {
     const { type, fixedPercentages, initialPercentages, finalPercentages } = formValues.assetAllocation;
     if (type === "fixed") {
-      setPendingPercentage(fixedPercentages[investmentId] ?? "");
+      setPendingPercentage(fixedPercentages[investmentId] * 100 ?? "");
     } else if (type === "glidePath") {
-      setPendingInitial(initialPercentages[investmentId] ?? "");
-      setPendingFinal(finalPercentages[investmentId] ?? "");
+      setPendingInitial(initialPercentages[investmentId] * 100 ?? "");
+      setPendingFinal(finalPercentages[investmentId] * 100 ?? "");
     }
     filteredInvestments.push(getInvestmentById(investmentId));
     setSelectedInvestment(investmentId);
@@ -203,7 +203,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
         displayList.push({
           _id: id,
           investmentTypeName: typeObj?.name || "Unknown Investment",
-          percent: fixedPercentages[id],
+          percent: fixedPercentages[id] * 100,
         });
       });
     }
