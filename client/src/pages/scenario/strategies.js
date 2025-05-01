@@ -13,11 +13,7 @@ import CustomInput from "../../components/customInputBox";
 import { AppContext } from "../../context/appContext";
 import { useNavigate } from "react-router-dom";
 import {
-  backContinueContainerStyles,
-  buttonStyles,
-  rowBoxStyles,
-  stackStyles,
-  titleStyles
+  backContinueContainerStyles, buttonStyles, rowBoxStyles, stackStyles, titleStyles
 } from "../../components/styles";
 import CustomSave from "../../components/customSaveBtn";
 import axios from "axios";
@@ -73,7 +69,7 @@ const StrategyList = ({ list, setList, fieldName, setScenario }) => {
 
 const Strategies = () => {
   const navigate = useNavigate();
-  const { currScenario, setCurrScenario, scenarioData, setScenarioData, currInvestments, currExpense, currInvestmentTypes, editMode } = useContext(AppContext);
+  const { currScenario, setCurrScenario, setScenarioData, currInvestments, currExpense, currInvestmentTypes, editMode } = useContext(AppContext);
   const [isRothOptimized, setIsRothOptimized] = useState(currScenario.optimizerSettings.enabled || false);
   const [startYear, setStartYear] = useState(currScenario.optimizerSettings?.startYear || "");
   const [endYear, setEndYear] = useState(currScenario.optimizerSettings?.endYear || "");

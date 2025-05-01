@@ -9,10 +9,6 @@ import {
   ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Alert,
 } from "@mui/material";
 
-// Icons
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-
 // Custom component imports
 import EventSeries from "./eventSeries";
 import CustomInput from "../../../components/customInputBox";

@@ -1,30 +1,14 @@
 import React, { useState, useContext } from "react";
-import {
-    ThemeProvider,
-    CssBaseline,
-    Container,
-    Typography,
-    List,
-    ListItem,
-    ListItemText,
-    IconButton,
-    Box,
-    Button
-} from "@mui/material";
+import { Button } from "@mui/material";
 import { AppContext, defaultInfo } from "../../../context/appContext";
 import { AuthContext } from "../../../context/authContext";
-import EditIcon from "@mui/icons-material/Edit";
-import theme from "../../../components/theme";
-import Navbar from "../../../components/navbar";
-import { useNavigate } from "react-router-dom";
 import yaml from "js-yaml";
 import axios from "axios";
 import { ObjectId } from "bson";
-// new ObjectId().toHexString();
 
 const ImportBtn = () => {
     // const [ selectedScenario, setSelectedScenario] = useState(null); // Track selected scenario
-    const { scenarioData, setScenarioData, setEditMode, setCurrScenario, setCurrInvestments, setCurrIncome, setCurrExpense, setCurrInvest, setCurrRebalance, setCurrInvestmentTypes } = useContext(AppContext);
+    const { setScenarioData, setEditMode, setCurrScenario, setCurrInvestments, setCurrIncome, setCurrExpense, setCurrInvest, setCurrRebalance, setCurrInvestmentTypes } = useContext(AppContext);
     const { user } = useContext(AuthContext);
 
     function parseScenarioYAML(yamlObject) {
@@ -211,8 +195,8 @@ const ImportBtn = () => {
               mean: lifeExpectancy[1]?.mean ?? null,
               stdDev: lifeExpectancy[1]?.stdev ?? null,
             },          
-            setOfinvestmentTypes: frontendInvestmentTypes.map((i) => i._id),
-            setOfinvestments: frontendInvestments.map((i) => i._id),
+            setOfInvestmentTypes: frontendInvestmentTypes.map((i) => i._id),
+            setOfInvestments: frontendInvestments.map((i) => i._id),
             incomeEventSeries: income.map((i) => i._id),
             expenseEventSeries: expense.map((i) => i._id),
             investEventSeries: invest.map((i) => i._id),

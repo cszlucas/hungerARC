@@ -26,7 +26,7 @@ var scenarioSchema = new Schema({
     mean: { type: Number },
     stdDev: { type: Number },
   },
-  setOfinvestmentTypes: [{ type: Schema.Types.ObjectId, ref: "InvestmentType" }],
+  setOfInvestmentTypes: [{ type: Schema.Types.ObjectId, ref: "InvestmentType" }],
   setOfInvestments: [{ type: Schema.Types.ObjectId, ref: "Investment" }],
   incomeEventSeries: [{ type: Schema.Types.ObjectId, ref: "IncomeEvent" }],
   expenseEventSeries: [{ type: Schema.Types.ObjectId, ref: "ExpenseEvent" }],

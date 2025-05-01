@@ -1,15 +1,6 @@
-import React, { useState, useContext } from "react";
+import React, { useContext } from "react";
 import {
-    ThemeProvider,
-    CssBaseline,
-    Container,
-    Typography,
-    List,
-    ListItem,
-    ListItemText,
-    IconButton,
-    Box,
-    Button
+    ThemeProvider, CssBaseline, Container, Typography, List, ListItem, ListItemText, IconButton, Box, Button
 } from "@mui/material";
 import { AppContext, defaultInfo } from "../../context/appContext";
 import { AuthContext } from "../../context/authContext";
@@ -17,8 +8,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import theme from "../../components/theme";
 import Navbar from "../../components/navbar";
 import { useNavigate } from "react-router-dom";
-import yaml from "js-yaml";
-import axios from "axios";
 import ImportBtn from "./import-export/import";
 
 const ScenarioList = () => {
@@ -79,7 +68,9 @@ const ScenarioList = () => {
                     <Typography variant="h6" component="h5" sx={{ marginRight: 2 }}>
                         Existing Scenarios
                     </Typography>
+                    
                     <ImportBtn/>
+
                     <Button 
                         variant="contained" 
                         color="secondary" // Uses the theme's secondary color

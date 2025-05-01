@@ -1,4 +1,4 @@
-import React, { useState, useContext, useMemo, useEffect, startTransition } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { flushSync } from "react-dom";
 
 import {
@@ -7,12 +7,10 @@ import {
 import theme from "../../../components/theme";
 import Navbar from "../../../components/navbar";
 import PageHeader from "../../../components/pageHeader";
-import { stackStyles, titleStyles, buttonStyles, backContinueContainerStyles, textFieldStyles, rowBoxStyles } from "../../../components/styles";
+import { 
+  stackStyles, titleStyles, buttonStyles, backContinueContainerStyles, rowBoxStyles 
+} from "../../../components/styles";
 
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import CustomInput from "../../../components/customInputBox";
-import CustomToggle from "../../../components/customToggle";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
 import axios from "axios";
@@ -57,7 +55,7 @@ const TAX_MAP = {
 };
 
 const Rebalance = () => {
-  const { currRebalance, setCurrRebalance, currInvestments, currInvestmentTypes, setCurrScenario, editMode } = useContext(AppContext);
+  const { currRebalance, setCurrRebalance, setCurrScenario, editMode } = useContext(AppContext);
   const { eventEditMode, setEventEditMode } = useContext(AppContext);
   const { user } = useContext(AuthContext);
 

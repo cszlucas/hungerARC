@@ -108,16 +108,12 @@ const CustomSave = ({ label = "Save", routeTo, color = "secondary", disable = fa
         handleAppendInScenario("setOfInvestments", cashInvestment._id);
 
         // Update top-level investment state in the app context
-
-        await setCurrInvestmentTypes((prev) => [
-          ...(Array.isArray(prev) ? prev : []),
-          cashTypeAccount,
-        ]);
-
-        await setCurrInvestments((prev) => [
-          ...(Array.isArray(prev) ? prev : []),
-          cashInvestment,
-        ]);
+        await setCurrInvestments((prev) => {
+          setCurrInvestmentTypes((prev) => {
+            return [...(Array.isArray(prev) ? prev : []), cashTypeAccount];
+          });
+          return [...(Array.isArray(prev) ? prev : []), cashInvestment];
+        });
 
         console.log(cashInvestment);
     } catch (error) {
