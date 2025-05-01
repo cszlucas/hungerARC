@@ -30,7 +30,7 @@ const RunSimulation = () => {
   const {currScenario, currInvestmentTypes, currInvestments, currIncome, currExpense, currInvest, currRebalance, tempExploration} = useContext(AppContext);
   const {user} = useContext(AuthContext);
   console.log("curr Investment: ", currInvestments);
-  console.log('currInvestmentTypes :>> ', currInvestmentTypes);
+  console.log("currInvestmentTypes :>> ", currInvestmentTypes);
   const handleExport = () => {
     exportToYAML({
       currScenario,

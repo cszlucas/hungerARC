@@ -139,7 +139,7 @@ const ImportBtn = () => {
                   Object.fromEntries(Object.entries(e.assetAllocation).map(([key, value]) => [investmentMap[key], value])), 
                   {}, 
                   {},
-                  null
+                  frontendInvestments.find((i) => i._id === investmentMap[Object.keys(e.assetAllocation)[0]]).accountTaxStatus
                 ]
               : [
                   {},

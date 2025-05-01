@@ -187,7 +187,7 @@ const Income = () => {
 
                 <Box sx={rowBoxStyles}>
                     {/* Column 1: General Event Info */}
-                    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, width: 400 }}>
+                    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 400 }}>
                         <EventSeries formValues={formValues} setFormValues={setFormValues} />
                     </Box>
 
