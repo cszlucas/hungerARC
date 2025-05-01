@@ -315,12 +315,14 @@ const OneDimensionalCharts = () => {
                     )}
 
                     {currChart === "Line Chart of Selected Quantity" && selectedQuantity === "final probability of success" && (
+
                         <SingleLineChart
                             title="Final-Year Probability of Success"
                             metricData={finalYearProbabilities}
                             yLabel="Probability"
                         />
                     )}
+
 
                     {currChart === "Line Chart of Selected Quantity" && selectedQuantity === "final median total investments" && (
                         <SingleLineChart
