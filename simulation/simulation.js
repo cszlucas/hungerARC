@@ -31,7 +31,8 @@ async function runSimulation(
   rebalanceEvent,
   investmentTypes,
   csvLog,
-  eventLog
+  eventLog,
+  currentYear
 ) {
   // previous year
   let irsLimit = scenario.irsLimit;
@@ -58,7 +59,6 @@ async function runSimulation(
     }
   }
   //console.log("capitalGains :>> ", capitalGains);
-  let currentYear = new Date().getFullYear();
   let userEndYear = scenario.birthYearUser + lifeExpectancyUser;
   // //save initial value and purchase price of investments
   for (let invest of investments) {
@@ -92,7 +92,7 @@ async function runSimulation(
     //console.log("CASH INVESTMENT: ", cashInvestment);
   }
 
-  let yearDataBuckets = createYearDataBuckets(3); //2 is numYears
+  let yearDataBuckets = createYearDataBuckets(2); //2 is numYears
   let yearIndex = 0;
 
   //  // SIMULATION LOOP
