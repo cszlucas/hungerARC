@@ -101,22 +101,11 @@ function scenarioExploration(foundData, parameter, value) {
   return foundData;
 }
 
-function getEvent(type, data) {
-  const id = data._id;
-  let collection;
-  if (type === "Income") {
-    collection = incomeevents;
-  } else if (type === "Expense") {
-    collection = expenseevents;
-  } else if (type === "Invest") {
-    collection = investevents;
-  } else if (type === "Rebalance") {
-    collection = rebalanceevents;
-  }
-  const event = collection.find((item) => item._id === id);
-  if (event) {
-    console.log("Event found:", event);
-    return event;
+function getEvent(listData, data) {
+  const e = listData.find(item => item._id === data._id);
+  if (e) {
+    console.log("Event found:", e);
+    return e;
   } else {
     console.log("Event not found.");
     return null;
@@ -135,7 +124,7 @@ function getEvent(type, data) {
 // simulationCount: numSimulations,
 
 async function main(investmentType2, invest2, rebalance2, expense2, income2, investment2, scenario2, exploration, userId, numScenarioTimes, scenarioId) {
-  console.log("exploration", exploration);
+  //console.log("exploration",JSON.stringify(exploration, null, 2));
   // not sure how to get a value using this, not needed
   var distributions = require("distributions");
   const dataStore = new DataStore();
@@ -170,20 +159,34 @@ async function main(investmentType2, invest2, rebalance2, expense2, income2, inv
 
   //default values if no scenario exploration
   let oneScenarioExploration=false;
+  let type = "";
   let lowerBound = 1;
   let upperBound = 1;
   let stepSize = 1;
+  let dataExplore;
+  let foundData;
+  let parameter;
+  if(exploration.length == 1){
+    oneScenarioExploration=true;
+    type = exploration[0].type;
+    lowerBound = exploration[0].range.lower
+    upperBound = exploration[0].range.upper;
+    stepSize = exploration[0].range.steps;
+    dataExplore = exploration[0].data;
+    parameter = exploration[0].parameter;
+  }
+  
   let isFirstIteration = true;
+  console.log(`Running ${numScenarioTimes} simulations for ${parameter}: lowerbound: ${ lowerBound}, and upperbound: ${upperBound}`);
+  //return;
   for (let value = lowerBound; value <= upperBound; value += stepSize) {
-   // console.log(`Running ${numScenarioTimes} simulations for ${parameter}: ${value}`);
     if (oneScenarioExploration) {
-      let foundData;
       if (isFirstIteration) {
-        foundData = getEvent(type, data._id);
+        foundData = getEvent(income2, dataExplore);
         isFirstIteration = false;
       }
 
-      scenarioExploration(foundData, parameter, value);
+      scenarioExploration(foundData, parameter, stepSize);
     }
     for (let x = 0; x < numScenarioTimes; x++) {
       const clonedData = {
@@ -197,6 +200,8 @@ async function main(investmentType2, invest2, rebalance2, expense2, income2, inv
         taxData: JSON.parse(JSON.stringify(taxData)),
         investmentType: JSON.parse(JSON.stringify(investmentType)),
       };
+
+      console.log("income", income);
       const yearDataBuckets = await runSimulation(
         clonedData.scenario,
         clonedData.taxData[0],
@@ -246,6 +251,7 @@ async function main(investmentType2, invest2, rebalance2, expense2, income2, inv
       earlyWithdrawals: data.earlyWithdrawals[i],
     });
   }
+  //console.log("YEARS", JSON.stringify(years, null, 2));
 
  // console.log("YEARS", JSON.stringify(years, null, 2));
 
