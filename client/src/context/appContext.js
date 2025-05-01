@@ -157,7 +157,7 @@ export const AppProvider = ({ children }) => {
       results.forEach(({ key, setter }, i) => dataTypes[i].setter(results[i]));
   
       const investments = results[0];
-      console.log(investments);
+      // console.log(investments);
   
       const takenTaxStatusAccounts = investments.reduce((acc, inv) => {
         const { investmentType: type, accountTaxStatus: status } = inv;
