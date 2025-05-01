@@ -121,6 +121,8 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
         console.log("uniform distribution, of min and max respectively, ", annualChange.min, " ", annualChange.max, ", amount is ", amt);
       } else {
         amt = randomNormal(annualChange.mean, annualChange.stdDev);
+        
+        console.log('amt :>> ', amt);
         console.log("normal distribution, of mean and stdDev respectively, ", annualChange.mean, " ", annualChange.stdDev, ", amount is ", amt);
       }
 

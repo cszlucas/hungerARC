@@ -66,7 +66,10 @@ async function runSimulation(
   }
 
   setValues([...incomeEvent, ...expenseEvent, ...investEvent, ...rebalanceEvent]);
-  // console.log("incomeEvent :>> ", incomeEvent);
+  console.log("incomeEvent :>> ", incomeEvent);
+  console.log("expenseEvent :>> ", expenseEvent);
+  console.log("investEvent :>> ", investEvent);
+  console.log("rebalanceEvent :>> ", rebalanceEvent);
   let sumInvestmentsPreTaxRMD = 0;
   let yearTotals = {
     curYearGains: 0,
@@ -92,7 +95,7 @@ async function runSimulation(
 
   //  // SIMULATION LOOP
   // manually adjusted for testing, should be year <= userEndYear !!
-  for (let year = currentYear; year <= 2026; year++) {
+  for (let year = currentYear; year <= 2027; year++) {
     console.log("\nSIMULATION YEAR", year);
     if (filingStatus == "married") {
       if (year == scenario.birthYearSpouse + lifeExpectancySpouse) {
@@ -207,6 +210,7 @@ async function runSimulation(
     ));
     yearIndex++;
   }
+  // console.log('yearDataBuckets :>> ', yearDataBuckets);
   return yearDataBuckets;
 }
 

@@ -123,7 +123,55 @@ function getEvent(listData, data) {
 // userId: user._id,
 // simulationCount: numSimulations,
 
-async function main(investmentType2, invest2, rebalance2, expense2, income2, investment2, scenario2, exploration, userId, numScenarioTimes, scenarioId) {
+function formatToNumber(obj){
+  console.log("formatToNumber", obj);
+  const numberFields = new Set([
+    'initialAmount', 'userPercentage', 
+    'value', 'calculated',
+    'min', 'max',
+    'amount', 'mean', 'stdDev'
+  ]);
+  
+  const booleanFields = new Set([
+    'inflationAdjustment', 'isSocialSecurity'
+  ]);
+  for (const k in obj){
+    for (const key in obj[k]) {
+      console.log('key :>> ', key);
+      console.log('obj[key] :>> ', obj[k][key]);
+      if (numberFields.has(key)) {
+        const num = Number(obj[k][key]);
+        if (!isNaN(num)) obj[k][key] = num;
+      } else if (booleanFields.has(key)) {
+        obj[k][key] = obj[k][key] === 'true';
+      } else if (typeof obj[k][key] === 'object' && obj[k][key] !== null) {
+        for (const subKey in obj[k][key]) {
+          console.log('subKey :>> ', subKey);
+          if (numberFields.has(subKey)) {
+            const num = Number(obj[k][key][subKey]);
+            console.log('num :>> ', num);
+            if (!isNaN(num)) obj[k][key][subKey] = num;
+          }
+        }
+      }
+    }
+  }
+  console.log("formatted object", obj);
+  return obj;
+  // for (const key in obj) {
+  //   if (
+  //     typeof obj[key] === "string" &&
+  //     !stringFields.has(key) &&
+  //     obj[key].trim() !== "" &&
+  //     !isNaN(obj[key])
+  //   ) {
+  //     obj[key] = Number(obj[key]);
+  //   }
+  // }
+  // return obj;
+}
+
+async function main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, numScenarioTimes, scenarioId) {
   //console.log("exploration",JSON.stringify(exploration, null, 2));
   // not sure how to get a value using this, not needed
   var distributions = require("distributions");
@@ -138,18 +186,28 @@ async function main(investmentType2, invest2, rebalance2, expense2, income2, inv
     values: [],
   };
 
-  const { taxData, scenario, stateTax, invest, income, expense, rebalance, investment, investmentType, user } = {
+  const { taxData, stateTax, user } = {
     taxData: dataStore.getData("taxData"),
-    scenario: dataStore.getData("scenario"),
     stateTax: dataStore.getData("stateTax"),
-    invest: dataStore.getData("invest"),
-    income: dataStore.getData("income"),
-    expense: dataStore.getData("expense"),
-    rebalance: dataStore.getData("rebalance"),
-    investment: dataStore.getData("investment"),
-    investmentType: dataStore.getData("investmentType"),
-    user: dataStore.getData("user"),
+    user: dataStore.getData("user")
   };
+
+  // change numbers from string to number
+  formatToNumber(income);
+  console.log("income", income);
+
+  // const { taxData, scenario, stateTax, invest, income, expense, rebalance, investment, investmentType, user } = {
+  //   taxData: dataStore.getData("taxData"),
+  //   scenario: dataStore.getData("scenario"),
+  //   stateTax: dataStore.getData("stateTax"),
+  //   invest: dataStore.getData("invest"),
+  //   income: dataStore.getData("income"),
+  //   expense: dataStore.getData("expense"),
+  //   rebalance: dataStore.getData("rebalance"),
+  //   investment: dataStore.getData("investment"),
+  //   investmentType: dataStore.getData("investmentType"),
+  //   user: dataStore.getData("user"),
+  // };
   // console.log("scenario: ", scenario);
   // console.log("stateTax :>> ", dataStore.stateTax);
   const startYearPrev = (new Date().getFullYear() - 1).toString();
@@ -170,6 +228,8 @@ async function main(investmentType2, invest2, rebalance2, expense2, income2, inv
   let explore;
   let foundData;
   let parameter;
+  console.log('exploration :>> ', exploration);
+  if(exploration){
   if (exploration.length == 1) {
     oneScenarioExploration = true;
     type = exploration[0].type;
@@ -180,7 +240,7 @@ async function main(investmentType2, invest2, rebalance2, expense2, income2, inv
     parameter = exploration[0].parameter;
     explorationData.parameter = parameter;
   }
-
+  }
   let isFirstIteration = true;
   //return;
   for (let i = lowerBound; i <= upperBound; i += stepSize) {
@@ -228,7 +288,6 @@ async function main(investmentType2, invest2, rebalance2, expense2, income2, inv
         eventLog
       );
       allYearDataBuckets.push(yearDataBuckets);
-
       // logs only for the first simulation
       if (x == 0) {
         const userName = user.email.split("@")[0];
@@ -245,14 +304,17 @@ async function main(investmentType2, invest2, rebalance2, expense2, income2, inv
       console.log("EXPLORE", JSON.stringify(explore, null, 2));
       return explore;
     }
+      
+    if (!oneScenarioExploration) {
+      let years = chartData(allYearDataBuckets, numScenarioTimes);
+      console.log("YEARS", JSON.stringify(years, null, 2));
+      return years;
+    } else {
+      return explore;
+    }
   }
-  if (!oneScenarioExploration) {
-    let years = chartData(allYearDataBuckets, numScenarioTimes);
-    console.log("YEARS", JSON.stringify(years, null, 2));
-    return years;
-  } else {
-    return explore;
-  }
+  // console.log("allYearDataBuckets hehe::>", allYearDataBuckets);
+
 }
 
 function chartData(allYearDataBuckets, numScenarioTimes) {
