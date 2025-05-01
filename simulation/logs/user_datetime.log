@@ -2208,3 +2208,107 @@ Log started at 2025-04-30T05:40:49.021Z
 [2027] REBALANCE | INVESTMENTS | Investment ID: 67e084385ca2a5376ad2efbd, value: $6,197.11, taxType: after-tax.
 [2027] REBALANCE | The rebalance has now been done.
 >>>>>>> 9686b2ce9192f0a35297655acc1f1ed73b76a44f
+[2025] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $5,000.Amount of cash you have to spend: "$76,847.53".
+[2025] NON-DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af31 | Value: $5,000
+[2025] NON-DISCRETIONARY | You paid all your non-discretionary expenses with cash...wow!.Amount of cash you have to spend: "$71,847.53".
+[2025] DISCRETIONARY | Amount of cash you have to spend: "$71,847.53".
+[2025] DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af32 | Value: $1,200
+[2025] DISCRETIONARY | You paid expense ID: 6811a238f0dff0346d46af32 all with cash..Amount of cash you have to spend: "$70,647.53".
+[2025] DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af33 | Value: $500
+[2025] DISCRETIONARY | You paid expense ID: 6811a238f0dff0346d46af33 all with cash..Amount of cash you have to spend: "$70,147.53".
+[2026] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $NaN.Amount of cash you have to spend: "$148,110.68".
+[2026] NON-DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af31 | Value: $NaN
+[2026] NON-DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $10,007.81
+[2026] NON-DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $2,001.79
+[2026] NON-DISCRETIONARY | You paid all your non-discretionary expenses...phew.
+[2026] NON-DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $10,007.81
+[2026] NON-DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $2,001.79
+[2026] DISCRETIONARY | Amount of cash you have to spend: "$0".
+[2026] DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af32 | Value: $NaN
+[2026] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $10,007.81
+[2026] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $2,001.79
+[2026] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $0
+[2026] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $2,001.79
+[2026] DISCRETIONARY | You were able to pay your discretionary expense without violating your financial goal..
+[2026] DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af33 | Value: $NaN
+[2026] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $0
+[2026] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $2,001.79
+[2026] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $0
+[2026] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $2,001.79
+[2026] DISCRETIONARY | You were able to pay your discretionary expense without violating your financial goal..
+[2027] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $NaN.Amount of cash you have to spend: "$78,487.07".
+[2027] NON-DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af31 | Value: $NaN
+[2027] NON-DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $0
+[2027] NON-DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $2,002.95
+[2027] NON-DISCRETIONARY | You paid all your non-discretionary expenses...phew.
+[2027] NON-DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $0
+[2027] NON-DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $2,002.95
+[2027] DISCRETIONARY | Amount of cash you have to spend: "$0".
+[2027] DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af32 | Value: $NaN
+[2027] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $0
+[2027] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $2,002.95
+[2027] DISCRETIONARY | This investment is already empty..
+[2027] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $0
+[2027] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $0
+[2027] DISCRETIONARY | You were able to pay your discretionary expense without violating your financial goal..
+[2027] DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af33 | Value: $NaN
+[2027] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $0
+[2027] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $0
+[2027] DISCRETIONARY | This investment is already empty..
+[2027] DISCRETIONARY | This investment is already empty..
+[2027] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $0
+[2027] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $0
+[2027] DISCRETIONARY | You were able to pay your discretionary expense without violating your financial goal..
+Log started at 2025-04-30T20:17:39.699Z
+[2025] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $5,000.Amount of cash you have to spend: "$76,364.14".
+[2025] NON-DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af31 | Value: $5,000
+[2025] NON-DISCRETIONARY | You paid all your non-discretionary expenses with cash...wow!.Amount of cash you have to spend: "$71,364.14".
+[2025] DISCRETIONARY | Amount of cash you have to spend: "$71,364.14".
+[2025] DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af32 | Value: $1,200
+[2025] DISCRETIONARY | You paid expense ID: 6811a238f0dff0346d46af32 all with cash..Amount of cash you have to spend: "$70,164.14".
+[2025] DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af33 | Value: $500
+[2025] DISCRETIONARY | You paid expense ID: 6811a238f0dff0346d46af33 all with cash..Amount of cash you have to spend: "$69,664.14".
+[2026] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $NaN.Amount of cash you have to spend: "$147,726.05".
+[2026] NON-DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af31 | Value: $NaN
+[2026] NON-DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $10,012.47
+[2026] NON-DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $2,002.79
+[2026] NON-DISCRETIONARY | You paid all your non-discretionary expenses...phew.
+[2026] NON-DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $10,012.47
+[2026] NON-DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $2,002.79
+[2026] DISCRETIONARY | Amount of cash you have to spend: "$0".
+[2026] DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af32 | Value: $NaN
+[2026] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $10,012.47
+[2026] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $2,002.79
+[2026] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $0
+[2026] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $2,002.79
+[2026] DISCRETIONARY | You were able to pay your discretionary expense without violating your financial goal..
+[2026] DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af33 | Value: $NaN
+[2026] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $0
+[2026] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $2,002.79
+[2026] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $0
+[2026] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $2,002.79
+[2026] DISCRETIONARY | You were able to pay your discretionary expense without violating your financial goal..
+[2027] NON-DISCRETIONARY | Amount you need to pay in Non-discretionary expenses - $NaN.Amount of cash you have to spend: "$79,615.69".
+[2027] NON-DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af31 | Value: $NaN
+[2027] NON-DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $0
+[2027] NON-DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $2,004.51
+[2027] NON-DISCRETIONARY | You paid all your non-discretionary expenses...phew.
+[2027] NON-DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $0
+[2027] NON-DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $2,004.51
+[2027] DISCRETIONARY | Amount of cash you have to spend: "$0".
+[2027] DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af32 | Value: $NaN
+[2027] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $0
+[2027] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $2,004.51
+[2027] DISCRETIONARY | This investment is already empty..
+[2027] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $0
+[2027] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $0
+[2027] DISCRETIONARY | You were able to pay your discretionary expense without violating your financial goal..
+[2027] DISCRETIONARY |  EXPENSE ID: 6811a238f0dff0346d46af33 | Value: $NaN
+[2027] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $0
+[2027] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $0
+[2027] DISCRETIONARY | This investment is already empty..
+[2027] DISCRETIONARY | This investment is already empty..
+[2027] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af20 | Value: $0
+[2027] DISCRETIONARY |  INVESTMENTS ID: 6811a237f0dff0346d46af2c | Value: $0
+[2027] DISCRETIONARY | You were able to pay your discretionary expense without violating your financial goal..
+[2027] INVEST | Excess cash: "$-1,000".Maximum cash to keep: "$1,000".
