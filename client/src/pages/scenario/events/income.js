@@ -1,13 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import {
-    ThemeProvider,
-    CssBaseline,
-    Container,
-    Button,
-    Stack,
-    Box,
-    Checkbox,
-    Typography
+    ThemeProvider, CssBaseline, Container, Button, Stack, Box, Checkbox, Typography
 } from "@mui/material";
 
 import theme from "../../../components/theme";

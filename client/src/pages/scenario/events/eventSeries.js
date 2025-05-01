@@ -1,15 +1,7 @@
 import React, { useContext } from "react";
-import {
-  ThemeProvider, CssBaseline, Container, Stack, Box,
-} from "@mui/material";
-import theme from "../../../components/theme";
-import Navbar from "../../../components/navbar";
+import { Stack, Box } from "@mui/material";
 
-import {
-    backContinueContainerStyles,
-    buttonStyles,
-    rowBoxStyles,
-} from "../../../components/styles";
+import { rowBoxStyles, } from "../../../components/styles";
 
 import CustomDropdown from "../../../components/customDropDown"; 
 import CustomInput from "../../../components/customInputBox";
@@ -21,7 +13,7 @@ const mongoose = require("mongoose");
 
 const EventSeries = ({ formValues, setFormValues }) => {
 // const EventSeries = () => {
-    const { eventEditMode, currIncome, currExpense, currInvest, currRebalance, tempExploration } = useContext(AppContext);
+    const { eventEditMode, currIncome, currExpense, currInvest, currRebalance } = useContext(AppContext);
     
     const menuLabels = [];
     const menuItems = [];

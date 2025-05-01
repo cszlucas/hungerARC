@@ -1,68 +1,17 @@
-import React, { useState, useContext, useMemo, useEffect, startTransition } from "react";
-import { flushSync } from "react-dom";
+import React, { useState, useContext, useMemo, useEffect } from "react";
 
 import {
-  ThemeProvider,
-  CssBaseline,
-  Container,
-  Typography,
-  Button,
-  Stack,
-  Box,
-  List,
-  MenuItem,
-  ListItem,
-  ListItemText,
-  TextField,
-  IconButton,
-  Backdrop,
-  Paper
+  Typography, Button, Stack, Box, List, MenuItem, ListItem, ListItemText, TextField, IconButton,
+  Backdrop, Paper
 } from "@mui/material";
-import theme from "../../../components/theme";
-import Navbar from "../../../components/navbar";
-import PageHeader from "../../../components/pageHeader";
-import { stackStyles, titleStyles, buttonStyles, backContinueContainerStyles, textFieldStyles, rowBoxStyles } from "../../../components/styles";
+import { textFieldStyles, rowBoxStyles } from "../../../components/styles";
 
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CustomInput from "../../../components/customInputBox";
 import CustomToggle from "../../../components/customToggle";
-import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
-import axios from "axios";
 import { AuthContext } from "../../../context/authContext";
-import EventSeries from "./eventSeries";
-import { ObjectId } from "bson";
-
-// const DEFAULT_FORM_VALUES = {
-//   _id: null,
-//   eventSeriesName: "",
-//   eventSeriesDescription: "",
-//   startYear: {
-//     type: "fixedAmt",
-//     value: "",
-//     mean: "",
-//     stdDev: "",
-//     min: "",
-//     max: "",
-//     refer: null,
-//   },
-//   duration: {
-//     type: "fixedAmt",
-//     value: "",
-//     mean: "",
-//     stdDev: "",
-//     min: "",
-//     max: ""
-//   },
-//   taxStatus: "non-retirement",
-//   assetAllocation: {
-//     type: "fixed",
-//     fixedPercentages: {},
-//     initialPercenatages: {},
-//     finalPercentages: {}
-//   }
-// };
 
 const TAX_MAP = {
   "non-retirement": "Taxable",
@@ -71,9 +20,7 @@ const TAX_MAP = {
 };
 
 const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPercentError }) => {
-  const { currRebalance, setCurrRebalance, currInvestments, currInvestmentTypes, setCurrScenario, editMode } = useContext(AppContext);
-  const { eventEditMode, setEventEditMode } = useContext(AppContext);
-  const { user } = useContext(AuthContext);
+  const { currInvestments, currInvestmentTypes } = useContext(AppContext);
   
   const investmentTypeMap = useMemo(() => (
     Object.fromEntries(currInvestmentTypes.map(i => [i._id, i]))

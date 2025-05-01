@@ -1,26 +1,21 @@
 import React, { useState, useContext } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Switch, MenuItem, TextField, IconButton, Backdrop, Fade } from "@mui/material";
+import { 
+  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, MenuItem, TextField, IconButton, 
+  Backdrop, Fade 
+} from "@mui/material";
 import theme from "../../components/theme";
 import Navbar from "../../components/navbar";
 import PageHeader from "../../components/pageHeader";
 import {
-  stackStyles,
-  titleStyles,
-  textFieldStyles,
-  backContinueContainerStyles,
-  buttonStyles,
-  rowBoxStyles,
+  stackStyles, titleStyles, textFieldStyles, backContinueContainerStyles, buttonStyles, rowBoxStyles,
 } from "../../components/styles";  // Import your modular styles
 import CustomInput from "../../components/customInputBox";
 import { Close as CloseIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../context/appContext";
 import {AuthContext} from "../../context/authContext";
-import { saveAs } from "file-saver";
-import yaml from "js-yaml";
 import axios from "axios";
 import { exportToYAML } from "./import-export/export";
-import CustomSave from "../../components/customSaveBtn";
 import DimensionalExploration from "../explore";
 // import investment from "../../../../server/models/investment";
 

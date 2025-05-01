@@ -1,8 +1,8 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
-  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, 
-  List, ListItem, ListItemText, IconButton, Backdrop, Dialog, DialogActions, DialogContent, DialogTitle 
+  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box,
+  List, ListItem, ListItemText, IconButton, Backdrop, Dialog, DialogContent, DialogTitle 
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import PaymentsIcon from "@mui/icons-material/Payments";
@@ -22,11 +22,11 @@ import {
 
 const EventSeriesList = () => {
   const [openBackdrop, setOpenBackdrop] = useState(false);
-  const {currIncome, setCurrIncome} = useContext(AppContext);
-  const {currExpense, setCurrExpense} = useContext(AppContext);
-  const {currInvest, setCurrInvest} = useContext(AppContext);
-  const {currRebalance, setCurrRebalance} = useContext(AppContext);
-  const {eventEditMode, setEventEditMode} = useContext(AppContext);
+  const {currIncome} = useContext(AppContext);
+  const {currExpense} = useContext(AppContext);
+  const {currInvest} = useContext(AppContext);
+  const {currRebalance} = useContext(AppContext);
+  const {setEventEditMode} = useContext(AppContext);
 
   let safeCurrIncome = Array.isArray(currIncome) ? currIncome : [];
   let safeCurrExpense = Array.isArray(currExpense) ? currExpense : [];
