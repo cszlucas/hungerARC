@@ -123,7 +123,7 @@ exports.importUserData = async (req, res) => {
     }
 
     // Save all data in parallel including the scenario
-    const [savedScenario] = await Promise.all([
+    await Promise.all([
       ...investments.map(i => new Investment(i).save()),
       ...investmentTypes.map(i => new InvestmentType(i).save()),
       ...income.map(e => new IncomeEvent(e).save()),
@@ -132,10 +132,9 @@ exports.importUserData = async (req, res) => {
       ...rebalance.map(e => new RebalanceEvent(e).save())
     ]);
     
-    console.log(scenario);
-    await new Scenario(scenario).save(); // Something seriously wrong with this save as its not saving set of investments correctly
+    await new Scenario(scenario).save();
 
-    user.scenarios.push(savedScenario._id);
+    user.scenarios.push(scenario._id);
     await user.save();
 
     return res.status(200).json({ message: "Scenario successfully imported" });

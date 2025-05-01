@@ -50,7 +50,7 @@ export const getInitialState = async (user) => {
       // console.log("Fetching scenarios for user:", userId);
       // Fetch scenarios from the backend
       const response = await axios.get(`http://localhost:8080/user/${userId}/scenarios`); // Adjust API route
-
+      console.log(response.data);
       if (response.data) {
           // console.log("Scenarios fetched from backend:", response.data);
           localStorage.setItem("scenarioData", JSON.stringify(response.data));
