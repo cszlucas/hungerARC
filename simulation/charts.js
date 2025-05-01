@@ -1,7 +1,8 @@
-function createYearDataBuckets(numYears) {
+function createYearDataBuckets(numYears, startYear) {
   const buckets = [];
   for (let i = 0; i < numYears; i++) {
     buckets.push({
+      year: startYear + i,  // Add year to each bucket
       investments: [],
       income: [],
       discretionary: [],
@@ -50,7 +51,7 @@ function buildChartDataFromBuckets(buckets, startYear, numScenarioTimes) {
   for (let i = 0; i < buckets.length; i++) {
     const yearIndex = i % numYears;
     const bucket = buckets[i];
-
+    
     yearBuckets[yearIndex].income.push(...bucket.income);
     yearBuckets[yearIndex].investments.push(...bucket.investments);
     yearBuckets[yearIndex].discretionary.push(...bucket.discretionary);
