@@ -18,6 +18,7 @@ import RunSimulations from "./pages/scenario/runSimulations";
 import Strategies from "./pages/scenario/strategies";
 import Charts from "./pages/charts";
 import OneDimensionalCharts from "./pages/odeCharts";
+import TwoDimensionalCharts from "./pages/tdeCharts";
 
 import reportWebVitals from "./reportWebVitals";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
@@ -49,7 +50,8 @@ const router = createBrowserRouter([
     ],
   },
   {path: "/charts", element: <Charts/>},
-  {path: "/ode", element: <OneDimensionalCharts/>}
+  {path: "/ode", element: <OneDimensionalCharts/>},
+  {path: "/tde", element: <TwoDimensionalCharts/>}
 ]);
 
 const root = ReactDOM.createRoot(document.getElementById("root"));

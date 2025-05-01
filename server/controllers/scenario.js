@@ -1,10 +1,12 @@
 const mongoose = require("mongoose");
 const Scenario = require("../models/scenario.js");
 const Investment = require("../models/investment.js");
+const InvestmentType = require("../models/investmentType.js");
+const { BaseEventSeries, IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent, AnnualChange } = require("../models/eventSeries.js");
+
 const User = require("../models/user.js");
 const { ObjectId } = mongoose.Types;
 const axios = require("axios");
-const { ExpenseEvent } = require("../models/eventSeries.js");
 const { main } = require("../../simulation/main.js");
 
 exports.scenario = async (req, res) => {
@@ -108,211 +110,42 @@ exports.deleteScenario = async (req, res) => {
 };
 
 exports.importUserData = async (req, res) => {
-  const { id } = req.params;
-  const {
-    name, filingStatus, birthYearSpouse, birthYearUser, lifeExpectancy, lifeExpectancySpouse,
-    setOfinvestmentTypes, setOfinvestments, income, expense, invest, rebalance,
-    inflationAssumption, irsLimit, spendingStrategy, expenseWithdrawalStrategy,
-    rmdStrategy, optimizerSettings, rothConversionStrategy, financialGoal, stateResident,
-  } = req.body;
-
-  if (inflationAssumption) {
-    inflationAssumption.inflationAssumptionType = inflationAssumption.type;
-  
-    if (inflationAssumption.inflationAssumptionType === "fixed") {
-      inflationAssumption.fixedRate = inflationAssumption.value;
-    }
-  }
-  
-  const basicInfoData = {
-    name,
-    filingStatus, //: maritalStatus === "couple" ? "married" : "single",
-    financialGoal,
-    inflationAssumption,
-    birthYearUser,
-    lifeExpectancy,
-    birthYearSpouse: birthYearSpouse ?? null,
-    lifeExpectancySpouse,
-    stateResident,
-    irsLimit,
-  };
-
   try {
-    const { data: scenarioData } = await axios.post(`http://localhost:8080/basicInfo/user/${id}`, basicInfoData);
-    const scenarioId = scenarioData._id;
+    const { id } = req.params;
+    const {
+      investments, investmentTypes, income, expense, invest, rebalance, scenario
+    } = req.body;
 
-    const investmentTypeMap = {};
-    const investmentMap = {};
-    // Handle investment types
-    for (const type of setOfinvestmentTypes) {
-      formatIssues([type]);
-      const { data: res } = await axios.post(`http://localhost:8080/scenario/${scenarioId}/investmentType`, type);
-      investmentTypeMap[res.name] = res._id;
+    const user = await User.findOne({ _id: id });
+    if (!user) {
+      console.log("user not found");
+      return res.status(404).json({ message: "user not found" });
     }
 
-    // Handle individual investments
-    for (const inv of setOfinvestments) {
-      formatIssues([inv]);
-      const investmentToCreate = {
-        investmentType: investmentTypeMap[inv.investmentType],
-        value: inv.value,
-        accountTaxStatus: inv.accountTaxStatus,
-      };
-      const { data: res } = await axios.post(`http://localhost:8080/scenario/${scenarioId}/investment`, investmentToCreate);
-      investmentMap[`${inv.id}`] = res._id;
-    }
+    // Save all data in parallel including the scenario
+    const [savedScenario] = await Promise.all([
+      ...investments.map(i => new Investment(i).save()),
+      ...investmentTypes.map(i => new InvestmentType(i).save()),
+      ...income.map(e => new IncomeEvent(e).save()),
+      ...expense.map(e => new ExpenseEvent(e).save()),
+      ...invest.map(e => new InvestEvent(e).save()),
+      ...rebalance.map(e => new RebalanceEvent(e).save())
+    ]);
     
-    // Convert asset allocation to IDs Mappings
-    for (const event of invest) {
-      if (event?.assetAllocation) {
-        event.assetAllocation = await assetAllocationToID(investmentMap, event.assetAllocation);
-      }
-    }
-    for (const event of rebalance) {
-      if (event?.assetAllocation) {
-        event.assetAllocation = await assetAllocationToID(investmentMap, event.assetAllocation);
-      }
-    }
+    console.log(scenario);
+    await new Scenario(scenario).save(); // Something seriously wrong with this save as its not saving set of investments correctly
 
-    // Event Series Mapping
-    const eventSeriesMapNameToId = {};
-    const eventMappings = [
-      { data: income, route: "incomeEvent" },
-      { data: expense, route: "expenseEvent" },
-      { data: invest, route: "investStrategy" },
-      { data: rebalance, route: "rebalanceStrategy" },
-    ];
+    user.scenarios.push(savedScenario._id);
+    await user.save();
 
-    // Assign unique IDs and map names
-    for (const { data } of eventMappings) {
-      formatIssues(data);
-      data.forEach(event => {
-        event._id = new ObjectId();
-        eventSeriesMapNameToId[event.eventSeriesName] = event._id;
-      });
-    }
+    return res.status(200).json({ message: "Scenario successfully imported" });
 
-    // Submit events
-    for (const { data, route } of eventMappings) {
-      for (const event of data) {
-        if (route === "expenseEvent") { console.log(event);}
-        console.log("=====================================");
-
-        event.startYear.refer = eventSeriesMapNameToId[event.startYear.refer] ?? null;
-        await axios.post(`http://localhost:8080/scenario/${scenarioId}/${route}`, event);
-      }
-    }
-
-    // Map strategy names to IDs and update scenario
-    const update = await axios.post(`http://localhost:8080/updateScenario/${scenarioId}`, {
-      spendingStrategy: await mapStrategyNamesToIds("expense", spendingStrategy),
-      expenseWithdrawalStrategy: await mapStrategyNamesToIds("investments", expenseWithdrawalStrategy),
-      rmdStrategy: await mapStrategyNamesToIds("investments", rmdStrategy),
-      rothConversionStrategy: await mapStrategyNamesToIds("investments", rothConversionStrategy),
-      optimizerSettings,
-    });
-
-    return res.status(200).json({ scenario: update.data.scenario });
-  } catch (error) {
-    logAxiosError("importing user data", error);
-    return res.status(500).json({ error: error.message });
+  } catch (err) {
+    console.error("Import error:", err);
+    return res.status(500).json({ message: "Server error during import" });
   }
 };
 
-function logAxiosError(context, error) {
-  if (error.response) {
-    console.error(`Error ${context}:`, error.response.data);
-  } else {
-    console.error(`Error ${context}:`, error.message);
-  }
-}
-
-async function assetAllocationToID(investmentMap, assetAllocation) {
-  function mapKeysToIds(percentagesObj, nameIdToInvestmentId) {
-    const result = {};
-    for (const [name, value] of Object.entries(percentagesObj)) {
-      const id = nameIdToInvestmentId[name]; // Use name directly
-      if (id) {
-        result[id] = value;
-      } else {
-        console.warn(`No investment ID found for investment type name: ${name}`);
-      }
-    }
-    // console.log(result);
-    return result;
-  }
-  // console.log(assetAllocation.fixedPercentages);
-  return {
-    ...assetAllocation,
-    fixedPercentages: mapKeysToIds(assetAllocation.fixedPercentages || {}, investmentMap),
-    initialPercentages: mapKeysToIds(assetAllocation.initialPercentages || {}, investmentMap),
-    finalPercentages: mapKeysToIds(assetAllocation.finalPercentages || {}, investmentMap),
-  };
-}
-
-async function mapStrategyNamesToIds(type, strategyNames) {
-  let typeMap = {};
-
-  if (type === "expense") {
-    const expenses = await ExpenseEvent.find({
-      eventSeriesName: { $in: strategyNames },
-    });
-    typeMap = expenses.reduce((acc, expense) => {
-      acc[expense.eventSeriesName] = expense._id;
-      return acc;
-    }, {});
-    //console.log("expenses", expenses);
-  } else if (type === "investments") {
-    const investments = await Investment.find().populate("investmentType");
-
-    typeMap = investments.reduce((acc, inv) => {
-      const typeName = inv.investmentType?.name; // populated from ref
-      const taxStatus = inv.accountTaxStatus;
-
-      if (typeName && taxStatus) {
-        const compoundId = `${typeName} ${taxStatus}`;
-        acc[compoundId] = inv._id;
-      }
-
-      return acc;
-    }, {});
-  }
-
-  return strategyNames.map((name) => typeMap[name]).filter((id) => id !== undefined);
-}
-
-function formatIssues(data) {
-  for (const d of data) {
-    if (d.startYear?.type === "fixed") {
-      d.startYear.type = "fixedAmt";
-    }
-    if (d.startYear?.type === "startWith") {
-      d.startYear.type = "same";
-    }
-    if (d.duration?.type === "fixed") {
-      d.duration.type = "fixedAmt";
-    }
-    if (d.annualChange?.type === "percent") {
-      d.annualChange.type = "percentage";
-    }
-    if (d.annualChange?.type === "amount") {
-      d.annualChange.type = "fixed";
-      d.annualChange.amount = 0;
-    }
-    if (d.annualReturn?.unit === "amount") {
-      d.annualReturn.unit = "fixed";
-    }
-    if (d.annualReturn?.unit === "percent") {
-      d.annualReturn.unit = "percentage";
-    }
-    if (d.annualIncome?.unit === "amount") {
-      d.annualIncome.unit = "fixed";
-    }
-    if (d.annualIncome?.unit === "percent") {
-      d.annualIncome.unit = "percentage";
-    }
-  }
-}
 
 
 exports.simulateScenario = async (req, res) => {
