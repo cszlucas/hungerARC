@@ -71,24 +71,25 @@ const RunSimulation = () => {
 
   const getChartData = async () => {
     try {
-      console.log(user._id);
-      console.log(currScenario._id);
+      const entireFormData = {
+        investmentType: currInvestmentTypes,
+        investment: currInvestments,
+        expense: currExpense,
+        income: currIncome,
+        invest: currInvest,
+        rebalance: currRebalance,
+        scenario: currScenario,
+        exploration: tempExploration,
+        userId: user._id,
+        simulationCount: numSimulations,
+      };
+
+      console.log(entireFormData);
       const response = await axios.get("http://localhost:8080/runSimulation", {
-        params: {
-          investmentType: currInvestmentTypes,
-          invest: currInvest,
-          rebalance: currRebalance,
-          expense: currExpense,
-          income: currIncome,
-          investment: currInvestments,
-          scenario: currScenario,
-          exploration: tempExploration,
-          userId: user._id,
-          simulationCount: numSimulations,
-          scenarioId: currScenario._id,
-        },
+        params: entireFormData,
       });
-      console.log(response);
+
+      // console.log(response);
       console.log(response.data);
       navigate("/charts", {
         state: { chartData: response.data }

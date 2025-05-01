@@ -79,7 +79,9 @@ const ScenarioList = () => {
                     <Typography variant="h6" component="h5" sx={{ marginRight: 2 }}>
                         Existing Scenarios
                     </Typography>
+                    
                     <ImportBtn/>
+
                     <Button 
                         variant="contained" 
                         color="secondary" // Uses the theme's secondary color
