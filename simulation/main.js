@@ -5,7 +5,7 @@ const Scenario = require("../server/models/scenario");
 const Investment = require("../server/models/investment");
 const InvestmentType = require("../server/models/investmentType");
 const User = require("../server/models/user.js");
-const { buildChartDataFromBuckets } = require("./charts.js");
+const { buildChartDataFromBuckets, exploreData, chartData } = require("./charts.js");
 const { IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent } = require("../server/models/eventSeries");
 const { calculateLifeExpectancy } = require("./algo.js");
 const { runSimulation } = require("./simulation.js");
@@ -245,46 +245,6 @@ async function main(investmentType2, invest2, rebalance2, expense2, income2, inv
   }
 }
 
-function chartData(allYearDataBuckets, numScenarioTimes) {
-  //console.log("allYearDataBuckets", JSON.stringify(allYearDataBuckets, null, 2));
-  const flattenedBuckets = allYearDataBuckets.flat();
-  // console.log("flattenedBuckets", flattenedBuckets)
-
-  const { startYear, endYear, data } = buildChartDataFromBuckets(flattenedBuckets, 2025, numScenarioTimes);
-  // console.log("DATA", JSON.stringify(data, null, 2));
-  // console.log("DATA", data);
-  const years = [];
-  for (let i = 0; i <= endYear - startYear; i++) {
-    years.push({
-      year: startYear + i,
-      income: data.income[i],
-      investments: data.investments[i],
-      discretionary: data.discretionary[i],
-      nonDiscretionary: data.nonDiscretionary[i],
-      taxes: data.taxes[i],
-      earlyWithdrawals: data.earlyWithdrawals[i],
-    });
-  }
-  return years;
-}
-
-function exploreData(allYearDataBuckets, explorationData, paramValueCombo, year) {
-  // Create simulations in desired format
-  //console.log("DATA", JSON.stringify(allYearDataBuckets, null, 2));
-  const simulations = allYearDataBuckets.map((simulation) =>
-    simulation.map((yearData) => ({
-      year: yearData.year,
-      investment: yearData.investments,
-    }))
-  );
-
-  explorationData.values.push({
-    value: paramValueCombo, // e.g., [20, 100]
-    simulations,
-  });
-
-  return explorationData;
-}
 
 // Call the main function to execute everything
 // main(1, "67df22db4996aba7bb6e8d73");

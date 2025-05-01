@@ -73,8 +73,52 @@ function buildChartDataFromBuckets(buckets, startYear, numScenarioTimes) {
   return { startYear, endYear, data };
 }
 
+function exploreData(allYearDataBuckets, explorationData, paramValueCombo, year) {
+  // Create simulations in desired format
+  //console.log("DATA", JSON.stringify(allYearDataBuckets, null, 2));
+  const simulations = allYearDataBuckets.map((simulation) =>
+    simulation.map((yearData) => ({
+      year: yearData.year,
+      investment: yearData.investments,
+    }))
+  );
+
+  explorationData.values.push({
+    value: paramValueCombo, // e.g., [20, 100]
+    simulations,
+  });
+
+  return explorationData;
+}
+
+function chartData(allYearDataBuckets, numScenarioTimes) {
+  //console.log("allYearDataBuckets", JSON.stringify(allYearDataBuckets, null, 2));
+  const flattenedBuckets = allYearDataBuckets.flat();
+  // console.log("flattenedBuckets", flattenedBuckets)
+
+  const { startYear, endYear, data } = buildChartDataFromBuckets(flattenedBuckets, 2025, numScenarioTimes);
+  // console.log("DATA", JSON.stringify(data, null, 2));
+  // console.log("DATA", data);
+  const years = [];
+  for (let i = 0; i <= endYear - startYear; i++) {
+    years.push({
+      year: startYear + i,
+      income: data.income[i],
+      investments: data.investments[i],
+      discretionary: data.discretionary[i],
+      nonDiscretionary: data.nonDiscretionary[i],
+      taxes: data.taxes[i],
+      earlyWithdrawals: data.earlyWithdrawals[i],
+    });
+  }
+  return years;
+}
+
+
 module.exports = {
   buildChartDataFromBuckets,
   updateYearDataBucket,
   createYearDataBuckets,
+  exploreData,
+  chartData
 };
