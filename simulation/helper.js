@@ -90,12 +90,12 @@ function randomNormal(mean, stdDev) {
   let u = rand();
   let v = rand();
   let z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-  console.log('u :>> ', u);
-  console.log('v :>> ', v);
-  console.log('z :>> ', z);
-  console.log("mean: ", typeof mean);   
-console.log("stdev", typeof stdDev); 
-  console.log('mean+z*stdDev :>> ', mean+z*stdDev);
+  //console.log('u :>> ', u);
+  //console.log('v :>> ', v);
+  //console.log('z :>> ', z);
+  //console.log("mean: ", typeof mean);   
+// console.log("stdev", typeof stdDev); 
+//   console.log('mean+z*stdDev :>> ', mean+z*stdDev);
   return mean + z * stdDev;
 }
 

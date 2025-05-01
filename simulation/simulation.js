@@ -81,15 +81,15 @@ async function runSimulation(
   let prevYearSS = 0;
   let prevYearEarlyWithdrawals = 0;
   let prevYearGains = 0;
-  console.log('investmentTypes :>> ', investmentTypes);
+//console.log('investmentTypes :>> ', investmentTypes);
   let cashInvestmentType = investmentTypes.find((inv) => inv.name === "Cash");
-  console.log("CASH INVESTMENT TYPE: ", cashInvestmentType);
-  console.log('investments :>> ', investments);
+  //console.log("CASH INVESTMENT TYPE: ", cashInvestmentType);
+ // console.log('investments :>> ', investments);
   let cashInvestment;
   if (cashInvestmentType) {
     let cashId = cashInvestmentType._id;
     cashInvestment = investments.find((inv) => inv.investmentType === cashId);
-    clog("CASH INVESTMENT: ", cashInvestment);
+    //console.log("CASH INVESTMENT: ", cashInvestment);
   }
 
   let yearDataBuckets = createYearDataBuckets(3); //2 is numYears

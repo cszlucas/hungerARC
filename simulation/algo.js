@@ -53,7 +53,7 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
   // console.log("fedIncomeTaxBracket :>> ", federalIncomeTax);
   let u = findUpperFedTaxBracket(curYearFedTaxableIncome, federalIncomeTax);
   // roth conversation amount
-  console.log("u :>> ", u);
+ // console.log("u :>> ", u);
   console.log("fedDeduction :>> ", fedDeduction);
   console.log("curYearFedTaxableIncome :>> ", curYearFedTaxableIncome);
   let rc = u - (curYearFedTaxableIncome - fedDeduction);

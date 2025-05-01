@@ -1,12 +1,8 @@
 const mongoose = require("mongoose");
 const StateTax = require("../server/models/stateTax.js");
 const Tax = require("../server/models/tax.js");
-//const Scenario = require("../server/models/scenario");
-//const Investment = require("../server/models/investment");
-//const InvestmentType = require("../server/models/investmentType");
 const User = require("../server/models/user.js");
 const { buildChartDataFromBuckets } = require("./charts.js");
-//const { IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent } = require("../server/models/eventSeries");
 const { calculateLifeExpectancy } = require("./algo.js");
 const { runSimulation } = require("./simulation.js");
 const path = require("path");
@@ -16,43 +12,12 @@ class DataStore {
     this.taxData = this.stateTax = this.scenario = this.investment = this.income = this.expense = this.rebalance = this.invest = this.investmentType = this.user = {};
   }
   async populateData(scenarioId, userId, residence) {
-    //const query = { _id: new mongoose.Types.ObjectId(scenarioId) };
     try {
-      // const scenario = await Scenario.findOne(query);
-      // if (!scenario) {
-      //   console.log("Scenario not found");
-      //   return;
-      // }
-      // this.scenario = scenario;
-      // const investment = await Investment.find({
-      //   _id: { $in: scenario.setOfInvestments },
-      // });
-      // investment.purchasePrice = 0;
-      // this.investment = investment;
-      // const income = await IncomeEvent.find({
-      //   _id: { $in: scenario.incomeEventSeries },
-      // });
-      // this.income = income;
-      // const expense = await ExpenseEvent.find({
-      //   _id: { $in: scenario.expenseEventSeries },
-      // });
-      // this.expense = expense;
-      // const invest = await InvestEvent.find({
-      //   _id: { $in: scenario.investEventSeries },
-      // });
-      // this.invest = invest;
-      // const rebalance = await RebalanceEvent.find({
-      //   _id: { $in: scenario.rebalanceEventSeries },
-      // });
-      // this.rebalance = rebalance;
       const tax = await Tax.find();
       this.taxData = tax;
       const user = await User.findById(userId);
       this.user = user;
       const stateTaxAll = await StateTax.find();
-
-      // const stateTaxDocs = await StateTax.find(); // get all for direct lookup
-      // const residence = scenario.stateResident;
 
       let matchedTax = null;
 
@@ -112,54 +77,6 @@ function getEvent(listData, data) {
   }
 }
 
-//   investmentType: currInvestmentTypes,
-// invest: currInvest,
-// rebalance: currRebalance,
-// expense: currExpense,
-// income: currIncome,
-// investment: currInvestments,
-// scenario: currScenario,
-// exploration: tempExploration,
-// userId: user._id,
-// simulationCount: numSimulations,
-
-// function formatToNumber(obj){
-//   console.log("formatToNumber", obj);
-//   const numberFields = new Set([
-//     'initialAmount', 'userPercentage', 
-//     'value', 'calculated',
-//     'min', 'max',
-//     'amount', 'mean', 'stdDev'
-//   ]);
-  
-//   const booleanFields = new Set([
-//     'inflationAdjustment', 'isSocialSecurity'
-//   ]);
-//   for (const k in obj){
-//     for (const key in obj[k]) {
-//       // console.log('key :>> ', key);
-//       // console.log('obj[key] :>> ', obj[k][key]);
-//       if (numberFields.has(key)) {
-//         const num = Number(obj[k][key]);
-//         if (!isNaN(num)) obj[k][key] = num;
-//       } else if (booleanFields.has(key)) {
-//         obj[k][key] = obj[k][key] === 'true';
-//       } else if (typeof obj[k][key] === 'object' && obj[k][key] !== null) {
-//         for (const subKey in obj[k][key]) {
-//           // console.log('subKey :>> ', subKey);
-//           if (numberFields.has(subKey)) {
-//             const num = Number(obj[k][key][subKey]);
-//             // console.log('num :>> ', num);
-//             if (!isNaN(num)) obj[k][key][subKey] = num;
-//           }
-//         }
-//       }
-//     }
-//   }
-//   console.log("formatted object", obj);
-//   return obj;
-// }
-
 function formatToNumber(obj) {
   const numberFields = new Set([
     'initialAmount', 'userPercentage',
@@ -167,7 +84,7 @@ function formatToNumber(obj) {
     'min', 'max',
     'amount', 'mean', 'stdDev', 
     'expenseRatio', 'maxCash', 'purchasePrice', 
-    'fixedPercentages', 'initialPercentages', 'finalPercentages'
+    'fixedPercentages', 'initialPercentages', 'finalPercentages', 'fixedPercentages', 'initialPercentages', 'finalPercentages'
   ]);
 
   //'fixedPercentages', 'initialPercentages', 'finalPercentages'
@@ -180,9 +97,6 @@ function formatToNumber(obj) {
       return o.map(recurse);
     } else if (o && typeof o === 'object') {
       for (const key in o) {
-        // if (numberFields.has(key)) {
-        //   const num = Number(o[key]);
-          // if (!isNaN(num)) o[key] = num;
           if (numberFields.has(key)) {
             if (typeof o[key] === 'object' && o[key] !== null) {
               // Map-like object: convert all values
@@ -233,43 +147,25 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   // change numbers from string to number
   //console.log('income before :>> ', income);
   formatToNumber(income);
-  console.log("income after", income);
+  //console.log("income after", income);
   //console.log('expense before :>> ', expense);
   formatToNumber(expense);
-  console.log("expense after", expense);
+  //console.log("expense after", expense);
   //console.log('rebalance before :>> ', rebalance);
   formatToNumber(rebalance);
-  //console.log("rebalance after", rebalance);
-  // console.dir(rebalance, { depth: null, colors: true });
-  //console.log('invest before :>> ', investment);
-  //console.log('invest allo after :>> ', invest.assetAllocation);
   formatToNumber(invest);
   //console.log("invest after", invest);
-  console.dir(rebalance, { depth: null, colors: true });
+  //console.dir(rebalance, { depth: null, colors: true });
 
   //console.log("invesmtnet before >>", investment);
   formatToNumber(investment);
   investment.purchasePrice = 0;
-  console.log("invesmtnet after >>", investment);
- // console.log("ALOCATE", JSON.stringify(invest, null, 2));
- // console.log("ALOCATE2", JSON.stringify(rebalance, null, 2));
-  // console.log("invesmtnetType before >>", investmentType);
+  //console.log("invesmtnet after >>", investment);
   formatToNumber(investmentType);
   console.log("invesmtnetType after >>", investmentType);
-  // const { taxData, scenario, stateTax, invest, income, expense, rebalance, investment, investmentType, user } = {
-  //   taxData: dataStore.getData("taxData"),
-  //   scenario: dataStore.getData("scenario"),
-  //   stateTax: dataStore.getData("stateTax"),
-  //   invest: dataStore.getData("invest"),
-  //   income: dataStore.getData("income"),
-  //   expense: dataStore.getData("expense"),
-  //   rebalance: dataStore.getData("rebalance"),
-  //   investment: dataStore.getData("investment"),
-  //   investmentType: dataStore.getData("investmentType"),
-  //   user: dataStore.getData("user"),
-  // };
-  // console.log("scenario: ", scenario);
-  // console.log("stateTax :>> ", dataStore.stateTax);
+//    console.log("ALOCATE", JSON.stringify(invest, null, 2));
+//  console.log("ALOCATE2", JSON.stringify(rebalance, null, 2));
+ 
   const startYearPrev = (new Date().getFullYear() - 1).toString();
   //calculate life expectancy
   const { lifeExpectancyUser, lifeExpectancySpouse } = calculateLifeExpectancy(scenario);
