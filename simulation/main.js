@@ -1,12 +1,8 @@
 const mongoose = require("mongoose");
 const StateTax = require("../server/models/stateTax.js");
 const Tax = require("../server/models/tax.js");
-const Scenario = require("../server/models/scenario");
-const Investment = require("../server/models/investment");
-const InvestmentType = require("../server/models/investmentType");
 const User = require("../server/models/user.js");
 const { buildChartDataFromBuckets } = require("./charts.js");
-const { IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent } = require("../server/models/eventSeries");
 const { calculateLifeExpectancy } = require("./algo.js");
 const { runSimulation } = require("./simulation.js");
 const path = require("path");
@@ -15,44 +11,13 @@ class DataStore {
   constructor() {
     this.taxData = this.stateTax = this.scenario = this.investment = this.income = this.expense = this.rebalance = this.invest = this.investmentType = this.user = {};
   }
-  async populateData(scenarioId, userId) {
-    const query = { _id: new mongoose.Types.ObjectId(scenarioId) };
+  async populateData(scenarioId, userId, residence) {
     try {
-      const scenario = await Scenario.findOne(query);
-      if (!scenario) {
-        console.log("Scenario not found");
-        return;
-      }
-      this.scenario = scenario;
-      const investment = await Investment.find({
-        _id: { $in: scenario.setOfInvestments },
-      });
-      investment.purchasePrice = 0;
-      this.investment = investment;
-      const income = await IncomeEvent.find({
-        _id: { $in: scenario.incomeEventSeries },
-      });
-      this.income = income;
-      const expense = await ExpenseEvent.find({
-        _id: { $in: scenario.expenseEventSeries },
-      });
-      this.expense = expense;
-      const invest = await InvestEvent.find({
-        _id: { $in: scenario.investEventSeries },
-      });
-      this.invest = invest;
-      const rebalance = await RebalanceEvent.find({
-        _id: { $in: scenario.rebalanceEventSeries },
-      });
-      this.rebalance = rebalance;
       const tax = await Tax.find();
       this.taxData = tax;
       const user = await User.findById(userId);
       this.user = user;
       const stateTaxAll = await StateTax.find();
-
-      // const stateTaxDocs = await StateTax.find(); // get all for direct lookup
-      const residence = scenario.stateResident;
 
       let matchedTax = null;
 
@@ -68,10 +33,10 @@ class DataStore {
       }
       this.stateTax = matchedTax;
 
-      const investmentType = await InvestmentType.find({
-        _id: { $in: scenario.setOfInvestmentTypes },
-      });
-      this.investmentType = investmentType;
+      // const investmentType = await InvestmentType.find({
+      //   _id: { $in: scenario.setOfInvestmentTypes },
+      // });
+      // this.investmentType = investmentType;
     } catch (err) {
       console.log("Error while populating data:", err);
     }
@@ -112,23 +77,58 @@ function getEvent(listData, data) {
   }
 }
 
-//   investmentType: currInvestmentTypes,
-// invest: currInvest,
-// rebalance: currRebalance,
-// expense: currExpense,
-// income: currIncome,
-// investment: currInvestments,
-// scenario: currScenario,
-// exploration: tempExploration,
-// userId: user._id,
-// simulationCount: numSimulations,
+function formatToNumber(obj) {
+  const numberFields = new Set([
+    'initialAmount', 'userPercentage',
+    'value', 'calculated',
+    'min', 'max',
+    'amount', 'mean', 'stdDev', 
+    'expenseRatio', 'maxCash', 'purchasePrice', 
+    'fixedPercentages', 'initialPercentages', 'finalPercentages', 'fixedPercentages', 'initialPercentages', 'finalPercentages'
+  ]);
 
-async function main(investmentType2, invest2, rebalance2, expense2, income2, investment2, scenario2, exploration, userId, numScenarioTimes, scenarioId) {
+  //'fixedPercentages', 'initialPercentages', 'finalPercentages'
+  const booleanFields = new Set([
+    'inflationAdjustment', 'isSocialSecurity', 'isDiscretionary'
+  ]);
+  
+  function recurse(o) {
+    if (Array.isArray(o)) {
+      return o.map(recurse);
+    } else if (o && typeof o === 'object') {
+      for (const key in o) {
+          if (numberFields.has(key)) {
+            if (typeof o[key] === 'object' && o[key] !== null) {
+              // Map-like object: convert all values
+              for (const subKey in o[key]) {
+                const num = Number(o[key][subKey]);
+                if (!isNaN(num)) o[key][subKey] = num;
+              }
+            } else {
+              const num = Number(o[key]);
+              if (!isNaN(num)) o[key] = num;
+            }
+        } else if (booleanFields.has(key)) {
+          o[key] = o[key] === 'true';
+        } else if (typeof o[key] === 'object' && o[key] !== null) {
+          o[key] = recurse(o[key]); // recurse deeper
+        }
+      }
+    }
+    return o;
+  }
+
+  return recurse(obj);
+}
+
+
+
+async function main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, numScenarioTimes, scenarioId) {
   //console.log("exploration",JSON.stringify(exploration, null, 2));
   // not sure how to get a value using this, not needed
   var distributions = require("distributions");
   const dataStore = new DataStore();
-  await Promise.all([dataStore.populateData(scenarioId, userId)]);
+  await Promise.all([dataStore.populateData(scenarioId, userId, scenario.stateResident)]);
   //console.log("our scenario \n\n", dataStore);
 
   const csvLog = []; // For user_datetime.csv
@@ -138,20 +138,34 @@ async function main(investmentType2, invest2, rebalance2, expense2, income2, inv
     values: [],
   };
 
-  const { taxData, scenario, stateTax, invest, income, expense, rebalance, investment, investmentType, user } = {
+  const { taxData, stateTax, user } = {
     taxData: dataStore.getData("taxData"),
-    scenario: dataStore.getData("scenario"),
     stateTax: dataStore.getData("stateTax"),
-    invest: dataStore.getData("invest"),
-    income: dataStore.getData("income"),
-    expense: dataStore.getData("expense"),
-    rebalance: dataStore.getData("rebalance"),
-    investment: dataStore.getData("investment"),
-    investmentType: dataStore.getData("investmentType"),
-    user: dataStore.getData("user"),
+    user: dataStore.getData("user")
   };
-  // console.log("scenario: ", scenario);
-  // console.log("stateTax :>> ", dataStore.stateTax);
+
+  // change numbers from string to number
+  //console.log('income before :>> ', income);
+  formatToNumber(income);
+  //console.log("income after", income);
+  //console.log('expense before :>> ', expense);
+  formatToNumber(expense);
+  //console.log("expense after", expense);
+  //console.log('rebalance before :>> ', rebalance);
+  formatToNumber(rebalance);
+  formatToNumber(invest);
+  //console.log("invest after", invest);
+  //console.dir(rebalance, { depth: null, colors: true });
+
+  //console.log("invesmtnet before >>", investment);
+  formatToNumber(investment);
+  investment.purchasePrice = 0;
+  //console.log("invesmtnet after >>", investment);
+  formatToNumber(investmentType);
+  console.log("invesmtnetType after >>", investmentType);
+//    console.log("ALOCATE", JSON.stringify(invest, null, 2));
+//  console.log("ALOCATE2", JSON.stringify(rebalance, null, 2));
+ 
   const startYearPrev = (new Date().getFullYear() - 1).toString();
   //calculate life expectancy
   const { lifeExpectancyUser, lifeExpectancySpouse } = calculateLifeExpectancy(scenario);
@@ -170,6 +184,8 @@ async function main(investmentType2, invest2, rebalance2, expense2, income2, inv
   let explore;
   let foundData;
   let parameter;
+  console.log('exploration :>> ', exploration);
+  if(exploration){
   if (exploration.length == 1) {
     oneScenarioExploration = true;
     type = exploration[0].type;
@@ -180,7 +196,7 @@ async function main(investmentType2, invest2, rebalance2, expense2, income2, inv
     parameter = exploration[0].parameter;
     explorationData.parameter = parameter;
   }
-
+  }
   let isFirstIteration = true;
   //return;
   for (let i = lowerBound; i <= upperBound; i += stepSize) {
@@ -228,7 +244,6 @@ async function main(investmentType2, invest2, rebalance2, expense2, income2, inv
         eventLog
       );
       allYearDataBuckets.push(yearDataBuckets);
-
       // logs only for the first simulation
       if (x == 0) {
         const userName = user.email.split("@")[0];
@@ -245,14 +260,17 @@ async function main(investmentType2, invest2, rebalance2, expense2, income2, inv
       console.log("EXPLORE", JSON.stringify(explore, null, 2));
       return explore;
     }
+      
+    if (!oneScenarioExploration) {
+      let years = chartData(allYearDataBuckets, numScenarioTimes);
+      console.log("YEARS", JSON.stringify(years, null, 2));
+      return years;
+    } else {
+      return explore;
+    }
   }
-  if (!oneScenarioExploration) {
-    let years = chartData(allYearDataBuckets, numScenarioTimes);
-    console.log("YEARS", JSON.stringify(years, null, 2));
-    return years;
-  } else {
-    return explore;
-  }
+  // console.log("allYearDataBuckets hehe::>", allYearDataBuckets);
+
 }
 
 function chartData(allYearDataBuckets, numScenarioTimes) {
