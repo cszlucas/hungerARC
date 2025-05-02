@@ -6,6 +6,8 @@ const { buildChartDataFromBuckets, exploreData, chartData } = require("./charts.
 const { calculateLifeExpectancy } = require("./algo.js");
 const { runSimulation } = require("./simulation.js");
 const path = require("path");
+const { formatToNumber } = require("./helper.js");
+const { getEvent, scenarioExplorationUpdate, generateParameterCombinations } = require("./exploration.js");
 
 class DataStore {
   constructor() {
@@ -47,91 +49,6 @@ class DataStore {
   }
 }
 
-function scenarioExploration(foundData, parameter, value) {
-  if (parameter == "Start Year" || parameter == "Duration") {
-    foundData.startYear.calculated += value;
-  } else if (parameter == "Initial Amount") {
-    foundData.initialAmount += value;
-  } else if (parameter == "Asset Allocation") {
-    if (foundData.assetAllocation.fixedPercentages.length != 0) {
-      // Fixed allocation
-      foundData.assetAllocation.fixedPercentages[0].value += value;
-      foundData.assetAllocation.fixedPercentages[1].value += 100 - foundData.assetAllocation.fixedPercentages[0].value;
-    } else if (foundData.assetAllocation.initialPercentages.length != 0) {
-      // Glide Path allocation
-      foundData.assetAllocation.initialPercentages[0].value += value;
-      foundData.assetAllocation.initialPercentages[1].value = 100 - foundData.assetAllocation.initialPercentages[0].value;
-    }
-  }
-  return foundData;
-}
-
-function getEvent(listData, data) {
-  const e = listData.find((item) => item._id === data._id);
-  if (e) {
-    //console.log("Event found:", e);
-    return e;
-  } else {
-    console.log("Event not found.");
-    return null;
-  }
-}
-
-function formatToNumber(obj) {
-  const numberFields = new Set([
-    "initialAmount",
-    "userPercentage",
-    "value",
-    "calculated",
-    "min",
-    "max",
-    "amount",
-    "mean",
-    "stdDev",
-    "expenseRatio",
-    "maxCash",
-    "purchasePrice",
-    "fixedPercentages",
-    "initialPercentages",
-    "finalPercentages",
-    "fixedPercentages",
-    "initialPercentages",
-    "finalPercentages",
-  ]);
-
-  //'fixedPercentages', 'initialPercentages', 'finalPercentages'
-  const booleanFields = new Set(["inflationAdjustment", "isSocialSecurity", "isDiscretionary"]);
-
-  function recurse(o) {
-    if (Array.isArray(o)) {
-      return o.map(recurse);
-    } else if (o && typeof o === "object") {
-      for (const key in o) {
-        if (numberFields.has(key)) {
-          if (typeof o[key] === "object" && o[key] !== null) {
-            // Map-like object: convert all values
-            for (const subKey in o[key]) {
-              const num = Number(o[key][subKey]);
-              if (!isNaN(num)) o[key][subKey] = num;
-            }
-          } else {
-            const num = Number(o[key]);
-            if (!isNaN(num)) o[key] = num;
-          }
-        } else if (booleanFields.has(key)) {
-          o[key] = o[key] === "true";
-        } else if (typeof o[key] === "object" && o[key] !== null) {
-          o[key] = recurse(o[key]); // recurse deeper
-        }
-      }
-    }
-    return o;
-  }
-
-  return recurse(obj);
-}
-
-
 async function main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, numScenarioTimes) {
   //console.log("exploration",JSON.stringify(exploration, null, 2));
   // not sure how to get a value using this, not needed
@@ -142,10 +59,6 @@ async function main(investmentType, invest, rebalance, expense, income, investme
 
   const csvLog = []; // For user_datetime.csv
   const eventLog = []; // For user_datetime.log
-  const explorationData = {
-    parameter: [],
-    values: [],
-  };
 
   const { taxData, stateTax, user } = {
     taxData: dataStore.getData("taxData"),
@@ -173,46 +86,52 @@ async function main(investmentType, invest, rebalance, expense, income, investme
 
   //default values if no scenario exploration
   let oneScenarioExploration = false;
-  let type = "";
-  let lowerBound = 1;
-  let upperBound = 1;
-  let stepSize = 1;
-  let dataExplore;
+  let explorationData = { parameter: [], values: [] };
+  let type = [];
+  let lowerBound = [];
+  let upperBound = [];
+  let stepSize = [];
+  let dataExplore = [];
   let explore;
-  let foundData;
-  let parameter;
+  let foundData=[];
+  let parameter = [];
+  let combinations = generateParameterCombinations(exploration);
   const typeToData = {
     Income: income,
     Expense: expense,
     Invest: invest,
     Rebalance: rebalance,
   };
+
   console.log("exploration :>> ", exploration);
-  if (exploration && exploration.length == 1) {
-    oneScenarioExploration = true;
-    type = exploration[0].type;
-    lowerBound = Number(exploration[0].range.lower);
-    upperBound = Number(exploration[0].range.upper);
-    stepSize = Number(exploration[0].range.steps);
-    dataExplore = exploration[0].data;
-    parameter = exploration[0].parameter;
-    explorationData.parameter = parameter;
+  if (exploration && exploration.length >= 1) {
+    for (let i = 0; i < exploration.length; i++) {
+      type[i] = exploration[i].type;
+      lowerBound[i] = Number(exploration[i].range.lower);
+      upperBound[i] = Number(exploration[i].range.upper);
+      stepSize[i] = Number(exploration[i].range.steps);
+      dataExplore[i] = exploration[i].data;
+      parameter[i] = exploration[i].parameter;
+      explorationData.parameter[i] = parameter[i];
+    }
   }
 
   let isFirstIteration = true;
   //return;
-  for (let i = lowerBound; i <= upperBound; i += stepSize) {
+  for (let i = 0; i <= combinations.length; i ++) {
     console.log(
-      `\nRUNNING ${numScenarioTimes} simulation/s total for parameter ${parameter}: lower bound: ${lowerBound}, and upper bound: ${upperBound} and step size is: ${stepSize}, at current step size VALUE: ${i}.\n`
+      `\nRUNNING ${numScenarioTimes} simulation/s total for combination ${combination[i]}: at current combination: ${i}.\n`
     );
     let allYearDataBuckets = [];
-    if (oneScenarioExploration) {
+    if (exploration) {
       if (isFirstIteration) {
-        foundData = getEvent(typeToData[type], dataExplore);
+        for(let event=0;event<type.length;event++){
+          foundData[event] = getEvent(typeToData[type[event]], dataExplore[event]);
+        }
         isFirstIteration = false;
       }
 
-      scenarioExploration(foundData, parameter, stepSize);
+      scenarioExplorationUpdate(foundData, parameter, stepSize);
     }
     for (let x = 0; x < numScenarioTimes; x++) {
       console.log(`ON SIMULATION NUMBER: ${x + 1}\n`);
@@ -258,8 +177,8 @@ async function main(investmentType, invest, rebalance, expense, income, investme
         // writeEventLog(logFilename, simulationResult.eventLog);
       }
     }
-    if (oneScenarioExploration) {
-      explore = exploreData(allYearDataBuckets, explorationData, [i], currentYear);
+    if (exploration.length >=1) {
+      explore = exploreData(allYearDataBuckets, explorationData, combination[i], currentYear);
     } else {
       let years = chartData(allYearDataBuckets, numScenarioTimes);
       console.log("YEARS", JSON.stringify(years, null, 2));
@@ -267,7 +186,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
     }
   }
 
-  if (oneScenarioExploration) {
+  if (exploration.length >=1) {
     console.log("EXPLORE", JSON.stringify(explore, null, 2));
     return explore;
   }
