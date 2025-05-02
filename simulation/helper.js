@@ -169,6 +169,61 @@ function getRebalanceStrategy(scenario, rebalanceEvent, type, year) {
   return rebalanceStrategy;
 }
 
+function formatToNumber(obj) {
+  const numberFields = new Set([
+    "initialAmount",
+    "userPercentage",
+    "value",
+    "calculated",
+    "min",
+    "max",
+    "amount",
+    "mean",
+    "stdDev",
+    "expenseRatio",
+    "maxCash",
+    "purchasePrice",
+    "fixedPercentages",
+    "initialPercentages",
+    "finalPercentages",
+    "fixedPercentages",
+    "initialPercentages",
+    "finalPercentages",
+  ]);
+
+  //'fixedPercentages', 'initialPercentages', 'finalPercentages'
+  const booleanFields = new Set(["inflationAdjustment", "isSocialSecurity", "isDiscretionary"]);
+
+  function recurse(o) {
+    if (Array.isArray(o)) {
+      return o.map(recurse);
+    } else if (o && typeof o === "object") {
+      for (const key in o) {
+        if (numberFields.has(key)) {
+          if (typeof o[key] === "object" && o[key] !== null) {
+            // Map-like object: convert all values
+            for (const subKey in o[key]) {
+              const num = Number(o[key][subKey]);
+              if (!isNaN(num)) o[key][subKey] = num;
+            }
+          } else {
+            const num = Number(o[key]);
+            if (!isNaN(num)) o[key] = num;
+          }
+        } else if (booleanFields.has(key)) {
+          o[key] = o[key] === "true";
+        } else if (typeof o[key] === "object" && o[key] !== null) {
+          o[key] = recurse(o[key]); // recurse deeper
+        }
+      }
+    }
+    return o;
+  }
+
+  return recurse(obj);
+}
+
+
 module.exports = {
   getCurrentEvent,
   getStrategy,
@@ -176,4 +231,5 @@ module.exports = {
   setValues,
   randomNormal,
   randomUniform,
+  formatToNumber,
 };
