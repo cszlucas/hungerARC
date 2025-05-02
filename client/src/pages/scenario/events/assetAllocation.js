@@ -1,68 +1,17 @@
-import React, { useState, useContext, useMemo, useEffect, startTransition } from "react";
-import { flushSync } from "react-dom";
+import React, { useState, useContext, useMemo, useEffect } from "react";
 
 import {
-  ThemeProvider,
-  CssBaseline,
-  Container,
-  Typography,
-  Button,
-  Stack,
-  Box,
-  List,
-  MenuItem,
-  ListItem,
-  ListItemText,
-  TextField,
-  IconButton,
-  Backdrop,
-  Paper
+  Typography, Button, Stack, Box, List, MenuItem, ListItem, ListItemText, TextField, IconButton,
+  Backdrop, Paper
 } from "@mui/material";
-import theme from "../../../components/theme";
-import Navbar from "../../../components/navbar";
-import PageHeader from "../../../components/pageHeader";
-import { stackStyles, titleStyles, buttonStyles, backContinueContainerStyles, textFieldStyles, rowBoxStyles } from "../../../components/styles";
+import { textFieldStyles, rowBoxStyles } from "../../../components/styles";
 
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CustomInput from "../../../components/customInputBox";
 import CustomToggle from "../../../components/customToggle";
-import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
-import axios from "axios";
 import { AuthContext } from "../../../context/authContext";
-import EventSeries from "./eventSeries";
-import { ObjectId } from "bson";
-
-// const DEFAULT_FORM_VALUES = {
-//   _id: null,
-//   eventSeriesName: "",
-//   eventSeriesDescription: "",
-//   startYear: {
-//     type: "fixedAmt",
-//     value: "",
-//     mean: "",
-//     stdDev: "",
-//     min: "",
-//     max: "",
-//     refer: null,
-//   },
-//   duration: {
-//     type: "fixedAmt",
-//     value: "",
-//     mean: "",
-//     stdDev: "",
-//     min: "",
-//     max: ""
-//   },
-//   taxStatus: "non-retirement",
-//   assetAllocation: {
-//     type: "fixed",
-//     fixedPercentages: {},
-//     initialPercenatages: {},
-//     finalPercentages: {}
-//   }
-// };
 
 const TAX_MAP = {
   "non-retirement": "Taxable",
@@ -71,9 +20,7 @@ const TAX_MAP = {
 };
 
 const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPercentError }) => {
-  const { currRebalance, setCurrRebalance, currInvestments, currInvestmentTypes, setCurrScenario, editMode } = useContext(AppContext);
-  const { eventEditMode, setEventEditMode } = useContext(AppContext);
-  const { user } = useContext(AuthContext);
+  const { currInvestments, currInvestmentTypes } = useContext(AppContext);
   
   const investmentTypeMap = useMemo(() => (
     Object.fromEntries(currInvestmentTypes.map(i => [i._id, i]))
@@ -101,14 +48,14 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
     if (formValues.assetAllocation.type === "fixed") {
       const total = Object.values(formValues.assetAllocation.fixedPercentages)
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-      setPercentError(Math.round(total) !== 100);
+      setPercentError(Math.round(total) !== 1);
     } else {
       const total_intial = Object.values(formValues.assetAllocation.fixedPercentages)
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
       const total_final = Object.values(formValues.assetAllocation.fixedPercentages)
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
       
-      setPercentError(Math.round(total_intial) !== 100 || Math.round(total_final) !== 100);
+      setPercentError(Math.round(total_intial) !== 1 || Math.round(total_final) !== 1);
     }
   }, [formValues.assetAllocation]);
 
@@ -169,13 +116,13 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
   
       if (allocationType === "fixed") {
         if (!updatedAssetAllocation.fixedPercentages) updatedAssetAllocation.fixedPercentages = {};
-        updatedAssetAllocation.fixedPercentages[selectedInvestment] = pendingPercentage;
+        updatedAssetAllocation.fixedPercentages[selectedInvestment] = parseFloat((pendingPercentage / 100).toFixed(2));
       } else if (allocationType === "glidePath") {
         if (!updatedAssetAllocation.initialPercentages) updatedAssetAllocation.initialPercentages = {};
         if (!updatedAssetAllocation.finalPercentages) updatedAssetAllocation.finalPercentages = {};
   
-        updatedAssetAllocation.initialPercentages[selectedInvestment] = pendingInitial;
-        updatedAssetAllocation.finalPercentages[selectedInvestment] = pendingFinal;
+        updatedAssetAllocation.initialPercentages[selectedInvestment] = parseFloat((pendingInitial / 100).toFixed(2));
+        updatedAssetAllocation.finalPercentages[selectedInvestment] = parseFloat((pendingFinal / 100).toFixed(2));
       }
   
       return {
@@ -183,7 +130,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
         assetAllocation: updatedAssetAllocation,
       };
     });
-  
+    console.log(formValues);
     setSelectedInvestment("");
     setPendingPercentage("");
     setPendingInitial("");
@@ -219,10 +166,10 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
   const handleEditInvestment = (investmentId) => {
     const { type, fixedPercentages, initialPercentages, finalPercentages } = formValues.assetAllocation;
     if (type === "fixed") {
-      setPendingPercentage(fixedPercentages[investmentId] ?? "");
+      setPendingPercentage(fixedPercentages[investmentId] * 100 ?? "");
     } else if (type === "glidePath") {
-      setPendingInitial(initialPercentages[investmentId] ?? "");
-      setPendingFinal(finalPercentages[investmentId] ?? "");
+      setPendingInitial(initialPercentages[investmentId] * 100 ?? "");
+      setPendingFinal(finalPercentages[investmentId] * 100 ?? "");
     }
     filteredInvestments.push(getInvestmentById(investmentId));
     setSelectedInvestment(investmentId);
@@ -256,7 +203,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
         displayList.push({
           _id: id,
           investmentTypeName: typeObj?.name || "Unknown Investment",
-          percent: fixedPercentages[id],
+          percent: fixedPercentages[id] * 100,
         });
       });
     }

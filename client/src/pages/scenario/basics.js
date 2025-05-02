@@ -12,7 +12,7 @@ import CustomToggle from "../../components/customToggle";
 import CustomDropdown from "../../components/customDropDown";
 import CustomSave from "../../components/customSaveBtn";
 import {
-  stackStyles, titleStyles, textFieldStyles, backContinueContainerStyles, buttonStyles, rowBoxStyles,
+  stackStyles, titleStyles, backContinueContainerStyles, buttonStyles, rowBoxStyles,
 } from "../../components/styles";
 import { AppContext } from "../../context/appContext";
 

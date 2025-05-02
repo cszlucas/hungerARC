@@ -31,7 +31,8 @@ async function runSimulation(
   rebalanceEvent,
   investmentTypes,
   csvLog,
-  eventLog
+  eventLog,
+  currentYear
 ) {
   // previous year
   let irsLimit = scenario.irsLimit;
@@ -58,7 +59,6 @@ async function runSimulation(
     }
   }
   //console.log("capitalGains :>> ", capitalGains);
-  let currentYear = new Date().getFullYear();
   let userEndYear = scenario.birthYearUser + lifeExpectancyUser;
   // //save initial value and purchase price of investments
   for (let invest of investments) {
@@ -67,6 +67,9 @@ async function runSimulation(
 
   setValues([...incomeEvent, ...expenseEvent, ...investEvent, ...rebalanceEvent]);
   // console.log("incomeEvent :>> ", incomeEvent);
+  // console.log("expenseEvent :>> ", expenseEvent);
+  // console.log("investEvent :>> ", investEvent);
+  // console.log("rebalanceEvent :>> ", rebalanceEvent);
   let sumInvestmentsPreTaxRMD = 0;
   let yearTotals = {
     curYearGains: 0,
@@ -78,16 +81,18 @@ async function runSimulation(
   let prevYearSS = 0;
   let prevYearEarlyWithdrawals = 0;
   let prevYearGains = 0;
-
+//console.log('investmentTypes :>> ', investmentTypes);
   let cashInvestmentType = investmentTypes.find((inv) => inv.name === "Cash");
-  // console.log(cashInvestmentType);
+  //console.log("CASH INVESTMENT TYPE: ", cashInvestmentType);
+ // console.log('investments :>> ', investments);
   let cashInvestment;
   if (cashInvestmentType) {
     let cashId = cashInvestmentType._id;
     cashInvestment = investments.find((inv) => inv.investmentType === cashId);
+    //console.log("CASH INVESTMENT: ", cashInvestment);
   }
 
-  let yearDataBuckets = createYearDataBuckets(3); //2 is numYears
+  let yearDataBuckets = createYearDataBuckets(2, currentYear); //2 is numYears
   let yearIndex = 0;
 
   //  // SIMULATION LOOP
@@ -188,7 +193,7 @@ async function runSimulation(
     // PRELIMINARIES
     // can differ each year if sampled from distribution
     preliminaries(federalIncomeTax, inflationRate, fedDeduction, capitalGains, stateTax, filingStatus, tax, irsLimit, stateIncomeTaxBracket, startYearPrev);
-
+    
     // CHARTS
     updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, curIncomeEvent, discretionary, nonDiscretionary, taxes, yearTotals, year, inflationRate, spouseDeath);
 
@@ -207,6 +212,7 @@ async function runSimulation(
     ));
     yearIndex++;
   }
+  // console.log('yearDataBuckets :>> ', yearDataBuckets);
   return yearDataBuckets;
 }
 

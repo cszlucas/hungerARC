@@ -154,11 +154,10 @@ export const AppProvider = ({ children }) => {
         dataTypes.map(({ key }) => retrieveScenarioData(editMode, key))
       );
   
-      results.forEach(({ key, setter }, i) => dataTypes[i].setter(results[i]));
+      dataTypes.forEach(({ setter }, i) => setter(results[i]));
   
-      const investments = results[0];
-      console.log(investments);
-  
+      const investments = results[0] || [];
+
       const takenTaxStatusAccounts = investments.reduce((acc, inv) => {
         const { investmentType: type, accountTaxStatus: status } = inv;
         if (!acc[type]) acc[type] = [];

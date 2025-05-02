@@ -53,7 +53,7 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
   // console.log("fedIncomeTaxBracket :>> ", federalIncomeTax);
   let u = findUpperFedTaxBracket(curYearFedTaxableIncome, federalIncomeTax);
   // roth conversation amount
-  console.log("u :>> ", u);
+ // console.log("u :>> ", u);
   console.log("fedDeduction :>> ", fedDeduction);
   console.log("curYearFedTaxableIncome :>> ", curYearFedTaxableIncome);
   let rc = u - (curYearFedTaxableIncome - fedDeduction);
@@ -121,6 +121,8 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
         console.log("uniform distribution, of min and max respectively, ", annualChange.min, " ", annualChange.max, ", amount is ", amt);
       } else {
         amt = randomNormal(annualChange.mean, annualChange.stdDev);
+
+        console.log('amt :>> ', amt);
         console.log("normal distribution, of mean and stdDev respectively, ", annualChange.mean, " ", annualChange.stdDev, ", amount is ", amt);
       }
 
@@ -183,9 +185,8 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals) {
     if (annualIncome.unit == "percentage") {
       income *= 1 + investment.value * 0.01;
     }
-
     // Add the income to curYearIncome, if the investment’s tax status is ‘non-retirement’ and the investment type’s taxability is ‘taxable’.
-    if (investment.accountTaxStatus == "non-retirement" && investmentType.taxability == "taxable") {
+    if (investment.accountTaxStatus == "non-retirement" && investmentType.taxability==true) {
       yearTotals.curYearIncome += income;
     }
 
@@ -207,6 +208,9 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals) {
 
     // Calculate this year’s expenses, by multiplying the expense ratio and the average value of the investment
     let expenses = investmentType.expenseRatio * 0.01 * ((initialValue + investment.value) / 2);
+    if(investmentType.name=="Cash" || investmentType.name=="cash"){
+    console.log('investment of CASH :>> ', investment);
+    }
     investment.value -= expenses;
     console.log("now its value is ", investment.value, "after subtracting an expense of ", expenses);
   }

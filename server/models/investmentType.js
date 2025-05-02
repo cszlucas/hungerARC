@@ -15,7 +15,7 @@ var investmentTypeSchema=new Schema({
     annualReturn: {type: expectedAnnual},
     expenseRatio: {type: Number}, //fixed percentage
     annualIncome: {type: expectedAnnual},
-    taxability: {type: String}, // tax-exempt or taxable
+    taxability: {type: Boolean},
 });
 
 module.exports=mongoose.model('InvestmentType', investmentTypeSchema);

@@ -9,10 +9,6 @@ import {
   ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Alert,
 } from "@mui/material";
 
-// Icons
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-
 // Custom component imports
 import EventSeries from "./eventSeries";
 import CustomInput from "../../../components/customInputBox";
@@ -224,7 +220,7 @@ const Invest = () => {
 
         {/* Form Body */}
         <Box sx={rowBoxStyles}>
-          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, width: 400 }}>
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 400 }}>
             <EventSeries formValues={formValues} setFormValues={setFormValues} />
             <CustomInput
               title="Maximum Cash"

@@ -159,7 +159,7 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
 
     expenseVal -= cashInvestment.value;
     cashInvestment.value = 0;
-    console.log("withdrawalStrategy", withdrawalStrategy);
+    //console.log("withdrawalStrategy", withdrawalStrategy);
     printInvestments(withdrawalStrategy, year, "discretionary", "investments");
     for (let investment of withdrawalStrategy) {
       if (expenseVal <= 0) break;
