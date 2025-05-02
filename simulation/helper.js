@@ -189,6 +189,11 @@ function formatToNumber(obj) {
     "fixedPercentages",
     "initialPercentages",
     "finalPercentages",
+    "range",
+    "userPercentage",
+    "lower",
+    "upper",
+    "steps"
   ]);
 
   //'fixedPercentages', 'initialPercentages', 'finalPercentages'

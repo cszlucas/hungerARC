@@ -20,34 +20,30 @@ function cartesianProduct(...arrays) {
   return arrays.reduce((acc, curr) => acc.flatMap((d) => curr.map((e) => [...d, e])), [[]]);
 }
 
-function getEvent(listData, data) {
-  const e = listData.find((item) => item._id === data._id);
-  if (e) {
-    //console.log("Event found:", e);
-    return e;
-  } else {
-    console.log("Event not found.");
-    return null;
-  }
+function getEvent(dataArray, data) {
+  return dataArray.find((event) => event._id === data._id);
 }
 
 function scenarioExplorationUpdate(foundData, parameter, value) {
-  for (let d = 0; d< parameter.length; d++) {
+  for (let d = 0; d < parameter.length; d++) {
     if (parameter[d] == "Start Year") {
-      foundData[d].startYear.calculated += value[d];
+      foundData[d].startYear.calculated = value[d];
     } else if (parameter[d] == "Duration") {
-      foundData[d].duration.calculated += value[d];
+      foundData[d].duration.calculated = value[d];
     } else if (parameter[d] == "Initial Amount") {
-      foundData[d].initialAmount += value[d];
+      foundData[d].initialAmount = value[d];
     } else if (parameter[d] == "Asset Allocation") {
-      if (foundData[d].assetAllocation.fixedPercentages.length != 0) {
-        // Fixed allocation
-        foundData[d].assetAllocation.fixedPercentages[0].value += value[d];
-        foundData[d].assetAllocation.fixedPercentages[1].value += 100 - foundData[d].assetAllocation.fixedPercentages[0].value;
-      } else if (foundData[d].assetAllocation.initialPercentages.length != 0) {
-        // Glide Path allocation
-        foundData[d].assetAllocation.initialPercentages[0].value += value[d];
-        foundData[d].assetAllocation.initialPercentages[1].value = 100 - foundData[d].assetAllocation.initialPercentages[0].value;
+      const allocation = foundData[d].assetAllocation;
+
+      if (allocation.fixedPercentages && allocation.fixedPercentages.length !== 0) {
+        allocation.fixedPercentages[0].value = value[d];
+        allocation.fixedPercentages[1].value = 100 - allocation.fixedPercentages[0].value;
+      } else if (allocation.initialPercentages && Object.keys(allocation.initialPercentages).length !== 0) {
+        const keys = Object.keys(allocation.initialPercentages);
+        const v = value[d]; 
+
+        allocation.initialPercentages[keys[0]] = v;
+        allocation.initialPercentages[keys[1]] = 1 - v;
       }
     }
   }

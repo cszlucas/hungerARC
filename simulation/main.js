@@ -74,6 +74,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   formatToNumber(investment);
   investment.purchasePrice = 0;
   formatToNumber(investmentType);
+  formatToNumber(exploration);
 
   const startYearPrev = (new Date().getFullYear() - 1).toString();
   //calculate life expectancy
@@ -81,11 +82,6 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   let currentYear = new Date().getFullYear();
   // console.log('lifeExpectancySpouse here :>> ', lifeExpectancySpouse);
 
-  // find the user's state tax data
-  // let stateTaxData = stateTax.find((state) => state.state === scenario.stateResident);
-
-  //default values if no scenario exploration
-  let oneScenarioExploration = false;
   let explorationData = { parameter: [], values: [] };
   let type = [];
   let lowerBound = [];
@@ -107,6 +103,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   console.log("exploration :>> ", exploration);
   if (exploration && exploration.length >= 1) {
     combinations = generateParameterCombinations(exploration);
+    console.log("COMBINATIONS: ", combinations);
     duration = combinations.length;
     for (let i = 0; i < exploration.length; i++) {
       type[i] = exploration[i].type;
@@ -121,18 +118,22 @@ async function main(investmentType, invest, rebalance, expense, income, investme
 
   let isFirstIteration = true;
   //return;
-  for (let i = 0; i <= duration; i++) {
+  for (let i = 0; i < duration; i++) {
     let allYearDataBuckets = [];
     if (exploration) {
-      console.log(`\nRUNNING ${numScenarioTimes} simulation/s total for combination ${combinations[i]}: at current combination: ${i}.\n`);
+      console.log(`\nRUNNING ${numScenarioTimes} simulation/s total for combination ${combinations[i]}: at current combination: ${i+1}.\n`);
       if (isFirstIteration) {
-        for (let event = 0; event < type.length; event++) {
-          foundData[event] = getEvent(typeToData[type[event]], dataExplore[event]);
-        }
+        foundData = exploration.map((spec) => {
+          const dataArray = typeToData[spec.type]; // expense, income, etc.
+          return getEvent(dataArray, spec.data);   // get matching object
+        });
         isFirstIteration = false;
       }
 
-      scenarioExplorationUpdate(foundData, parameter, stepSize);
+      scenarioExplorationUpdate(foundData, parameter, combinations[i]);
+      // console.log("DID IT CHANGE",JSON.stringify(expense, null, 2));
+      // console.log("DID IT CHANGE",JSON.stringify(invest, null, 2));
+
     }
     for (let x = 0; x < numScenarioTimes; x++) {
       console.log(`ON SIMULATION NUMBER: ${x + 1}\n`);
@@ -182,13 +183,13 @@ async function main(investmentType, invest, rebalance, expense, income, investme
       explore = exploreData(allYearDataBuckets, explorationData, combinations[i], currentYear);
     } else {
       let years = chartData(allYearDataBuckets, numScenarioTimes);
-      console.log("YEARS", JSON.stringify(years, null, 2));
+      //console.log("YEARS", JSON.stringify(years, null, 2));
       return years;
     }
   }
 
   if (exploration && exploration.length >= 1) {
-    console.log("EXPLORE", JSON.stringify(explore, null, 2));
+    //console.log("EXPLORE", JSON.stringify(explore, null, 2));
     return explore;
   }
 }
