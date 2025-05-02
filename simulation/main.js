@@ -93,9 +93,9 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   let stepSize = [];
   let dataExplore = [];
   let explore;
-  let foundData=[];
+  let foundData = [];
   let parameter = [];
-  let combinations = generateParameterCombinations(exploration);
+  let combinations;
   const typeToData = {
     Income: income,
     Expense: expense,
@@ -103,8 +103,11 @@ async function main(investmentType, invest, rebalance, expense, income, investme
     Rebalance: rebalance,
   };
 
+  let duration = 1;
   console.log("exploration :>> ", exploration);
   if (exploration && exploration.length >= 1) {
+    combinations = generateParameterCombinations(exploration);
+    duration = combinations.length;
     for (let i = 0; i < exploration.length; i++) {
       type[i] = exploration[i].type;
       lowerBound[i] = Number(exploration[i].range.lower);
@@ -118,14 +121,12 @@ async function main(investmentType, invest, rebalance, expense, income, investme
 
   let isFirstIteration = true;
   //return;
-  for (let i = 0; i <= combinations.length; i ++) {
-    console.log(
-      `\nRUNNING ${numScenarioTimes} simulation/s total for combination ${combination[i]}: at current combination: ${i}.\n`
-    );
+  for (let i = 0; i <= duration; i++) {
     let allYearDataBuckets = [];
     if (exploration) {
+      console.log(`\nRUNNING ${numScenarioTimes} simulation/s total for combination ${combinations[i]}: at current combination: ${i}.\n`);
       if (isFirstIteration) {
-        for(let event=0;event<type.length;event++){
+        for (let event = 0; event < type.length; event++) {
           foundData[event] = getEvent(typeToData[type[event]], dataExplore[event]);
         }
         isFirstIteration = false;
@@ -177,8 +178,8 @@ async function main(investmentType, invest, rebalance, expense, income, investme
         // writeEventLog(logFilename, simulationResult.eventLog);
       }
     }
-    if (exploration.length >=1) {
-      explore = exploreData(allYearDataBuckets, explorationData, combination[i], currentYear);
+    if (exploration && exploration.length >= 1) {
+      explore = exploreData(allYearDataBuckets, explorationData, combinations[i], currentYear);
     } else {
       let years = chartData(allYearDataBuckets, numScenarioTimes);
       console.log("YEARS", JSON.stringify(years, null, 2));
@@ -186,7 +187,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
     }
   }
 
-  if (exploration.length >=1) {
+  if (exploration && exploration.length >= 1) {
     console.log("EXPLORE", JSON.stringify(explore, null, 2));
     return explore;
   }

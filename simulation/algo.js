@@ -208,7 +208,7 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals) {
 
     // Calculate this year’s expenses, by multiplying the expense ratio and the average value of the investment
     let expenses = investmentType.expenseRatio * 0.01 * ((initialValue + investment.value) / 2);
-    if(investmentType.name=="Cash"){
+    if(investmentType.name=="Cash" || investmentType.name=="cash"){
     console.log('investment of CASH :>> ', investment);
     }
     investment.value -= expenses;
