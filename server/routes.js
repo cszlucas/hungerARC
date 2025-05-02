@@ -10,6 +10,9 @@ const webscraping = require("./controllers/webscraping.js");
 // user
 router.get("/user/:id/scenarios", user.scenarios);
 router.post("/auth/google", user.auth);
+router.post("/auth/guest", user.guestAuth);
+router.get("/auth/session", user.sessionCheck);
+router.post("/auth/logout", user.logout);
 router.post("/uploadStateTaxYaml", user.uploadStateTaxYaml);
 
 // events

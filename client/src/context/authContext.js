@@ -8,15 +8,8 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState((rawData != "undefined" ? JSON.parse(rawData) : null));
     
     useEffect(() => {
-        // Load user data from localStorage
-        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("user", JSON.stringify(user)); // Load user data from localStorage
     }, [user]);
-    
-    // const logout = () => {
-    //     localStorage.removeItem("edit");
-    //     localStorage.clear();
-    //     setUser(null);
-    // };
 
     return (
         <AuthContext.Provider value={{ user, setUser}}>
