@@ -31,14 +31,14 @@ async function runSimulation(
   rebalanceEvent,
   investmentTypes,
   csvLog,
-  eventLog,
   currentYear
 ) {
+  //console.log("RUN SIMULATION",JSON.stringify(investments, null, 2));
+  //console.log("currentYear", currentYear);
   // previous year
   let irsLimit = scenario.irsLimit;
   let filingStatus = scenario.filingStatus;
   let spouseDeath = false;
-  let state = scenario.stateResident;
   let federalIncomeTax, stateIncomeTaxBracket, fedDeduction, stateDeduction, capitalGains;
   // previous year's tax
   if (filingStatus == "single") {
@@ -195,6 +195,7 @@ async function runSimulation(
     preliminaries(federalIncomeTax, inflationRate, fedDeduction, capitalGains, stateTax, filingStatus, tax, irsLimit, stateIncomeTaxBracket, startYearPrev);
     
     // CHARTS
+    console.log("updateChart called", { yearIndex, yearDataBucketsLength: yearDataBuckets.length });
     updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, curIncomeEvent, discretionary, nonDiscretionary, taxes, yearTotals, year, inflationRate, spouseDeath);
 
     // SAVE FOR PREV YEAR
@@ -212,7 +213,7 @@ async function runSimulation(
     ));
     yearIndex++;
   }
-  // console.log('yearDataBuckets :>> ', yearDataBuckets);
+  //console.log('yearDataBuckets :>> ', yearDataBuckets);
   return yearDataBuckets;
 }
 
@@ -241,6 +242,12 @@ function preliminaries(federalIncomeTax, inflationRate, fedDeduction, capitalGai
 function updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, curIncomeEvent, discretionary, nonDiscretionary, taxes, yearTotals, year, inflationRate, spouseDeath) {
   const lookup = Object.fromEntries(investmentTypes.map((type) => [type._id.toString(), type.name]));
 
+  //console.log("BUCKET BEFORE UPDATE", yearDataBuckets[yearIndex]);
+  console.log("yearIndex", yearIndex);
+  if (!yearDataBuckets[yearIndex]) {
+    console.error("yearDataBuckets[yearIndex] is undefined", { yearIndex });
+    return;
+  }  
   updateYearDataBucket(yearDataBuckets, yearIndex, {
     investments: investments.map((event) => ({
       name: lookup[event.investmentType.toString()] ? `${lookup[event.investmentType.toString()]} (${event.accountTaxStatus})` : "Unknown",

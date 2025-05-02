@@ -1,13 +1,15 @@
-const mongoose = require("mongoose");
 const StateTax = require("../server/models/stateTax.js");
 const Tax = require("../server/models/tax.js");
 const User = require("../server/models/user.js");
-const { buildChartDataFromBuckets, exploreData, chartData } = require("./charts.js");
+const { exploreData, chartData } = require("./charts.js");
 const { calculateLifeExpectancy } = require("./algo.js");
-const { runSimulation } = require("./simulation.js");
 const path = require("path");
 const { formatToNumber } = require("./helper.js");
 const { getEvent, scenarioExplorationUpdate, generateParameterCombinations } = require("./exploration.js");
+const Piscina = require("piscina");
+const piscina = new Piscina({
+  filename: path.resolve(__dirname, "./worker.js"),
+});
 
 class DataStore {
   constructor() {
@@ -51,8 +53,7 @@ class DataStore {
 
 async function main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, numScenarioTimes) {
   //console.log("exploration",JSON.stringify(exploration, null, 2));
-  // not sure how to get a value using this, not needed
-  var distributions = require("distributions");
+
   const dataStore = new DataStore();
   await Promise.all([dataStore.populateData(userId, scenario.stateResident)]);
   //console.log("our scenario \n\n", dataStore);
@@ -119,13 +120,13 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   let isFirstIteration = true;
   //return;
   for (let i = 0; i < duration; i++) {
-    let allYearDataBuckets = [];
+    const workerInputs = [];
     if (exploration) {
-      console.log(`\nRUNNING ${numScenarioTimes} simulation/s total for combination ${combinations[i]}: at current combination: ${i+1}.\n`);
+      console.log(`\nRUNNING ${numScenarioTimes} simulation/s total for combination ${combinations[i]}: at current combination: ${i + 1}.\n`);
       if (isFirstIteration) {
         foundData = exploration.map((spec) => {
           const dataArray = typeToData[spec.type]; // expense, income, etc.
-          return getEvent(dataArray, spec.data);   // get matching object
+          return getEvent(dataArray, spec.data); // get matching object
         });
         isFirstIteration = false;
       }
@@ -133,41 +134,34 @@ async function main(investmentType, invest, rebalance, expense, income, investme
       scenarioExplorationUpdate(foundData, parameter, combinations[i]);
       // console.log("DID IT CHANGE",JSON.stringify(expense, null, 2));
       // console.log("DID IT CHANGE",JSON.stringify(invest, null, 2));
-
     }
+    const singleTaxData = taxData[0];
+    console.log("currentYear type:", typeof currentYear); // Should be a number
+    console.log("currentYear value:", currentYear); // Should be a single year, not an array
+
     for (let x = 0; x < numScenarioTimes; x++) {
       console.log(`ON SIMULATION NUMBER: ${x + 1}\n`);
-      const clonedData = {
-        scenario: JSON.parse(JSON.stringify(scenario)),
-        stateTax: JSON.parse(JSON.stringify(stateTax)),
-        investment: JSON.parse(JSON.stringify(investment)),
-        expense: JSON.parse(JSON.stringify(expense)),
-        income: JSON.parse(JSON.stringify(income)),
-        invest: JSON.parse(JSON.stringify(invest)),
-        rebalance: JSON.parse(JSON.stringify(rebalance)),
-        taxData: JSON.parse(JSON.stringify(taxData)),
-        investmentType: JSON.parse(JSON.stringify(investmentType)),
-      };
-
-      //console.log("income", income);
-      const yearDataBuckets = await runSimulation(
-        clonedData.scenario,
-        clonedData.taxData[0],
-        clonedData.stateTax,
-        startYearPrev,
-        lifeExpectancyUser,
-        lifeExpectancySpouse,
-        clonedData.investment,
-        clonedData.income,
-        clonedData.expense,
-        clonedData.invest,
-        clonedData.rebalance,
-        clonedData.investmentType,
-        csvLog,
-        eventLog,
-        currentYear
+      const clonedData = JSON.parse(
+        JSON.stringify({
+          scenario,
+          taxData: singleTaxData,
+          stateTax,
+          startYearPrev,
+          lifeExpectancyUser,
+          lifeExpectancySpouse,
+          investment,
+          income,
+          expense,
+          invest,
+          rebalance,
+          investmentType,
+          csvLog,
+          currentYear,
+        })
       );
-      allYearDataBuckets.push(yearDataBuckets);
+
+      workerInputs.push(clonedData);
+
       // logs only for the first simulation
       if (x == 0) {
         const userName = user.email.split("@")[0];
@@ -179,17 +173,20 @@ async function main(investmentType, invest, rebalance, expense, income, investme
         // writeEventLog(logFilename, simulationResult.eventLog);
       }
     }
+    const allSimulationResults = await Promise.all(workerInputs.map((input) => piscina.run(input)));
+    console.log("allSimulationResults", JSON.stringify(allSimulationResults));
+
     if (exploration && exploration.length >= 1) {
-      explore = exploreData(allYearDataBuckets, explorationData, combinations[i], currentYear);
+      explore = exploreData(allSimulationResults, explorationData, combinations[i], currentYear);
     } else {
-      let years = chartData(allYearDataBuckets, numScenarioTimes);
-      //console.log("YEARS", JSON.stringify(years, null, 2));
+      let years = chartData(allSimulationResults, numScenarioTimes);
+      console.log("YEARS", JSON.stringify(years, null, 2));
       return years;
     }
   }
 
   if (exploration && exploration.length >= 1) {
-    //console.log("EXPLORE", JSON.stringify(explore, null, 2));
+    console.log("EXPLORE", JSON.stringify(explore, null, 2));
     return explore;
   }
 }
