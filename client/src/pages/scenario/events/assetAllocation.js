@@ -191,7 +191,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
         const typeObj = getInvestmentTypeById(investment?.investmentType);
         displayList.push({
           _id: id,
-          investmentTypeName: typeObj?.name || "Unknown Investment",
+          investmentTypeName: typeObj?.name + " " + typeObj?.accountTaxStatus || "Unknown Investment",
           initial: initialPercentages[id] * 100,
           final: finalPercentages[id] * 100,
         });

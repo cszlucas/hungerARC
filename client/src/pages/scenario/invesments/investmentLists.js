@@ -241,7 +241,7 @@ const InvestmentLists = () => {
             >
               <ListItemText
                 primary={<span style={{ fontWeight: "bold" }}>{investmentTypeName}</span>}
-                secondary={`Value: ${item.value} | ${item._id}`}
+                secondary={`Balance: $${parseFloat(item.value).toFixed(2)}`}
               />
               <IconButton edge="end" aria-label="edit" onClick={() => handleEditInvestment(item)}>
                 <EditIcon />

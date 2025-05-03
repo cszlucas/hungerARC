@@ -13,23 +13,35 @@ const CustomInput = ({
     disable=false
 }) => {
     
-    const handleChange = (event, newValue) => {
-        // If it's a number field, enforce min and max constraints
+    const handleChange = (event) => {
+        const inputValue = event.target.value;
+    
         if (type === "number") {
             const min = inputProps.min !== undefined ? Number(inputProps.min) : -Infinity;
             const max = inputProps.max !== undefined ? Number(inputProps.max) : Infinity;
-            
-            if (event.target.value !== "" && !isNaN(event.target.value)) {
-                const numericValue = Number(event.target.value);
-
-                if (numericValue < min || numericValue > max) {
-                    return; // Prevent the change
+    
+            // Allow empty input to support deletion
+            if (inputValue === "") {
+                setValue(inputValue);
+                return;
+            }
+    
+            // Check if it's a valid number
+            if (!isNaN(inputValue)) {
+                const numericValue = Number(inputValue);
+    
+                // Check for decimal precision
+                const decimalPart = inputValue.split(".")[1];
+                if (decimalPart && decimalPart.length > 2) {
+                    return; // Too many decimal places
+                }
+    
+                if (numericValue >= min && numericValue <= max) {
+                    setValue(inputValue);
                 }
             }
-        }
-
-        if (newValue !== null) {
-            setValue(event.target.value);
+        } else {
+            setValue(inputValue);
         }
     };
 
