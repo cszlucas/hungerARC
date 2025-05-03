@@ -8,7 +8,7 @@ const tax = require("./controllers/tax.js");
 const webscraping = require("./controllers/webscraping.js");
 
 // user
-router.get("/user/:id/scenarios", user.scenarios);
+router.get("/user/scenarios", user.scenarios);
 router.post("/auth/google", user.auth);
 router.post("/auth/guest", user.guestAuth);
 router.get("/auth/session", user.sessionCheck);
@@ -48,11 +48,11 @@ router.post("/deleteInvestmentType/:id", investments.deleteInvestmentType);
 
 // scenario
 router.get("/scenario/:id", scenario.scenario);
-router.post("/basicInfo/user/:id", scenario.basicInfo);
+router.post("/basicInfo/", scenario.basicInfo);
 router.post("/updateScenario/:id", scenario.updateScenario);
 router.post("/scenarioInvestments", scenario.scenarioInvestments);
 router.post("/deleteScenario/:id", scenario.deleteScenario);
-router.post("/importScenario/user/:id", scenario.importUserData);
+router.post("/importScenario/", scenario.importUserData);
 //tax
 router.get("/tax", tax.tax);
 router.get("/statetax/:state", tax.statetax);

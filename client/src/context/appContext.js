@@ -49,8 +49,8 @@ export const getInitialState = async (user) => {
 
       // console.log("Fetching scenarios for user:", userId);
       // Fetch scenarios from the backend
-      const response = await axios.get(`http://localhost:8080/user/${userId}/scenarios`); // Adjust API route
-      console.log(response.data);
+      const response = await axios.get("http://localhost:8080/user/scenarios", { withCredentials: true }); // Adjust API route
+      // console.log(response.data);
       if (response.data) {
           // console.log("Scenarios fetched from backend:", response.data);
           localStorage.setItem("scenarioData", JSON.stringify(response.data));
@@ -66,7 +66,7 @@ export const getInitialState = async (user) => {
 
 const readStateFromLS = (key_value) => {
   const storedState = localStorage.getItem(key_value);
-  if (key_value === "edit") console.log(JSON.parse(storedState));
+  // if (key_value === "edit") console.log(JSON.parse(storedState));
   return storedState ? JSON.parse(storedState) : null;
 };
 

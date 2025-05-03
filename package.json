@@ -7,6 +7,7 @@
     "distributions": "^2.2.0",
     "express-session": "^1.18.1",
     "mongoose": "^8.12.1",
+    "piscina": "^5.0.0",
     "structured-clone": "^0.2.2",
     "uuid": "^11.1.0"
   },

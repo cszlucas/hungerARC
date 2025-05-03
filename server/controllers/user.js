@@ -7,7 +7,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 exports.auth = async (req, res) => {
   const { googleId, email, guest } = req.body;
-  console.log("Received data:", { googleId, email, guest });
+  // console.log("Received data:", { googleId, email, guest });
 
   try {
     let user = await User.findOne({ $or: [{ googleId }, { email }] });
@@ -58,15 +58,14 @@ exports.logout = (req, res) => {
 };
 
 exports.scenarios = async (req, res) => {
-  const { id } = req.params; // Get user ID from route parameters
-
   try {
     // Find the user by ID and populate the scenarios array
-    console.log(id);
-    const user = await User.findById(id).populate('scenarios');
-    console.log(user);
+    if (!req.session.user) res.status(500).json({ message: "Failed to get user session" });
+    const userData = req.session.user;
+    const user = await User.findById(userData._id).populate('scenarios');
+
     if (!user) {
-      return res.status(404).json({ error: 'User not found' }); // Handle if no user is found
+      return res.status(404).json({ message: "User not found" });
     }
 
     res.status(200).json(user.scenarios); // Send back the populated scenarios

@@ -29,7 +29,7 @@ const GoogleAuth = () => {
 
         if (res.ok) {
             const data = await res.json();
-            console.log(data);
+            // console.log(data);
             setUser(data);
             navigate("/profile");
         } else {

@@ -130,7 +130,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
         assetAllocation: updatedAssetAllocation,
       };
     });
-    console.log(formValues);
+    // console.log(formValues);
     setSelectedInvestment("");
     setPendingPercentage("");
     setPendingInitial("");
