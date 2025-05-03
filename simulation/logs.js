@@ -260,7 +260,8 @@ function printEvents(events, year, type, detailsType, inflationRate, spouseDeath
         details: {
           type: detailsType,
           ID: e._id,
-          value: getValueInYear(e, year, inflationRate, spouseDeath),
+          value: e.initialAmount,
+          // value: getValueInYear(e, year, inflationRate, spouseDeath),
         },
       });
     }

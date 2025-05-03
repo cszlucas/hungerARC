@@ -14,9 +14,10 @@ function getValueInYear(event, year, inflationRate, spouseDeath) {
     amount *= event.userPercentage * 0.01;
   }
 
+  console.log('duration.calculated :>> ', duration.calculated);
   // Only apply expected change if event is active in this year
   if (yearsActive >= 0 && yearsActive < duration.calculated && yearsSinceStart >= 0) {
-    for (let i = 0; i < yearsActive; i++) {
+    // for (let i = 0; i < yearsActive; i++) {
       let change = 0;
 
       switch (annualChange.distribution) {
@@ -37,11 +38,12 @@ function getValueInYear(event, year, inflationRate, spouseDeath) {
         default:
           break;
       }
-    }
-  } else {
-    // If not in active years, set amount to 0
-    amount = 0;
+    // }
   }
+  //  else {
+    // If not in active years, set amount to 0
+    // amount = 0;
+  // }
   return amount;
 }
 
