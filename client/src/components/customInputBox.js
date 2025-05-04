@@ -10,38 +10,34 @@ const CustomInput = ({
     setValue, 
     width = "auto",
     inputProps = {},
-    disable=false
+    disable = false
 }) => {
-    
+
     const handleChange = (event) => {
         const inputValue = event.target.value;
-    
+
         if (type === "number") {
             const min = inputProps.min !== undefined ? Number(inputProps.min) : -Infinity;
             const max = inputProps.max !== undefined ? Number(inputProps.max) : Infinity;
-    
-            // Allow empty input to support deletion
+
             if (inputValue === "") {
-                setValue(""); // Clear numeric value
+                setValue(""); // Allow clearing the input
                 return;
             }
-    
-            // Check if it's a valid number
+
             if (!isNaN(inputValue)) {
                 const numericValue = Number(inputValue);
-    
-                // Check for decimal precision
                 const decimalPart = inputValue.split(".")[1];
                 if (decimalPart && decimalPart.length > 2) {
                     return; // Too many decimal places
                 }
-    
+
                 if (numericValue >= min && numericValue <= max) {
-                    setValue(adornment === "%" ? numericValue *0.01 : numericValue); // Store as number
+                    setValue(adornment === "%" ? numericValue * 0.01 : numericValue);
                 }
             }
         } else {
-            setValue(inputValue); // Store as string for non-number types
+            setValue(inputValue);
         }
     };
 
@@ -65,27 +61,35 @@ const CustomInput = ({
         }
     };
 
+    const displayValue =
+        type === "number" && adornment === "%" && typeof value === "number"
+            ? (value * 100).toFixed(2).replace(/\.?0+$/, "")
+            : value;
+
     return (
         <Box sx={{ display: "flex", flexDirection: "column", width: "auto", mb: 2 }}>
-            {title && <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium", minWidth: 170 }}>
-                {title}
-            </Typography>}
+            {title && (
+                <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium", minWidth: 170 }}>
+                    {title}
+                </Typography>
+            )}
             <TextField
                 variant="outlined"
                 type={type === "number" ? "number" : "text"}
-                multiline={type == "multiline"}
-                sx={{ ...getFieldStyles(), ...{width: width}}}
-                value={adornment === "%" ? value * 100 : value}
+                multiline={type === "multiline"}
+                sx={{ ...getFieldStyles(), width: width }}
+                value={displayValue}
                 onChange={handleChange}
                 onKeyDown={(e) => {
-                    if (type === "number" && (e.key === "-" || e.key === "+" || e.key === "e")) {
+                    if (type === "number" && ["-", "+", "e"].includes(e.key)) {
                         e.preventDefault();
                     }
                 }}
-                InputProps={{...{ 
+                InputProps={{
                     startAdornment: adornment !== "none" && adornment !== "%" ? getAdornment() : null,
-                    endAdornment: adornment === "%" ? getAdornment() : null
-                }, ...{inputProps}}}
+                    endAdornment: adornment === "%" ? getAdornment() : null,
+                    inputProps: inputProps
+                }}
                 disabled={disable}
             />
         </Box>

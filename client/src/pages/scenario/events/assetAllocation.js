@@ -46,7 +46,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
 
   useEffect(() => {
     function roundToTwo(num) {
-      return Math.round(num * 100) / 100;
+      return Math.round(num * 10000) / 10000;
     }
 
     if (formValues.assetAllocation.type === "fixed") {
@@ -61,7 +61,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
       const total_final = Object.values(formValues.assetAllocation.finalPercentages)
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
       
-      // console.log(`${roundToTwo(total_intial)} - ${roundToTwo(total_final)}`);
+      // console.log(`${roundToTwo(total_initial)} - ${roundToTwo(total_final)}`);
       setPercentError(roundToTwo(total_initial) !== 1 || roundToTwo(total_final) !== 1);
     }
   }, [formValues.assetAllocation]);
@@ -197,8 +197,8 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
           _id: id,
           investmentTypeName: typeObj?.name || "Unknown Investment",
           accountTaxStatus: investment?.accountTaxStatus || "",
-          initial: initialPercentages[id] * 100,
-          final: finalPercentages[id] * 100,
+          initial: (initialPercentages[id] * 100).toFixed(2),
+          final: (finalPercentages[id] * 100).toFixed(2),
         });
       });
     } else if (type === "fixed") {
@@ -209,7 +209,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
           _id: id,
           investmentTypeName: typeObj?.name || "Unknown Investment",
           accountTaxStatus: investment?.accountTaxStatus || "",
-          percent: fixedPercentages[id] * 100,
+          percent: (fixedPercentages[id] * 100).toFixed(2),
         });
       });
     }

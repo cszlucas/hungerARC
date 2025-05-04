@@ -36,13 +36,13 @@ const TAX_STATUSES_REVERSE = TAX_STATUSES.reduce((acc, item) => {
 }, {});
 
 // Default structure for a new investment
-const defaultInvestment = { id: NEW_ID, investmentTypeId: "", taxType: "", value: "0" };
+const defaultInvestment = { id: NEW_ID, investmentTypeId: "", taxType: "", value: "" };
 
 const InvestmentLists = () => {
   // Global app and auth context
   const {
-    editMode, setEventEditMode, currInvestments, setCurrInvestments,
-    currInvestmentTypes, setCurrScenario, takenTaxStatusAccounts, setTakenTaxStatusAccounts
+    editMode, setEventEditMode, currInvestments, setCurrInvestments, currInvestmentTypes, 
+    currScenario, setCurrScenario, takenTaxStatusAccounts, setTakenTaxStatusAccounts
   } = useContext(AppContext);
   const { user } = useContext(AuthContext);
 
@@ -51,6 +51,11 @@ const InvestmentLists = () => {
   const [editing, setEditing] = useState(false);
   const [availableTaxTypes, setAvailableTaxTypes] = useState([[], []]);
   const [newInvestment, setNewInvestment] = useState(defaultInvestment);
+  // Handle form input changes
+  const handleInputChange = (field, value) => {
+    setNewInvestment((prev) => ({ ...prev, [field]: value }));
+  };
+
   const navigate = useNavigate();
 
   // Helper: Add value to a key array in the scenario object
@@ -107,6 +112,7 @@ const InvestmentLists = () => {
     }
   }, [newInvestment.id, newInvestment.investmentTypeId]);
 
+
   // UI Event: Modal open/close
   const handleOpen = () => {
     setNewInvestment(defaultInvestment);
@@ -117,62 +123,50 @@ const InvestmentLists = () => {
     setEditing(false);
   };
 
-  // Handle form input changes
-  const handleInputChange = (field, value) => {
-    setNewInvestment((prev) => ({ ...prev, [field]: value }));
-  };
-
-  // Transform frontend investment data to backend format
-  const transformInvestmentData = (investment) => ({
-    investmentType: investment.investmentTypeId,
-    accountTaxStatus: investment.taxType,
-    value: investment.value,
-  });
-
-  // Update scenario and tax status mappings for new investment
-  const handleUpdatingLocalStorageForNewInvestments = (investment, id) => {
-    appendToScenarioKey("setOfInvestments", id);
-    appendToTakenTaxStatusAccounts(investment.investmentType, investment.accountTaxStatus);
-
-    if (investment.accountTaxStatus === "pre-tax") {
-      appendToScenarioKey("rothConversionStrategy", id);
-      appendToScenarioKey("rmdStrategy", id);
-    } else {
-      appendToScenarioKey("expenseWithdrawalStrategy", id);
-    }
-  };
 
   // Add or update investment in state (and backend if not guest)
   const handleAddInvestment = async () => {
     const { investmentTypeId, taxType, value, id } = newInvestment;
     if (!investmentTypeId || !taxType || value === "" || isNaN(Number(value))) return;
 
-    const transformed = transformInvestmentData(newInvestment);
-    let newId = id;
+    // Transform frontend investment data to backend format
+    const renameAttributes = (investment) => ({
+      investmentType: investment.investmentTypeId,
+      accountTaxStatus: investment.taxType,
+      value: investment.value,
+    });
+    // Update scenario and tax status mappings for new investment
+    const handleUpdates = (investment, editing=false) => {
+      if (editing) {
+        setCurrInvestments((prev) =>
+          prev.map((item) => (item._id === investment._id ? investment : item))
+        );
+        return;
+      }
 
-    try {
-      if (id === NEW_ID) {
-        // Create new investment
-        if (!user.guest) {
-          const response = await axios.post(`http://localhost:8080/scenario/${editMode}/investment`, transformed);
-          newId = response.data._id;
-        } else {
-          newId = new ObjectId().toHexString();
-        }
-
-        transformed._id = newId;
-        handleUpdatingLocalStorageForNewInvestments(transformed, newId);
+      appendToScenarioKey("setOfInvestments", investment._id);
+      appendToTakenTaxStatusAccounts(investment.investmentType, investment.accountTaxStatus);
+      if (investment.accountTaxStatus === "pre-tax") {
+        appendToScenarioKey("rothConversionStrategy", investment._id);
+        appendToScenarioKey("rmdStrategy", investment._id);
       } else {
-        // Update existing investment
+        appendToScenarioKey("expenseWithdrawalStrategy", investment._id);
+      }
+      setCurrInvestments((prev) => [...(Array.isArray(prev) ? prev : []), investment]);
+    };
+
+    const transformed = renameAttributes(newInvestment);
+    try {
+      if (id === NEW_ID) { // Create new investment
+        const response = !user.guest ? (await axios.post(`http://localhost:8080/scenario/${currScenario._id}/investment`, transformed)).data : transformed;
+        if (user.guest) response._id = new ObjectId().toHexString();
+        handleUpdates(response);
+      } else {  // Update existing investment
         transformed._id = id;
+        const response = !user.guest ? (await axios.post(`http://localhost:8080/updateInvestment/${id}`, transformed)).data.result : transformed;
+        handleUpdates(response, true);
 
         const original = currInvestments.find((inv) => inv._id === id);
-        if (!user.guest) {
-          await axios.post(`http://localhost:8080/updateInvestment/${id}`, transformed);
-        }
-
-        setCurrInvestments((prev) => prev.filter((item) => item._id !== id));
-
         if (original && original.accountTaxStatus !== taxType) {
           setTakenTaxStatusAccounts((prev) => {
             const updated = { ...prev };
@@ -184,11 +178,9 @@ const InvestmentLists = () => {
             return updated;
           });
         }
-
         setEditing(false);
       }
 
-      setCurrInvestments((prev) => [...(Array.isArray(prev) ? prev : []), transformed]);
       setNewInvestment(defaultInvestment);
       handleClose();
     } catch (error) {
@@ -241,7 +233,7 @@ const InvestmentLists = () => {
             >
               <ListItemText
                 primary={<span style={{ fontWeight: "bold" }}>{investmentTypeName}</span>}
-                secondary={`Balance: $${parseFloat(item.value).toFixed(2)}`}
+                secondary={`Balance: $${parseFloat(item.value).toFixed(2)}`} // | ${item._id}
               />
               <IconButton edge="end" aria-label="edit" onClick={() => handleEditInvestment(item)}>
                 <EditIcon />
@@ -395,7 +387,7 @@ const InvestmentLists = () => {
                   <CustomInput
                     title="Value"
                     type="number"
-                    value={newInvestment.value || ""}
+                    value={newInvestment.value}
                     setValue={(value) => handleInputChange("value", value)}
                     adornment={"$"}
                     inputProps={{ min: 0 }}
@@ -412,7 +404,12 @@ const InvestmentLists = () => {
                   color="secondary"
                   onClick={handleAddInvestment}
                   sx={{ textTransform: "none" }}
-                  disabled={newInvestment.taxType === "" || newInvestment.value === ""}
+                  disabled={
+                    newInvestment.taxType === "" ||
+                    newInvestment.value === null ||
+                    newInvestment.value === undefined ||
+                    isNaN(Number(newInvestment.value))
+                  }
                 >
                   Save
                 </Button>
