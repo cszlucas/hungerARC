@@ -17,7 +17,7 @@ module.exports = async function(input) {
       rebalance,
       investmentType,
       csvLog,
-      currentYear,
+      currentYear  
     } = input;
     
     return await runSimulation(

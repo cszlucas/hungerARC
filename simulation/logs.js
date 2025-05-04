@@ -54,19 +54,20 @@ function logFinancialEvent({ year, type, description, amount, details = {} }) {
 
   switch (type.toLowerCase()) {
     case "income":
-    case "invest":
+    case "invest": {
       line += formatStrategy(description, details, "invest");
       break;
-    case "roth conversion":
+    }
+    case "roth conversion": {
       if (details.from && details.to) {
         line += ` of "${details.from}" to "${details.to}"`;
       }
       break;
-
-    case "rebalance":
+    }
+    case "rebalance": {
       line += formatStrategy(description, details, "rebalance");
       break;
-
+    }
     case "rmd": {
       const rmdAmount = details.amount ?? amount;
 
@@ -92,6 +93,10 @@ function logFinancialEvent({ year, type, description, amount, details = {} }) {
     case "discretionary":
     case "non-discretionary": {
       line += formatNonDiscretionaryDetails(details, amount, description);
+      break;
+    }
+    case "simulationinfo": {
+      if (description) line += `${description}`;
       break;
     }
     default:
