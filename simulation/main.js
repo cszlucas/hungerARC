@@ -6,6 +6,7 @@ const { calculateLifeExpectancy } = require("./algo.js");
 const path = require("path");
 const { formatToNumber } = require("./helper.js");
 const { getEvent, scenarioExplorationUpdate, generateParameterCombinations } = require("./exploration.js");
+const {logFinancialEvent} =require("./logs.js");
 const Piscina = require("piscina");
 const piscina = new Piscina({
   filename: path.resolve(__dirname, "./worker.js"),
@@ -101,7 +102,21 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   };
 
   let duration = 1;
-  console.log("exploration :>> ", exploration);
+  // console.log("exploration :>> ", exploration);
+  let rothExploration;
+  for (let i = 0; i < exploration.length; i++) {
+    if (exploration[i].type == "Roth Optimizer Flag") {
+      rothExploration = exploration[i];
+      exploration.splice(i, 1); // remove the Roth Optimizer Flag from exploration array
+      break;
+    }
+  }
+  if (rothExploration) {
+    // console.log("scenario before roth :>> ", scenario);
+    scenarioExplorationUpdate(scenario, ["Roth Optimizer Flag"], [rothExploration.data.optimizerSettings]);
+    // console.log("scenario after roth :>> ", scenario);
+  }
+
   if (exploration && exploration.length >= 1) {
     combinations = generateParameterCombinations(exploration);
     console.log("COMBINATIONS: ", combinations);
@@ -121,25 +136,41 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   //return;
   for (let i = 0; i < duration; i++) {
     const workerInputs = [];
-    if (exploration) {
+    if (exploration.length >= 1) {
+      logFinancialEvent({
+        year: "Explore",
+        type: "simulationInfo",
+        description: `You chose explore dimension #${exploration.length}. RUNNING ${numScenarioTimes} simulation/s total for combination ${combinations[i]}: at current combination: ${i + 1}. `,
+      });
       console.log(`\nRUNNING ${numScenarioTimes} simulation/s total for combination ${combinations[i]}: at current combination: ${i + 1}.\n`);
+      console.log("INCOME HERE, ", income);
       if (isFirstIteration) {
         foundData = exploration.map((spec) => {
+          console.log("spec type :>> ", spec.type);
+          // if (spec.type != "Roth Optimizer Flag"){
+          console.log("spec :>> ", spec);
           const dataArray = typeToData[spec.type]; // expense, income, etc.
+          console.log("dataArray HERE :>> ", dataArray);
           return getEvent(dataArray, spec.data); // get matching object
+          // } else{
+            // console.log("spec roth :>> ", spec);
+            // return spec.data;
+          // }
         });
         isFirstIteration = false;
       }
-
       scenarioExplorationUpdate(foundData, parameter, combinations[i]);
-      // console.log("DID IT CHANGE",JSON.stringify(expense, null, 2));
+      //console.log("DID IT CHANGE",JSON.stringify(expense, null, 2));
       // console.log("DID IT CHANGE",JSON.stringify(invest, null, 2));
     }
     const singleTaxData = taxData[0];
-    console.log("currentYear type:", typeof currentYear); // Should be a number
-    console.log("currentYear value:", currentYear); // Should be a single year, not an array
 
     for (let x = 0; x < numScenarioTimes; x++) {
+      logFinancialEvent({
+        year: "Simulation",
+        type: "simulationInfo",
+        description: `ON SIMULATION NUMBER: ${x + 1}.`,
+      });
       console.log(`ON SIMULATION NUMBER: ${x + 1}\n`);
       const clonedData = JSON.parse(
         JSON.stringify({
@@ -174,19 +205,19 @@ async function main(investmentType, invest, rebalance, expense, income, investme
       }
     }
     const allSimulationResults = await Promise.all(workerInputs.map((input) => piscina.run(input)));
-    console.log("allSimulationResults", JSON.stringify(allSimulationResults));
+    //console.log("allSimulationResults", JSON.stringify(allSimulationResults));
 
     if (exploration && exploration.length >= 1) {
       explore = exploreData(allSimulationResults, explorationData, combinations[i], currentYear);
     } else {
       let years = chartData(allSimulationResults, numScenarioTimes);
-      console.log("YEARS", JSON.stringify(years, null, 2));
+      //console.log("YEARS", JSON.stringify(years, null, 2));
       return years;
     }
   }
 
   if (exploration && exploration.length >= 1) {
-    console.log("EXPLORE", JSON.stringify(explore, null, 2));
+    // console.log("EXPLORE", JSON.stringify(explore, null, 2));
     return explore;
   }
 }

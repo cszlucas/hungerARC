@@ -21,6 +21,7 @@ function getCurrentEvent(year, incomeEvent = [], expenseEvent = [], investEvent 
   }
 
   for (let event of investEvent) {
+    //console.log("INVEST EVENT",JSON.stringify(event, null, 2));
     if (year >= event.startYear.calculated && year <= event.startYear.calculated + event.duration.calculated) {
       curInvestEvent.push(event);
     }
@@ -78,10 +79,14 @@ function refEvents(event, relatedEvents) {
 function setValues(events) {
   //run once per simulation
   for (let event of events) {
-    let startYr = startYear(event, events);
-    event.startYear.calculated = startYr;
-    let dur = duration(event);
-    event.duration.calculated = dur;
+    if (event.startYear.calculated == undefined) {
+      let startYr = startYear(event, events);
+      event.startYear.calculated = startYr;
+    }
+    if (event.duration.calculated == undefined) {
+      let dur = duration(event);
+      event.duration.calculated = dur;
+    }
   }
 }
 
@@ -93,9 +98,9 @@ function randomNormal(mean, stdDev) {
   //console.log('u :>> ', u);
   //console.log('v :>> ', v);
   //console.log('z :>> ', z);
-  //console.log("mean: ", typeof mean);   
-// console.log("stdev", typeof stdDev); 
-//   console.log('mean+z*stdDev :>> ', mean+z*stdDev);
+  //console.log("mean: ", typeof mean);
+  // console.log("stdev", typeof stdDev);
+  //   console.log('mean+z*stdDev :>> ', mean+z*stdDev);
   return mean + z * stdDev;
 }
 
@@ -104,12 +109,13 @@ function randomUniform(min, max) {
 }
 
 function mulberry32(seed) {
-  return function() {
-      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
-      let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
-      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-      return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  }
+  return function () {
+    seed |= 0;
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
 
 function duration(event) {
@@ -129,27 +135,27 @@ function duration(event) {
 
 function getStrategy(scenario, investments, curExpenseEvent, investEvent, year) {
   // Helper: safely map by ID and filter out unfound items
-  const safeMapById = (ids, collection, label) => {
+  const safeMapById = (ids, collection, label, e) => {
     return ids
       .map((id) => {
         const item = collection.find((entry) => entry._id === id);
         if (!item) {
-          console.warn(`Warning: ${label} ID "${id}" not found in collection.`);
+          console.log(`Warning: ${e} ID "${id}" not part of strategy: ${label}.`);
           console.log(collection);
         }
         return item;
       })
       .filter(Boolean);
   };
-  const RMDStrategyInvestOrder = safeMapById(scenario.rmdStrategy, investments, "RMD Strategy Investment");
-  const withdrawalStrategy = safeMapById(scenario.expenseWithdrawalStrategy, investments, "Withdrawal Strategy Investment");
-  const spendingStrategy = safeMapById(scenario.spendingStrategy, curExpenseEvent, "Spending Strategy Expense");
+  const RMDStrategyInvestOrder = safeMapById(scenario.rmdStrategy, investments, "RMD Strategy Investment", "RMD collection");
+  const withdrawalStrategy = safeMapById(scenario.expenseWithdrawalStrategy, investments, "Withdrawal Strategy Investment", "investment collection");
+  const spendingStrategy = safeMapById(scenario.spendingStrategy, curExpenseEvent, "Spending Strategy Expense", "expense collection");
 
   const investStrategy = investEvent.filter(
     (invest) => scenario.investEventSeries.includes(invest._id) && invest.startYear?.calculated <= year && year <= invest.startYear?.calculated + invest.duration?.calculated
   );
-  
-  console.log("helper invest strategy: " + investStrategy);
+
+  //console.log("helper invest strategy: " + investStrategy);
   return {
     RMDStrategyInvestOrder,
     withdrawalStrategy,
@@ -193,7 +199,7 @@ function formatToNumber(obj) {
     "userPercentage",
     "lower",
     "upper",
-    "steps"
+    "steps",
   ]);
 
   //'fixedPercentages', 'initialPercentages', 'finalPercentages'
@@ -227,7 +233,6 @@ function formatToNumber(obj) {
 
   return recurse(obj);
 }
-
 
 module.exports = {
   getCurrentEvent,

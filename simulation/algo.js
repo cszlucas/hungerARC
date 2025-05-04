@@ -1,5 +1,7 @@
 import { randomNormal, randomUniform } from "./helper.js";
 import { v4 as uuidv4 } from "uuid";
+import { logFinancialEvent, printIncomeEvents } from "./logs.js";
+
 
 function findInflation(inflationAssumption) {
   if (inflationAssumption.type == "fixed") return inflationAssumption.fixedRate;
@@ -108,8 +110,17 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
 
 function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, yearTotals, cashInvestment, curIncomeEvent, spouseDeath) {
   console.log("\nUPDATE INCOME EVENTS");
+  logFinancialEvent({
+    year: year,
+    type: "income",
+    description: "The income events before running it.",
+  });
+  printIncomeEvents(incomeEvents, year, "income", "income", inflationRate, spouseDeath);
+
   for (let incomeEvent of incomeEvents) {
+    // log income event detail
     console.log("incomeEvent :>> ", incomeEvent.eventSeriesName);
+    
     if (curIncomeEvent.includes(incomeEvent)) {
       let annualChange = incomeEvent.annualChange;
       let incomeValue = incomeEvent.initialAmount;
@@ -154,6 +165,17 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
       }
     }
   }
+  logFinancialEvent({
+    year: year,
+    type: "income",
+    description: "The income events after running it.",
+  });
+  printIncomeEvents(incomeEvents, year, "income", "income", inflationRate, spouseDeath);
+  logFinancialEvent({
+    year: year,
+    type: "income",
+    description: "The income has now been done.",
+  });
 }
 
 function updateInflationExpenses(curExpenseEvent, expenseEvent, inflationRate) {

@@ -26,9 +26,11 @@ function payNonDiscretionaryExpenses(
   //console.log("nonDiscretionaryExpenses ", nonDiscretionaryExpenses);
   let expenseAmt = 0;
   for (let expense of nonDiscretionaryExpenses) {
-    expenseAmt += getValueInYear(expense, year, inflationRate, spouseDeath);
+    let amt = getValueInYear(expense, year, inflationRate, spouseDeath);
+    expense.initialAmount = amt;
+    expenseAmt += amt;
   }
-  const taxes = getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, capitalGains, userAge, fedDeduction);
+  const taxes = getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, capitalGains, userAge, fedDeduction, year);
   let withdrawalAmt = expenseAmt + taxes;
   logFinancialEvent({
     year: year,
@@ -92,7 +94,7 @@ function payNonDiscretionaryExpenses(
 }
 
 //calculate TAX
-function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGains, userAge, fedDeduction) {
+function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGains, userAge, fedDeduction, year) {
   console.log("CALCULATING TAXES, my prev year income: ", prevYearIncome);
   const adjustedIncome = Math.max(0, prevYearIncome - fedDeduction - prevYearSS);
   const federalTax = taxAmt(adjustedIncome, federalIncomeRange);
@@ -107,6 +109,11 @@ function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdr
 
   const capitalGainsTax = taxAmt(prevYearGains, capitalGains, "capitalGains");
 
+  logFinancialEvent({
+    year: year,
+    type: "non-discretionary",
+    description: `Taxes to pay include federalTax: $${federalTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, stateTax: $${stateTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, social security tax: $${ssTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, earlyWithdrawalTax: $${earlyWithdrawalTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, capitalGainsTax: $${capitalGainsTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  });
   return federalTax + stateTax + ssTax + earlyWithdrawalTax + capitalGainsTax;
 }
 
@@ -138,9 +145,9 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
   });
   for (let expense of spendingStrategy) {
     printEvents([expense], year, "discretionary", "expense", inflationRate, spouseDeath);
-    let expenseVal = getValueInYear(expense, year, inflationRate, spouseDeath);
     //console.log("Expense:", expense._id, "Amount:", expenseVal, "Cash available:", cashInvestment.value);
-
+    let expenseVal = getValueInYear(expense, year, inflationRate, spouseDeath);
+    expense.initialAmount = expenseVal;
     if (cashInvestment.value >= expenseVal) {
       cashInvestment.value -= expenseVal;
       expensesPaid += expenseVal;

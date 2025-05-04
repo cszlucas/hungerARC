@@ -56,9 +56,9 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
       // console.log(`${roundToTwo(total)}`);
       setPercentError(roundToTwo(total) !== 1);
     } else {
-      const total_intial = Object.values(formValues.assetAllocation.fixedPercentages)
+      const total_initial = Object.values(formValues.assetAllocation.initialPercentages)
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-      const total_final = Object.values(formValues.assetAllocation.fixedPercentages)
+      const total_final = Object.values(formValues.assetAllocation.finalPercentages)
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
       
       // console.log(`${roundToTwo(total_intial)} - ${roundToTwo(total_final)}`);
