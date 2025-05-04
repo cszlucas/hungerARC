@@ -1,6 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, 
-    Switch, MenuItem, TextField, IconButton, Backdrop, Fade, Checkbox } from "@mui/material";
+import { ThemeProvider, CssBaseline, Container, Typography, Stack } from "@mui/material";
 import theme from "../components/theme";
 import Navbar from "../components/navbar";
 import {
@@ -77,25 +76,31 @@ function prepareSurfaceData(z, x, y) {
     };
 }
 
-function PlotlySurfaceChart({ title, x, y, z }) {
+function PlotlySurfaceChart({ title, x, y, z, xLabel, yLabel, zLabel }) {
   return (
     <Plot
       data={[
         {
           type: "surface",
-          x: x,
-          y: y,
-          z: z,
+          z: z,       // 2D array: shape [y.length][x.length]
+          x: x,       // 1D array for column labels (optional)
+          y: y,       // 1D array for row labels (optional)
           colorscale: "Viridis",
         },
       ]}
       layout={{
-        title,
+        title: { text: title },
         autosize: true,
         scene: {
-          xaxis: { title: "Duration" },
-          yaxis: { title: "Contribution" },
-          zaxis: { title: "Investment ($)" },
+          xaxis: {
+            title: { text: xLabel || "X Axis" },
+          },
+          yaxis: {
+            title: { text: yLabel || "Y Axis" },
+          },
+          zaxis: {
+            title: { text: zLabel || "Z Axis" },
+          },
         },
         margin: { l: 0, r: 0, b: 0, t: 50 },
       }}
@@ -104,76 +109,87 @@ function PlotlySurfaceChart({ title, x, y, z }) {
   );
 }
 
-function ContourChart({ title, x, y, z }) {
-    // Flatten z[y][x] to [ [xVal, yVal, zVal], ... ]
-    const heatmapData = [];
-    for (let j = 0; j < y.length; j++) {
-      for (let i = 0; i < x.length; i++) {
-        heatmapData.push([i, j, z[j][i]]);
-      }
+
+function ContourChart({ title, x, y, z, xLabel = "X", yLabel = "Y", zLabel = "Z" }) {
+  // Flatten z[y][x] to [ [xVal, yVal, zVal], ... ]
+  const heatmapData = [];
+  for (let j = 0; j < y.length; j++) {
+    for (let i = 0; i < x.length; i++) {
+      heatmapData.push([i, j, z[j][i]]);
     }
-  
-    const zValues = heatmapData.map(p => p[2]);
-    const zMin = Math.min(...zValues);
-    const zMax = Math.max(...zValues);
-  
-    const option = {
-      title: { text: title },
-      tooltip: {},
-      visualMap: {
-        min: zMin,
-        max: zMax,
-        calculable: true,
-        orient: "vertical",
-        left: "left",
-        inRange: {
-          color: [
-            "#313695", "#4575b4", "#74add1", "#abd9e9", "#ffffbf",
-            "#fdae61", "#f46d43", "#d73027", "#a50026"
-          ]
-        }
-      },
-      xAxis: {
-        type: "category",
-        data: x,
-        boundaryGap: true,
-        name: "Duration"
-      },
-      yAxis: {
-        type: "category",
-        data: y,
-        boundaryGap: true,
-        name: "Contribution"
-      },
-      series: [
-        {
-          type: "heatmap",
-          data: heatmapData,
-          label: {
-            show: false
-          },
-          emphasis: {
-            itemStyle: {
-              borderColor: "#333",
-              borderWidth: 1
-            }
+  }
+
+  const zValues = heatmapData.map(p => p[2]);
+  const zMin = Math.min(...zValues);
+  const zMax = Math.max(...zValues);
+
+  const option = {
+    title: { text: title },
+    tooltip: {
+      formatter: function (params) {
+        const xi = params.value[0];
+        const yi = params.value[1];
+        const zi = params.value[2];
+        return `${xLabel}: ${x[xi]}<br/>${yLabel}: ${y[yi]}<br/>${zLabel}: ${zi}`;
+      }
+    },
+    visualMap: {
+      min: zMin,
+      max: zMax,
+      calculable: true,
+      orient: "vertical",
+      left: "left",
+      inRange: {
+        color: [
+          "#313695", "#4575b4", "#74add1", "#abd9e9", "#ffffbf",
+          "#fdae61", "#f46d43", "#d73027", "#a50026"
+        ]
+      }
+    },
+    xAxis: {
+      type: "category",
+      data: x,
+      boundaryGap: true,
+      name: xLabel
+    },
+    yAxis: {
+      type: "category",
+      data: y,
+      boundaryGap: true,
+      name: yLabel
+    },
+    series: [
+      {
+        type: "heatmap",
+        data: heatmapData,
+        label: {
+          show: false
+        },
+        emphasis: {
+          itemStyle: {
+            borderColor: "#333",
+            borderWidth: 1
           }
         }
-      ]
-    };
-  
-    return (
-      <ReactECharts
-        option={option}
-        style={{ width: "100%", height: "80vh" }}
-        notMerge={true}
-        lazyUpdate={true}
-      />
-    );
+      }
+    ]
+  };
+
+  return (
+    <ReactECharts
+      option={option}
+      style={{ width: "100%", height: "80vh" }}
+      notMerge={true}
+      lazyUpdate={true}
+    />
+  );
 }
+
   
 
 const TwoDimensionalCharts = () => {
+    const {tempExploration} = useContext(AppContext);
+    // console.log(tempExploration);
     const location = useLocation();
     const chartData = location.state?.chartData || [];
 
@@ -244,21 +260,21 @@ const TwoDimensionalCharts = () => {
                     </Stack>
 
                     {currChart === "Surface Plot" && selectedQuantity === "final probability of success" && (
-                        <PlotlySurfaceChart title="Final-Year Probability of Success" {...probGrid} />
+                        <PlotlySurfaceChart title="Final-Year Probability of Success" {...probGrid} zLabel="Final Probability of Success" />
 
                     )}
 
                     {currChart === "Surface Plot" && selectedQuantity === "final median total investments" && (
-                        <PlotlySurfaceChart title="Final-Year Median Investment" {...medianGrid} />
+                        <PlotlySurfaceChart title="Final-Year Median Investment" {...medianGrid} zLabel = "Final Median Total Investments"/>
                     )}
 
                     {currChart === "Contour Plot" && selectedQuantity === "final probability of success" && (
-                        <ContourChart title="Final-Year Probability of Success" {...probGrid} />
+                        <ContourChart title="Final-Year Probability of Success" {...probGrid} zLabel="Final Probability of Success" />
 
                     )}
 
                     {currChart === "Contour Plot" && selectedQuantity === "final median total investments" && (
-                        <ContourChart title="Final-Year Median Investment" {...medianGrid} />
+                        <ContourChart title="Final-Year Median Investment" {...medianGrid} zLabel="Final Median Total Investments" />
 
                     )}
 
