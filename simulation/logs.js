@@ -45,15 +45,22 @@ function logInvestment(investments, year, csvLog, investmentTypes) {
 fs.appendFileSync(logFile, message, "utf8");
 
 function logFinancialEvent({ year, type, description, amount, details = {} }) {
+  // console.log('INCOME TESTING :>> ');
+  // console.log('type :>> ', type);
+  // console.log('description :>> ', description);
+
+  let line = `[${year}] ${type.toUpperCase()} | `;
+
   if (amount !== undefined) {
     const formattedAmount = typeof amount === "number" ? `$${amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : amount;
     line += ` - ${formattedAmount}.`;
   }
 
-  let line = `[${year}] ${type.toUpperCase()} | `;
 
   switch (type.toLowerCase()) {
     case "income":
+      line += formatIncome(details, amount, description);
+      break;
     case "invest": {
       line += formatStrategy(description, details, "invest");
       break;
@@ -108,6 +115,24 @@ function logFinancialEvent({ year, type, description, amount, details = {} }) {
   // Add a newline and write to file
   fs.appendFileSync(logFile, line + "\n", "utf8");
 }
+
+function formatIncome(details, amount, description = "") { 
+  // details: {
+  //   type: detailsType,
+  //   ID: e._id,
+  //   name: e.eventSeriesName,
+  //   value: e.initialAmount
+  let line = "";
+  if (description) line += `${description}`;
+  // console.log('description :>> ', description);
+  // console.log('detail :>> ', details);
+  if (Object.keys(details).length > 0){ 
+    line += "Name: " + `${details.name},` + " ID: " + `${details.ID},` + " Value: " + `${details.value}.`;
+  }
+  // console.log('line :>> ', line);
+  return line;
+}
+
 
 function formatNonDiscretionaryDetails(details, amount, description = "") {
   const expenseAmount = details.amount ?? amount;
@@ -199,6 +224,31 @@ function printInvestments(investments, year, type, detailsType) {
   }
 }
 
+
+function printIncomeEvents(events, year, type, detailsType, inflationRate, spouseDeath) {
+  console.log('INCOME LOG events :>> ', events);
+  if (events.length == 0) {
+    logFinancialEvent({
+      year: year,
+      type: type,
+      description: `There are no more events of type ${type} this year.`,
+    });
+  } else {
+    for (e of events) {
+      logFinancialEvent({
+        year: year,
+        type: type,
+        details: {
+          type: detailsType,
+          ID: e._id,
+          name: e.eventSeriesName,
+          value: e.initialAmount
+        },
+      });
+    }
+  }
+}
+
 function printEvents(events, year, type, detailsType, inflationRate, spouseDeath) {
   if (events.length == 0) {
     logFinancialEvent({
@@ -214,7 +264,8 @@ function printEvents(events, year, type, detailsType, inflationRate, spouseDeath
         details: {
           type: detailsType,
           ID: e._id,
-          value: getValueInYear(e, year, inflationRate, spouseDeath),
+          value: e.initialAmount,
+          // value: getValueInYear(e, year, inflationRate, spouseDeath),
         },
       });
     }
@@ -257,5 +308,6 @@ module.exports = {
   logFinancialEvent,
   printInvestments,
   printEvents,
+  printIncomeEvents,
   printStrategy,
 };
