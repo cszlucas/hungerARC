@@ -3,7 +3,7 @@ import { performRMDs } from "./rmd.js";
 import { payNonDiscretionaryExpenses, payDiscretionaryExpenses } from "./expenses.js";
 import { runInvestStrategy, rebalance } from "./strategy.js";
 import { getCurrentEvent, getStrategy, getRebalanceStrategy, setValues } from "./helper.js";
-import { logInvestment } from "./logs.js";
+import { logInvestment, logFinancialEvent } from "./logs.js";
 import {
   findInflation,
   updateInvestmentValues,
@@ -31,9 +31,9 @@ async function runSimulation(
   rebalanceEvent,
   investmentTypes,
   csvLog,
-  currentYear
+  currentYear 
 ) {
-  //console.log("RUN SIMULATION",JSON.stringify(investments, null, 2));
+  //console.log("RUN SIMULATION",JSON.stringify(scenario, null, 2));
   //console.log("currentYear", currentYear);
   // previous year
   let irsLimit = scenario.irsLimit;
@@ -81,10 +81,10 @@ async function runSimulation(
   let prevYearSS = 0;
   let prevYearEarlyWithdrawals = 0;
   let prevYearGains = 0;
-//console.log('investmentTypes :>> ', investmentTypes);
+  //console.log('investmentTypes :>> ', investmentTypes);
   let cashInvestmentType = investmentTypes.find((inv) => inv.name === "Cash");
   //console.log("CASH INVESTMENT TYPE: ", cashInvestmentType);
- // console.log('investments :>> ', investments);
+  // console.log('investments :>> ', investments);
   let cashInvestment;
   if (cashInvestmentType) {
     let cashId = cashInvestmentType._id;
@@ -97,7 +97,7 @@ async function runSimulation(
 
   //  // SIMULATION LOOP
   // manually adjusted for testing, should be year <= userEndYear !!
-  for (let year = currentYear; year <= 2026; year++) {
+  for (let year = currentYear; year <= 2027; year++) {
     console.log("\nSIMULATION YEAR", year);
     if (filingStatus == "married") {
       if (year == scenario.birthYearSpouse + lifeExpectancySpouse) {
@@ -113,7 +113,10 @@ async function runSimulation(
       }
     }
     let inflationRate = findInflation(scenario.inflationAssumption) * 0.01;
+    //console.log("EVENTS",JSON.stringify(expenseEvent, null, 2));
     let { curIncomeEvent, curExpenseEvent, curInvestEvent, curRebalanceEvent } = getCurrentEvent(year, incomeEvent, expenseEvent, investEvent, rebalanceEvent);
+    //console.log("Found current event? ",JSON.stringify(curExpenseEvent, null, 2));
+
     let { RMDStrategyInvestOrder, withdrawalStrategy, spendingStrategy, investStrategy } = getStrategy(scenario, investments, curExpenseEvent, curInvestEvent, year);
 
     // RUN INCOME EVENTS
@@ -169,6 +172,12 @@ async function runSimulation(
     // PAY DISCRETIONARY EXPENSES
     if (spendingStrategy && spendingStrategy.length != 0) {
       payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath);
+    } else {
+      logFinancialEvent({
+        year: year,
+        type: "discretionary",
+        description: `No more discretionary expenses to pay this year.`,
+      });
     }
 
     const discretionary = curExpenseEvent.filter((expenseEvent) => expenseEvent.isDiscretionary === true);
@@ -176,6 +185,12 @@ async function runSimulation(
     // RUN INVEST EVENT
     if (investStrategy && investStrategy.length != 0) {
       runInvestStrategy(cashInvestment, irsLimit, year, investments, investStrategy);
+    } else {
+      logFinancialEvent({
+        year: year,
+        type: "invest",
+        description: `No invest events this year.`,
+      });
     }
 
     // RUN REBALANCE EVENT
@@ -186,14 +201,18 @@ async function runSimulation(
       if (rebalanceStrategy && rebalanceStrategy.length != 0) {
         rebalance(investments, year, rebalanceStrategy, userAge, yearTotals, type);
       } else {
-        console.log("Nothing to rebalance of type: ", type);
+        logFinancialEvent({
+          year: year,
+          type: "rebalance",
+          description: `Nothing to rebalance of type: ${type} this year.`,
+        });
       }
     }
 
     // PRELIMINARIES
     // can differ each year if sampled from distribution
     preliminaries(federalIncomeTax, inflationRate, fedDeduction, capitalGains, stateTax, filingStatus, tax, irsLimit, stateIncomeTaxBracket, startYearPrev);
-    
+
     // CHARTS
     console.log("updateChart called", { yearIndex, yearDataBucketsLength: yearDataBuckets.length });
     updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, curIncomeEvent, discretionary, nonDiscretionary, taxes, yearTotals, year, inflationRate, spouseDeath);
@@ -247,7 +266,8 @@ function updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, c
   if (!yearDataBuckets[yearIndex]) {
     console.error("yearDataBuckets[yearIndex] is undefined", { yearIndex });
     return;
-  }  
+  }
+
   updateYearDataBucket(yearDataBuckets, yearIndex, {
     investments: investments.map((event) => ({
       name: lookup[event.investmentType.toString()] ? `${lookup[event.investmentType.toString()]} (${event.accountTaxStatus})` : "Unknown",

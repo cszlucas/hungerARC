@@ -50,12 +50,13 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
       setPercentError(Math.round(total) !== 1);
     } else {
-      const total_intial = Object.values(formValues.assetAllocation.fixedPercentages)
+      const total_initial = Object.values(formValues.assetAllocation.initialPercentages)
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-      const total_final = Object.values(formValues.assetAllocation.fixedPercentages)
+      const total_final = Object.values(formValues.assetAllocation.finalPercentages)
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-      
-      setPercentError(Math.round(total_intial) !== 1 || Math.round(total_final) !== 1);
+      console.log("total_initial",total_initial);
+      console.log("total_final", total_final);
+      setPercentError(Math.round(total_initial) !== 1 || Math.round(total_final) !== 1);
     }
   }, [formValues.assetAllocation]);
 
