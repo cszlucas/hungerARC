@@ -36,7 +36,7 @@ function payNonDiscretionaryExpenses(
     details: {
       amount: expenseAmt,
       taxes: taxes,
-      cash: cashInvestment.value
+      cash: cashInvestment.value,
     },
   });
   printEvents(nonDiscretionaryExpenses, year, "non-discretionary", "expense", inflationRate, spouseDeath);
@@ -110,18 +110,26 @@ function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdr
   logFinancialEvent({
     year: year,
     type: "non-discretionary",
-    description: `Taxes to pay include federalTax: $${federalTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, stateTax: $${stateTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, social security tax: $${ssTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, earlyWithdrawalTax: $${earlyWithdrawalTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, capitalGainsTax: $${capitalGainsTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    description: `Taxes to pay include federalTax: $${federalTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, stateTax: $${stateTax.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}, social security tax: $${ssTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, earlyWithdrawalTax: $${earlyWithdrawalTax.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}, capitalGainsTax: $${capitalGainsTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
   });
   return federalTax + stateTax + ssTax + earlyWithdrawalTax + capitalGainsTax;
 }
 
 function taxAmt(income, taxBracket, type) {
-  for (let range of taxBracket) {
-    if (income >= range.incomeRange[0] && income <= range.incomeRange[1]) {
-      if (type === "capitalGains") {
-        return income > 0 ? income * (range.gainsRate / 100) : 0;
-      } else {
-        return income * (range.taxRate / 100);
+  if (taxBracket) {
+    for (let range of taxBracket) {
+      if (income >= range.incomeRange[0] && income <= range.incomeRange[1]) {
+        if (type === "capitalGains") {
+          return income > 0 ? income * (range.gainsRate / 100) : 0;
+        } else {
+          return income * (range.taxRate / 100);
+        }
       }
     }
   }
