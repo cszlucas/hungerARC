@@ -1,6 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, 
-    Switch, MenuItem, TextField, IconButton, Backdrop, Fade, Checkbox } from "@mui/material";
+import { ThemeProvider, CssBaseline, Container, Typography, Stack } from "@mui/material";
 import theme from "../components/theme";
 import Navbar from "../components/navbar";
 import {

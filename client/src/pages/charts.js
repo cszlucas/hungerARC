@@ -1,6 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, 
-    Switch, MenuItem, TextField, IconButton, Backdrop, Fade, Checkbox } from "@mui/material";
+import { ThemeProvider, CssBaseline, Container, Typography, Stack, Checkbox } from "@mui/material";
 import theme from "../components/theme";
 import Navbar from "../components/navbar";
 import {
@@ -176,7 +175,6 @@ const ChartWithBands = ({ shadedLineChart }) => {
       legend: {
         labels: {
           filter: function (legendItem) {
-            // Only show the Upper bands + Median in the legend
             return (
               legendItem.text.includes("10–90%") ||
               legendItem.text.includes("20–80%") ||
@@ -188,6 +186,22 @@ const ChartWithBands = ({ shadedLineChart }) => {
         },
       },
     },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: "Year",
+          font: { size: 14 }
+        }
+      },
+      y: {
+        title: {
+          display: true,
+          text: "Value ($)",
+          font: { size: 14 }
+        }
+      }
+    }
   };
 
   return <Line data={data} options={options} />;
@@ -240,7 +254,7 @@ const GroupedStackedBarChart = ({ data, threshold = 0 }) => {
   });
 
   const option = {
-    title: { text: "Grouped and Stacked Bar Chart" },
+    title: { text: "" },
     tooltip: {
       trigger: "axis",
       axisPointer: { type: "shadow" },
@@ -275,6 +289,7 @@ const GroupedStackedBarChart = ({ data, threshold = 0 }) => {
     xAxis: {
       type: "category",
       data: years,
+      name: "Years"
     },
     yAxis: {
       type: "value",
@@ -391,26 +406,55 @@ function parseShadedLineChartBands(rawData, quantity) {
       p40_60: { lower: [], upper: [] },
       median: []
     };
-  } 
+  }
 
   const getCategory = (entry) => {
     if (quantity === "Total Investments") return entry.investments;
     if (quantity === "Total Income") return entry.income;
+
     if (quantity === "Total Expenses") {
-      return [
-        ...(entry.discretionary ?? []),
-        ...(entry.nonDiscretionary ?? []),
-        ...(entry.taxes != null ? entry.taxes.map(v => ({ value: v })) : [])
-      ];
+      const nSims = Math.max(
+        entry.discretionary?.length ?? 0,
+        entry.nonDiscretionary?.length ?? 0,
+        entry.taxes?.length ?? 0
+      );
+    
+      const sims = [];
+    
+      for (let i = 0; i < nSims; i++) {
+        const dItems = entry.discretionary?.[i] ?? [];
+        const ndItems = entry.nonDiscretionary?.[i] ?? [];
+    
+        // Ensure taxes[i] is always treated as an array of numbers
+        const taxEntry = entry.taxes?.[i];
+        const taxItems = Array.isArray(taxEntry)
+          ? taxEntry
+          : typeof taxEntry === "number"
+            ? [taxEntry]
+            : [];
+    
+        const dSum = dItems.reduce((sum, item) => sum + (item?.value ?? 0), 0);
+        const ndSum = ndItems.reduce((sum, item) => sum + (item?.value ?? 0), 0);
+        const tSum = taxItems.reduce((sum, val) => sum + (val ?? 0), 0);
+    
+        sims.push({ value: dSum + ndSum + tSum });
+      }
+    
+      return sims;
     }
+    
+    
+
     if (quantity === "Early Withdrawal Tax") {
       return entry.earlyWithdrawals != null
         ? entry.earlyWithdrawals.map(v => ({ value: v }))
         : [];
     }
+
     if (quantity === "Percentage of Total Discretionary Expenses Incurred") {
       return entry.discretionary ?? [];
     }
+
     return [];
   };
 
@@ -420,7 +464,7 @@ function parseShadedLineChartBands(rawData, quantity) {
   const percentilesByYear = rawData.map((yearData) => {
     const sims = getCategory(yearData);
 
-    if (sims.length === 0) return null;
+    if (!sims || sims.length === 0) return null;
 
     const totalsPerSim = sims.map((arrOrVal) => {
       if (Array.isArray(arrOrVal)) {
@@ -439,7 +483,6 @@ function parseShadedLineChartBands(rawData, quantity) {
       if (lower === upper) {
         return totalsPerSim[lower];
       }
-      // Linear interpolation
       const weight = index - lower;
       return totalsPerSim[lower] * (1 - weight) + totalsPerSim[upper] * weight;
     };
@@ -457,7 +500,6 @@ function parseShadedLineChartBands(rawData, quantity) {
     };
   });
 
-  // Split out bands
   const bands = {
     startYear,
     endYear,
@@ -491,9 +533,10 @@ function parseShadedLineChartBands(rawData, quantity) {
       bands.median.push(p.median);
     }
   });
-
+  console.log(bands);
   return bands;
 }
+
 
 const Charts = () => {
     const location = useLocation();
@@ -522,7 +565,7 @@ const Charts = () => {
     const shadedQuantities = ["Total Investments", "Total Income", "Total Expenses", "Early Withdrawal Tax", "Percentage of Total Discretionary Expenses Incurred"];
     
     const shadedLineChartData = parseShadedLineChartBands(chartData.years, currQuantity);
-    console.log(shadedLineChartData);
+    // console.log(shadedLineChartData);
 
     const quantityKeyMap = {
         "Total Investments": "investments",
@@ -615,9 +658,6 @@ const Charts = () => {
                         <ChartWithBands
                             shadedLineChart={parseShadedLineChartBands(chartData.years, currQuantity)}
                         />
-                        // <>Testing Something</>
-                        // <ShadedConfidenceChart/>
-                        // <ShadedLineChart/>
                     )}
 
                     {currChart === "Stacked Bar Chart" && (
