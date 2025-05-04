@@ -114,7 +114,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
       stepSize[i] = Number(exploration[i].range.steps);
       dataExplore[i] = exploration[i].data;
       parameter[i] = exploration[i].parameter;
-      explorationData.parameter[i] = parameter[i];
+      explorationData.parameter[i] = `${type[i]} ${parameter[i]}`;
     }
   }
 
