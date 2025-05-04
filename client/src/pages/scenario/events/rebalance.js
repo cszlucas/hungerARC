@@ -236,7 +236,7 @@ const Rebalance = () => {
             <EventSeries formValues={formValues} setFormValues={setFormValues} />
           </Box>
           {/* Right Column - Investment List for the selected tax type */}
-          <Box sx={{width: 350}}>
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
             <AssetAllocation formValues={formValues} setFormValues={setFormValues} isRebalance={true} setPercentError={setPercentError}/>
           </Box>
         </Box>

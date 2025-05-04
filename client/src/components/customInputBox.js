@@ -67,9 +67,9 @@ const CustomInput = ({
 
     return (
         <Box sx={{ display: "flex", flexDirection: "column", width: "auto", mb: 2 }}>
-            <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium", minWidth: 170 }}>
+            {title && <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium", minWidth: 170 }}>
                 {title}
-            </Typography>
+            </Typography>}
             <TextField
                 variant="outlined"
                 type={type === "number" ? "number" : "text"}
