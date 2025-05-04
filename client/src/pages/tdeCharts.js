@@ -220,7 +220,9 @@ function ContourChart({ title, x, y, z }) {
 
 const TwoDimensionalCharts = () => {
     const location = useLocation();
-    // const tdeData = location.state?.tdeData || [];
+    const chartData = location.state?.chartData || [];
+
+    console.log(chartData);
 
     const tdeData = {
         parameter: ["duration", "contribution"],

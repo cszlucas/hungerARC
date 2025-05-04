@@ -86,9 +86,24 @@ const RunSimulation = () => {
 
       // console.log(response);
       // console.log(response.data);
-      navigate("/charts", {
-        state: { chartData: response.data }
-      });
+      if (tempExploration.length == 0)
+      {
+        navigate("/charts", {
+          state: { chartData: response.data }
+        });
+      }
+      else if (tempExploration.length == 1)
+      {
+        navigate("/ode", {
+          state: { chartData: response.data }
+        });
+      }
+      else
+      {
+        navigate("/tde", {
+          state: { chartData: response.data }
+        });
+      }
   
       // return response.data; // optional: just return the data, not the whole Axios response
     } catch (error) {
