@@ -45,6 +45,8 @@ function scenarioExplorationUpdate(foundData, parameter, value) {
         allocation.initialPercentages[keys[0]] = v;
         allocation.initialPercentages[keys[1]] = 1 - v;
       }
+    } else if (parameter[d] == "Roth Optimizer Flag") {
+      foundData.optimizerSettings = value[d];
     }
   }
 }
