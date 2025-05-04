@@ -28,9 +28,17 @@ export default function NavBar({ currentPage }) {
     setOpen(state);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:8080/auth/logout", {
+        method: "POST",
+        credentials: "include", // important to send the session cookie
+      });
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
+  
     localStorage.clear();
-    localStorage.setItem("edit", null);
     navigate("/login");
   };
 

@@ -214,7 +214,7 @@ async function Investments() {
 
 async function Users() {
   try {
-    const scenarios = await axios.get("http://localhost:8080/user/67df2402ff2657feabd8c721/scenarios");
+    const scenarios = await axios.get("http://localhost:8080/user/67df2402ff2657feabd8c721/scenarios"); // This does not work anymore
     console.log(scenarios.data);
   } catch (error) {
     console.error("Error updating:", error);
