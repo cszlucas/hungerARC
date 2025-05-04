@@ -97,7 +97,6 @@ function logFinancialEvent({ year, type, description, amount, details = {} }) {
       break;
     }
     case "discretionary":
-      break;
     case "non-discretionary": {
       line += formatNonDiscretionaryDetails(details, amount, description);
       break;

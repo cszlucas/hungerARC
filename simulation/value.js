@@ -7,7 +7,7 @@ function getValueInYear(event, year, inflationRate, spouseDeath) {
   const yearsSinceStart = year - startSimYear;
   const yearsActive = year - startYear.calculated;
   // Apply inflation to base amount only if inflationAdjustment is true
-  let amount = inflationAdjustment ? initialAmount * Math.pow(1 + inflationRate, yearsSinceStart) : initialAmount;
+  let amount = inflationAdjustment ? initialAmount * (1 + inflationRate) : initialAmount;
 
   // Account for if spouse is out of simulation
   if (spouseDeath) {
@@ -16,6 +16,8 @@ function getValueInYear(event, year, inflationRate, spouseDeath) {
 
   console.log('duration.calculated :>> ', duration.calculated);
   // Only apply expected change if event is active in this year
+
+  // Probably don't need to check this
   if (yearsActive >= 0 && yearsActive < duration.calculated && yearsSinceStart >= 0) {
     // for (let i = 0; i < yearsActive; i++) {
       let change = 0;

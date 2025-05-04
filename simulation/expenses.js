@@ -26,7 +26,7 @@ function payNonDiscretionaryExpenses(
   //console.log("nonDiscretionaryExpenses ", nonDiscretionaryExpenses);
   let expenseAmt = 0;
   for (let expense of nonDiscretionaryExpenses) {
-    amt = getValueInYear(expense, year, inflationRate, spouseDeath);
+    let amt = getValueInYear(expense, year, inflationRate, spouseDeath);
     expense.initialAmount = amt;
     expenseAmt += amt;
   }
@@ -140,9 +140,9 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
   });
   for (let expense of spendingStrategy) {
     printEvents([expense], year, "discretionary", "expense", inflationRate, spouseDeath);
-    let expenseVal = getValueInYear(expense, year, inflationRate, spouseDeath);
     //console.log("Expense:", expense._id, "Amount:", expenseVal, "Cash available:", cashInvestment.value);
-
+    let expenseVal = getValueInYear(expense, year, inflationRate, spouseDeath);
+    expense.initialAmount = expenseVal;
     if (cashInvestment.value >= expenseVal) {
       cashInvestment.value -= expenseVal;
       expensesPaid += expenseVal;

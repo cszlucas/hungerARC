@@ -248,15 +248,18 @@ function updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, c
     })),
     income: curIncomeEvent.map((event) => ({
       name: event.eventSeriesName,
-      value: getValueInYear(event, year, inflationRate, spouseDeath),
+      value: event.initialAmount
+      // value: getValueInYear(event, year, inflationRate, spouseDeath),
     })),
     discretionary: discretionary.map((event) => ({
       name: event.eventSeriesName,
-      value: getValueInYear(event, year, inflationRate, spouseDeath),
+      value: event.initialAmount
+      // value: getValueInYear(event, year, inflationRate, spouseDeath),
     })),
     nonDiscretionary: nonDiscretionary.map((event) => ({
       name: event.eventSeriesName,
-      value: getValueInYear(event, year, inflationRate, spouseDeath),
+      value: event.initialAmount
+      // value: getValueInYear(event, year, inflationRate, spouseDeath),
     })),
     taxes: taxes,
     earlyWithdrawals: yearTotals.curYearEarlyWithdrawals,
