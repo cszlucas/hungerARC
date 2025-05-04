@@ -30,7 +30,7 @@ function payNonDiscretionaryExpenses(
     expense.initialAmount = amt;
     expenseAmt += amt;
   }
-  const taxes = getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, capitalGains, userAge, fedDeduction);
+  const taxes = getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, capitalGains, userAge, fedDeduction, year);
   let withdrawalAmt = expenseAmt + taxes;
   logFinancialEvent({
     year: year,
@@ -94,7 +94,7 @@ function payNonDiscretionaryExpenses(
 }
 
 //calculate TAX
-function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGains, userAge, fedDeduction) {
+function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGains, userAge, fedDeduction, year) {
   console.log("CALCULATING TAXES, my prev year income: ", prevYearIncome);
   const adjustedIncome = Math.max(0, prevYearIncome - fedDeduction - prevYearSS);
   const federalTax = taxAmt(adjustedIncome, federalIncomeRange);
@@ -109,6 +109,11 @@ function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdr
 
   const capitalGainsTax = taxAmt(prevYearGains, capitalGains, "capitalGains");
 
+  logFinancialEvent({
+    year: year,
+    type: "non-discretionary",
+    description: `Taxes to pay include federalTax: $${federalTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, stateTax: $${stateTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, social security tax: $${ssTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, earlyWithdrawalTax: $${earlyWithdrawalTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, capitalGainsTax: $${capitalGainsTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  });
   return federalTax + stateTax + ssTax + earlyWithdrawalTax + capitalGainsTax;
 }
 

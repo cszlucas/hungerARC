@@ -56,10 +56,10 @@ function buildReadableInvestmentId(investment, investmentTypes) {
  * Supports fixed values, distributions (normal/uniform), and references to events.
  */
 function convertStartOrDuration(field, idToNameMap) {
-  if (field.type === "same" || field.type === "after") {
-    console.log("ID: " + field.refer);
-    console.log(idToNameMap);
-  }
+  // if (field.type === "same" || field.type === "after") {
+  //   console.log("ID: " + field.refer);
+  //   console.log(idToNameMap);
+  // }
   
   if (!field || !field.type) { return { type: "fixed", value: 0 }; }  // Default for undefined or malformed input
 

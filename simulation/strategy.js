@@ -18,7 +18,7 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
       excessCash: cashInvestment.value - strategy.maxCash,
     },
   });
-  const excessCash = cashInvestment.value - strategy.maxCash;
+  let excessCash = cashInvestment.value - strategy.maxCash;
   //.log("The excess cash is (if <0 no money to invest)", excessCash);
   let allocations = [];
   if (excessCash > 0) {
@@ -91,9 +91,19 @@ function runInvestStrategy(cashInvestment, irsLimit, year, investments, investSt
 
     if (excessCash - totalInvested > 0) {
       console.log("everything else in non-retirement: ", excessDueToLimit);
-      buyNonRetirement(investmentsWithAllocations, excessDueToLimit, year);
+      excessCash = buyNonRetirement(investmentsWithAllocations, excessDueToLimit, year);
     }
+    cashInvestment.value -= (cashInvestment.value - strategy.maxCash);
+    cashInvestment.value += excessCash;
   }
+  
+  logFinancialEvent({
+    year: year,
+    type: "invest",
+    details: {
+      cash: cashInvestment.value,
+    },
+  });
 }
 
 function allocationIDToObject(allocations, investments) {
@@ -139,7 +149,6 @@ function buyNonRetirement(investmentsWithAllocations, excessCash, year) {
   // Filter only non-retirement investments first
   const nonRetirement = investmentsWithAllocations.filter(({ investment }) => investment.accountTaxStatus === "non-retirement");
 
-  // Total their percentage (in case it doesn't sum to 1)
   const totalPercentage = nonRetirement.reduce((sum, { percentage }) => sum + percentage, 0);
 
   logFinancialEvent({
@@ -154,6 +163,7 @@ function buyNonRetirement(investmentsWithAllocations, excessCash, year) {
     // Normalize percentage if necessary
     const adjustedPercentage = percentage / totalPercentage;
     const buyAmt = excessCash * adjustedPercentage;
+    excessCash -= buyAmt;
     investment.purchasePrice += buyAmt;
     investment.value += buyAmt;
     console.log("Buying into non-retirement:", investment._id, "purchase:", buyAmt);
@@ -168,6 +178,7 @@ function buyNonRetirement(investmentsWithAllocations, excessCash, year) {
       },
     });
   }
+  return excessCash;
 }
 
 function scaleDownRatio(type, investmentsWithAllocations, irsLimit, excessCash) {

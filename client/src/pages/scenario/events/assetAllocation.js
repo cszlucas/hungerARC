@@ -50,12 +50,13 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
       setPercentError(Math.round(total) !== 1);
     } else {
-      const total_intial = Object.values(formValues.assetAllocation.fixedPercentages)
+      const total_initial = Object.values(formValues.assetAllocation.initialPercentages)
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-      const total_final = Object.values(formValues.assetAllocation.fixedPercentages)
+      const total_final = Object.values(formValues.assetAllocation.finalPercentages)
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-      
-      setPercentError(Math.round(total_intial) !== 1 || Math.round(total_final) !== 1);
+      console.log("total_initial",total_initial);
+      console.log("total_final", total_final);
+      setPercentError(Math.round(total_initial) !== 1 || Math.round(total_final) !== 1);
     }
   }, [formValues.assetAllocation]);
 
@@ -130,7 +131,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
         assetAllocation: updatedAssetAllocation,
       };
     });
-    console.log(formValues);
+    // console.log(formValues);
     setSelectedInvestment("");
     setPendingPercentage("");
     setPendingInitial("");
@@ -192,6 +193,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
         displayList.push({
           _id: id,
           investmentTypeName: typeObj?.name || "Unknown Investment",
+          accountTaxStatus: investment?.accountTaxStatus || "",
           initial: initialPercentages[id] * 100,
           final: finalPercentages[id] * 100,
         });
@@ -203,6 +205,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
         displayList.push({
           _id: id,
           investmentTypeName: typeObj?.name || "Unknown Investment",
+          accountTaxStatus: investment?.accountTaxStatus || "",
           percent: fixedPercentages[id] * 100,
         });
       });
@@ -229,7 +232,10 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
             }
           >
             <ListItemText
-              primary={<span style={{ fontWeight: "bold" }}>{item.investmentTypeName || "Unknown Investment"}</span>}
+              primary={<span>
+                <span style={{ fontWeight: "bold" }}>{item.investmentTypeName || "Unknown Investment"}</span>
+                {" " + TAX_MAP[item.accountTaxStatus]}
+              </span>}
               secondary={
                 item.initial !== undefined && item.final !== undefined
                   ? `${item.initial}% → ${item.final}%`
@@ -245,16 +251,29 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
   return (<>
         <Box>
           {/* Right Column - Investment List for the selected tax type */}
-          <Box sx={{width: 350}}>
+          <Box sx={{width: "auto"}}>
             {/* Add Button */}
-            <Stack direction="row" spacing={4} sx={{mt: 4, display: "flex", justifyContent: "space-between"}}>
-              <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                {TAX_MAP[formValues.taxStatus] || "Investments"}
-              </Typography>
+            <Stack direction="row" spacing={1} sx={{display: "flex", justifyContent: "space-between",  alignItems: "center"}}>
+              <Box sx={{display: "flex", columnGap: 2, alignItems: "center"}}>
+                <Typography variant="h5" sx={{ fontWeight: "bold"}}>
+                  {TAX_MAP[formValues.taxStatus] || "Investments"}
+                </Typography>
+                <CustomToggle
+                  title=""
+                  labels={["Fixed", "Glide Path"]}
+                  values={["fixed", "glidePath"]}
+                  sideView={false}
+                  width={150}
+                  value={formValues.assetAllocation.type}
+                  setValue={(value) =>
+                    handleInputChange("assetAllocation.type", value)
+                  }
+                />
+              </Box>
               <Button
                 variant="contained"
                 color="primary"
-                sx={{ textTransform: "none" }}
+                sx={{ textTransform: "none"}}
                 onClick={handleOpenBackdrop}
               >
                 Add
@@ -284,6 +303,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
             {/* Investment Dropdown - Populated Based on Tax Category */}
             <Box sx={rowBoxStyles}>
               <Box sx={{ display: "inline-flex", flexDirection: "column", width: "auto", mb:2 }}>
+                
                 <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium" }}>
                   Investment
                 </Typography>
@@ -309,25 +329,13 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
                     }, [])
                     .map((investment) => (
                       <MenuItem key={investment._id} value={investment._id}>
-                        {getInvestmentTypeById(investment.investmentType)?.name}
+                        {getInvestmentTypeById(investment.investmentType)?.name} - {TAX_MAP[investment.accountTaxStatus]}
                       </MenuItem>
                     ))}
                 </TextField>
               </Box>
               {/* Toggle Allocation Type */}
-              <Box>
-                <CustomToggle
-                  title="Allocations"
-                  labels={["Fixed", "Glide Path"]}
-                  values={["fixed", "glidePath"]}
-                  sideView={false}
-                  width={100}
-                  value={formValues.assetAllocation.type}
-                  setValue={(value) =>
-                    handleInputChange("assetAllocation.type", value)
-                  }
-                />
-              </Box>
+              
             </Box>
           
             <Box sx={{mt: -3}}>

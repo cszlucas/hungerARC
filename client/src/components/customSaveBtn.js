@@ -89,14 +89,16 @@ const CustomSave = ({ label = "Save", routeTo, color = "secondary", disable = fa
             // Logged-in users: create and persist data on server
             const createdType = await axios.post(
                 `http://localhost:8080/scenario/${scenarioId}/investmentType`,
-                cashTypeAccount
+                cashTypeAccount,
+                { withCredentials: true }
             );
             const createdInvestment = await axios.post(
                 `http://localhost:8080/scenario/${scenarioId}/investment`,
                 {
                     ...cashInvestment,
                     investmentType: createdType.data._id,
-                }
+                },
+                { withCredentials: true }
             );
 
             cashInvestment.investmentType = createdType.data._id;
@@ -115,7 +117,7 @@ const CustomSave = ({ label = "Save", routeTo, color = "secondary", disable = fa
           return [...(Array.isArray(prev) ? prev : []), cashInvestment];
         });
 
-        console.log(cashInvestment);
+        // console.log(cashInvestment);
     } catch (error) {
         console.error("Error saving data:", error);
         alert("Failed to save data! Please try again.");
@@ -129,7 +131,7 @@ const CustomSave = ({ label = "Save", routeTo, color = "secondary", disable = fa
         let id = new ObjectId().toHexString();
 
         if (!user.guest) {
-          const response = await axios.post(`http://localhost:8080/basicInfo/user/${user._id}`, scenario);
+          const response = await axios.post("http://localhost:8080/basicInfo/", scenario, { withCredentials: true });
           id = response.data._id;
         }
 
@@ -139,14 +141,14 @@ const CustomSave = ({ label = "Save", routeTo, color = "secondary", disable = fa
         
         await addCashInvestment(id);
       } else {
-        if (!user.guest) await axios.post(`http://localhost:8080/updateScenario/${editMode}`, scenario);
+        if (!user.guest) await axios.post(`http://localhost:8080/updateScenario/${editMode}`, scenario, { withCredentials: true });
         setScenarioData((prev) => prev.map((item) => (item._id === editMode ? scenario : item)));
       } 
     } catch (error) {
       console.error("Error:", error);
       alert("Something Went Wrong!");
     } finally {
-      console.log(editMode);
+      // console.log(editMode);
       if (routeTo) navigate(routeTo); // now safely done after all updates
     }
   };
