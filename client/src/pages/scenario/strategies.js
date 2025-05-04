@@ -19,6 +19,11 @@ import CustomSave from "../../components/customSaveBtn";
 import axios from "axios";
 import { AuthContext } from "../../context/authContext";
 
+const TAX_MAP = {
+  "non-retirement": "Taxable",
+  "pre-tax": "Tax-Deferred",
+  "after-tax": "Tax-Free",
+};
 
 const StrategyList = ({ list, setList, fieldName, setScenario }) => {
   const handleMove = (index, direction) => {
@@ -47,7 +52,10 @@ const StrategyList = ({ list, setList, fieldName, setScenario }) => {
               "&:hover": { backgroundColor: "#B0B0B0" },
             }}
           >
-            <ListItemText primary={<span style={{ fontWeight: "bold" }}>{item.name}</span>} />
+            <ListItemText primary={<>
+              <span style={{ fontWeight: "bold" }}>{item.name}</span>
+            </>}
+            secondary={TAX_MAP[item.accountTaxStatus]}/>
 
             {index > 0 && (
               <IconButton onClick={() => handleMove(index, -1)}>
@@ -151,7 +159,7 @@ const Strategies = () => {
         }
       }
 
-      if (!matchedInvestment) return { id, name: "Unknown Investment Strategy" };
+      if (!matchedInvestment) return { id, name: "Unknown Investment Strategy", accountTaxStatus: "" };
 
       let matchedInvestmentType = null;
 
@@ -162,7 +170,11 @@ const Strategies = () => {
         }
       }
 
-      return { id, name: matchedInvestmentType ? matchedInvestmentType.name : "Unknown Investment Type" };
+      return { 
+        id, 
+        name: matchedInvestmentType ? matchedInvestmentType.name : "Unknown Investment Type",
+        accountTaxStatus: matchedInvestment.accountTaxStatus, 
+      };
     });
   };
 

@@ -71,6 +71,7 @@ const Basics = () => {
             type="number"
             value={currScenario.financialGoal}
             setValue={(value) => handleInputChange("financialGoal", value)}
+            adornment="$"
             inputProps={{ min: 0 }}
           />
 

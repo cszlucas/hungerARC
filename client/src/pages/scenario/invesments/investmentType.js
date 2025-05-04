@@ -49,7 +49,7 @@ const InvestmentType = () => {
       name: "",
       description: "",
       expenseRatio: "",
-      taxability: false,
+      taxability: true,
       annualReturn: {
         unit: "fixed",
         type: "fixed",

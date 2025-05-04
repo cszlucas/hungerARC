@@ -22,7 +22,7 @@ const CustomInput = ({
     
             // Allow empty input to support deletion
             if (inputValue === "") {
-                setValue(inputValue);
+                setValue(""); // Clear numeric value
                 return;
             }
     
@@ -37,11 +37,11 @@ const CustomInput = ({
                 }
     
                 if (numericValue >= min && numericValue <= max) {
-                    setValue(inputValue);
+                    setValue(adornment === "%" ? numericValue *0.01 : numericValue); // Store as number
                 }
             }
         } else {
-            setValue(inputValue);
+            setValue(inputValue); // Store as string for non-number types
         }
     };
 
@@ -75,7 +75,7 @@ const CustomInput = ({
                 type={type === "number" ? "number" : "text"}
                 multiline={type == "multiline"}
                 sx={{ ...getFieldStyles(), ...{width: width}}}
-                value={value}
+                value={adornment === "%" ? value * 100 : value}
                 onChange={handleChange}
                 onKeyDown={(e) => {
                     if (type === "number" && (e.key === "-" || e.key === "+" || e.key === "e")) {

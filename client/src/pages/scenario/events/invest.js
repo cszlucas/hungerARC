@@ -90,21 +90,32 @@ const Invest = () => {
 
   // Enable Save button if all fields are filled
   useEffect(() => {
-    const expression = formValues.eventSeriesName &&
-      (formValues.startYear.type !== "fixedAmt" || formValues.startYear.value) &&
-      (formValues.startYear.type !== "normal" || (formValues.startYear.mean && formValues.startYear.stdDev)) &&
-      (formValues.startYear.type !== "uniform" || (formValues.startYear.min && formValues.startYear.max)) &&
-      (["same", "after"].includes(formValues.startYear.type) ? formValues.startYear.refer : true) &&
-      formValues.maxCash &&
-      (formValues.duration.type !== "fixedAmt" || formValues.duration.value) &&
-      (formValues.duration.type !== "normal" || (formValues.duration.mean && formValues.duration.stdDev)) &&
-      (formValues.duration.type !== "uniform" || (formValues.duration.min && formValues.duration.max)) &&
-      (formValues.assetAllocation.type === "fixed"
-        ? Object.keys(formValues.assetAllocation.fixedPercentages).length > 0
-        : true) &&
-      (formValues.assetAllocation.type === "glidePath"
-        ? Object.keys(formValues.assetAllocation.initialPercentages).length > 0
-        : true);
+    function checkValidNum(eventValue) {
+      return eventValue >= 0 && typeof eventValue === "number" && !isNaN(eventValue);
+    }
+
+    const expression = formValues.eventSeriesName 
+      && (formValues.startYear.type !== "fixedAmt" 
+        || checkValidNum(formValues.startYear.value)) 
+      && (formValues.startYear.type !== "normal" 
+        || (checkValidNum(formValues.startYear.mean) && checkValidNum(formValues.startYear.stdDev))) 
+      && (formValues.startYear.type !== "uniform" 
+        || (checkValidNum(formValues.startYear.min) && checkValidNum(formValues.startYear.max) 
+        && formValues.startYear.min <= formValues.startYear.max)) 
+      && (["same", "after"].includes(formValues.startYear.type) 
+        ? formValues.startYear.refer : true) 
+      && checkValidNum(formValues.maxCash) 
+      && (formValues.duration.type !== "fixedAmt" 
+        || checkValidNum(formValues.duration.value)) 
+      && (formValues.duration.type !== "normal" 
+        || (checkValidNum(formValues.duration.mean) && checkValidNum(formValues.duration.stdDev))) 
+      && (formValues.duration.type !== "uniform" 
+        || (checkValidNum(formValues.duration.min) && checkValidNum(formValues.duration.max) 
+        && formValues.duration.min <= formValues.duration.max)) 
+      && (formValues.assetAllocation.type === "fixed" 
+        ? Object.keys(formValues.assetAllocation.fixedPercentages).length > 0 : true)
+      && (formValues.assetAllocation.type === "glidePath" 
+        ? Object.keys(formValues.assetAllocation.initialPercentages).length > 0 : true);
 
     setDisable(!expression);
   }, [formValues]);
