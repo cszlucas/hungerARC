@@ -72,15 +72,18 @@ exports.createInvestment = async (req, res) => {
 };
 
 exports.updateInvestmentType = async (req, res) => {
-  const { id } = req.params;
-  const updateData = req.body; // Data to update (from the request body)
+  const { __v, ...updateData } = req.body;
   const investId = new ObjectId(req.params.id);
   let result;
   delete updateData._id;
 
   try {
     if (updateData) {
-      result = await InvestmentType.findOneAndUpdate({ _id: investId }, { $set: updateData }, { new: true });
+      result = await InvestmentType.findOneAndUpdate(
+        { _id: investId, __v }, // Match ID and version
+        { $set: updateData, $inc: { __v: 1 } }, // Apply updates and increment version
+        { new: true }
+      );
     }
 
     if (!result) {
@@ -95,15 +98,18 @@ exports.updateInvestmentType = async (req, res) => {
 };
 
 exports.updateInvestment = async (req, res) => {
-  const { id } = req.params;
-  const updateData = req.body; // Data to update (from the request body)
+  const { __v, ...updateData } = req.body;
   const investId = new ObjectId(req.params.id);
   let result;
   delete updateData._id;
 
   try {
     if (updateData) {
-      result = await Investment.findOneAndUpdate({ _id: investId }, { $set: updateData }, { new: true });
+      result = await Investment.findOneAndUpdate(
+        { _id: investId, __v }, // Match ID and version
+        { $set: updateData, $inc: { __v: 1 } },
+        { new: true }
+      );
     }
 
     if (!result) {
@@ -120,24 +126,24 @@ exports.updateInvestment = async (req, res) => {
 // getAllInvestments based on scenarioId
 exports.getAllInvestmentsByScenario = async (req, res) => {
   const { id } = req.params;
-  try{
+  try {
     const scenario = await Scenario.findOne({ _id: id });
     const investmentIds = scenario.setOfInvestments;
     const investments = await Investment.find({ _id: { $in: investmentIds } });
     res.status(200).json(investments);
-  }catch(err){
+  } catch (err) {
     res.status(500).json({ error: "Failed to get all investments by scenario" });
   }
 };
 
 exports.getInvestmentTypeByScenario = async (req, res) => {
   const { id } = req.params;
-  try{
+  try {
     const scenario = await Scenario.findOne({ _id: id });
     const investmentTypeIds = scenario.setOfInvestmentTypes;
     const investmentTypes = await InvestmentType.find({ _id: { $in: investmentTypeIds } });
     res.status(200).json(investmentTypes);
-  }catch(err){
+  } catch (err) {
     res.status(500).json({ error: "Failed to get all investments type by scenario" });
   }
 };
@@ -167,9 +173,9 @@ exports.deleteInvestment = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: "Failed to delete investment" });
   }
-}
+};
 
-exports.deleteInvestmentType = async (req, res) => {  
+exports.deleteInvestmentType = async (req, res) => {
   const { id } = req.params;
   try {
     const deletedInvestmentType = await InvestmentType.findByIdAndDelete(id);
@@ -180,4 +186,4 @@ exports.deleteInvestmentType = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: "Failed to delete investment type" });
   }
-}
+};

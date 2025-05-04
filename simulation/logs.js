@@ -142,7 +142,7 @@ function formatStrategy(description, details, type) {
   const formatCurrency = (val) => (typeof val === "number" ? `$${val.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : val ?? "");
   const formatPercentage = (val) => `${(val * 100).toFixed(2)}%`;
   if (description) line += `${description}`;
-  if (details.cash) {
+if (details.cash!=undefined) {
     line += `Amount of cash you have to spend: "${formatCurrency(details.cash)}".`;
   }
   if (details.excessCash!=undefined) {

@@ -22,9 +22,10 @@ exports.scenario = async (req, res) => {
   }
 };
 
+//start of a new scenario
 exports.basicInfo = async (req, res) => {
   const { id } = req.params; //user id
-  console.log("Received request with ID:", req.params.id);
+  //console.log("Received request with ID:", req.params.id);
   try {
     const { name, filingStatus, financialGoal, inflationAssumption, birthYearUser, lifeExpectancy, stateResident, birthYearSpouse, lifeExpectancySpouse, irsLimit } = req.body;
     const newBasicInfo = new Scenario({
@@ -75,10 +76,18 @@ exports.basicInfo = async (req, res) => {
 
 exports.updateScenario = async (req, res) => {
   const { id } = req.params;
-  const updateData = req.body;
+  const { __v, ...updateData } = req.body;
   try {
-    const result = await Scenario.findByIdAndUpdate( new ObjectId(id), { $set: updateData }, { new: true });
-    return res.status(200).json({ message: "Scenario updated successfully", scenario: result });
+    const result = await Scenario.findOneAndUpdate(
+      { _id: new ObjectId(id), __v }, // Match ID and version
+      { $set: updateData, $inc: { __v: 1 } }, // Apply updates and increment version
+      { new: true }
+    );
+    if (!result) {
+      return res.status(409).json({ error: "Version conflict or scenario not found." });
+    } else {
+      return res.status(200).json({ message: "Scenario updated successfully", scenario: result });
+    }
   } catch (err) {
     console.error("Error adding to scenario:", err);
     res.status(500).json({ error: err.message });
@@ -98,8 +107,9 @@ exports.scenarioInvestments = async (req, res) => {
 
 exports.deleteScenario = async (req, res) => {
   const { id } = req.params;
+  const { __v } = req.body;
   try {
-    const deletedScenario = await Scenario.findByIdAndDelete(id);
+    const deletedScenario = await Scenario.findOneAndDelete({ _id: id, __v });
     if (!deletedScenario) {
       return res.status(404).json({ message: "Scenario not found" });
     }
@@ -112,9 +122,7 @@ exports.deleteScenario = async (req, res) => {
 exports.importUserData = async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      investments, investmentTypes, income, expense, invest, rebalance, scenario
-    } = req.body;
+    const { investments, investmentTypes, income, expense, invest, rebalance, scenario } = req.body;
 
     const user = await User.findOne({ _id: id });
     if (!user) {
@@ -124,14 +132,14 @@ exports.importUserData = async (req, res) => {
 
     // Save all data in parallel including the scenario
     const [savedScenario] = await Promise.all([
-      ...investments.map(i => new Investment(i).save()),
-      ...investmentTypes.map(i => new InvestmentType(i).save()),
-      ...income.map(e => new IncomeEvent(e).save()),
-      ...expense.map(e => new ExpenseEvent(e).save()),
-      ...invest.map(e => new InvestEvent(e).save()),
-      ...rebalance.map(e => new RebalanceEvent(e).save())
+      ...investments.map((i) => new Investment(i).save()),
+      ...investmentTypes.map((i) => new InvestmentType(i).save()),
+      ...income.map((e) => new IncomeEvent(e).save()),
+      ...expense.map((e) => new ExpenseEvent(e).save()),
+      ...invest.map((e) => new InvestEvent(e).save()),
+      ...rebalance.map((e) => new RebalanceEvent(e).save()),
     ]);
-    
+
     console.log(scenario);
     await new Scenario(scenario).save(); // Something seriously wrong with this save as its not saving set of investments correctly
 
@@ -139,14 +147,11 @@ exports.importUserData = async (req, res) => {
     await user.save();
 
     return res.status(200).json({ message: "Scenario successfully imported" });
-
   } catch (err) {
     console.error("Import error:", err);
     return res.status(500).json({ message: "Server error during import" });
   }
 };
-
-
 
 exports.simulateScenario = async (req, res) => {
   try {
@@ -158,18 +163,8 @@ exports.simulateScenario = async (req, res) => {
 
     // Run the simulation
     years = await main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, simulationCount);
-    // const { shadedChart, probabilityChart, barChartAverage, barChartMedian } = await main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, simulationCount, scenarioId);
-    // const { shadedChart, probabilityChart, barChartAverage, barChartMedian } = await main(simulationCount, scenarioId, userId);
-
-    // Send results to frontend
-    // res.status(200).json({
-    //   shadedChart,
-    //   probabilityChart,
-    //   barChartAverage,
-    //   barChartMedian,
-    // });
     res.status(200).json({
-      years
+      years,
     });
   } catch (err) {
     console.error("Simulation error:", err);
