@@ -255,7 +255,7 @@ const DimensionalExploration = () => {
               </>)}
             </Box>
             
-            { tempExplorationForm.type !== "" && (
+            { tempExplorationForm.type !== "" && tempExplorationForm.type !== "Roth Optimizer Flag" && (
               <>
                 {tempExplorationForm.type !== "Roth Optimizer Flag" && (
                   <Box>
