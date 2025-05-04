@@ -45,18 +45,24 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
   }, [formValues._id]);
 
   useEffect(() => {
+    function roundToTwo(num) {
+      return Math.round(num * 100) / 100;
+    }
+
     if (formValues.assetAllocation.type === "fixed") {
       const total = Object.values(formValues.assetAllocation.fixedPercentages)
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-      setPercentError(Math.round(total) !== 1);
+      
+      // console.log(`${roundToTwo(total)}`);
+      setPercentError(roundToTwo(total) !== 1);
     } else {
       const total_initial = Object.values(formValues.assetAllocation.initialPercentages)
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
       const total_final = Object.values(formValues.assetAllocation.finalPercentages)
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-      console.log("total_initial",total_initial);
-      console.log("total_final", total_final);
-      setPercentError(Math.round(total_initial) !== 1 || Math.round(total_final) !== 1);
+      
+      // console.log(`${roundToTwo(total_intial)} - ${roundToTwo(total_final)}`);
+      setPercentError(roundToTwo(total_initial) !== 1 || roundToTwo(total_final) !== 1);
     }
   }, [formValues.assetAllocation]);
 
@@ -97,10 +103,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
   
     return matchesTaxStatus && !alreadyAllocated; // If investment matches with given tax status as well its not already allocated
   });
-  // console.log(filteredInvestments);
-  // console.log( selectedInvestment && typeof selectedInvestment === "string" && selectedInvestment.trim() !== ""
-  // ? [...filteredInvestments, getInvestmentById(selectedInvestment)]
-  // : [...filteredInvestments]);
+
   const [pendingPercentage, setPendingPercentage] = useState("");
   const [pendingInitial, setPendingInitial] = useState("");
   const [pendingFinal, setPendingFinal] = useState("");
@@ -117,13 +120,13 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
   
       if (allocationType === "fixed") {
         if (!updatedAssetAllocation.fixedPercentages) updatedAssetAllocation.fixedPercentages = {};
-        updatedAssetAllocation.fixedPercentages[selectedInvestment] = parseFloat((pendingPercentage / 100).toFixed(2));
+        updatedAssetAllocation.fixedPercentages[selectedInvestment] = parseFloat(pendingPercentage);
       } else if (allocationType === "glidePath") {
         if (!updatedAssetAllocation.initialPercentages) updatedAssetAllocation.initialPercentages = {};
         if (!updatedAssetAllocation.finalPercentages) updatedAssetAllocation.finalPercentages = {};
   
-        updatedAssetAllocation.initialPercentages[selectedInvestment] = parseFloat((pendingInitial / 100).toFixed(2));
-        updatedAssetAllocation.finalPercentages[selectedInvestment] = parseFloat((pendingFinal / 100).toFixed(2));
+        updatedAssetAllocation.initialPercentages[selectedInvestment] = parseFloat(pendingInitial);
+        updatedAssetAllocation.finalPercentages[selectedInvestment] = parseFloat(pendingFinal);
       }
   
       return {
@@ -167,10 +170,10 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
   const handleEditInvestment = (investmentId) => {
     const { type, fixedPercentages, initialPercentages, finalPercentages } = formValues.assetAllocation;
     if (type === "fixed") {
-      setPendingPercentage(fixedPercentages[investmentId] * 100 ?? "");
+      setPendingPercentage(fixedPercentages[investmentId] ?? "");
     } else if (type === "glidePath") {
-      setPendingInitial(initialPercentages[investmentId] * 100 ?? "");
-      setPendingFinal(finalPercentages[investmentId] * 100 ?? "");
+      setPendingInitial(initialPercentages[investmentId] ?? "");
+      setPendingFinal(finalPercentages[investmentId] ?? "");
     }
     filteredInvestments.push(getInvestmentById(investmentId));
     setSelectedInvestment(investmentId);
@@ -345,7 +348,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
                   title="Value"
                   type="number"
                   adornment="%"
-                  value={pendingPercentage ?? "" }
+                  value={pendingPercentage ?? ""}
                   setValue={setPendingPercentage}
                 />
               )}

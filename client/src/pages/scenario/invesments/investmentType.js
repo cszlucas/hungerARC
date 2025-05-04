@@ -49,7 +49,7 @@ const InvestmentType = () => {
       name: "",
       description: "",
       expenseRatio: "",
-      taxability: false,
+      taxability: true,
       annualReturn: {
         unit: "fixed",
         type: "fixed",
@@ -93,13 +93,20 @@ const InvestmentType = () => {
   // Handles the enabling or disabling the save button
   const [disable, setDisable] = useState(true);
   useEffect(() => {
-      let expression = formValues.name && formValues.expenseRatio 
-        && (formValues.annualReturn.type !== "fixed" || formValues.annualReturn.value)
-        && (formValues.annualReturn.type !== "normal" || formValues.annualReturn.mean && formValues.annualIncome.stdDev)
-        && (formValues.annualIncome.type !== "fixed" || formValues.annualIncome.value)
-        && (formValues.annualIncome.type !== "normal" || formValues.annualIncome.mean && formValues.annualIncome.stdDev);
-
-      setDisable(expression ? false : true);
+      function checkValidNum(eventValue) {
+        return eventValue >= 0 && typeof eventValue === "number" && !isNaN(eventValue);
+      }
+      let expression = formValues.name && checkValidNum(formValues.expenseRatio)
+        && (formValues.annualReturn.type !== "fixed" 
+          || checkValidNum(formValues.annualReturn.value))
+        && (formValues.annualReturn.type !== "normal" 
+          || checkValidNum(formValues.annualReturn.mean) && checkValidNum(formValues.annualIncome.stdDev))
+        && (formValues.annualIncome.type !== "fixed" 
+          || checkValidNum(formValues.annualIncome.value))
+        && (formValues.annualIncome.type !== "normal" 
+          || checkValidNum(formValues.annualIncome.mean) && checkValidNum(formValues.annualIncome.stdDev));
+      
+      setDisable(!expression);
   }, [formValues]);
 
   /**
@@ -132,6 +139,7 @@ const InvestmentType = () => {
       if (!user.guest) {
         // For non-guest users, sync with server
         if (id === "new") {
+          if (formValues.name.toLowerCase() === "cash") return;
           const response = await axios.post(
             `http://localhost:8080/scenario/${editMode}/investmentType`,
             formValues
@@ -146,6 +154,7 @@ const InvestmentType = () => {
       } else {
         // For guest users, generate local ID and update only local state
         if (id === "new") {
+          if (formValues.name.toLowerCase() === "cash") return;
           id = new ObjectId().toHexString();
           handleUpdateLocalStorageForNewInvestmentType(id);
         } else {
