@@ -217,7 +217,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   }
 
   if (exploration && exploration.length >= 1) {
-    // console.log("EXPLORE", JSON.stringify(explore, null, 2));
+    console.log("EXPLORE", JSON.stringify(explore, null, 2));
     return explore;
   }
 }
