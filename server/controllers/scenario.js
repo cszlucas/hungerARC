@@ -22,6 +22,7 @@ exports.scenario = async (req, res) => {
   }
 };
 
+//start of a new scenario
 exports.basicInfo = async (req, res) => {
   try {
     if (!req.session.user) res.status(500).json({ message: "Failed to get user session" });
@@ -76,10 +77,18 @@ exports.basicInfo = async (req, res) => {
 
 exports.updateScenario = async (req, res) => {
   const { id } = req.params;
-  const updateData = req.body;
+  const { __v, ...updateData } = req.body;
   try {
-    const result = await Scenario.findByIdAndUpdate( new ObjectId(id), { $set: updateData }, { new: true });
-    return res.status(200).json({ message: "Scenario updated successfully", scenario: result });
+    const result = await Scenario.findOneAndUpdate(
+      { _id: new ObjectId(id), __v }, // Match ID and version
+      { $set: updateData, $inc: { __v: 1 } }, // Apply updates and increment version
+      { new: true }
+    );
+    if (!result) {
+      return res.status(409).json({ error: "Version conflict or scenario not found." });
+    } else {
+      return res.status(200).json({ message: "Scenario updated successfully", scenario: result });
+    }
   } catch (err) {
     console.error("Error adding to scenario:", err);
     res.status(500).json({ error: err.message });
@@ -99,8 +108,9 @@ exports.scenarioInvestments = async (req, res) => {
 
 exports.deleteScenario = async (req, res) => {
   const { id } = req.params;
+  const { __v } = req.body;
   try {
-    const deletedScenario = await Scenario.findByIdAndDelete(id);
+    const deletedScenario = await Scenario.findOneAndDelete({ _id: id, __v });
     if (!deletedScenario) {
       return res.status(404).json({ message: "Scenario not found" });
     }
@@ -139,14 +149,11 @@ exports.importUserData = async (req, res) => {
     await user.save();
 
     return res.status(200).json({ message: "Scenario successfully imported" });
-
   } catch (err) {
     console.error("Import error:", err);
     return res.status(500).json({ message: "Server error during import" });
   }
 };
-
-
 
 exports.simulateScenario = async (req, res) => {
   try {
@@ -158,18 +165,8 @@ exports.simulateScenario = async (req, res) => {
 
     // Run the simulation
     years = await main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, simulationCount);
-    // const { shadedChart, probabilityChart, barChartAverage, barChartMedian } = await main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, simulationCount, scenarioId);
-    // const { shadedChart, probabilityChart, barChartAverage, barChartMedian } = await main(simulationCount, scenarioId, userId);
-
-    // Send results to frontend
-    // res.status(200).json({
-    //   shadedChart,
-    //   probabilityChart,
-    //   barChartAverage,
-    //   barChartMedian,
-    // });
     res.status(200).json({
-      years
+      years,
     });
   } catch (err) {
     console.error("Simulation error:", err);

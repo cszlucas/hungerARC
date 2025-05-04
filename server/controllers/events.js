@@ -54,8 +54,7 @@ exports.createIncomeEvent = async (req, res) => {
 
 // update existing income event with changed entries
 exports.updateIncome = async (req, res) => {
-  const { id } = req.params;
-  const updateData = req.body; // Data to update (from the request body)
+  const { __v, ...updateData } = req.body;
   const incomeId = new ObjectId(req.params.id);
   let result;
 
@@ -65,8 +64,8 @@ exports.updateIncome = async (req, res) => {
 
     if (updateData) {
       result = await IncomeEvent.findOneAndUpdate(
-        { _id: incomeId }, // Find document by ID
-        { $set: updateData }, // Update fields
+        { _id: incomeId, __v }, // Find document by ID
+        { $set: updateData, $inc: { __v: 1 } }, // Update fields
         { new: true }
       );
     }
@@ -81,7 +80,7 @@ exports.updateIncome = async (req, res) => {
   }
 };
 
-exports.deleteIncomeEvent = async (req, res) => { 
+exports.deleteIncomeEvent = async (req, res) => {
   const { id } = req.params; // income event id
   try {
     const incomeEvent = await IncomeEvent.findByIdAndDelete(id); // delete the income event based on its id
@@ -145,8 +144,7 @@ exports.createExpenseEvent = async (req, res) => {
 
 // update the field(s) in existing expense in mongodb
 exports.updateExpense = async (req, res) => {
-  const { id } = req.params;
-  const updateData = req.body; // Data to update (from the request body)
+  const { __v, ...updateData } = req.body;
   const expenseId = new ObjectId(req.params.id);
   let result;
   delete updateData._id;
@@ -154,7 +152,7 @@ exports.updateExpense = async (req, res) => {
   try {
     // Update the document by ID
     if (updateData) {
-      result = await ExpenseEvent.findOneAndUpdate({ _id: expenseId }, { $set: updateData }, { new: true });
+      result = await ExpenseEvent.findOneAndUpdate({ _id: expenseId, __v }, { $set: updateData, $inc: { __v: 1 } }, { new: true });
     }
 
     if (!result) {
@@ -201,7 +199,7 @@ exports.createInvestStrategy = async (req, res) => {
         fixedPercentages: assetAllocation.fixedPercentages,
         initialPercentages: assetAllocation.initialPercentages,
         finalPercentages: assetAllocation.finalPercentages,
-      },  
+      },
       maxCash,
     });
 
@@ -237,12 +235,12 @@ exports.getInvestStrategy = async (req, res) => {
 // update field(s) of existing invest event
 exports.updateInvestStrategy = async (req, res) => {
   const strategyId = new ObjectId(req.params.id);
-  const updateData = req.body; // Data to update (from the request body)
+  const { __v, ...updateData } = req.body;
   let result;
   delete updateData._id;
   try {
     if (updateData) {
-      result = await InvestEvent.findOneAndUpdate({ _id: strategyId }, { $set: updateData }, { new: true });
+      result = await InvestEvent.findOneAndUpdate({ _id: strategyId, __v }, { $set: updateData, $inc: { __v: 1 } }, { new: true });
     }
 
     if (!result) {
@@ -255,7 +253,7 @@ exports.updateInvestStrategy = async (req, res) => {
   }
 };
 
-exports.deleteInvestEvent = async (req, res) => { 
+exports.deleteInvestEvent = async (req, res) => {
   const { id } = req.params; // invest event id
   try {
     const investEvent = await InvestEvent.findByIdAndDelete(id); // delete the invest event based on its id
@@ -284,10 +282,10 @@ exports.createRebalanceStrategy = async (req, res) => {
       duration,
       taxStatus,
       assetAllocation: {
-        type: assetAllocation.type,  
-        initialPercentages: assetAllocation.initialPercentages,  
-        finalPercentages: assetAllocation.finalPercentages,  
-        fixedPercentages: assetAllocation.fixedPercentages,  
+        type: assetAllocation.type,
+        initialPercentages: assetAllocation.initialPercentages,
+        finalPercentages: assetAllocation.finalPercentages,
+        fixedPercentages: assetAllocation.fixedPercentages,
       },
     });
 
@@ -323,12 +321,12 @@ exports.getRebalanceStrategy = async (req, res) => {
 // update existing rebalance event
 exports.updateRebalanceStrategy = async (req, res) => {
   const strategyId = new ObjectId(req.params.id);
-  const updateData = req.body; // Data to update (from the request body)
+  const { __v, ...updateData } = req.body;
   let result;
   delete updateData._id;
   try {
     if (updateData) {
-      result = await RebalanceEvent.findOneAndUpdate({ _id: strategyId }, { $set: updateData }, { new: true });
+      result = await RebalanceEvent.findOneAndUpdate({ _id: strategyId, __v }, { $set: updateData, $inc: { __v: 1 } }, { new: true });
     }
 
     if (!result) {
