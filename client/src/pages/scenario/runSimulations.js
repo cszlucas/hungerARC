@@ -29,8 +29,8 @@ const RunSimulation = () => {
 
   const {currScenario, currInvestmentTypes, currInvestments, currIncome, currExpense, currInvest, currRebalance, tempExploration} = useContext(AppContext);
   const {user} = useContext(AuthContext);
-  console.log("curr Investment: ", currInvestments);
-  console.log("currInvestmentTypes :>> ", currInvestmentTypes);
+  // console.log("curr Investment: ", currInvestments);
+  // console.log("currInvestmentTypes :>> ", currInvestmentTypes);
   const handleExport = () => {
     exportToYAML({
       currScenario,
@@ -79,13 +79,13 @@ const RunSimulation = () => {
         simulationCount: numSimulations,
       };
 
-      console.log(entireFormData);
+      // console.log(entireFormData);
       const response = await axios.get("http://localhost:8080/runSimulation", {
         params: entireFormData,
       });
 
       // console.log(response);
-      console.log(response.data);
+      // console.log(response.data);
       navigate("/charts", {
         state: { chartData: response.data }
       });

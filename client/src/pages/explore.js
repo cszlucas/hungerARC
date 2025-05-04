@@ -83,7 +83,7 @@ const DimensionalExploration = () => {
     else if (tempExplorationForm.type === "Rebalance") handleInputChange("data", getRebalanceById(tempExplorationForm.id));
   }, [tempExplorationForm.id, tempExplorationForm.type, handleInputChange]);
 
-  useEffect(() => { console.log(tempExplorationForm); }, [tempExplorationForm.range]);
+  // useEffect(() => { console.log(tempExplorationForm); }, [tempExplorationForm.range]);
 
   const handleOpenBackdrop = () => {
     setOpenBackdrop(true);

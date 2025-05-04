@@ -24,9 +24,15 @@ exports.scenario = async (req, res) => {
 
 //start of a new scenario
 exports.basicInfo = async (req, res) => {
-  const { id } = req.params; //user id
-  //console.log("Received request with ID:", req.params.id);
   try {
+    if (!req.session.user) res.status(500).json({ message: "Failed to get user session" });
+    const userData = req.session.user;
+    const user = await User.findOne({ _id: userData._id });
+    if (!user) {
+      console.log("user not found");
+      return res.status(404).json({ message: "User not found" });
+    }
+
     const { name, filingStatus, financialGoal, inflationAssumption, birthYearUser, lifeExpectancy, stateResident, birthYearSpouse, lifeExpectancySpouse, irsLimit } = req.body;
     const newBasicInfo = new Scenario({
       name,
@@ -59,11 +65,6 @@ exports.basicInfo = async (req, res) => {
     });
 
     const savedBasicInfo = await newBasicInfo.save();
-    const user = await User.findOne({ _id: id });
-    if (!user) {
-      console.log("user not found");
-      return res.status(404).json({ message: "user not found" });
-    }
     user.scenarios.push(savedBasicInfo._id);
     await user.save();
 
@@ -121,29 +122,30 @@ exports.deleteScenario = async (req, res) => {
 
 exports.importUserData = async (req, res) => {
   try {
-    const { id } = req.params;
+    if (!req.session.user) res.status(500).json({ message: "Failed to get user session" });
+    
+    const userData = req.session.user;
     const { investments, investmentTypes, income, expense, invest, rebalance, scenario } = req.body;
 
-    const user = await User.findOne({ _id: id });
+    const user = await User.findOne({ _id: userData._id });
     if (!user) {
       console.log("user not found");
-      return res.status(404).json({ message: "user not found" });
+      return res.status(404).json({ message: "User not found" });
     }
 
     // Save all data in parallel including the scenario
-    const [savedScenario] = await Promise.all([
-      ...investments.map((i) => new Investment(i).save()),
-      ...investmentTypes.map((i) => new InvestmentType(i).save()),
-      ...income.map((e) => new IncomeEvent(e).save()),
-      ...expense.map((e) => new ExpenseEvent(e).save()),
-      ...invest.map((e) => new InvestEvent(e).save()),
-      ...rebalance.map((e) => new RebalanceEvent(e).save()),
+    await Promise.all([
+      ...investments.map(i => new Investment(i).save()),
+      ...investmentTypes.map(i => new InvestmentType(i).save()),
+      ...income.map(e => new IncomeEvent(e).save()),
+      ...expense.map(e => new ExpenseEvent(e).save()),
+      ...invest.map(e => new InvestEvent(e).save()),
+      ...rebalance.map(e => new RebalanceEvent(e).save())
     ]);
+    
+    await new Scenario(scenario).save();
 
-    console.log(scenario);
-    await new Scenario(scenario).save(); // Something seriously wrong with this save as its not saving set of investments correctly
-
-    user.scenarios.push(savedScenario._id);
+    user.scenarios.push(scenario._id);
     await user.save();
 
     return res.status(200).json({ message: "Scenario successfully imported" });

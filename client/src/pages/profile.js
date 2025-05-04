@@ -27,12 +27,13 @@ function DisplayUserName({ user }) {
 
 const Profile = () => {
     const { user } = useContext(AuthContext);
-    const [stateTaxes, setStateTaxes] = useState(user?.stateYaml || null);
+    const [stateTaxes, setStateTaxes] = useState(user?.stateYaml || []);
     const navigate = useNavigate(); // Initialize useNavigate
 
     console.log(user);
 
     useEffect(() => {
+        console.log(user);
         if (!user) {
             navigate("/"); // Redirect to home page if user doesn't exist
         }
