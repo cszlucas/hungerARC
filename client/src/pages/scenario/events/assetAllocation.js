@@ -62,7 +62,7 @@ const AssetAllocation = ({ formValues, setFormValues, isRebalance = false, setPe
           .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
       
       // console.log(`${roundToTwo(total_intial)} - ${roundToTwo(total_final)}`);
-      setPercentError(roundToTwo(total_intial) !== 1 || roundToTwo(total_final) !== 1);
+      setPercentError(roundToTwo(total_initial) !== 1 || roundToTwo(total_final) !== 1);
     }
   }, [formValues.assetAllocation]);
 
