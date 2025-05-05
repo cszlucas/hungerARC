@@ -44,9 +44,8 @@ const RunSimulation = () => {
   const navigate = useNavigate();
 
   const getChartData = async () => {
-    try {
-      const rmdData = await axios.get("http://localhost:8080/runSimulation");
-      
+    try {      
+      console.log(user.guest ? "guest" : user._id );
       const entireFormData = {
         investmentType: currInvestmentTypes,
         investment: currInvestments,
@@ -57,7 +56,6 @@ const RunSimulation = () => {
         scenario: currScenario,
         exploration: tempExploration,
         simulationCount: numSimulations,
-        rmd: rmdData,
         userId: user.guest ? "guest" : user._id 
       };
 
