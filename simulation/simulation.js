@@ -33,7 +33,7 @@ async function runSimulation(
   csvLog,
   currentYear
 ) {
-  //console.log("RUN SIMULATION",JSON.stringify(investmentTypes, null, 2));
+  //console.log("RUN SIMULATION",JSON.stringify(stateTax, null, 2));
   //console.log("currentYear", currentYear);
   // previous year
   let irsLimit = scenario.irsLimit;
@@ -92,12 +92,12 @@ async function runSimulation(
     //console.log("CASH INVESTMENT: ", cashInvestment);
   }
 
-  let yearDataBuckets = createYearDataBuckets(40, currentYear); //2 is numYears
+  let yearDataBuckets = createYearDataBuckets(2, currentYear); //2 is numYears
   let yearIndex = 0;
 
   //  // SIMULATION LOOP
   // manually adjusted for testing, should be year <= userEndYear !!
-  for (let year = currentYear; year <= 2065; year++) {
+  for (let year = currentYear; year <= 2027; year++) {
     console.log("\nSIMULATION YEAR", year);
     if (filingStatus == "married") {
       if (year == scenario.birthYearSpouse + lifeExpectancySpouse) {
@@ -112,6 +112,7 @@ async function runSimulation(
         }
       }
     }
+    //console.log("stateIncomeTaxBracket", stateIncomeTaxBracket);
     let inflationRate = findInflation(scenario.inflationAssumption) * 0.01;
     //console.log("EVENTS",JSON.stringify(expenseEvent, null, 2));
     let { curIncomeEvent, curExpenseEvent, curInvestEvent, curRebalanceEvent } = getCurrentEvent(year, incomeEvent, expenseEvent, investEvent, rebalanceEvent);
@@ -134,13 +135,12 @@ async function runSimulation(
       },
     });
     if (sumInvestmentsPreTaxRMD > 0) {
-      await performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year);
+      await performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year, withdrawalStrategy);
     }
     sumInvestmentsPreTaxRMD = 0;
 
     //  UPDATE INVESTMENT VALUES
     updateInvestmentValues(investments, investmentTypes, yearTotals);
-
     // find all the investment objects by the roth conversion strategy ids
     let rothConversionStrategyInvestments = [];
     for (let investment of scenario.rothConversionStrategy) {
@@ -153,10 +153,8 @@ async function runSimulation(
     if (scenario.optimizerSettings.enabled && year >= scenario.optimizerSettings.startYear && year <= scenario.optimizerSettings.endYear) {
       rothConversion(scenario, year, yearTotals, federalIncomeTax, investmentTypes, investments, rothConversionStrategyInvestments, fedDeduction);
     }
-
     // account for inflation for expenses that are not in the current year
     updateInflationExpenses(curExpenseEvent, expenseEvent, inflationRate);
-
     //  PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
     let { nonDiscretionary, taxes } = payNonDiscretionaryExpenses(
       curExpenseEvent,
@@ -216,7 +214,7 @@ async function runSimulation(
         });
       }
     }
-
+  
     // PRELIMINARIES
     // can differ each year if sampled from distribution
     preliminaries(federalIncomeTax, inflationRate, fedDeduction, capitalGains, stateTax, filingStatus, tax, irsLimit, stateIncomeTaxBracket, startYearPrev);
@@ -259,7 +257,7 @@ function preliminaries(federalIncomeTax, inflationRate, fedDeduction, capitalGai
     updateFedDeduction(tax.single.standardDeductions, inflationRate);
     updateCapitalGains(tax.single.capitalGainsTaxRates, inflationRate);
     if (stateTax) {
-      updateStateIncomeTaxBracket(stateTax.taxDetails[startYearPrev].single.stateIncomeTaxRatesBrackets);
+      updateStateIncomeTaxBracket(stateTax.taxDetails[startYearPrev].single.stateIncomeTaxRatesBrackets, inflationRate);
     }
   }
   // retirement account limit

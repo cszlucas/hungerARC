@@ -13,6 +13,7 @@ const timestamp = new Date();
 const piscina = new Piscina({
   filename: path.resolve(__dirname, "./worker.js"),
 });
+//console.log(`Active threads: ${piscina.threads.length}`);
 (async () => {
   for (let i = 0; i < numSimulations; i++) {
     await piscina.run({ simId: i });
@@ -44,7 +45,7 @@ class DataStore {
         matchedTax = userTaxDocs.find((tax) => tax.state === residence);
       }
       this.stateTax = matchedTax;
-
+      console.log("this.stateTax", this.stateTax);
       // const investmentType = await InvestmentType.find({
       //   _id: { $in: scenario.setOfInvestmentTypes },
       // });
@@ -183,6 +184,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
         description: `ON SIMULATION NUMBER: ${x + 1}.`,
       });
       console.log(`ON SIMULATION NUMBER: ${x + 1}\n`);
+      
       const clonedData = JSON.parse(
         JSON.stringify({
           scenario,
@@ -228,7 +230,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   }
 
   if (exploration && exploration.length >= 1) {
-    console.log("EXPLORE", JSON.stringify(explore, null, 2));
+    //console.log("EXPLORE", JSON.stringify(explore, null, 2));
     return explore;
   }
 }

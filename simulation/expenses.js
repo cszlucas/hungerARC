@@ -96,6 +96,7 @@ function payNonDiscretionaryExpenses(
 //calculate TAX
 function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGains, userAge, fedDeduction, year) {
   console.log("CALCULATING TAXES, my prev year income: ", prevYearIncome);
+  //console.log("stateIncomeRange", stateIncomeRange);
   logFinancialEvent({
     year: year,
     type: "non-discretionary",
@@ -255,7 +256,7 @@ function updateValues(investment, userAge, yearTotals, partial, amountPaid, year
       logFinancialEvent({
         year: year,
         type: type,
-        description: `By a fraction update curYearGains: ${gain}, "purchase price: ${investment.purchasePrice}`,
+        description: `By a fraction update capital gains: ${gain}, "purchase price: ${investment.purchasePrice}`,
       });
       //console.log("By a fraction update curYearGains:", gain, "purchase price:", investment.purchasePrice);
     } else {
@@ -265,7 +266,7 @@ function updateValues(investment, userAge, yearTotals, partial, amountPaid, year
       logFinancialEvent({
         year: year,
         type: type,
-        description: `Update curYearGains: ${gain}, "purchase price: ${investment.purchasePrice}`,
+        description: `Update capital gains: ${gain}, "purchase price: ${investment.purchasePrice}`,
       });
       //console.log("update curYearGains:", gain, "purchase price:", investment.purchasePrice);
     }
