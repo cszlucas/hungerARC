@@ -74,13 +74,15 @@ function logFinancialEvent({ year, type, description, amount, details = {} }) {
       line += formatStrategy(description, details, "invest");
       break;
     }
-    case "investment":
+    case "investment": {
       line += formatInvestment(description, details);
       break;
+    }
     case "roth conversion": {
       if (details.from && details.to) {
         line += ` of "${details.from}" to "${details.to}"`;
       }
+      line += formatRoth(description, details);
       break;
     }
     case "rebalance": {
@@ -152,11 +154,19 @@ function formatInvestment(description, details){
 
   if (description) line += `${description}`;
   if (Object.keys(details).length > 0){ 
-
-    
-    line += `Investment ID: ${details.ID}, value: ${formatCurrency(details.value)}, taxType: ${details.taxStatus}.`;
+    if(details.type == "investments"){
+      line += `Investment ID: ${details.ID}, value: ${formatCurrency(details.value)}, taxType: ${details.taxStatus}.`;
+    } else if(details.type == "curYearIncome"){
+      line += `${details.type.toUpperCase()} | Investment ID: ${details.ID}, taxType: ${details.taxStatus}.`;
+    }
   }
   // console.log('line :>> ', line);
+  return line;
+}
+
+function formatRoth(description, details) {
+  let line = "";
+  if (description) line += `${description}`;
   return line;
 }
 
@@ -336,5 +346,5 @@ module.exports = {
   printEvents,
   printIncomeEvents,
   printStrategy,
-  createLogger
+  createLogger,
 };

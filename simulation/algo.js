@@ -2,7 +2,14 @@ import { randomNormal, randomUniform } from "./helper.js";
 import { v4 as uuidv4 } from "uuid";
 import { logFinancialEvent, printIncomeEvents, printInvestments } from "./logs.js";
 
-
+// const formatCurrency = (val) => (typeof val === "number" ? `$${val.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : val ?? "");
+function formatCurrency(val) {
+  if (typeof val === "number") {
+    return `$${val.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  } else {
+    return val ?? "";
+  }
+}
 function findInflation(inflationAssumption) {
   if (inflationAssumption.type == "fixed") return inflationAssumption.fixedRate;
   else if (inflationAssumption.type == "uniform") return randomUniform(inflationAssumption.min, inflationAssumption.max);
@@ -60,6 +67,20 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
   console.log("curYearFedTaxableIncome :>> ", curYearFedTaxableIncome);
   let rc = u - (curYearFedTaxableIncome - fedDeduction);
   let rcCopy = rc;
+
+  logFinancialEvent({
+    year: year,
+    type: "roth conversion",
+    description: `Amount of Roth conversion is ${formatCurrency(rc)}`,
+  });
+
+  if(rothConversionStrategyInvestments.length==0){
+    logFinancialEvent({
+      year: year,
+      type: "roth conversion",
+      description: "There are no investments for Roth conversion.",
+    });
+  }
   // transfer from pre-tax to after-tax retirement
   for (let investment of rothConversionStrategyInvestments) {
     if (investment.accountTaxStatus == "after-tax") continue;
@@ -71,7 +92,12 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
       if (rc >= investment.value) {
         rc -= investment.value;
         investment.accountTaxStatus = "after-tax";
-        console.log("investment ", investmentType.name, " is now after-tax account with same value");
+        console.log("investment ID ", investmentType.name, " is now after-tax account with same value");
+        logFinancialEvent({
+          year: year,
+          type: "roth conversion",
+          description: `Investment ID ${investmentType._id} is now an after-tax account with same value of ${formatCurrency(investment.value)}. RC becomes ${formatCurrency(rc)}`,
+        });
       } else {
         investment.value -= rc;
         const newInvestmentObject = {
@@ -97,7 +123,12 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
 
         // push only the ID to the scenario
         scenario.setOfInvestments.push(newInvestmentObject._id);
-
+        logFinancialEvent({
+          year: year,
+          type: "roth conversion",
+          description: `Investment ID ${investmentType._id} is partially transferred, value is now ${formatCurrency(investment.value)} after
+            subtracting ${formatCurrency(rc)}. A new investment object is created with value ${formatCurrency(rc)} and account tax status after-tax. RC becomes 0`,
+        });
         rc = 0;
       }
       //  console.log('scenario.investments :>> ', scenario.setOfInvestments);
@@ -106,6 +137,16 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
   }
 
   yearTotals.curYearIncome += rcCopy;
+  logFinancialEvent({
+    year: year,
+    type: "roth conversion",
+    description: `CurYearIncome changes from ${formatCurrency(yearTotals.curYearIncome - rcCopy)} to ${formatCurrency(yearTotals.curYearIncome)}`,
+  });
+  logFinancialEvent({
+    year: year,
+    type: "roth conversion",
+    description: "Roth conversion has now been done.",
+  });
 }
 
 function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, yearTotals, cashInvestment, curIncomeEvent, spouseDeath) {
@@ -201,7 +242,7 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals, year) 
     // Calculate the generated income, using the given fixed amount or percentage, or sampling from the specified probability distribution.
     let initialValue = investment.value;
     let investmentType = investmentTypes.find((type) => type._id === investment.investmentType);
-    console.log("investment type name of ", investmentType.name, ", investment is ", investment.accountTaxStatus, " and value is ", investment.value);
+    console.log("investment type name of ", investmentType.name, ", investment is ", investment.accountTaxStatus, " and value is ", formatCurrency(investment.value));
 
     let annualIncome = investmentType.annualIncome;
     let income = 0;
@@ -221,10 +262,10 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals, year) 
       logFinancialEvent({
         year: year,
         type: "investment",
-        description: `The curYearIncome changes from ${curYearIncome} to ${yearTotals.curYearIncome}. `,
+        description: `CurYearIncome changes from ${formatCurrency(curYearIncome)} to ${formatCurrency(yearTotals.curYearIncome)} from `,
         details: {
           ID: investment._id,
-          type: "CurYearIncome",
+          type: "curYearIncome",
           taxStatus: investment.accountTaxStatus,
         }
       });
@@ -244,8 +285,15 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals, year) 
     // Add the income to the value of the investment
     investment.value += change;
     console.log("change :>> ", change);
+    let prevYearGains = yearTotals.curYearGains;
     yearTotals.curYearGains += change;
-
+    if (change != 0){
+      logFinancialEvent({
+        year: year,
+        type: "investment",
+        description: `CurYearGains changes from ${formatCurrency(prevYearGains)} to ${formatCurrency(yearTotals.curYearGains)}  with Investment ID ${investment._id}`,
+      });
+    }
     // Calculate this year’s expenses, by multiplying the expense ratio and the average value of the investment
     let expenses = investmentType.expenseRatio * 0.01 * ((initialValue + investment.value) / 2);
     if(investmentType.name=="Cash" || investmentType.name=="cash"){
