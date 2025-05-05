@@ -8,7 +8,7 @@ import { ObjectId } from "bson";
 
 const ImportBtn = () => {
     // const [ selectedScenario, setSelectedScenario] = useState(null); // Track selected scenario
-    const { setScenarioData, setEditMode, setCurrScenario, setCurrInvestments, setCurrIncome, setCurrExpense, setCurrInvest, setCurrRebalance, setCurrInvestmentTypes } = useContext(AppContext);
+    const { scenarioData, setScenarioData, setEditMode, setCurrScenario, setCurrInvestments, setCurrIncome, setCurrExpense, setCurrInvest, setCurrRebalance, setCurrInvestmentTypes } = useContext(AppContext);
     const { user } = useContext(AuthContext);
 
     function parseScenarioYAML(yamlObject) {
@@ -35,6 +35,7 @@ const ImportBtn = () => {
         
         //new ObjectId().toHexString();
         const investmentTypeMap = Object.fromEntries(investmentTypes.map(i => [i.name, new ObjectId().toHexString()]));
+        const investmentTypeMapReverse = Object.fromEntries(investmentTypes.map(i => [investmentTypeMap[i.name], i.name]));
         const investmentMap = Object.fromEntries(investments.map(i => [i.id, new ObjectId().toHexString()]));
         const eventSeriesMap = Object.fromEntries(eventSeries.map(i => [i.name, new ObjectId().toHexString()]));
 
@@ -210,15 +211,42 @@ const ImportBtn = () => {
               max: inflationAssumption.max ?? null,
             },
             irsLimit: afterTaxContributionLimit,
-            spendingStrategy: spendingStrategy.map((n) => eventSeriesMap[n]),
-            expenseWithdrawalStrategy: expenseWithdrawalStrategy.map((n) => investmentMap[n]),
-            rmdStrategy: RMDStrategy.map((n) => investmentMap[n]),
+            spendingStrategy: (() => {
+              const mapped = spendingStrategy.map((n) => eventSeriesMap[n]);
+              const allExpenseIds = expense.map((e) => e._id);
+              const missing = allExpenseIds.filter((id) => !mapped.includes(id));
+              return [...mapped, ...missing];
+            })(),
+            expenseWithdrawalStrategy: (() => {
+              const mapped = expenseWithdrawalStrategy.map((n) => investmentMap[n]);
+              const eligibleIds = frontendInvestments
+                .filter((inv) => (inv.accountTaxStatus === "non-retirement" || inv.accountTaxStatus === "after-tax") 
+                  && investmentTypeMapReverse[inv.investmentType].toLowerCase() !== "cash")
+                .map((inv) => inv._id);
+              const missing = eligibleIds.filter((id) => !mapped.includes(id));
+              return [...mapped, ...missing];
+            })(),
+            rmdStrategy: (() => {
+              const mapped = RMDStrategy.map((n) => investmentMap[n]);
+              const allPreTaxIds = frontendInvestments
+                .filter((inv) => inv.accountTaxStatus === "pre-tax")
+                .map((inv) => inv._id);
+              const missing = allPreTaxIds.filter((id) => !mapped.includes(id));
+              return [...mapped, ...missing];
+            })(),
             optimizerSettings: {
               enabled: RothConversionOpt,
               startYear: RothConversionStart,
               endYear: RothConversionEnd,
             },
-            rothConversionStrategy: RothConversionStrategy.map((n) => investmentMap[n]),
+            rothConversionStrategy: (() => {
+              const mapped = RothConversionStrategy.map((n) => investmentMap[n]);
+              const allPreTaxIds = frontendInvestments
+                .filter((inv) => inv.accountTaxStatus === "pre-tax")
+                .map((inv) => inv._id);
+              const missing = allPreTaxIds.filter((id) => !mapped.includes(id));
+              return [...mapped, ...missing];
+            })(),
             financialGoal,
             stateResident: residenceState,
           }
@@ -236,10 +264,13 @@ const ImportBtn = () => {
             const parsed = parseScenarioYAML(raw);
 
             // console.log("✅ Parsed YAML:", parsed);
-            const response = await axios.post("http://localhost:8080/importScenario/", parsed, { withCredentials: true });
+            if (!user.guest) {
+              await axios.post("http://localhost:8080/importScenario/", parsed, { withCredentials: true });
+            }
+            // const response = await axios.post("http://localhost:8080/importScenario/", parsed, { withCredentials: true });
 
             // console.log(response.data);
-
+            setCurrScenario(parsed.scenario);
             setScenarioData((prev) => [...(prev || []), parsed.scenario]);
             setCurrInvestments(parsed.investments);
             setCurrInvestmentTypes(parsed.investmentTypes);
@@ -261,14 +292,14 @@ const ImportBtn = () => {
           id="yaml-upload"
           style={{ display: "none" }}
           onChange={handleYAMLImportFile}
-          disabled={user.guest}
+          disabled={user.guest && scenarioData.length >= 1}
       />
       <label htmlFor="yaml-upload">
         <Button
             variant="contained"
             component="span"
             sx={{ marginRight: 2, textTransform: "none" }}
-            disabled={user.guest}
+            disabled={(user.guest && scenarioData.length >= 1)}
         >
             Import
         </Button>

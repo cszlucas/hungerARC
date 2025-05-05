@@ -59,7 +59,7 @@ const ScenarioList = () => {
                     variant="contained"
                     sx={{ marginBottom: 6, textTransform: "none" }}
                     onClick={handleNewScenario}
-                    disabled={user.guest && scenarioData.length > 1}
+                    disabled={user.guest && scenarioData.length >= 1}
                 >
                     New Scenario
                 </Button>
