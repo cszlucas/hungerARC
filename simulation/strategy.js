@@ -253,12 +253,12 @@ function rebalance(investments, year, rebalanceStrategy, userAge, yearTotals, ty
       if (investment.value - sellAmt <= 0) {
         // full sale
         console.log("Sell entire investment", investment._id, "value: ", investment.value);
-        updateValues(investment, userAge, yearTotals, false, investment.value);
+        updateValues(investment, userAge, yearTotals, false, investment.value, year, type);
         investment.value = 0;
       } else {
         // partial sale
         console.log("Sell partial investment", investment._id, "value:", investment.value, "sell amount:", sellAmt);
-        updateValues(investment, userAge, yearTotals, true, sellAmt);
+        updateValues(investment, userAge, yearTotals, true, sellAmt, year, type);
         investment.value -= sellAmt;
       }
     }

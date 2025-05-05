@@ -1,15 +1,12 @@
 const fs = require("fs");
 const path = require("path");
-const { getValueInYear } = require("./value.js");
-const investment = require("../server/models/investment.js");
-const now = new Date();
-const timestamp = now.toISOString(); // gives a clean timestamp like "2025-04-26T22:18:43.123Z"
-const message = `Log started at ${timestamp}\n`;
 const logDir = path.join(__dirname, "logs");
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir);
 }
-const logFile = path.join(logDir, "user_datetime.log");
+const timestamp = new Date();
+const { log, logFile }= createLogger();
+
 
 function writeCSVLog(csvFilename, simulationResult) {
   const years = simulationResult.years; // array of years like [2025, 2026,...]
@@ -42,7 +39,19 @@ function logInvestment(investments, year, csvLog, investmentTypes) {
   // console.log('csvLog :>> ', csvLog);
 }
 
-fs.appendFileSync(logFile, message, "utf8");
+function createLogger(timestamp = new Date()) {
+  const datetime = timestamp.toISOString().replace(/[:.]/g, '-');
+  const filename = `user_${datetime}.log`;
+  const logFile = path.join(logDir, filename);
+
+  function log(message) {
+    const entry = `[${new Date().toISOString()}] ${message}\n`;
+    fs.appendFileSync(logFile, entry, 'utf8');
+  }
+
+  return { log, logFile };
+}
+
 
 function logFinancialEvent({ year, type, description, amount, details = {} }) {
   // console.log('INCOME TESTING :>> ');
@@ -88,7 +97,6 @@ function logFinancialEvent({ year, type, description, amount, details = {} }) {
       if (details.amountTransfer!=undefined) {
         line += `Transferred "${details.amountTransfer}" from pretax investment to non-retirement. `;
       }
-
       line += formatStrategy(description, details, "rmd");
 
       if (details.nonRetirementInvestmentID) {
@@ -310,4 +318,5 @@ module.exports = {
   printEvents,
   printIncomeEvents,
   printStrategy,
+  createLogger
 };

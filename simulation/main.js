@@ -6,11 +6,18 @@ const { calculateLifeExpectancy } = require("./algo.js");
 const path = require("path");
 const { formatToNumber } = require("./helper.js");
 const { getEvent, scenarioExplorationUpdate, generateParameterCombinations } = require("./exploration.js");
-const {logFinancialEvent} =require("./logs.js");
+const { logFinancialEvent } = require("./logs.js");
 const Piscina = require("piscina");
+let numSimulations;
+const timestamp = new Date();
 const piscina = new Piscina({
   filename: path.resolve(__dirname, "./worker.js"),
 });
+(async () => {
+  for (let i = 0; i < numSimulations; i++) {
+    await piscina.run({ simId: i });
+  }
+})();
 
 class DataStore {
   constructor() {
@@ -58,6 +65,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   const dataStore = new DataStore();
   await Promise.all([dataStore.populateData(userId, scenario.stateResident)]);
   //console.log("our scenario \n\n", dataStore);
+  numSimulations = numScenarioTimes;
 
   const csvLog = []; // For user_datetime.csv
   const eventLog = []; // For user_datetime.log
@@ -81,6 +89,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   const startYearPrev = (new Date().getFullYear() - 1).toString();
   //calculate life expectancy
   const { lifeExpectancyUser, lifeExpectancySpouse } = calculateLifeExpectancy(scenario);
+ // console.log("lifeExpectancyUser", lifeExpectancyUser);
   let currentYear = new Date().getFullYear();
   // console.log('lifeExpectancySpouse here :>> ', lifeExpectancySpouse);
 
@@ -104,17 +113,19 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   let duration = 1;
   // console.log("exploration :>> ", exploration);
   let rothExploration;
-  for (let i = 0; i < exploration.length; i++) {
-    if (exploration[i].type == "Roth Optimizer Flag") {
-      rothExploration = exploration[i];
-      exploration.splice(i, 1); // remove the Roth Optimizer Flag from exploration array
-      break;
+  if (exploration && exploration.length) {
+    for (let i = 0; i < exploration.length; i++) {
+      if (exploration[i].type == "Roth Optimizer Flag") {
+        rothExploration = exploration[i];
+        exploration.splice(i, 1); // remove the Roth Optimizer Flag from exploration array
+        break;
+      }
     }
-  }
-  if (rothExploration) {
-    // console.log("scenario before roth :>> ", scenario);
-    scenarioExplorationUpdate(scenario, ["Roth Optimizer Flag"], [rothExploration.data.optimizerSettings]);
-    // console.log("scenario after roth :>> ", scenario);
+    if (rothExploration) {
+      // console.log("scenario before roth :>> ", scenario);
+      scenarioExplorationUpdate(scenario, ["Roth Optimizer Flag"], [rothExploration.data.optimizerSettings]);
+      // console.log("scenario after roth :>> ", scenario);
+    }
   }
 
   if (exploration && exploration.length >= 1) {
@@ -136,7 +147,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   //return;
   for (let i = 0; i < duration; i++) {
     const workerInputs = [];
-    if (exploration.length >= 1) {
+    if (exploration && exploration.length >= 1) {
       logFinancialEvent({
         year: "Explore",
         type: "simulationInfo",
@@ -153,8 +164,8 @@ async function main(investmentType, invest, rebalance, expense, income, investme
           console.log("dataArray HERE :>> ", dataArray);
           return getEvent(dataArray, spec.data); // get matching object
           // } else{
-            // console.log("spec roth :>> ", spec);
-            // return spec.data;
+          // console.log("spec roth :>> ", spec);
+          // return spec.data;
           // }
         });
         isFirstIteration = false;

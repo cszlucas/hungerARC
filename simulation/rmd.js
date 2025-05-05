@@ -6,6 +6,13 @@ import { v4 as uuidv4 } from "uuid";
 //RMDStrategyInvestOrder is an ordering on investments in pre-tax retirement accounts.
 async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year) {
   console.log("Perform RMD");
+  if (RMDStrategyInvestOrder.length == 0) {
+    logFinancialEvent({
+      year: year,
+      type: "rmd",
+      description: "There are no pretax investments."
+    });
+  }
   if (userAge >= 74 && RMDStrategyInvestOrder != null) {
     //console.log("\nRMDs\nUser age", userAge, "and sum of pre-tax values from prev year is", sumInvestmentsPreTaxRMD);
 
@@ -25,8 +32,6 @@ async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOr
       type: "rmd",
       details: {
         amount: rmdCount,
-        incomeAmount: sumInvestmentsPreTaxRMD,
-        userAge: userAge,
       },
     });
     printInvestments(RMDStrategyInvestOrder, year, "rmd", "investments");
@@ -50,7 +55,7 @@ async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOr
         logFinancialEvent({
           year: year,
           type: "rmd",
-          description: "All RMD transferred."
+          description: "All RMD transferred.",
         });
         break;
       }
