@@ -179,7 +179,7 @@ function transformForLineChart(metricData, parameter) {
 }
 
 
-function getParameterValuesByIndex(dataset, index) {
+export function getParameterValuesByIndex(dataset, index) {
   const entries = dataset.years?.values ?? [];
   const valueSet = new Set();
 

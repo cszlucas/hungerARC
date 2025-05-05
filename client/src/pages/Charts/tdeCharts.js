@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, Stack } from "@mui/material";
+import { ThemeProvider, CssBaseline, Container, Typography, Stack, Checkbox } from "@mui/material";
 import theme from "../../components/theme";
 import Navbar from "../../components/navbar";
 import {
@@ -7,10 +7,15 @@ import {
   titleStyles,
 } from "../../components/styles";  // Import your modular styles
 import CustomDropdown from "../../components/customDropDown";
+import CustomInputBox from "../../components/customInputBox";
 import ReactECharts from "echarts-for-react";
 import "echarts-gl";
 import { useLocation } from "react-router-dom";
 import Plot from "react-plotly.js";
+import { getParameterValuesByIndex } from "./odeCharts"; 
+import { ProbabilityLineChart, parseProbabilityLineChartData } from "./ProbabilityLineChart";
+import { parseShadedLineChartBands, ChartWithBands } from "./ShadedLineChart";
+import { parseStackedBarDataByMode, GroupedStackedBarChart } from "./StackedBarChart";
 import { AppContext } from "../../context/appContext";
 
 
@@ -42,7 +47,6 @@ function parseFinalMetric2D(data, financialGoal, metric = "probability") {
 
   return results;
 }
-
   
 function createGrid(pointArray) {
     const xVals = [...new Set(pointArray.map(p => p.paramA))].sort((a, b) => a - b);
@@ -61,19 +65,11 @@ function createGrid(pointArray) {
     return { x: xVals, y: yVals, z: zMatrix };
 }
   
-  
 
 function transpose(matrix) {
     return matrix[0].map((_, colIdx) => matrix.map(row => row[colIdx]));
 }
   
-  // Prepares z -> flatData + dataShape for echarts
-function prepareSurfaceData(z, x, y) {
-    return {
-        flatData: z.flat(),
-        shape: [y.length, x.length]
-    };
-}
 
 function PlotlySurfaceChart({ title, x, y, z, xLabel, yLabel, zLabel }) {
   return (
@@ -184,7 +180,65 @@ function ContourChart({ title, x, y, z, xLabel = "X", yLabel = "Y", zLabel = "Z"
   );
 }
 
-  
+function flattenChartDataByTwoParams(rawParamData, paramAIndex, valueA, paramBIndex, valueB) {
+  console.log("rawParamData:", rawParamData);
+  console.log("paramAIndex:", paramAIndex, "valueA:", valueA);
+  console.log("paramBIndex:", paramBIndex, "valueB:", valueB);
+
+  if (
+    !rawParamData?.values ||
+    typeof paramAIndex !== "number" ||
+    typeof paramBIndex !== "number"
+  ) {
+    console.error("❌ Invalid input data or parameter indices.");
+    return [];
+  }
+
+  const matchingEntries = rawParamData.values.filter(entry => {
+    return (
+      entry.value?.[paramAIndex] === valueA &&
+      entry.value?.[paramBIndex] === valueB
+    );
+  });
+
+  const flatData = [];
+
+  matchingEntries.forEach(entry => {
+    const { simulations } = entry;
+    if (!Array.isArray(simulations)) return;
+
+    const nYears = simulations[0]?.length ?? 0;
+
+    for (let yearIdx = 0; yearIdx < nYears; yearIdx++) {
+      const yearData = {
+        year: simulations[0][yearIdx].year,
+        investments: [],
+        income: [],
+        discretionary: [],
+        nonDiscretionary: [],
+        taxes: [],
+        earlyWithdrawals: []
+      };
+
+      simulations.forEach(sim => {
+        const simYear = sim[yearIdx];
+        if (!simYear) return;
+
+        yearData.investments.push(simYear.investment?.[0] ?? []);
+        yearData.income.push(simYear.income?.[0] ?? []);
+        yearData.discretionary.push(simYear.discretionary?.[0] ?? []);
+        yearData.nonDiscretionary.push(simYear.nonDiscretionary?.[0] ?? []);
+        yearData.taxes.push(simYear.taxes?.[0] ?? 0);
+        yearData.earlyWithdrawals.push(simYear.earlyWithdrawals?.[0] ?? 0);
+      });
+
+      flatData.push(yearData);
+    }
+  });
+
+  return flatData;
+}
+
 
 const TwoDimensionalCharts = () => {
     // console.log(tempExploration);
@@ -194,33 +248,63 @@ const TwoDimensionalCharts = () => {
     const param1 = chartData.years.parameter[0];
     const param2 = chartData.years.parameter[1];
 
+    const param1Values = getParameterValuesByIndex(chartData, 0);
+    const param2Values = getParameterValuesByIndex(chartData, 1);
     console.log(chartData);   
 
     const financialGoal = 7000;
     const [currChart, setCurrChart] = useState("");
     const [selectedQuantity, setSelectedQuantity] = useState("");
+    const [parameterValue1, setParameterValue1] = useState(param1Values[0]);
+    const [parameterValue2, setParameterValue2] = useState(param2Values[0]);
+    const [currQuantity, setCurrQuantity] = useState("Total Investments");
+    const [rawDataSubset, setRawDataSubset] = useState([]);
 
-    const chartTypes = ["Surface Plot", "Contour Plot"];
+    // console.log(parameterValue1);
+    // console.log(parameterValue2);
+    // console.log(chartData)
+    useEffect(() => {
+        if (!chartData || parameterValue1 == null || parameterValue2 == null) return;
+    
+        const subset = flattenChartDataByTwoParams(chartData.years, 0, parameterValue1, 1, parameterValue2);
+        console.log(subset);
+        setRawDataSubset(subset);
+    }, [parameterValue1, parameterValue2]);
+
+    const [currStat, setCurrStat] = useState("Median");
+    const [aggThres, setAggThres] = useState(false);
+    const [limit, setLimit] = useState(0);
+    
+    useEffect(() => {
+    }, [limit]);
+    
+
+    const chartTypes = ["Probability Line Chart", "Shaded Line Chart", "Stacked Bar Chart", "Surface Plot", "Contour Plot"];
     // const multiQuantities = ["probability of success", "median total investments"];
     const lineChartQuantities = ["final probability of success", "final median total investments"];
+    const shadedQuantities = ["Total Investments", "Total Income", "Total Expenses", "Early Withdrawal Tax", "Percentage of Total Discretionary Expenses Incurred"];
 
     const finalProbResults = parseFinalMetric2D(chartData.years, financialGoal, "probability");
-    console.log(finalProbResults); // inside parseFinalMetric2D
+    // console.log(finalProbResults); // inside parseFinalMetric2D
 
     const finalMedianResults = parseFinalMetric2D(chartData.years, financialGoal, "median");
 
     const probGrid = createGrid(finalProbResults);
     const medianGrid = createGrid(finalMedianResults);
 
-    console.log("probability Grid: ");
-    console.log(probGrid);
-    console.log("median Grid: ");
-    console.log(medianGrid);
+    const probLineData = parseProbabilityLineChartData(rawDataSubset, financialGoal);
+    const shadedLineData = parseShadedLineChartBands(rawDataSubset, currQuantity);
+    const {stackMeanData, stackMedianData} = parseStackedBarDataByMode(rawDataSubset, "exploration");
 
-    console.log("z flat map");
-    console.log(probGrid.z.flat());
-    console.log("z flat map");
-    console.log(medianGrid.z.flat());
+    // console.log("probability Grid: ");
+    // console.log(probGrid);
+    // console.log("median Grid: ");
+    // console.log(medianGrid);
+
+    // console.log("z flat map");
+    // console.log(probGrid.z.flat());
+    // console.log("z flat map");
+    // console.log(medianGrid.z.flat());
 
     return (
         <ThemeProvider theme={theme}>
@@ -258,6 +342,65 @@ const TwoDimensionalCharts = () => {
                                 />
                             </>
                         )}
+
+                        {(
+                          currChart === "Probability Line Chart" ||
+                          currChart === "Shaded Line Chart" ||
+                          currChart === "Stacked Bar Chart"
+                        ) && (
+                          <>
+                            <CustomDropdown
+                              label={param1}
+                              value={parameterValue1}
+                              menuItems={param1Values}
+                              setValue={setParameterValue1}
+                            />
+                            <CustomDropdown
+                              label={param2}
+                              value={parameterValue2}
+                              menuItems={param2Values}
+                              setValue={setParameterValue2}
+                            /> 
+                          </>
+                        )}
+                        {currChart === "Shaded Line Chart" && (
+                            <CustomDropdown
+                              label={"Select a Quantity"}
+                              value={currQuantity}
+                              menuItems={shadedQuantities}
+                              setValue={setCurrQuantity}
+                            />
+                        )}
+                        {currChart === "Stacked Bar Chart" && (
+                            <>
+                                <CustomDropdown
+                                    label="Pick Mean or Median"
+                                    value={currStat}
+                                    menuItems={["Mean", "Median"]}
+                                    setValue={setCurrStat}
+                                />
+
+                                <Stack direction="row" alignItems="center" sx={{ mb: 5, gap:0.5 }}>
+                                    <Typography variant="body1" sx={{ fontWeight: "medium", width: 200 }}>
+                                        Aggregation Threshold
+                                    </Typography>
+                                    <Checkbox
+                                        checked={aggThres}
+                                        onChange={e => setAggThres(e.target.checked)}
+                                    />
+                                </Stack>
+
+                                {aggThres && (
+                                    <CustomInputBox
+                                        title="Threshold Limit"
+                                        type="number"
+                                        value={limit}
+                                        setValue={setLimit}
+                                        inputProps={{ min: 0 }}
+                                    />
+                                )}
+                            </>
+                        )}
                     </Stack>
 
                     {currChart === "Surface Plot" && selectedQuantity === "final probability of success" && (
@@ -277,6 +420,23 @@ const TwoDimensionalCharts = () => {
                     {currChart === "Contour Plot" && selectedQuantity === "final median total investments" && (
                         <ContourChart title="Final-Year Median Investment" {...medianGrid} xLabel={param1} yLabel={param2} zLabel="Final Median Total Investments" />
 
+                    )}
+
+                    {currChart === "Probability Line Chart" && (
+                        <ProbabilityLineChart lineChart={probLineData} />
+                    )}
+
+                    {currChart === "Shaded Line Chart" && (
+                        <ChartWithBands
+                            shadedLineChart={parseShadedLineChartBands(rawDataSubset, currQuantity)}
+                        />
+                    )}
+
+                    {currChart === "Stacked Bar Chart" && (
+                        <GroupedStackedBarChart
+                            data={currStat === "Median" ? stackMedianData : stackMeanData}
+                            threshold={limit}
+                        />
                     )}
 
                 </Stack>
