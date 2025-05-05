@@ -77,6 +77,9 @@ async function main(investmentType, invest, rebalance, expense, income, investme
     user: dataStore.getData("user"),
   };
 
+  // console.log("income", income);
+  // console.dir(scenario, { depth: null });
+  // console.dir(income, { depth: null });
   // change numbers from string to number
   formatToNumber(income);
   formatToNumber(expense);
@@ -86,6 +89,10 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   investment.purchasePrice = 0;
   formatToNumber(investmentType);
   formatToNumber(exploration);
+  formatToNumber(scenario);
+  // console.log("scenario");
+  console.dir(scenario, { depth: null });
+
 
   const startYearPrev = (new Date().getFullYear() - 1).toString();
   //calculate life expectancy

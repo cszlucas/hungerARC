@@ -1,6 +1,6 @@
 import { randomNormal, randomUniform } from "./helper.js";
 import { v4 as uuidv4 } from "uuid";
-import { logFinancialEvent, printIncomeEvents } from "./logs.js";
+import { logFinancialEvent, printIncomeEvents, printInvestments } from "./logs.js";
 
 
 function findInflation(inflationAssumption) {
@@ -188,8 +188,15 @@ function updateInflationExpenses(curExpenseEvent, expenseEvent, inflationRate) {
   }
 }
 
-function updateInvestmentValues(investments, investmentTypes, yearTotals) {
+function updateInvestmentValues(investments, investmentTypes, yearTotals, year) {
   console.log("\nUPDATE INVESTMENT VALUES");
+  logFinancialEvent({
+    year: year,
+    type: "investment",
+    description: "The investment before updating values.",
+  });
+  printInvestments(investments, year, "investment", "investments");
+
   for (let investment of investments) {
     // Calculate the generated income, using the given fixed amount or percentage, or sampling from the specified probability distribution.
     let initialValue = investment.value;
@@ -209,7 +216,18 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals) {
     }
     // Add the income to curYearIncome, if the investment’s tax status is ‘non-retirement’ and the investment type’s taxability is ‘taxable’.
     if (investment.accountTaxStatus == "non-retirement" && investmentType.taxability==true) {
+      let curYearIncome = yearTotals.curYearIncome;
       yearTotals.curYearIncome += income;
+      logFinancialEvent({
+        year: year,
+        type: "investment",
+        description: `The curYearIncome changes from ${curYearIncome} to ${yearTotals.curYearIncome}. `,
+        details: {
+          ID: investment._id,
+          type: "CurYearIncome",
+          taxStatus: investment.accountTaxStatus,
+        }
+      });
     }
 
     // Calculate the change in value, using the given fixed amount or percentage, or sampling from the specified probability distribution.
@@ -236,6 +254,17 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals) {
     investment.value -= expenses;
     console.log("now its value is ", investment.value, "after subtracting an expense of ", expenses);
   }
+  logFinancialEvent({
+    year: year,
+    type: "investment",
+    description: "The investment after updating values.",
+  });
+  printInvestments(investments, year, "investment", "investments");
+  logFinancialEvent({
+    year: year,
+    type: "investment",
+    description: "Updating investment values has now been done.",
+  });
 }
 
 function calculateLifeExpectancy(scenario) {

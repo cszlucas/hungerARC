@@ -140,7 +140,7 @@ async function runSimulation(
     sumInvestmentsPreTaxRMD = 0;
 
     //  UPDATE INVESTMENT VALUES
-    updateInvestmentValues(investments, investmentTypes, yearTotals);
+    updateInvestmentValues(investments, investmentTypes, yearTotals, year);
     // find all the investment objects by the roth conversion strategy ids
     let rothConversionStrategyInvestments = [];
     for (let investment of scenario.rothConversionStrategy) {

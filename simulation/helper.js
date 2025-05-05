@@ -200,6 +200,14 @@ function formatToNumber(obj) {
     "lower",
     "upper",
     "steps",
+    "fixedAge",
+    "startYear",
+    "endYear",
+    "fixedRate",
+    "birthYearUser",
+    "financialGoal",
+    "irsLimit",
+    "birthYearSpouse"
   ]);
 
   //'fixedPercentages', 'initialPercentages', 'finalPercentages'
