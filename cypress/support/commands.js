@@ -31,9 +31,22 @@ Cypress.Commands.add('loginAsGuest', () => {
   
   // Open the nav drawer and navigate to a section
   Cypress.Commands.add('navigateTo', (menuItem) => {
-    cy.get('header').find('button').click(); // Open drawer
-    cy.get('.MuiDrawer-paper').contains(menuItem).click();
+    // Open drawer via header menu
+    cy.get('header').find('button').should('be.visible').click();
+  
+    // Wait until drawer is fully attached, visible, and stable
+    cy.get('body')
+      .find('.MuiDrawer-paper', { timeout: 5000 })
+      .should('exist')
+      .and('be.visible');
+  
+    // Wait for menu item to be ready and click it
+    cy.get('.MuiDrawer-paper')
+      .contains(menuItem)
+      .should('be.visible')
+      .click();
   });
+  
   
   // Select from a MUI <TextField select>
   Cypress.Commands.add('selectDropdown', (labelText, value) => {

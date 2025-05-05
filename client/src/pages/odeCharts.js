@@ -156,24 +156,26 @@ function calculateFinalYearMedianInvestments(data) {
 }
 
 
-function transformForLineChart(metricData) {
-    const yearsSet = new Set();
-  
-    // Collect all years across all parameter values
-    Object.values(metricData).forEach(yearDict => {
-      Object.keys(yearDict).forEach(year => yearsSet.add(Number(year)));
-    });
-  
-    const years = Array.from(yearsSet).sort((a, b) => a - b);
-  
-    const series = Object.entries(metricData).map(([paramValue, yearData]) => ({
-      name: `duration = ${paramValue}`,
-      type: "line",
-      data: years.map(year => yearData[year] ?? null), // fill missing with null
-    }));
-  
-    return { years, series };
+function transformForLineChart(metricData, parameter) {
+  // Collect all years from all parameter entries
+  const yearsSet = new Set();
+  Object.values(metricData).forEach(yearObj => {
+    Object.keys(yearObj).forEach(year => yearsSet.add(Number(year)));
+  });
+  const years = Array.from(yearsSet).sort((a, b) => a - b);
+
+  // Outer keys = parameter values
+  const series = Object.entries(metricData).map(([paramValue, yearObj]) => ({
+    name: `${parameter} = ${paramValue}`,
+    type: "line",
+    data: years.map(year => yearObj[year] ?? null),
+  }));
+
+  return { years, series };
 }
+
+
+
   
 
 const OneDimensionalCharts = () => {
@@ -182,62 +184,25 @@ const OneDimensionalCharts = () => {
     const chartData = location.state?.chartData || [];
     console.log(chartData);
     const financialGoal = 9000;
-    // const odeData = {
-    //     "parameter": "duration",
-    //     "values": [
-    //       {
-    //         "value": 20,
-    //         "simulations": [
-    //           [
-    //             { "year": 2025, "investment": [{ "name": "Roth IRA", "value": 3000 }, { "name": "Brokerage", "value": 5000 }] },
-    //             { "year": 2026, "investment": [{ "name": "Roth IRA", "value": 3500 }, { "name": "Brokerage", "value": 6000 }] }
-    //           ],
-    //           [
-    //             { "year": 2025, "investment": [{ "name": "Roth IRA", "value": 2800 }, { "name": "Brokerage", "value": 5200 }] },
-    //             { "year": 2026, "investment": [{ "name": "Roth IRA", "value": 3600 }, { "name": "Brokerage", "value": 5800 }] }
-    //           ]
-    //         ]
-    //       },
-    //       {
-    //         "value": 25,
-    //         "simulations": [
-    //           [
-    //             { "year": 2025, "investment": [{ "name": "Roth IRA", "value": 3200 }, { "name": "Brokerage", "value": 5100 }] },
-    //             { "year": 2026, "investment": [{ "name": "Roth IRA", "value": 3600 }, { "name": "Brokerage", "value": 6300 }] }
-    //           ],
-    //           [
-    //             { "year": 2025, "investment": [{ "name": "Roth IRA", "value": 3000 }, { "name": "Brokerage", "value": 5000 }] },
-    //             { "year": 2026, "investment": [{ "name": "Roth IRA", "value": 3400 }, { "name": "Brokerage", "value": 6200 }] }
-    //           ]
-    //         ]
-    //       },
-    //       {
-    //         "value": 30,
-    //         "simulations": [
-    //           [
-    //             { "year": 2025, "investment": [{ "name": "Roth IRA", "value": 3100 }, { "name": "Brokerage", "value": 5600 }] },
-    //             { "year": 2026, "investment": [{ "name": "Roth IRA", "value": 3900 }, { "name": "Brokerage", "value": 5900 }] }
-    //           ],
-    //           [
-    //             { "year": 2025, "investment": [{ "name": "Roth IRA", "value": 3500 }, { "name": "Brokerage", "value": 5700 }] },
-    //             { "year": 2026, "investment": [{ "name": "Roth IRA", "value": 3700 }, { "name": "Brokerage", "value": 6000 }] }
-    //           ]
-    //         ]
-    //       }
-    //     ]
-    // };
-    
+
+    const parameter = chartData.years.parameter[0];
+
     const probabilityOfSuccessData = calculateYearlySuccessProbabilities(chartData.years, financialGoal);
     const medians = calculateYearlyMedianInvestments(chartData.years);
     const finalYearProbabilities = calculateFinalYearSuccessProbabilities(chartData.years, financialGoal);
     const finalMedians = calculateFinalYearMedianInvestments(chartData.years);
 
-    console.log(finalYearProbabilities);
-    console.log(finalMedians);
+    // console.log(finalYearProbabilities);
+    // console.log(finalMedians);
 
     console.log(probabilityOfSuccessData);
-    const probData = transformForLineChart(probabilityOfSuccessData);
-    const medianData = transformForLineChart(medians);
+    console.log(medians);
+
+
+    const probData = transformForLineChart(probabilityOfSuccessData, parameter);
+    const medianData = transformForLineChart(medians, parameter);
+    console.log(probData);
+    console.log(medianData);
 
 
     // console.log(odeData);
