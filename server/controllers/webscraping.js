@@ -6,54 +6,86 @@ const StateTax = require("../models/stateTax.js");
 const cheerio = require("cheerio");
 const { ObjectId } = require("mongoose").Types;
 const axios = require("axios");
+const path = require("path");
+const { createStateTaxes } = require("../importStateYaml.js");
 
 exports.handleAllRoutes = async (req, res) => {
   try {
-    const newTaxData = new Tax({
-      year: 2025,
-      single: {
-        federalIncomeTaxRatesBrackets: [
-          { incomeRange: [0, 0], taxRate: 0 },
-          { incomeRange: [0, 0], taxRate: 0 },
-        ],
-        standardDeductions: 0,
-        capitalGainsTaxRates: [
-          // { incomeRange: [0, 0], gainsRate: 0 },
-          // { incomeRange: [0, 0], gainsRate: 0 },
-        ],
-      },
-    });
-    const savedTaxData = await newTaxData.save();
-    taxId = savedTaxData._id;
 
-    const newRMD = new RMD({
-      rmd: [{ age: 0, distributionPeriod: 0 }],
-    });
+    let standardDeductions, incomeMarried, incomeSingle, capitalGains, rmd;
+    // --- TAX ---
+    const taxCount = await Tax.countDocuments();
+    if (taxCount === 0) {
+      const newTaxData = new Tax({
+        year: 2025,
+        single: {
+          federalIncomeTaxRatesBrackets: [
+            { incomeRange: [0, 0], taxRate: 0 },
+            { incomeRange: [0, 0], taxRate: 0 },
+          ],
+          standardDeductions: 0,
+          capitalGainsTaxRates: [],
+        },
+      });
+      const savedTaxData = await newTaxData.save();
+      taxId = savedTaxData._id;
+      console.log("Saved new Tax document");
+      // --- RUN ADDITIONAL DATA HELPERS ---
+      standardDeductions = await exports.standardDeductions(req, res);
+      incomeMarried = await exports.incomeMarried(req, res);
+      incomeSingle = await exports.incomeSingle(req, res);
+      capitalGains = await exports.capitalGains(req, res);
+    } else {
+      const existingTax = await Tax.findOne({});
+      taxId = existingTax._id;
+      console.log("Tax already exists, using existing");
+    }
 
-    const savedRMD = await newRMD.save();
-    rmdId = savedRMD._id;
-    console.log("The RMD id: ", rmdId);
+    // --- RMD ---
+    const existingRMD = await RMD.findOne();
+    if (!existingRMD) {
+      const newRMD = new RMD({
+        rmd: [{ age: 0, distributionPeriod: 0 }],
+      });
+      const savedRMD = await newRMD.save();
+      rmdId = savedRMD._id;
+      console.log("Saved new RMD document");
+      rmd = await exports.rmd(req, res);
+    } else {
+      rmdId = existingRMD._id;
+      console.log("RMD already exists, using existing");
+    }
 
-    const standardDeductions = await exports.standardDeductions(req, res);
-    const incomeMarried = await exports.incomeMarried(req, res);
-    const incomeSingle = await exports.incomeSingle(req, res);
-    const capitalGains = await exports.capitalGains(req, res);
-    const rmd = await exports.rmd(req, res);
+    // --- STATE TAXES ---
+    const filePath = path.join(__dirname, "../stateYaml/states.yml");
+    const stateTaxCount = await StateTax.countDocuments();
+    let stateTax;
+    if (stateTaxCount < 3) {
+      stateTax = await createStateTaxes(filePath); // returns inserted docs or something meaningful
+    } else {
+      stateTax = await StateTax.find(); // get existing docs to return in 
+      console.log("State tax already exists, using existing");
+    }
 
-    // Aggregate all results into one response
+    // --- SEND RESPONSE ---
     res.status(200).json({
+      taxId,
+      rmdId,
       standardDeductions,
       incomeMarried,
       incomeSingle,
       capitalGains,
       rmd,
+      // stateTax,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "An error occurred while fetching data", mymessage: error.message });
+    console.error("handleAllRoutes error:", error);
+    res.status(500).json({
+      message: "An error occurred while fetching data",
+      mymessage: error.message,
+    });
   }
 };
-
 
 //TAXES
 exports.standardDeductions = async (req, res) => {

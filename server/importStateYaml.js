@@ -2,7 +2,7 @@ const fs = require("fs");
 const yaml = require("js-yaml");
 const StateTax = require("./models/stateTax");
 
-const mongoose = require("mongoose");
+//const mongoose = require("mongoose");
 
 // mongoose
 //   .connect("mongodb://localhost:27017/hungerarc", {
