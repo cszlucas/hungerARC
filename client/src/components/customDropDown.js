@@ -1,41 +1,58 @@
-import { Box, Typography, TextField, MenuItem } from "@mui/material";
+import { Box, Typography, Autocomplete, TextField } from "@mui/material";
 import React from "react";
 import { textFieldStyles } from "./styles";
 
-const CustomDropdown = ({ label, value, setValue, menuLabels=[], menuItems=[], width = "auto", disable = false }) => {
-    if (menuLabels == [] || menuLabels.length != menuItems.length) {
-        menuLabels = menuItems;
-    }
+const CustomDropdown = ({
+  label,
+  value,
+  setValue,
+  menuLabels = [],
+  menuItems = [],
+  width = "auto",
+  disable = false
+}) => {
+  // Fall back to menuItems if labels are missing or mismatched
+  if (menuLabels.length === 0 || menuLabels.length !== menuItems.length) {
+    menuLabels = menuItems;
+  }
 
-    const handleChange = (event) => {
-        setValue(event.target.value);
-    };
+  const options = menuItems.map((item, i) => ({
+    label: menuLabels[i],
+    value: item
+  }));
 
-    return (
-        <Box sx={{ display: "inline-flex", flexDirection: "column", width: "auto" }}>
-            <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium" }}>
-                {label}
-            </Typography>
-            <TextField
-                select
-                value={value}
-                onChange={handleChange}
-                displayempty="true"
-                fullWidth
-                sx={{...textFieldStyles, width: width}}
-                disabled={menuLabels.length == 0 || disable}
-            >
-                <MenuItem value="" disabled>
-                    Select
-                </MenuItem>
-                {menuItems.map((item, i) => (
-                    <MenuItem key={item} value={item}>
-                        {menuLabels[i]}
-                    </MenuItem>
-                ))}
-            </TextField>
-        </Box>
-    );
+  const selectedOption = options.find(option => option.value === value) || null;
+
+  return (
+    <Box sx={{ display: "inline-flex", flexDirection: "column", width }}>
+      <Typography
+        variant="body1"
+        sx={{ marginBottom: 1, fontWeight: "medium" }}
+      >
+        {label}
+      </Typography>
+      <Autocomplete
+        disabled={options.length === 0 || disable}
+        value={selectedOption}
+        onChange={(event, newValue) => {
+          setValue(newValue ? newValue.value : "");
+        }}
+        options={options}
+        getOptionLabel={(option) => option.label}
+        isOptionEqualToValue={(option, val) => option.value === val.value}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            sx={{ ...textFieldStyles, width }}
+            placeholder="Select"
+          />
+        )}
+        disableClearable
+        autoHighlight
+        ListboxProps={{ style: { maxHeight: 300 } }}
+      />
+    </Box>
+  );
 };
 
 export default CustomDropdown;

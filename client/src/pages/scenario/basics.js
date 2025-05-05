@@ -95,12 +95,11 @@ const Basics = () => {
 
         {/* User Demographics and Life Expectancy */}
         <Box sx={rowBoxStyles}>
-          <CustomInput
-            title="Your Birth Year"
-            type="number"
+          <CustomDropdown
+            label="Your Birth Year"
             value={currScenario.birthYearUser}
             setValue={(value) => handleInputChange("birthYearUser", value)}
-            inputProps={{ min: 0, max: new Date().getFullYear() }}
+            menuItems={Array.from({ length: new Date().getFullYear() - 1925 + 1 }, (_, i) => 1925 + i)}
           />
 
           <CustomToggle
@@ -119,7 +118,7 @@ const Basics = () => {
               type="number"
               value={currScenario.lifeExpectancy.fixedAge}
               setValue={(value) => handleInputChange("lifeExpectancy.fixedAge", value)}
-              inputProps={{ min: 0 }}
+              inputProps={{ min: 0, max: 150 }}
             />
           ) : (
             <>
@@ -128,14 +127,14 @@ const Basics = () => {
                 type="number"
                 value={currScenario.lifeExpectancy.mean}
                 setValue={(value) => handleInputChange("lifeExpectancy.mean", value)}
-                inputProps={{ min: 0 }}
+                inputProps={{ min: 0, max: 100 }}
               />
               <CustomInput
                 title="Standard Deviation"
                 type="number"
                 value={currScenario.lifeExpectancy.stdDev}
                 setValue={(value) => handleInputChange("lifeExpectancy.stdDev", value)}
-                inputProps={{ min: 0 }}
+                inputProps={{ min: 0, max: 60 }}
               />
             </>
           )}
@@ -144,11 +143,11 @@ const Basics = () => {
         {/* Spouse Inputs if Married */}
         {currScenario.filingStatus === "married" && (
           <Box sx={rowBoxStyles}>
-            <CustomInput
-              title="Spouse's Birth Year"
-              type="number"
+            <CustomDropdown
+              label="Spouse's Birth Year"
               value={currScenario.birthYearSpouse}
               setValue={(value) => handleInputChange("birthYearSpouse", value)}
+              menuItems={Array.from({ length: new Date().getFullYear() - 1925 + 1 }, (_, i) => 1925 + i)}
             />
 
             <CustomToggle
@@ -167,7 +166,7 @@ const Basics = () => {
                 type="number"
                 value={currScenario.lifeExpectancySpouse.fixedAge}
                 setValue={(value) => handleInputChange("lifeExpectancySpouse.fixedAge", value)}
-                inputProps={{ min: 0 }}
+                inputProps={{ min: 0, max: 150 }}
               />
             ) : (
               <>
@@ -176,14 +175,14 @@ const Basics = () => {
                   type="number"
                   value={currScenario.lifeExpectancySpouse.mean}
                   setValue={(value) => handleInputChange("lifeExpectancySpouse.mean", value)}
-                  inputProps={{ min: 0 }}
+                  inputProps={{ min: 0, max: 100 }}
                 />
                 <CustomInput
                   title="Standard Deviation"
                   type="number"
                   value={currScenario.lifeExpectancySpouse.stdDev}
                   setValue={(value) => handleInputChange("lifeExpectancySpouse.stdDev", value)}
-                  inputProps={{ min: 0 }}
+                  inputProps={{ min: 0, max: 50 }}
                 />
               </>
             )}

@@ -161,21 +161,21 @@ const EventSeries = ({ formValues, setFormValues }) => {
 
                     {formValues.startYear.type === "fixedAmt" && (
                         <Stack direction="row" spacing={1} alignItems="start">
-                            <CustomInput 
-                                title="Value"
-                                type="number"
+                            <CustomDropdown
+                                label="Value"
                                 value={formValues.startYear.value}
                                 setValue={(value) => handleInputChange("startYear.value", value)}
+                                menuItems={Array.from({ length: 300 }, (_, i) => new Date().getFullYear() + i)}
                             />
                         </Stack>
                     )}
                     {formValues.startYear.type === "normal" && (
                         <Stack direction="row" spacing={1} alignItems="start">
-                            <CustomInput 
-                                title="Mean"
-                                type="number"
+                            <CustomDropdown
+                                label="Mean"
                                 value={formValues.startYear.mean}
                                 setValue={(value) => handleInputChange("startYear.mean", value)}
+                                menuItems={Array.from({ length: 200 }, (_, i) => new Date().getFullYear() + i)}
                             />
                             <CustomInput 
                                 title="Standard Deviation"
@@ -187,17 +187,17 @@ const EventSeries = ({ formValues, setFormValues }) => {
                     )}
                     {formValues.startYear.type === "uniform" && (
                         <Stack direction="row" spacing={1} alignItems="start">
-                            <CustomInput 
-                                title="Min"
-                                type="number"
+                            <CustomDropdown
+                                label="Min"
                                 value={formValues.startYear.min}
                                 setValue={(value) => handleInputChange("startYear.min", value)}
+                                menuItems={Array.from({ length: 200 }, (_, i) => new Date().getFullYear() + i)}
                             />
-                            <CustomInput 
-                                title="Max"
-                                type="number"
+                            <CustomDropdown
+                                label="Max"
                                 value={formValues.startYear.max}
                                 setValue={(value) => handleInputChange("startYear.max", value)}
+                                menuItems={Array.from({ length: 200 }, (_, i) => new Date().getFullYear() + i)}
                             />
                         </Stack>
                     )}

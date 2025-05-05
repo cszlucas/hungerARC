@@ -1,7 +1,6 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { 
-  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, MenuItem, TextField, IconButton, 
-  Backdrop, Fade 
+  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Alert,
 } from "@mui/material";
 import theme from "../../components/theme";
 import Navbar from "../../components/navbar";
@@ -25,6 +24,8 @@ const RunSimulation = () => {
   const [numSimulations, setNumSimulations] = useState("1");
   const {currScenario, currInvestmentTypes, currInvestments, currIncome, currExpense, currInvest, currRebalance, tempExploration} = useContext(AppContext);
   const {user} = useContext(AuthContext);
+  const [unfilledError, setUnfilledError] = useState(false);
+  const [showUnfilledError, setShowUnfilledError] = useState(false);
 
   const handleExport = () => {
     exportToYAML({
@@ -87,12 +88,66 @@ const RunSimulation = () => {
       throw error; // rethrow if you want to handle it outside
     }
   };
+
+  useEffect(() => {
+    function checkValidNum(eventValue) {
+      return eventValue >= 0 && typeof eventValue === "number" && !isNaN(eventValue);
+    }
+
+    const expression = currScenario.name
+      && checkValidNum(currScenario.financialGoal)
+      && currScenario.stateResident
+      && checkValidNum(currScenario.birthYearUser) 
+      && (currScenario.lifeExpectancy.type !== "fixed" 
+        || checkValidNum(currScenario.lifeExpectancy.fixedAge))
+      && (currScenario.lifeExpectancy.type !== "normal" 
+        || (checkValidNum(currScenario.lifeExpectancy.mean) && checkValidNum(currScenario.lifeExpectancy.stdDev)))
+      && (currScenario.filingStatus !== "married" 
+        || (checkValidNum(currScenario.birthYearSpouse) 
+          && (currScenario.lifeExpectancySpouse.type !== "fixed" 
+            || checkValidNum(currScenario.lifeExpectancySpouse.fixedAge))
+          && (currScenario.lifeExpectancySpouse.type !== "normal" 
+            || (checkValidNum(currScenario.lifeExpectancySpouse.mean) && checkValidNum(currScenario.lifeExpectancySpouse.stdDev)))))
+      && checkValidNum(currScenario.irsLimit)
+      && (currScenario.inflationAssumption.type !== "fixed" || checkValidNum(currScenario.inflationAssumption.fixedRate))
+      && (currScenario.inflationAssumption.type !== "normal" 
+        || (checkValidNum(currScenario.inflationAssumption.mean) && checkValidNum(currScenario.inflationAssumption.stdDev)))
+      && (currScenario.inflationAssumption.type !== "uniform" 
+        || (checkValidNum(currScenario.inflationAssumption.min) && checkValidNum(currScenario.inflationAssumption.max)
+        && currScenario.inflationAssumption.min <= currScenario.inflationAssumption.max));
+
+      setUnfilledError(!expression);
+  }, [currScenario]);
+  
+
+  const triggerUnfilledError = () => {
+    setShowUnfilledError(true);
+    setTimeout(() => setShowUnfilledError(false), 10000); // Hide after 3s
+  };
   
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Navbar currentPage={""} />
       <Container>
+        {showUnfilledError && (
+          <Alert
+            severity="error"
+            variant="filled"
+            sx={{
+              position: "fixed",
+              top: 70,
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 1301,
+              width: "70vw",
+              maxWidth: 500,
+              boxShadow: 3,
+            }}
+          >
+            {"All of Scenario's basic info must be filled."}
+          </Alert>
+        )}
 
         {/* Stack for title and save button */}
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={stackStyles}>
@@ -166,6 +221,10 @@ const RunSimulation = () => {
             onClick={() => {
               // const fetchedData = await getChartData();
               // console.log(fetchedData);
+              if (unfilledError) {
+                triggerUnfilledError();
+                return;
+              }
               getChartData();
             }}
           >
