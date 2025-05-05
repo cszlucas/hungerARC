@@ -244,6 +244,8 @@ const TwoDimensionalCharts = () => {
     // console.log(tempExploration);
     const location = useLocation();
     const chartData = location.state?.chartData || [];
+    
+    
 
     const param1 = chartData.years.parameter[0];
     const param2 = chartData.years.parameter[1];
@@ -252,7 +254,8 @@ const TwoDimensionalCharts = () => {
     const param2Values = getParameterValuesByIndex(chartData, 1);
     console.log(chartData);   
 
-    const financialGoal = 7000;
+    const {currScenario} = useContext(AppContext);
+    const financialGoal = currScenario.financialGoal;
     const [currChart, setCurrChart] = useState("");
     const [selectedQuantity, setSelectedQuantity] = useState("");
     const [parameterValue1, setParameterValue1] = useState(param1Values[0]);

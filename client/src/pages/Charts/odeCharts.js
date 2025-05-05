@@ -260,7 +260,8 @@ const OneDimensionalCharts = () => {
     // const odeData = location.state?.odeData || [];
     const chartData = location.state?.chartData || [];
     console.log(chartData);
-    const financialGoal = 9000;
+    const {currScenario} = useContext(AppContext);
+    const financialGoal = currScenario.financialGoal;
 
     const parameter = chartData.years.parameter[0];
     const paramValues = getParameterValuesByIndex(chartData, 0);
