@@ -12,6 +12,13 @@ const GoogleAuth = () => {
     const { setUser } = useContext(AuthContext);
     const navigate = useNavigate();
 
+    const handleAllRoutes = async () => {
+        await fetch("http://localhost:8080/handleAllRoutes", { method: "GET" });
+        // console.log((await response.json()));
+    };
+    
+    handleAllRoutes();
+    
     const handleSuccess = async (credentialResponse) => {
         const decodedToken = jwtDecode(credentialResponse.credential);
         const userData = {

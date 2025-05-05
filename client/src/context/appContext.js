@@ -98,9 +98,6 @@ const retrieveScenarioData = async (scenarioId, dataType) => {
   }
 };
 
-// Helper function to capitalize the first letter of the data type
-const capitalizeFirstLetter = (string) => string.charAt(0).toUpperCase() + string.slice(1);
-
 // Context Provider Component
 export const AppProvider = ({ children }) => {
   // console.log("Reading from local storage first!");
@@ -120,6 +117,7 @@ export const AppProvider = ({ children }) => {
   const [currRebalance, setCurrRebalance] = useState(readStateFromLS("currentRebalance") || []);   // rebalanceEvents[], // rebalance event series
   
   const [tempExploration, setTempExploration] = useState(readStateFromLS("tempExploration") || []); 
+  const [statesTaxes, setStateTaxes] = useState(readStateFromLS("statesTaxes") || []);
   const { user } = useContext(AuthContext);
   
   useEffect(() => {
@@ -215,6 +213,10 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     if (tempExploration) localStorage.setItem("tempExploration", JSON.stringify(tempExploration));
   }, [tempExploration]);
+
+  useEffect(() => {
+    if (statesTaxes) localStorage.setItem("statesTaxes", JSON.stringify(statesTaxes));
+  }, [statesTaxes]);
   
 
   return (

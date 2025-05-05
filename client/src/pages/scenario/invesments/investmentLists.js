@@ -149,9 +149,8 @@ const InvestmentLists = () => {
       if (investment.accountTaxStatus === "pre-tax") {
         appendToScenarioKey("rothConversionStrategy", investment._id);
         appendToScenarioKey("rmdStrategy", investment._id);
-      } else {
-        appendToScenarioKey("expenseWithdrawalStrategy", investment._id);
       }
+      appendToScenarioKey("expenseWithdrawalStrategy", investment._id);
       setCurrInvestments((prev) => [...(Array.isArray(prev) ? prev : []), investment]);
     };
 
@@ -406,8 +405,7 @@ const InvestmentLists = () => {
                   sx={{ textTransform: "none" }}
                   disabled={
                     newInvestment.taxType === "" ||
-                    newInvestment.value === null ||
-                    newInvestment.value === undefined ||
+                    newInvestment.value === "" ||
                     isNaN(Number(newInvestment.value))
                   }
                 >

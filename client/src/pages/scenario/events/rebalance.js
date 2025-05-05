@@ -1,3 +1,4 @@
+import axios from "axios";
 import React, { useState, useContext, useEffect } from "react";
 import { flushSync } from "react-dom";
 
@@ -13,8 +14,9 @@ import {
 
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
-import axios from "axios";
 import { AuthContext } from "../../../context/authContext";
+import { useAlert } from "../../../context/alertContext";
+
 import EventSeries from "./eventSeries";
 import { ObjectId } from "bson";
 import AssetAllocation from "./assetAllocation";
@@ -58,6 +60,7 @@ const Rebalance = () => {
   const { currRebalance, setCurrRebalance, setCurrScenario, editMode } = useContext(AppContext);
   const { eventEditMode, setEventEditMode } = useContext(AppContext);
   const { user } = useContext(AuthContext);
+  const { showAlert } = useAlert();
 
   const getRebalanceById = (id) => currRebalance.find(r => r._id === id) || null;
   const getRebalanceByTaxStatus = (status) => {
@@ -71,7 +74,6 @@ const Rebalance = () => {
   });
   const [disable, setDisable] = useState(true);
   const [percentError, setPercentError] = useState(false);
-  const [showPercentError, setShowPercentError] = useState(false);
   
   // Enable Save button only if all required fields are filled correctly
   useEffect(() => {
@@ -169,35 +171,11 @@ const Rebalance = () => {
     }
   };
 
-  const triggerPercentError = () => {
-    setShowPercentError(true);
-    setTimeout(() => setShowPercentError(false), 10000); // Hide after 3s
-  };
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Navbar currentPage={""} />
       <Container>
-        {showPercentError && (
-          <Alert
-            severity="error"
-            variant="filled"
-            sx={{
-              position: "fixed",
-              top: 70,
-              left: "50%",
-              transform: "translateX(-50%)",
-              zIndex: 1301,
-              width: "70vw",
-              maxWidth: 500,
-              boxShadow: 3,
-            }}
-          >
-            Fixed or initial and final allocation percentages must each sum to exactly 100%.
-          </Alert>
-        )}
-
         {/* Stack for title and save button */}
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={stackStyles}>
           <Stack direction="column">
@@ -276,7 +254,7 @@ const Rebalance = () => {
           <Button variant="contained" color="success" sx={buttonStyles} 
             onClick={()=> {
               if (percentError) {
-                triggerPercentError();
+                showAlert("Fixed or initial and final allocation percentages must each sum to exactly 100%.", "error");
                 return;
               }
               handleSave();

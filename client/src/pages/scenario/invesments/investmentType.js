@@ -12,6 +12,8 @@ import CustomInput from "../../../components/customInputBox";
 import CustomToggle from "../../../components/customToggle";
 import { AppContext } from "../../../context/appContext";
 import { AuthContext } from "../../../context/authContext";
+import { useAlert } from "../../../context/alertContext";
+
 import { 
   backContinueContainerStyles, buttonStyles, rowBoxStyles 
 } from "../../../components/styles";
@@ -20,24 +22,13 @@ import { ObjectId } from "bson";
 
 const InvestmentType = () => {
   const {
-    editMode,
-    eventEditMode,
-    setEventEditMode,
-    currInvestmentTypes,
-    setCurrInvestmentTypes,
-    setCurrScenario,
+    editMode, eventEditMode, setEventEditMode, currInvestmentTypes, setCurrInvestmentTypes, setCurrScenario,
   } = useContext(AppContext);
-
   const { user } = useContext(AuthContext);
+  const { showAlert } = useAlert();
+  
   const navigate = useNavigate();
-
-  const [textError, setTextError] = useState("");
-  const [showError, setShowError] = useState(false);
-  const triggerAlertError = () => {
-    setShowError(true);
-    setTimeout(() => setShowError(false), 10000); // Hide after 3s
-  };
-
+  
   /**
    * Utility to retrieve an investment type object by its ID
    */
@@ -124,8 +115,7 @@ const InvestmentType = () => {
     let id = eventEditMode;
 
     if (id === "new" && formValues.name.toLowerCase() === "cash") {
-      setTextError("You cannot name an investment-type account \"Cash.\"");
-      triggerAlertError();
+      showAlert("You cannot name an investment-type account \"Cash.\"", "error");
       return;
     }
 
@@ -180,25 +170,6 @@ const InvestmentType = () => {
       <CssBaseline />
       <Navbar currentPage={""} />
       <Container>
-        {showError && (
-          <Alert
-            severity="error"
-            variant="filled"
-            sx={{
-              position: "fixed",
-              top: 70,
-              left: "50%",
-              transform: "translateX(-50%)",
-              zIndex: 1301,
-              width: "70vw",
-              maxWidth: 500,
-              boxShadow: 3,
-            }}
-          >
-            {textError}
-          </Alert>
-        )}
-
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ marginTop: 6, marginBottom: 2 }}>
           <Typography variant="h2" component="h1" sx={{ fontWeight: "bold" }}>
             Investment Types
