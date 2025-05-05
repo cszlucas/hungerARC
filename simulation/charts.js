@@ -124,5 +124,5 @@ module.exports = {
   updateYearDataBucket,
   createYearDataBuckets,
   exploreData,
-  chartData
+  chartData,
 };
