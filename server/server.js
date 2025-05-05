@@ -43,16 +43,21 @@ app.use(session({
 }));
 
 // --- MONGOOSE CONNECTION ---
-mongoose.connect("mongodb://localhost:27017/hungerarc", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => {
-  console.log("Connected to MongoDB");
 
-  const yamlPath = path.join(__dirname, "stateYaml/states.yml");
-  parseYaml(yamlPath); // preload tax data
-
-}).catch(err => console.error("MongoDB connection error:", err));
+if (process.env.NODE_ENV !== 'test') {
+  mongoose.connect("mongodb://localhost:27017/hungerarc", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  }).then(() => {
+    console.log("Connected to MongoDB");
+    const yamlPath = path.join(__dirname, "stateYaml/states.yml");
+  //parseYaml(yamlPath); // preload tax data
+  }).catch((err) => {
+    console.error("MongoDB connection error:", err);
+  });
+} else{
+  console.log("your testing jest");
+}
 
 // --- ROUTES ---
 const routes = require('./routes.js');
@@ -62,3 +67,5 @@ app.use('/', routes);
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+module.exports = app; 

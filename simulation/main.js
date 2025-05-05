@@ -231,7 +231,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
       explore = exploreData(allSimulationResults, explorationData, combinations[i], currentYear);
     } else {
       let years = chartData(allSimulationResults, numScenarioTimes);
-      //console.log("YEARS", JSON.stringify(years, null, 2));
+      console.log("YEARS", JSON.stringify(years, null, 2));
       return years;
     }
   }

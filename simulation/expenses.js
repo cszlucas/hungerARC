@@ -205,9 +205,6 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
         year: year,
         type: "discretionary",
         description: "You were NOT able to pay all your discretionary expenses.",
-        details: {
-          cash: cashInvestment.value,
-        },
       });
     } else {
       logFinancialEvent({
@@ -226,13 +223,14 @@ function payFromInvestment(withdrawalAmt, investment, userAge, yearTotals, year,
     logFinancialEvent({
       year: year,
       type: type,
-      description: "This investment is already empty.",
+      description: "This investment is already empty",
     });
     return 0;
   } else if (investment.value - withdrawalAmt > 0) {
     //console.log("subtract needed and keep investment:", investment._id, "type:", investment.accountTaxStatus, "value: ", investment.value);
     updateValues(investment, userAge, yearTotals, true, withdrawalAmt, year, type);
-    investment.value -= withdrawalAmt;
+    //investment.value -= withdrawalAmt;
+    investment.value=0;
     //console.log("Investment now with value: ", investment.value);
     return withdrawalAmt;
   } else {
@@ -254,7 +252,7 @@ function updateValues(investment, userAge, yearTotals, partial, amountPaid, year
       logFinancialEvent({
         year: year,
         type: type,
-        description: `By a fraction update capital gains: ${gain}, "purchase price: ${investment.purchasePrice}`,
+        description: `By a fraction update capital gains: ${gain.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, "purchase price: ${investment.purchasePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       });
       //console.log("By a fraction update curYearGains:", gain, "purchase price:", investment.purchasePrice);
     } else {
@@ -264,7 +262,7 @@ function updateValues(investment, userAge, yearTotals, partial, amountPaid, year
       logFinancialEvent({
         year: year,
         type: type,
-        description: `Update capital gains: ${gain}, "purchase price: ${investment.purchasePrice}`,
+        description: `Update capital gains: ${gain.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, "purchase price: ${investment.purchasePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       });
       //console.log("update curYearGains:", gain, "purchase price:", investment.purchasePrice);
     }
