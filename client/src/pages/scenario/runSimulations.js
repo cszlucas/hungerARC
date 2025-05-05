@@ -13,7 +13,9 @@ import CustomShare from "../../components/customShareBtn";
 import { Close as CloseIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../context/appContext";
-import {AuthContext} from "../../context/authContext";
+import { AuthContext } from "../../context/authContext";
+import { useAlert } from "../../context/alertContext";
+
 import axios from "axios";
 import { exportToYAML } from "./import-export/export";
 import DimensionalExploration from "../explore";
@@ -23,9 +25,9 @@ import DimensionalExploration from "../explore";
 const RunSimulation = () => {
   const [numSimulations, setNumSimulations] = useState("1");
   const {currScenario, currInvestmentTypes, currInvestments, currIncome, currExpense, currInvest, currRebalance, tempExploration} = useContext(AppContext);
-  const {user} = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
+  const { showAlert } = useAlert();
   const [unfilledError, setUnfilledError] = useState(false);
-  const [showUnfilledError, setShowUnfilledError] = useState(false);
 
   const handleExport = () => {
     exportToYAML({
@@ -119,36 +121,11 @@ const RunSimulation = () => {
       setUnfilledError(!expression);
   }, [currScenario]);
   
-
-  const triggerUnfilledError = () => {
-    setShowUnfilledError(true);
-    setTimeout(() => setShowUnfilledError(false), 10000); // Hide after 3s
-  };
-  
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Navbar currentPage={""} />
       <Container>
-        {showUnfilledError && (
-          <Alert
-            severity="error"
-            variant="filled"
-            sx={{
-              position: "fixed",
-              top: 70,
-              left: "50%",
-              transform: "translateX(-50%)",
-              zIndex: 1301,
-              width: "70vw",
-              maxWidth: 500,
-              boxShadow: 3,
-            }}
-          >
-            {"All of Scenario's basic info must be filled."}
-          </Alert>
-        )}
-
         {/* Stack for title and save button */}
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={stackStyles}>
           <Typography variant="h2" component="h1" sx={titleStyles}>
@@ -222,7 +199,7 @@ const RunSimulation = () => {
               // const fetchedData = await getChartData();
               // console.log(fetchedData);
               if (unfilledError) {
-                triggerUnfilledError();
+                showAlert("All of Scenario's basic info must be filled.", "error");
                 return;
               }
               getChartData();
