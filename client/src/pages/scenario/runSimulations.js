@@ -56,7 +56,6 @@ const RunSimulation = () => {
         rebalance: currRebalance,
         scenario: currScenario,
         exploration: tempExploration,
-        userId: user._id,
         simulationCount: numSimulations,
         rmd: rmdData,
         userId: user.guest ? "guest" : user._id 
