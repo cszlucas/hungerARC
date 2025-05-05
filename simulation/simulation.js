@@ -2,7 +2,7 @@ import { updateYearDataBucket, createYearDataBuckets } from "./charts.js";
 import { performRMDs } from "./rmd.js";
 import { payNonDiscretionaryExpenses, payDiscretionaryExpenses } from "./expenses.js";
 import { runInvestStrategy, rebalance } from "./strategy.js";
-import { getCurrentEvent, getStrategy, getRebalanceStrategy, setValues } from "./helper.js";
+import { getCurrentEvent, getStrategy, getRebalanceStrategy, setValues, setGlobalRand } from "./helper.js";
 import { logInvestment, logFinancialEvent } from "./logs.js";
 import {
   findInflation,
@@ -15,7 +15,7 @@ import {
   updateCapitalGains,
   updateFedDeduction,
 } from "./algo.js";
-import { getValueInYear } from "./value.js";
+
 
 async function runSimulation(
   scenario,
@@ -31,8 +31,11 @@ async function runSimulation(
   rebalanceEvent,
   investmentTypes,
   csvLog,
-  currentYear
+  currentYear,
+  rand,
+  rmd
 ) {
+  setGlobalRand(rand);
   //console.log("RUN SIMULATION",JSON.stringify(stateTax, null, 2));
   //console.log("currentYear", currentYear);
   // previous year
@@ -135,7 +138,7 @@ async function runSimulation(
       },
     });
     if (sumInvestmentsPreTaxRMD > 0) {
-      await performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year, withdrawalStrategy);
+      await performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year, withdrawalStrategy, rmd);
     }
     sumInvestmentsPreTaxRMD = 0;
 

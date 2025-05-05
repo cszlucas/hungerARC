@@ -1,10 +1,9 @@
-import RMD from "../server/models/rmd-schema.js";
 import { logFinancialEvent, printInvestments, printStrategy } from "./logs.js";
 import structuredClone from "structured-clone";
-import { ObjectId } from 'mongodb';
+import { ObjectId } from "mongodb";
 
 //RMDStrategyInvestOrder is an ordering on investments in pre-tax retirement accounts.
-async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year, withdrawalStrategy) {
+async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year, withdrawalStrategy, rmdObj){
   console.log("Perform RMD", sumInvestmentsPreTaxRMD, RMDStrategyInvestOrder, userAge);
   if (RMDStrategyInvestOrder.length == 0) {
     logFinancialEvent({
@@ -16,9 +15,12 @@ async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOr
   if (userAge >= 74 && RMDStrategyInvestOrder != null) {
     console.log("\nRMDs\nUser age", userAge, "and sum of pre-tax values from prev year is", sumInvestmentsPreTaxRMD);
 
-    const match = await RMD.findOne({ "rmd.age": userAge }, { "rmd.$": 1 });
+   // console.log(rmdObj);
+    const rmdArray = rmdObj.rmd;
+    const match = rmdArray.find((entry) => entry.age === userAge);
     if (!match || !match.rmd || !match.rmd[0]) {
       console.error("RMD data not found for age:", userAge);
+      return;
     }
 
     const distributionPeriod = match.rmd[0].distributionPeriod;
