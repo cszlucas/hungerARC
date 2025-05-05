@@ -111,9 +111,12 @@ exports.deleteScenario = async (req, res) => {
 };
 
 exports.importUserData = async (req, res) => {
+
   try {
-    if (!req.session.user) res.status(500).json({ message: "Failed to get user session" });
-    
+    if (!req.session.user) {
+      return res.status(500).json({ message: "Failed to get user session" });  // ✅ added return
+    }
+
     const userData = req.session.user;
     const { investments, investmentTypes, income, expense, invest, rebalance, scenario } = req.body;
 
@@ -123,7 +126,6 @@ exports.importUserData = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Save all data in parallel including the scenario
     await Promise.all([
       ...investments.map(i => new Investment(i).save()),
       ...investmentTypes.map(i => new InvestmentType(i).save()),
@@ -145,7 +147,6 @@ exports.importUserData = async (req, res) => {
     return res.status(500).json({ message: "Server error during import" });
   }
 };
-
 
 
 exports.simulateScenario = async (req, res) => {

@@ -120,15 +120,22 @@ exports.updateInvestment = async (req, res) => {
 // getAllInvestments based on scenarioId
 exports.getAllInvestmentsByScenario = async (req, res) => {
   const { id } = req.params;
-  try{
+  try {
     const scenario = await Scenario.findOne({ _id: id });
-    const investmentIds = scenario.setOfInvestments;
+
+    if (!scenario) {
+      return res.status(404).json({ error: "Scenario not found" });
+    }
+
+    const investmentIds = scenario.setOfInvestments || [];
     const investments = await Investment.find({ _id: { $in: investmentIds } });
     res.status(200).json(investments);
-  }catch(err){
+  } catch (err) {
+    console.error("Error in getAllInvestmentsByScenario:", err);
     res.status(500).json({ error: "Failed to get all investments by scenario" });
   }
 };
+
 
 exports.getInvestmentTypeByScenario = async (req, res) => {
   const { id } = req.params;
