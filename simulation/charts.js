@@ -80,6 +80,11 @@ function exploreData(allYearDataBuckets, explorationData, paramValueCombo, year)
     simulation.map((yearData) => ({
       year: yearData.year,
       investment: yearData.investments,
+      income: yearData.income,
+      discretionary: yearData.discretionary,
+      nonDiscretionary: yearData.nonDiscretionary,
+      taxes: yearData.taxes,
+      earlyWithdrawals: yearData.earlyWithdrawals,
     }))
   );
 

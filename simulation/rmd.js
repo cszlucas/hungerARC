@@ -1,16 +1,16 @@
 import RMD from "../server/models/rmd-schema.js";
 import { logFinancialEvent, printInvestments, printStrategy } from "./logs.js";
 import structuredClone from "structured-clone";
-import { v4 as uuidv4 } from "uuid";
+import { ObjectId } from 'mongodb';
 
 //RMDStrategyInvestOrder is an ordering on investments in pre-tax retirement accounts.
-async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year) {
-  console.log("Perform RMD");
+async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year, withdrawalStrategy) {
+  console.log("Perform RMD", sumInvestmentsPreTaxRMD, RMDStrategyInvestOrder, userAge);
   if (RMDStrategyInvestOrder.length == 0) {
     logFinancialEvent({
       year: year,
       type: "rmd",
-      description: "There are no pretax investments."
+      description: "There are no pretax investments.",
     });
   }
   if (userAge >= 74 && RMDStrategyInvestOrder != null) {
@@ -39,12 +39,12 @@ async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOr
       if (rmdCount > 0) {
         //console.log("The rmd count: ", rmdCount, "and the pretax investment", preTaxInvest._id, "has value:", preTaxInvest.value);
         if (preTaxInvest.value - rmdCount >= 0) {
-          transferInvestment(preTaxInvest, allInvestmentsNonRetirement, rmdCount, investments, year);
+          transferInvestment(preTaxInvest, allInvestmentsNonRetirement, rmdCount, investments, year, withdrawalStrategy);
           preTaxInvest.value -= rmdCount;
           //console.log("can perform rmd all this round. The old pretax investment", preTaxInvest._id, " now has", preTaxInvest.value);
           break;
         } else {
-          transferInvestment(preTaxInvest, allInvestmentsNonRetirement, preTaxInvest.value, investments, year);
+          transferInvestment(preTaxInvest, allInvestmentsNonRetirement, preTaxInvest.value, investments, year, withdrawalStrategy);
           rmdCount -= preTaxInvest.value;
           preTaxInvest.value = 0;
           //console.log("can NOT pay all this round. Transfer all of pretax investment. The rmd amount left to transfer: ", rmdCount);
@@ -64,7 +64,7 @@ async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOr
 }
 
 // from the pretax account to non-retirement accounts
-function transferInvestment(preTaxInvest, allInvestmentsNonRetirement, amountTransfer, investments, year) {
+function transferInvestment(preTaxInvest, allInvestmentsNonRetirement, amountTransfer, investments, year, withdrawalStrategy) {
   let nonRetirementMap = new Map(allInvestmentsNonRetirement.map((investment) => [investment.investmentType, investment]));
   let nonRetirementInvestment = nonRetirementMap.get("preTaxInvest.investmentType");
 
@@ -83,8 +83,8 @@ function transferInvestment(preTaxInvest, allInvestmentsNonRetirement, amountTra
   } else {
     //console.log("create a new non-retirement investment with value: ", amountTransfer);
     let newInvestment = {
-      _id: uuidv4(),
       ...structuredClone(preTaxInvest),
+      _id: new ObjectId(), // 🔄 Mongo-style ID
       value: amountTransfer,
       accountTaxStatus: "non-retirement",
     };
@@ -100,6 +100,7 @@ function transferInvestment(preTaxInvest, allInvestmentsNonRetirement, amountTra
     });
 
     investments.push(newInvestment);
+    withdrawalStrategy.push(newInvestment._id);
   }
 }
 

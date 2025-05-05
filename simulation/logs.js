@@ -95,7 +95,7 @@ function logFinancialEvent({ year, type, description, amount, details = {} }) {
       if (details.incomeAmount!=undefined) line += `Previous year's income amount - ${formatDollar(details.incomeAmount)} `;
       if (details.userAge) line += `at age ${details.userAge}`;
       if (details.amountTransfer!=undefined) {
-        line += `Transferred "${details.amountTransfer}" from pretax investment to non-retirement. `;
+        line += `Transferred "${details.amountTransfer.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}" from pretax investment to non-retirement. `;
       }
       line += formatStrategy(description, details, "rmd");
 
