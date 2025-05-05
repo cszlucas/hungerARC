@@ -188,10 +188,12 @@ function ContourChart({ title, x, y, z, xLabel = "X", yLabel = "Y", zLabel = "Z"
   
 
 const TwoDimensionalCharts = () => {
-    const {tempExploration} = useContext(AppContext);
     // console.log(tempExploration);
     const location = useLocation();
     const chartData = location.state?.chartData || [];
+
+    const param1 = chartData.years.parameter[0];
+    const param2 = chartData.years.parameter[1];
 
     console.log(chartData);   
 
@@ -260,21 +262,21 @@ const TwoDimensionalCharts = () => {
                     </Stack>
 
                     {currChart === "Surface Plot" && selectedQuantity === "final probability of success" && (
-                        <PlotlySurfaceChart title="Final-Year Probability of Success" {...probGrid} zLabel="Final Probability of Success" />
+                        <PlotlySurfaceChart title="Final-Year Probability of Success" {...probGrid} xLabel={param1} yLabel={param2} zLabel="Final Probability of Success" />
 
                     )}
 
                     {currChart === "Surface Plot" && selectedQuantity === "final median total investments" && (
-                        <PlotlySurfaceChart title="Final-Year Median Investment" {...medianGrid} zLabel = "Final Median Total Investments"/>
+                        <PlotlySurfaceChart title="Final-Year Median Investment" {...medianGrid} xLabel={param1} yLabel={param2} zLabel = "Final Median Total Investments"/>
                     )}
 
                     {currChart === "Contour Plot" && selectedQuantity === "final probability of success" && (
-                        <ContourChart title="Final-Year Probability of Success" {...probGrid} zLabel="Final Probability of Success" />
+                        <ContourChart title="Final-Year Probability of Success" {...probGrid} xLabel={param1} yLabel={param2} zLabel="Final Probability of Success" />
 
                     )}
 
                     {currChart === "Contour Plot" && selectedQuantity === "final median total investments" && (
-                        <ContourChart title="Final-Year Median Investment" {...medianGrid} zLabel="Final Median Total Investments" />
+                        <ContourChart title="Final-Year Median Investment" {...medianGrid} xLabel={param1} yLabel={param2} zLabel="Final Median Total Investments" />
 
                     )}
 
