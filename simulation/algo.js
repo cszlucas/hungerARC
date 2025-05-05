@@ -1,6 +1,6 @@
-import { randomNormal, randomUniform } from "./helper.js";
-import { v4 as uuidv4 } from "uuid";
-import { logFinancialEvent, printIncomeEvents } from "./logs.js";
+const { randomNormal, randomUniform } = require('./helper.js');
+const { ObjectId } = require('mongodb');
+const { logFinancialEvent, printIncomeEvents } = require("./logs.js");
 
 
 function findInflation(inflationAssumption) {
@@ -75,7 +75,7 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
       } else {
         investment.value -= rc;
         const newInvestmentObject = {
-          _id: uuidv4(),
+          _id: new ObjectId(),
           investmentType: investment.investmentType,
           value: rc,
           accountTaxStatus: "after-tax",
@@ -258,7 +258,7 @@ function calculateLifeExpectancy(scenario) {
   return { lifeExpectancyUser, lifeExpectancySpouse };
 }
 
-export {
+module.exports = {
   findInflation,
   calculateLifeExpectancy,
   updateInvestmentValues,

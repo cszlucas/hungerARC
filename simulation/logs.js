@@ -25,7 +25,7 @@ function writeCSVLog(csvFilename, simulationResult) {
 function writeEventLog(logFilename, simulationResult){
 }
 
-function writeEventLog(logFilename, simulationResult) {}
+//function writeEventLog(logFilename, simulationResult) {}
 
 function logInvestment(investments, year, csvLog, investmentTypes) {
   const csvRow = { year };
@@ -165,6 +165,9 @@ function formatNonDiscretionaryDetails(details, amount, description = "") {
   if (details?.type && details?.ID && details?.value!=undefined) {
     const valueFormatted = formatCurrency(details.value);
     line += ` ${details.type.toUpperCase()} ID: ${details.ID} | Value: ${valueFormatted}`;
+    if(details.taxStatus!=undefined){
+      line+=` type: ${details.taxStatus}`;
+    }
   }
   return line;
 }

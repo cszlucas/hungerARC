@@ -4,15 +4,15 @@ const StateTax = require("./models/stateTax");
 
 const mongoose = require("mongoose");
 
-mongoose
-  .connect("mongodb://localhost:27017/hungerarc", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.error("Could not connect to MongoDB", err));
+// mongoose
+//   .connect("mongodb://localhost:27017/hungerarc", {
+//     useNewUrlParser: true,
+//     useUnifiedTopology: true,
+//   })
+//   .then(() => console.log("Connected to MongoDB"))
+//   .catch((err) => console.error("Could not connect to MongoDB", err));
 
-const parseYaml = async (filePath) => {
+exports.createStateTaxes = async (filePath) => {
   try {
     console.log("in here");
     const fileContents = fs.readFileSync(filePath, "utf8");
@@ -38,11 +38,11 @@ const parseYaml = async (filePath) => {
       };
     });
 
-    // await StateTax.insertMany(stateTax);
+    await StateTax.insertMany(stateTax);
     console.log("state tax is in db");
   } catch (error) {
     console.log("error in parsing yaml file: ", error);
   }
 };
 
-module.exports = parseYaml;
+// module.exports = parseYaml;

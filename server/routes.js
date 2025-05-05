@@ -6,6 +6,7 @@ const investments = require("./controllers/investments.js");
 const scenario = require("./controllers/scenario.js");
 const tax = require("./controllers/tax.js");
 const webscraping = require("./controllers/webscraping.js");
+const stateTax = require("./importStateYaml.js");
 
 // user
 router.get("/user/scenarios", user.scenarios);
@@ -64,6 +65,7 @@ router.get("/incomeMarried", webscraping.incomeMarried);
 router.get("/capitalGains", webscraping.capitalGains);
 router.get("/rmd", webscraping.rmd);
 router.get("/handleAllRoutes", webscraping.handleAllRoutes);
+router.post("/statetax", stateTax.createStateTaxes);
 
 // simulation
 router.get("/runSimulation", scenario.simulateScenario);

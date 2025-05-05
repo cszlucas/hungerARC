@@ -2,6 +2,7 @@ let taxId;
 let rmdId;
 const RMD = require("../models/rmd-schema.js");
 const Tax = require("../models/tax.js");
+const StateTax = require("../models/stateTax.js");
 const cheerio = require("cheerio");
 const { ObjectId } = require("mongoose").Types;
 const axios = require("axios");
@@ -52,6 +53,7 @@ exports.handleAllRoutes = async (req, res) => {
     res.status(500).json({ message: "An error occurred while fetching data", mymessage: error.message });
   }
 };
+
 
 //TAXES
 exports.standardDeductions = async (req, res) => {
