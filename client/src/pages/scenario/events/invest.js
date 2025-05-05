@@ -25,6 +25,7 @@ import {
 // Contexts
 import { AppContext } from "../../../context/appContext";
 import { AuthContext } from "../../../context/authContext";
+import { useAlert } from "../../../context/alertContext";
 
 // Default state structure for a new investment event
 const DEFAULT_FORM_VALUES = {
@@ -60,6 +61,7 @@ const DEFAULT_FORM_VALUES = {
 const Invest = () => {
   const { editMode, eventEditMode, setEventEditMode, currInvest, setCurrInvest, setCurrScenario } = useContext(AppContext);
   const { user } = useContext(AuthContext);
+  const { showAlert } = useAlert();
   const navigate = useNavigate();
 
   // Get existing investment or default
@@ -86,7 +88,6 @@ const Invest = () => {
   const [formValues, setFormValues] = useState(getInvestById(eventEditMode ? eventEditMode.id : "new"));
   const [disable, setDisable] = useState(true);
   const [percentError, setPercentError] = useState(false);
-  const [showPercentError, setShowPercentError] = useState(false);
 
   // Enable Save button if all fields are filled
   useEffect(() => {
@@ -188,35 +189,11 @@ const Invest = () => {
     }
   };
 
-  const triggerPercentError = () => {
-    setShowPercentError(true);
-    setTimeout(() => setShowPercentError(false), 10000); // Hide after 3s
-  };
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Navbar currentPage={""} />
       <Container>
-        {showPercentError && (
-          <Alert
-            severity="error"
-            variant="filled"
-            sx={{
-              position: "fixed",
-              top: 70,
-              left: "50%",
-              transform: "translateX(-50%)",
-              zIndex: 1301,
-              width: "auto",
-              maxWidth: 500,
-              boxShadow: 3,
-            }}
-          >
-            Fixed or initial and final allocation percentages must each sum to exactly 100%.
-          </Alert>
-        )}
-
         {/* Header */}
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={stackStyles}>
           <Typography variant="h2" component="h1" sx={titleStyles}>
@@ -269,7 +246,7 @@ const Invest = () => {
             sx={buttonStyles}
             onClick={() => {
               if (percentError) {
-                triggerPercentError();
+                showAlert("Fixed or initial and final allocation percentages must each sum to exactly 100%.", "error");
                 return;
               }
               handleSave();

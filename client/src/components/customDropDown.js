@@ -38,7 +38,7 @@ const CustomDropdown = ({
           setValue(newValue ? newValue.value : "");
         }}
         options={options}
-        getOptionLabel={(option) => option.label}
+        getOptionLabel={(option) => option.label.toString()}
         isOptionEqualToValue={(option, val) => option.value === val.value}
         renderInput={(params) => (
           <TextField

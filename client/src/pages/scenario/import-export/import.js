@@ -220,8 +220,7 @@ const ImportBtn = () => {
             expenseWithdrawalStrategy: (() => {
               const mapped = expenseWithdrawalStrategy.map((n) => investmentMap[n]);
               const eligibleIds = frontendInvestments
-                .filter((inv) => (inv.accountTaxStatus === "non-retirement" || inv.accountTaxStatus === "after-tax") 
-                  && investmentTypeMapReverse[inv.investmentType].toLowerCase() !== "cash")
+                .filter((inv) => (investmentTypeMapReverse[inv.investmentType].toLowerCase() !== "cash"))
                 .map((inv) => inv._id);
               const missing = eligibleIds.filter((id) => !mapped.includes(id));
               return [...mapped, ...missing];

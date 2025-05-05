@@ -31,9 +31,10 @@ const Profile = () => {
     const navigate = useNavigate(); // Initialize useNavigate
 
     console.log(user);
-
+    
     useEffect(() => {
         console.log(user);
+        
         if (!user) {
             navigate("/"); // Redirect to home page if user doesn't exist
         }

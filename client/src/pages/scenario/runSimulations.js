@@ -28,6 +28,7 @@ const RunSimulation = () => {
   const { user } = useContext(AuthContext);
   const { showAlert } = useAlert();
   const [unfilledError, setUnfilledError] = useState(false);
+  const [minMaxError, setMinMaxError] = useState(false);
 
   const handleExport = () => {
     exportToYAML({
@@ -115,10 +116,13 @@ const RunSimulation = () => {
       && (currScenario.inflationAssumption.type !== "normal" 
         || (checkValidNum(currScenario.inflationAssumption.mean) && checkValidNum(currScenario.inflationAssumption.stdDev)))
       && (currScenario.inflationAssumption.type !== "uniform" 
-        || (checkValidNum(currScenario.inflationAssumption.min) && checkValidNum(currScenario.inflationAssumption.max)
-        && currScenario.inflationAssumption.min <= currScenario.inflationAssumption.max));
+        || (checkValidNum(currScenario.inflationAssumption.min) && checkValidNum(currScenario.inflationAssumption.max)));
 
       setUnfilledError(!expression);
+      
+      if (currScenario.inflationAssumption.type === "uniform" && (checkValidNum(currScenario.inflationAssumption.min) && checkValidNum(currScenario.inflationAssumption.max))) {
+        setMinMaxError(currScenario.inflationAssumption.min > currScenario.inflationAssumption.max);
+      }
   }, [currScenario]);
   
   return (
@@ -200,9 +204,11 @@ const RunSimulation = () => {
               // console.log(fetchedData);
               if (unfilledError) {
                 showAlert("All of Scenario's basic info must be filled.", "error");
-                return;
               }
-              getChartData();
+              if (minMaxError) {
+                showAlert("Inflation Assumpation Min is greater then Max.", "error");
+              }
+              if (!unfilledError && !minMaxError) getChartData();
             }}
           >
             Run Simulation
