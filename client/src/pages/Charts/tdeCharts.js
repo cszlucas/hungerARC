@@ -1,18 +1,17 @@
 import React, { useState, useContext, useEffect } from "react";
 import { ThemeProvider, CssBaseline, Container, Typography, Stack } from "@mui/material";
-import theme from "../components/theme";
-import Navbar from "../components/navbar";
+import theme from "../../components/theme";
+import Navbar from "../../components/navbar";
 import {
   stackStyles,
   titleStyles,
-} from "../components/styles";  // Import your modular styles
-import CustomDropdown from "../components/customDropDown";
+} from "../../components/styles";  // Import your modular styles
+import CustomDropdown from "../../components/customDropDown";
 import ReactECharts from "echarts-for-react";
-import * as echarts from "echarts";
 import "echarts-gl";
 import { useLocation } from "react-router-dom";
 import Plot from "react-plotly.js";
-import { AppContext } from "../context/appContext";
+import { AppContext } from "../../context/appContext";
 
 
 function parseFinalMetric2D(data, financialGoal, metric = "probability") {
