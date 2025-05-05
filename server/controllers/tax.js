@@ -1,5 +1,7 @@
 const StateTax = require("../importStateYaml.js");
 const Tax = require("../models/tax.js");
+const User = require("../models/user.js");
+const State = require("../models/stateTax.js");
 
 //IRS TAX
 exports.tax = async (req, res) => {
@@ -27,3 +29,33 @@ exports.statetax = async (req, res) => {
     res.status(500).json({ error: "Failed to retrieve state tax data", message: err.message });
   }
 };
+
+
+exports.getStateTax = async (req, res) => {
+  console.log("getStateTax", req.params.id);
+  const userId = req.params.id;
+  const user = await User.findById( userId );
+  console.log("user", user);
+  try{
+    const userStates = await State.find(
+      { _id: { $in: user.stateYaml } }
+    ).select('_id state'); // only select _id and name
+
+    const additionalStates = await State.find({ 
+      state: { $in: ['New York', 'New Jersey', 'Connecticut'] }
+    }).select('_id state');
+
+    // Merge the two lists and remove duplicates based on _id
+    const combinedStatesMap = new Map();
+
+    [...userStates, ...additionalStates].forEach(state => {
+      combinedStatesMap.set(state._id.toString(), state);
+    });
+
+    const combinedStates = Array.from(combinedStatesMap.values());
+
+    res.status(200).json(combinedStates);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to retrieve state tax data", message: err.message });
+  }
+}
