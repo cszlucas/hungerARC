@@ -5,7 +5,7 @@ import {
 } from "@mui/material";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import DeleteIcon from "@mui/icons-material/Delete";
+import CustomDropdown from "../../components/customDropDown";
 import theme from "../../components/theme";
 import Navbar from "../../components/navbar";
 import PageHeader from "../../components/pageHeader";
@@ -247,25 +247,23 @@ const Strategies = () => {
                     setScenario={setCurrScenario} 
                   />
                   <Box sx={{...rowBoxStyles, mt: 2}}>
-                    <CustomInput
-                      title="Start Year"
-                      type="number"
+                    <CustomDropdown
+                      label="Start Year"
                       value={startYear}
                       setValue={(value)=>{ 
                         setStartYear(value);
                         handleCurrScenarioChange("optimizerSettings.startYear", value);
                       }}
-                      inputProps={{ min: 0 }}
+                      menuItems={Array.from({ length: 200 }, (_, i) => new Date().getFullYear() + i)}
                     />
-                    <CustomInput
-                      title="End Year"
-                      type="number"
+                    <CustomDropdown
+                      label="End Year"
                       value={endYear}
                       setValue={(value)=>{ 
                         setEndYear(value);
                         handleCurrScenarioChange("optimizerSettings.endYear", value);
                       }}
-                      inputProps={{ min: 0 }}
+                      menuItems={Array.from({ length: 200 }, (_, i) => new Date().getFullYear() + i)}
                     />
                   </Box>
                 </>

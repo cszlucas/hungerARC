@@ -165,7 +165,7 @@ const EventSeries = ({ formValues, setFormValues }) => {
                                 label="Value"
                                 value={formValues.startYear.value}
                                 setValue={(value) => handleInputChange("startYear.value", value)}
-                                menuItems={Array.from({ length: 300 }, (_, i) => new Date().getFullYear() + i)}
+                                menuItems={Array.from({ length: 200 }, (_, i) => new Date().getFullYear() + i)}
                             />
                         </Stack>
                     )}

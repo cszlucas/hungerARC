@@ -232,23 +232,21 @@ const DimensionalExploration = () => {
                 </Stack>
                 {tempExplorationForm.data?.optimizerSettings?.enabled && (
                   <Box sx={{ mt: 2, ...rowBoxStyles }}>
-                    <CustomInput
-                      title="Start Year"
-                      type="number"
+                    <CustomDropdown
+                      label="Start Year"
                       value={tempExplorationForm.data?.optimizerSettings?.startYear || ""}
                       setValue={(value)=>{ 
                         handleInputChange("data.optimizerSettings.startYear", value);
                       }}
-                      inputProps={{ min: 0 }}
+                      menuItems={Array.from({ length: 200 }, (_, i) => new Date().getFullYear() + i)}
                     />
-                    <CustomInput
-                      title="End Year"
-                      type="number"
+                    <CustomDropdown
+                      label="End Year"
                       value={tempExplorationForm.data?.optimizerSettings?.endYear || ""}
                       setValue={(value)=>{ 
                         handleInputChange("data.optimizerSettings.endYear", value);
                       }}
-                      inputProps={{ min: 0 }}
+                      menuItems={Array.from({ length: 200 }, (_, i) => new Date().getFullYear() + i)}
                     />
                   </Box>
                 )}
