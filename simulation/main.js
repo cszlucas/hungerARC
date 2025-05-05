@@ -1,6 +1,7 @@
 const StateTax = require("../server/models/stateTax.js");
 const Tax = require("../server/models/tax.js");
 const User = require("../server/models/user.js");
+const RMD = require("../server/models/rmd-schema.js");
 const { exploreData, chartData } = require("./charts.js");
 const { calculateLifeExpectancy } = require("./algo.js");
 const path = require("path");
@@ -9,6 +10,7 @@ const { getEvent, scenarioExplorationUpdate, generateParameterCombinations } = r
 const { logFinancialEvent } = require("./logs.js");
 const Piscina = require("piscina");
 let numSimulations;
+const BASE_SEED = 12345;
 const timestamp = new Date();
 const piscina = new Piscina({
   filename: path.resolve(__dirname, "./worker.js"),
@@ -22,7 +24,7 @@ const piscina = new Piscina({
 
 class DataStore {
   constructor() {
-    this.taxData = this.stateTax = this.scenario = this.investment = this.income = this.expense = this.rebalance = this.invest = this.investmentType = this.user = {};
+    this.taxData = this.stateTax = this.scenario = this.investment = this.income = this.expense = this.rebalance = this.invest = this.investmentType = this.user = this.rmd = {};
   }
   async populateData(userId, residence) {
     try {
@@ -46,6 +48,8 @@ class DataStore {
       }
       this.stateTax = matchedTax;
       console.log("this.stateTax", this.stateTax);
+      const rmd = await RMD.findOne();
+      this.rmd = rmd;
       // const investmentType = await InvestmentType.find({
       //   _id: { $in: scenario.setOfInvestmentTypes },
       // });
@@ -71,10 +75,11 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   const csvLog = []; // For user_datetime.csv
   const eventLog = []; // For user_datetime.log
 
-  const { taxData, stateTax, user } = {
+  const { taxData, stateTax, user, rmd } = {
     taxData: dataStore.getData("taxData"),
     stateTax: dataStore.getData("stateTax"),
     user: dataStore.getData("user"),
+    rmd: dataStore.getData("rmd")
   };
 
   // console.log("income", income);
@@ -185,6 +190,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
     const singleTaxData = taxData[0];
 
     for (let x = 0; x < numScenarioTimes; x++) {
+      const seed = BASE_SEED + i * 100000 + x;
       logFinancialEvent({
         year: "Simulation",
         type: "simulationInfo",
@@ -208,6 +214,8 @@ async function main(investmentType, invest, rebalance, expense, income, investme
           investmentType,
           csvLog,
           currentYear,
+          seed,
+          rmd
         })
       );
 

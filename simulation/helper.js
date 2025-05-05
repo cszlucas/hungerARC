@@ -1,6 +1,5 @@
 //This file ensures objects delivered in correct format and for current year. Ex: uniform/normal
-const seed = 12345;
-const rand = mulberry32(seed);
+let globalRand = Math.random; // fallback
 
 function getCurrentEvent(year, incomeEvent = [], expenseEvent = [], investEvent = [], rebalanceEvent = []) {
   let curIncomeEvent = [];
@@ -90,10 +89,24 @@ function setValues(events) {
   }
 }
 
+function setGlobalRand(r) {
+  globalRand = r;
+}
+
 function randomNormal(mean, stdDev) {
+  // console.log("Using mulberry32 (custom PRNG):");
+  // for (let i = 0; i < 5; i++) {
+  //   console.log(globalRand()); // Should produce a fixed sequence
+  // }
+
+  // // Now log the values from Math.random() for comparison
+  // console.log("\nUsing Math.random():");
+  // for (let i = 0; i < 5; i++) {
+  //   console.log(Math.random()); // This should be different each time
+  // }
   // Using Box-Muller Transform with seeded PRNG
-  let u = rand();
-  let v = rand();
+  let u = globalRand();
+  let v = globalRand();
   let z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
   //console.log('u :>> ', u);
   //console.log('v :>> ', v);
@@ -105,7 +118,7 @@ function randomNormal(mean, stdDev) {
 }
 
 function randomUniform(min, max) {
-  return min + rand() * (max - min);
+  return min + globalRand() * (max - min);
 }
 
 function mulberry32(seed) {
@@ -207,7 +220,7 @@ function formatToNumber(obj) {
     "birthYearUser",
     "financialGoal",
     "irsLimit",
-    "birthYearSpouse"
+    "birthYearSpouse",
   ]);
 
   //'fixedPercentages', 'initialPercentages', 'finalPercentages'
@@ -250,4 +263,6 @@ module.exports = {
   randomNormal,
   randomUniform,
   formatToNumber,
+  setGlobalRand,
+  mulberry32,
 };

@@ -1,6 +1,6 @@
 const { runSimulation } = require('./simulation.js');
-
 const { createLogger } = require('./logs');
+const {mulberry32} = require("./helper.js");
 
 module.exports = async function ({ simId }) {
   // const log = createLogger(userId ?? simId);
@@ -31,9 +31,13 @@ module.exports = async function(input) {
       rebalance,
       investmentType,
       csvLog,
-      currentYear  
+      currentYear,
+      seed,
+      rmd  
     } = input;
     
+    const rand = mulberry32(seed); 
+
     return await runSimulation(
       scenario,
       taxData,
@@ -48,7 +52,9 @@ module.exports = async function(input) {
       rebalance,
       investmentType,
       csvLog,
-      currentYear
+      currentYear,
+      rand,
+      rmd
     );
   } catch (error) {
     console.error('Error in worker:', error);
