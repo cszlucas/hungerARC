@@ -50,7 +50,7 @@ if (process.env.NODE_ENV !== 'test') {
     useUnifiedTopology: true
   }).then(() => {
     console.log("Connected to MongoDB");
-    const yamlPath = path.join(__dirname, "stateYaml/states.yml");
+   // const yamlPath = path.join(__dirname, "stateYaml/states.yml");
   //parseYaml(yamlPath); // preload tax data
   }).catch((err) => {
     console.error("MongoDB connection error:", err);
