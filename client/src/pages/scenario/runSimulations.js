@@ -59,6 +59,7 @@ const RunSimulation = () => {
         userId: user._id,
         simulationCount: numSimulations,
         rmd: rmdData,
+        userId: user.guest ? "guest" : user._id 
       };
 
       // console.log(entireFormData);
