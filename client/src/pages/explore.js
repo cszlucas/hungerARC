@@ -10,6 +10,8 @@ import { rowBoxStyles } from "../components/styles";
 
 import { AppContext } from "../context/appContext";
 import { AuthContext } from "../context/authContext";
+import { useAlert } from "../context/alertContext";
+
 
 const DimensionalExploration = () => {
   const { 
@@ -18,6 +20,7 @@ const DimensionalExploration = () => {
   } = useContext(AppContext);
   const { eventEditMode, setEventEditMode } = useContext(AppContext);
   const { user } = useContext(AuthContext);
+  const { showAlert } = useAlert();
 
   const [openBackdrop, setOpenBackdrop] = useState(false);
   const [tempExplorationForm, setTempExplorationForm] = useState({
@@ -41,6 +44,10 @@ const DimensionalExploration = () => {
       return updated;
     });
   }, []);
+
+  function checkValidNum(eventValue) {
+    return eventValue >= 0 && typeof eventValue === "number" && !isNaN(eventValue);
+  }
 
   const getIncomeById = (id) => currIncome.find(e => e._id === id) || null;
   const getExpenseById = (id) => currExpense.find(e => e._id === id) || null;
@@ -94,6 +101,18 @@ const DimensionalExploration = () => {
   };
 
   const handleAddExploration = () => {
+    if (tempExplorationForm.range.lower > tempExplorationForm.range.upper) {
+      showAlert("Your lower bound is greater then your upper bound.", "error");
+      return;
+    }
+    if (tempExploration.length === 1 
+      && tempExplorationForm.type === tempExploration[0].type 
+      && tempExplorationForm.parameter === tempExploration[0].parameter
+    ) {
+      showAlert("You already have a dimensional scenario exploration for that parameter.", "error");
+      return;
+    }
+
     if (eventEditMode && eventEditMode.event === "Exploration") {
       setTempExploration((prev) => 
         prev.map((e) => 
@@ -105,11 +124,19 @@ const DimensionalExploration = () => {
     }
     setEventEditMode(null);
     setOpenBackdrop(false);
+    setTempExplorationForm({
+      type: "", 
+      id: "", 
+      parameter: "", 
+      range: { lower: "", upper: "", steps: "" }, 
+      data: {}
+    });
   };
 
   const handleEditExploration = (index) => {
     const selected = tempExploration[index];
-    setTempExplorationForm({ ...selected });
+    console.log(selected);
+    setTempExplorationForm(selected);
     setEventEditMode({ id: selected.id, event: "Exploration" });
     setOpenBackdrop(true);
   };
@@ -288,34 +315,50 @@ const DimensionalExploration = () => {
                   <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
                     Parameter Exploration Range:
                   </Typography>
-                  <Box sx={{display: "flex", alignItems: "flex-start", flexWrap: "wrap", columnGap: 4}}>
-                    <CustomInput
-                      title="Lower Bound"
-                      type="number"
-                      adornment={tempExplorationForm.parameter === "Asset Allocation" ? "%" : ""}
-                      value={tempExplorationForm.range.lower || ""}
-                      setValue={(value) => handleInputChange("range.lower", value)}
-                      inputProps={{
-                        min: 0,
-                        ...(tempExplorationForm.parameter === "Asset Allocation" ? { max: 100 } : {})
-                      }}
-                    />
-                    <CustomInput
-                      title="Upper Bound"
-                      type="number"
-                      adornment={tempExplorationForm.parameter === "Asset Allocation" ? "%" : ""}
-                      value={tempExplorationForm.range.upper || ""}
-                      setValue={(value) => handleInputChange("range.upper", value)}
-                      inputProps={{
-                        min: 0,
-                        ...(tempExplorationForm.parameter === "Asset Allocation" ? { max: 100 } : {})
-                      }}
-                    />
+                  <Box sx={{display: "flex", alignItems: "flex-start", flexWrap: "wrap", columnGap: 4, rowGap: 2}}>
+                    { tempExplorationForm.parameter === "Start Year" ? (<>
+                      <CustomDropdown
+                        label="Lower Bound"
+                        value={tempExplorationForm.range.lower}
+                        setValue={(value) => handleInputChange("range.lower", value)}
+                        menuItems={Array.from({ length: 200 }, (_, i) => new Date().getFullYear() + i)}
+                      />
+                      <CustomDropdown
+                        label="Upper Bound"
+                        value={tempExplorationForm.range.upper}
+                        setValue={(value) => handleInputChange("range.upper", value)}
+                        menuItems={Array.from({ length: 200 }, (_, i) => new Date().getFullYear() + i)}
+                      />
+                    </>) : (<>
+                      <CustomInput
+                        title="Lower Bound"
+                        type="number"
+                        adornment={tempExplorationForm.parameter === "Asset Allocation" ? "%" : ""}
+                        value={tempExplorationForm.range.lower}
+                        setValue={(value) => handleInputChange("range.lower", value)}
+                        inputProps={{
+                          min: 0,
+                          ...(tempExplorationForm.parameter === "Asset Allocation" ? { max: 100 } : {})
+                        }}
+                      />
+                      <CustomInput
+                        title="Upper Bound"
+                        type="number"
+                        adornment={tempExplorationForm.parameter === "Asset Allocation" ? "%" : ""}
+                        value={tempExplorationForm.range.upper}
+                        setValue={(value) => handleInputChange("range.upper", value)}
+                        inputProps={{
+                          min: 0,
+                          ...(tempExplorationForm.parameter === "Asset Allocation" ? { max: 100 } : {})
+                        }}
+                      />
+                    </>)}
+                    
                     <CustomInput
                       title="Step Size"
                       type="number"
                       adornment={tempExplorationForm.parameter === "Asset Allocation" ? "%" : ""}
-                      value={tempExplorationForm.range.steps || ""}
+                      value={tempExplorationForm.range.steps}
                       setValue={(value) => handleInputChange("range.steps", value)}
                       inputProps={{
                         min: 0,
@@ -332,7 +375,19 @@ const DimensionalExploration = () => {
             <Button variant="contained" color="primary" sx={{ textTransform: "none" }} onClick={handleCloseBackdrop}>
               Cancel
             </Button>
-            <Button variant="contained" color="secondary" sx={{ textTransform: "none" }} onClick={handleAddExploration}>
+            <Button 
+              variant="contained" 
+              color="secondary" 
+              sx={{ textTransform: "none" }} 
+              onClick={handleAddExploration}
+              disabled={tempExplorationForm.type === "" 
+                || ((tempExplorationForm.type !== "Roth Optimizer Flag") 
+                  && (tempExplorationForm.parameter === ""
+                    || !checkValidNum(tempExplorationForm.range.lower)
+                    || !checkValidNum(tempExplorationForm.range.upper)
+                    || !checkValidNum(tempExplorationForm.range.steps)))
+              }
+            >
               Add
             </Button>
           </Box>

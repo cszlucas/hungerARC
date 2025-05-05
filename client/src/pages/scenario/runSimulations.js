@@ -10,7 +10,6 @@ import {
 } from "../../components/styles";  // Import your modular styles
 import CustomInput from "../../components/customInputBox";
 import CustomShare from "../../components/customShareBtn";
-import { Close as CloseIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../context/appContext";
 import { AuthContext } from "../../context/authContext";
@@ -46,6 +45,8 @@ const RunSimulation = () => {
 
   const getChartData = async () => {
     try {
+      const rmdData = await axios.get("http://localhost:8080/runSimulation");
+      
       const entireFormData = {
         investmentType: currInvestmentTypes,
         investment: currInvestments,
@@ -57,6 +58,7 @@ const RunSimulation = () => {
         exploration: tempExploration,
         userId: user._id,
         simulationCount: numSimulations,
+        rmd: rmdData,
       };
 
       // console.log(entireFormData);
@@ -64,8 +66,6 @@ const RunSimulation = () => {
         params: entireFormData,
       });
 
-      // console.log(response);
-      // console.log(response.data);
       if (tempExploration.length == 0)
       {
         navigate("/charts", {
@@ -92,12 +92,13 @@ const RunSimulation = () => {
     }
   };
 
-  useEffect(() => {
+  const checkForErrors = () => {
+    let flag = false;
     function checkValidNum(eventValue) {
       return eventValue >= 0 && typeof eventValue === "number" && !isNaN(eventValue);
     }
 
-    const expression = currScenario.name
+    const validInputs = currScenario.name
       && checkValidNum(currScenario.financialGoal)
       && currScenario.stateResident
       && checkValidNum(currScenario.birthYearUser) 
@@ -117,13 +118,25 @@ const RunSimulation = () => {
         || (checkValidNum(currScenario.inflationAssumption.mean) && checkValidNum(currScenario.inflationAssumption.stdDev)))
       && (currScenario.inflationAssumption.type !== "uniform" 
         || (checkValidNum(currScenario.inflationAssumption.min) && checkValidNum(currScenario.inflationAssumption.max)));
+    
+    if (!validInputs) {
+      showAlert("All of Scenario's basic info must be filled.", "error");
+      flag = true;
+    }
+    
+    if (currScenario.inflationAssumption.type === "uniform" 
+    && (checkValidNum(currScenario.inflationAssumption.min) && checkValidNum(currScenario.inflationAssumption.max)
+    && currScenario.inflationAssumption.min > currScenario.inflationAssumption.max)) {
+      showAlert("Inflation Assumpation Min is greater then Max.", "error");
+      flag = true;
+    }
 
-      setUnfilledError(!expression);
-      
-      if (currScenario.inflationAssumption.type === "uniform" && (checkValidNum(currScenario.inflationAssumption.min) && checkValidNum(currScenario.inflationAssumption.max))) {
-        setMinMaxError(currScenario.inflationAssumption.min > currScenario.inflationAssumption.max);
-      }
-  }, [currScenario]);
+    if (tempExploration.length === 2 && (tempExploration[0].type === "Roth Optimizer Flag" || tempExploration[1] === "Roth Optimizer Flag")) {
+      showAlert("2-Dimensional Exploration can not contain non-numeric parameters (e.g., Roth Conversion Optimizer).", "error");
+      flag = true;
+    }
+    return flag;
+  };
   
   return (
     <ThemeProvider theme={theme}>
@@ -200,15 +213,7 @@ const RunSimulation = () => {
           </Button>
           <Button variant="contained" color="secondary" sx={buttonStyles}
             onClick={() => {
-              // const fetchedData = await getChartData();
-              // console.log(fetchedData);
-              if (unfilledError) {
-                showAlert("All of Scenario's basic info must be filled.", "error");
-              }
-              if (minMaxError) {
-                showAlert("Inflation Assumpation Min is greater then Max.", "error");
-              }
-              if (!unfilledError && !minMaxError) getChartData();
+              if (!checkForErrors()) getChartData();
             }}
           >
             Run Simulation
