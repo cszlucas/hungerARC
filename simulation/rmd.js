@@ -14,7 +14,7 @@ async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOr
     });
   }
   if (userAge >= 74 && RMDStrategyInvestOrder != null) {
-    //console.log("\nRMDs\nUser age", userAge, "and sum of pre-tax values from prev year is", sumInvestmentsPreTaxRMD);
+    console.log("\nRMDs\nUser age", userAge, "and sum of pre-tax values from prev year is", sumInvestmentsPreTaxRMD);
 
     const match = await RMD.findOne({ "rmd.age": userAge }, { "rmd.$": 1 });
     if (!match || !match.rmd || !match.rmd[0]) {

@@ -74,10 +74,15 @@ function logFinancialEvent({ year, type, description, amount, details = {} }) {
       line += formatStrategy(description, details, "invest");
       break;
     }
+    case "investment": {
+      line += formatInvestment(description, details);
+      break;
+    }
     case "roth conversion": {
       if (details.from && details.to) {
         line += ` of "${details.from}" to "${details.to}"`;
       }
+      line += formatRoth(description, details);
       break;
     }
     case "rebalance": {
@@ -131,16 +136,39 @@ function formatIncome(details, amount, description = "") {
   //   name: e.eventSeriesName,
   //   value: e.initialAmount
   let line = "";
+  const formatCurrency = (val) => (typeof val === "number" ? `$${val.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : val ?? "");
+
   if (description) line += `${description}`;
   // console.log('description :>> ', description);
   // console.log('detail :>> ', details);
   if (Object.keys(details).length > 0){ 
-    line += "Name: " + `${details.name},` + " ID: " + `${details.ID},` + " Value: " + `${details.value}.`;
+    line += ` Name: ${details.name}, ID: ${details.ID},  Value: ${formatCurrency(details.value)}.`;
   }
   // console.log('line :>> ', line);
   return line;
 }
 
+function formatInvestment(description, details){
+  let line = "";
+  const formatCurrency = (val) => (typeof val === "number" ? `$${val.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : val ?? "");
+
+  if (description) line += `${description}`;
+  if (Object.keys(details).length > 0){ 
+    if(details.type == "investments"){
+      line += `Investment ID: ${details.ID}, value: ${formatCurrency(details.value)}, taxType: ${details.taxStatus}.`;
+    } else if(details.type == "curYearIncome"){
+      line += `${details.type.toUpperCase()} | Investment ID: ${details.ID}, taxType: ${details.taxStatus}.`;
+    }
+  }
+  // console.log('line :>> ', line);
+  return line;
+}
+
+function formatRoth(description, details) {
+  let line = "";
+  if (description) line += `${description}`;
+  return line;
+}
 
 function formatNonDiscretionaryDetails(details, amount, description = "") {
   const expenseAmount = details.amount ?? amount;
@@ -321,5 +349,5 @@ module.exports = {
   printEvents,
   printIncomeEvents,
   printStrategy,
-  createLogger
+  createLogger,
 };

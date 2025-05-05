@@ -206,9 +206,7 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
         type: "discretionary",
         description: "You were NOT able to pay all your discretionary expenses.",
       });
-      //console.log("You were NOT able to pay all your discretionary expenses.");
     } else {
-      //console.log("You were able to pay all your discretionary expenses without violating your financial goal.");
       logFinancialEvent({
         year: year,
         type: "discretionary",
