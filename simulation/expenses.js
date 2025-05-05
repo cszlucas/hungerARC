@@ -38,7 +38,7 @@ function payNonDiscretionaryExpenses(
     details: {
       amount: expenseAmt,
       taxes: taxes,
-      cash: cashInvestment.value
+      cash: cashInvestment.value,
     },
   });
   printEvents(nonDiscretionaryExpenses, year, "non-discretionary", "expense", inflationRate, spouseDeath);
@@ -96,6 +96,11 @@ function payNonDiscretionaryExpenses(
 //calculate TAX
 function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGains, userAge, fedDeduction, year) {
   console.log("CALCULATING TAXES, my prev year income: ", prevYearIncome);
+  logFinancialEvent({
+    year: year,
+    type: "non-discretionary",
+    description: `Calculating taxes, my prev year income: ${prevYearIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, fedDeduction: ${fedDeduction.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, prevYearSS: ${prevYearSS.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  });
   const adjustedIncome = Math.max(0, prevYearIncome - fedDeduction - prevYearSS);
   const federalTax = taxAmt(adjustedIncome, federalIncomeRange);
   const stateTax = taxAmt(adjustedIncome, stateIncomeRange);
@@ -112,18 +117,26 @@ function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdr
   logFinancialEvent({
     year: year,
     type: "non-discretionary",
-    description: `Taxes to pay include federalTax: $${federalTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, stateTax: $${stateTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, social security tax: $${ssTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, earlyWithdrawalTax: $${earlyWithdrawalTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, capitalGainsTax: $${capitalGainsTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    description: `Taxes to pay include federalTax: $${federalTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, stateTax: $${stateTax.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}, social security tax: $${ssTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, earlyWithdrawalTax: $${earlyWithdrawalTax.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}, capitalGainsTax: $${capitalGainsTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
   });
   return federalTax + stateTax + ssTax + earlyWithdrawalTax + capitalGainsTax;
 }
 
 function taxAmt(income, taxBracket, type) {
-  for (let range of taxBracket) {
-    if (income >= range.incomeRange[0] && income <= range.incomeRange[1]) {
-      if (type === "capitalGains") {
-        return income > 0 ? income * (range.gainsRate / 100) : 0;
-      } else {
-        return income * (range.taxRate / 100);
+  if (taxBracket) {
+    for (let range of taxBracket) {
+      if (income >= range.incomeRange[0] && income <= range.incomeRange[1]) {
+        if (type === "capitalGains") {
+          return income > 0 ? income * (range.gainsRate / 100) : 0;
+        } else {
+          return income * (range.taxRate / 100);
+        }
       }
     }
   }
@@ -219,40 +232,60 @@ function payFromInvestment(withdrawalAmt, investment, userAge, yearTotals, year,
     return 0;
   } else if (investment.value - withdrawalAmt > 0) {
     //console.log("subtract needed and keep investment:", investment._id, "type:", investment.accountTaxStatus, "value: ", investment.value);
-    updateValues(investment, userAge, yearTotals, true, withdrawalAmt);
+    updateValues(investment, userAge, yearTotals, true, withdrawalAmt, year, type);
     investment.value -= withdrawalAmt;
     //console.log("Investment now with value: ", investment.value);
     return withdrawalAmt;
   } else {
     let amountPaid = investment.value;
     //console.log("use up investment:", investment._id, "value: ", investment.value, "now with value 0 and move onto next");
-    updateValues(investment, userAge, yearTotals, false, amountPaid);
+    updateValues(investment, userAge, yearTotals, false, amountPaid, year, type);
     investment.value = 0;
     return amountPaid;
   }
 }
 
-function updateValues(investment, userAge, yearTotals, partial, amountPaid) {
+function updateValues(investment, userAge, yearTotals, partial, amountPaid, year, type) {
   if (investment.accountTaxStatus === "non-retirement") {
     if (partial) {
       const fractionSold = investment.value > 0 ? amountPaid / investment.value : 0;
       const gain = fractionSold * (investment.value - investment.purchasePrice);
       yearTotals.curYearGains += Math.max(gain, 0);
       investment.purchasePrice -= (1 - fractionSold) * investment.purchasePrice;
-      console.log("By a fraction update curYearGains:", gain, "purchase price:", investment.purchasePrice);
+      logFinancialEvent({
+        year: year,
+        type: type,
+        description: `By a fraction update curYearGains: ${gain}, "purchase price: ${investment.purchasePrice}`,
+      });
+      //console.log("By a fraction update curYearGains:", gain, "purchase price:", investment.purchasePrice);
     } else {
       const gain = investment.value - investment.purchasePrice;
       yearTotals.curYearGains += Math.max(gain, 0);
       investment.purchasePrice -= 0;
-      console.log("update curYearGains:", gain, "purchase price:", investment.purchasePrice);
+      logFinancialEvent({
+        year: year,
+        type: type,
+        description: `Update curYearGains: ${gain}, "purchase price: ${investment.purchasePrice}`,
+      });
+      //console.log("update curYearGains:", gain, "purchase price:", investment.purchasePrice);
     }
   }
 
   if (investment.accountTaxStatus === "pre-tax") {
+    logFinancialEvent({
+      year: year,
+      type: type,
+      description: `Update curYearIncome: ${yearTotals.curYearIncome}, by ${amountPaid}`,
+    });
     yearTotals.curYearIncome += amountPaid;
   }
 
   if ((investment.accountTaxStatus === "pre-tax" || investment.accountTaxStatus === "after-tax") && userAge < 59) {
+    logFinancialEvent({
+      year: year,
+      type: type,
+      description: `Update curYearEarlyWithdrawals: ${yearTotals.curYearEarlyWithdrawals}, by ${amountPaid}`,
+    });
     yearTotals.curYearEarlyWithdrawals += amountPaid;
   }
 }

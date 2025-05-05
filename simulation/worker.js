@@ -1,5 +1,19 @@
 const { runSimulation } = require('./simulation.js');
 
+const { createLogger } = require('./logs');
+
+module.exports = async function ({ simId }) {
+  // const log = createLogger(userId ?? simId);
+
+  // log(`Simulation ${simId} started.`);
+
+  // Simulated work
+  await new Promise((res) => setTimeout(res, Math.random() * 1000));
+
+ // log(`Simulation ${simId} completed.`);
+};
+
+
 module.exports = async function(input) {
   //console.log("Inside Worker, currentYear:", input.currentYear);
   try {

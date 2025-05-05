@@ -31,9 +31,9 @@ async function runSimulation(
   rebalanceEvent,
   investmentTypes,
   csvLog,
-  currentYear 
+  currentYear
 ) {
-  //console.log("RUN SIMULATION",JSON.stringify(scenario, null, 2));
+  //console.log("RUN SIMULATION",JSON.stringify(investmentTypes, null, 2));
   //console.log("currentYear", currentYear);
   // previous year
   let irsLimit = scenario.irsLimit;
@@ -81,10 +81,10 @@ async function runSimulation(
   let prevYearSS = 0;
   let prevYearEarlyWithdrawals = 0;
   let prevYearGains = 0;
-  //console.log('investmentTypes :>> ', investmentTypes);
-  let cashInvestmentType = investmentTypes.find((inv) => inv.name === "Cash");
+  console.log("investmentTypes :>> ", investmentTypes);
+  let cashInvestmentType = investmentTypes.find((inv) => inv.name === "Cash" || inv.name === "cash");
   //console.log("CASH INVESTMENT TYPE: ", cashInvestmentType);
-  // console.log('investments :>> ', investments);
+  //console.log('investments :>> ', investments);
   let cashInvestment;
   if (cashInvestmentType) {
     let cashId = cashInvestmentType._id;
@@ -92,12 +92,12 @@ async function runSimulation(
     //console.log("CASH INVESTMENT: ", cashInvestment);
   }
 
-  let yearDataBuckets = createYearDataBuckets(2, currentYear); //2 is numYears
+  let yearDataBuckets = createYearDataBuckets(40, currentYear); //2 is numYears
   let yearIndex = 0;
 
   //  // SIMULATION LOOP
   // manually adjusted for testing, should be year <= userEndYear !!
-  for (let year = currentYear; year <= 2027; year++) {
+  for (let year = currentYear; year <= 2065; year++) {
     console.log("\nSIMULATION YEAR", year);
     if (filingStatus == "married") {
       if (year == scenario.birthYearSpouse + lifeExpectancySpouse) {
@@ -125,6 +125,14 @@ async function runSimulation(
 
     // PERFORM RMD FOR PREVIOUS YEAR
     const userAge = year - scenario.birthYearUser;
+    logFinancialEvent({
+      year: year,
+      type: "rmd",
+      details: {
+        userAge: userAge,
+        incomeAmount: sumInvestmentsPreTaxRMD
+      },
+    });
     if (sumInvestmentsPreTaxRMD > 0) {
       await performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year);
     }
@@ -275,17 +283,17 @@ function updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, c
     })),
     income: curIncomeEvent.map((event) => ({
       name: event.eventSeriesName,
-      value: event.initialAmount
+      value: event.initialAmount,
       // value: getValueInYear(event, year, inflationRate, spouseDeath),
     })),
     discretionary: discretionary.map((event) => ({
       name: event.eventSeriesName,
-      value: event.initialAmount
+      value: event.initialAmount,
       // value: getValueInYear(event, year, inflationRate, spouseDeath),
     })),
     nonDiscretionary: nonDiscretionary.map((event) => ({
       name: event.eventSeriesName,
-      value: event.initialAmount
+      value: event.initialAmount,
       // value: getValueInYear(event, year, inflationRate, spouseDeath),
     })),
     taxes: taxes,
