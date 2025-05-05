@@ -405,8 +405,7 @@ const InvestmentLists = () => {
                   sx={{ textTransform: "none" }}
                   disabled={
                     newInvestment.taxType === "" ||
-                    newInvestment.value === null ||
-                    newInvestment.value === undefined ||
+                    newInvestment.value === "" ||
                     isNaN(Number(newInvestment.value))
                   }
                 >
