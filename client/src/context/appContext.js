@@ -34,39 +34,36 @@ export const defaultInfo = {
 // Function to retrieve initial scenarios from localStorage or fetch from backend
 export const getInitialState = async (user) => {
   try {
-      // Check if scenario data already exists in localStorage
-      const storedScenarios = JSON.parse(localStorage.getItem("scenarioData"));
-      if (storedScenarios) {
-          return storedScenarios; // Return cached scenarios if available
-      }
+    // Check if scenario data already exists in localStorage
+    const storedScenarios = JSON.parse(localStorage.getItem("scenarioData"));
+    if (storedScenarios) {
+      return storedScenarios; // Return cached scenarios if available
+    }
 
-      // Retrieve user ID from localStorage
-      const userId = user._id;
-      if (!userId) {
-          console.error("User ID not found in localStorage.");
-          return []; // Return an empty list if no user ID
-      }
+    // Retrieve user ID from localStorage
+    const userId = user._id;
+    if (!userId) {
+      console.error("User ID not found in localStorage.");
+      return []; // Return an empty list if no user ID
+    }
 
-      // console.log("Fetching scenarios for user:", userId);
-      // Fetch scenarios from the backend
-      const response = await axios.get("http://localhost:8080/user/scenarios", { withCredentials: true }); // Adjust API route
-      // console.log(response.data);
-      if (response.data) {
-          // console.log("Scenarios fetched from backend:", response.data);
-          localStorage.setItem("scenarioData", JSON.stringify(response.data));
-          return response.data;
-      }
+    // Fetch scenarios from the backend
+    const response = await axios.get("http://localhost:8080/user/scenarios", { withCredentials: true }); // Adjust API route
+    // console.log(response.data);
+    if (response.data) {
+      localStorage.setItem("scenarioData", JSON.stringify(response.data));
+      return response.data;
+    }
 
-      return []; // Return empty if no data
+    return []; // Return empty if no data
   } catch (error) {
-      console.error("Error fetching scenarios:", error);
-      return []; // Return empty if an error occurs
+    console.error("Error fetching scenarios:", error);
+    return []; // Return empty if an error occurs
   }
 };
 
 const readStateFromLS = (key_value) => {
   const storedState = localStorage.getItem(key_value);
-  // if (key_value === "edit") console.log(JSON.parse(storedState));
   return storedState ? JSON.parse(storedState) : null;
 };
 
@@ -100,7 +97,6 @@ const retrieveScenarioData = async (scenarioId, dataType) => {
 
 // Context Provider Component
 export const AppProvider = ({ children }) => {
-  // console.log("Reading from local storage first!");
   const [scenarioData, setScenarioData] = useState(readStateFromLS("scenarioData"));
 
   const [editMode, setEditMode] = useState(readStateFromLS("edit"));
@@ -117,13 +113,15 @@ export const AppProvider = ({ children }) => {
   const [currRebalance, setCurrRebalance] = useState(readStateFromLS("currentRebalance") || []);   // rebalanceEvents[], // rebalance event series
   
   const [tempExploration, setTempExploration] = useState(readStateFromLS("tempExploration") || []); 
-  const [statesTaxes, setStateTaxes] = useState(readStateFromLS("statesTaxes") || []);
+  const [stateTaxes, setStateTaxes] = useState(readStateFromLS("stateTaxes") || []);
   const { user } = useContext(AuthContext);
   
   useEffect(() => {
     const fetchData = async () => {
       const data = await getInitialState(user);  // Await the resolved data
       setScenarioData(data);  // Set the resolved data, not the Promise
+      const response = await axios.get("http://localhost:8080/getStateTax", { withCredentials: true });
+      if (response.data) { setStateTaxes(response.data); }
     };
     if (user) { fetchData(); }
   }, [user]);  // Trigger a refetch when user changes
@@ -156,14 +154,13 @@ export const AppProvider = ({ children }) => {
   
       const investments = results[0] || [];
 
-      const takenTaxStatusAccounts = investments.reduce((acc, inv) => {
+      const taxStatusAccounts = investments.reduce((acc, inv) => {
         const { investmentType: type, accountTaxStatus: status } = inv;
         if (!acc[type]) acc[type] = [];
         acc[type].push(status);
         return acc;
       }, {});
-  
-      setTakenTaxStatusAccounts(takenTaxStatusAccounts);
+      setTakenTaxStatusAccounts(taxStatusAccounts);
       setTempExploration([]);
     };
   
@@ -179,27 +176,27 @@ export const AppProvider = ({ children }) => {
   }, [currScenario]);
 
   useEffect(() => {
-      if (currInvestments) localStorage.setItem("currentInvestments", JSON.stringify(currInvestments));
+    if (currInvestments) localStorage.setItem("currentInvestments", JSON.stringify(currInvestments));
   }, [currInvestments]);
 
   useEffect(() => {
-      if (currIncome) localStorage.setItem("currentIncome", JSON.stringify(currIncome));
+    if (currIncome) localStorage.setItem("currentIncome", JSON.stringify(currIncome));
   }, [currIncome]);
 
   useEffect(() => {
-      if (currExpense) localStorage.setItem("currentExpense", JSON.stringify(currExpense));
+    if (currExpense) localStorage.setItem("currentExpense", JSON.stringify(currExpense));
   }, [currExpense]);
 
   useEffect(() => {
-      if (currInvest) localStorage.setItem("currentInvest", JSON.stringify(currInvest));
+    if (currInvest) localStorage.setItem("currentInvest", JSON.stringify(currInvest));
   }, [currInvest]);
 
   useEffect(() => {
-      if (currRebalance) localStorage.setItem("currentRebalance", JSON.stringify(currRebalance));
+    if (currRebalance) localStorage.setItem("currentRebalance", JSON.stringify(currRebalance));
   }, [currRebalance]);
 
   useEffect(() => {
-      if (currInvestmentTypes) localStorage.setItem("currentInvestmentType", JSON.stringify(currInvestmentTypes));
+    if (currInvestmentTypes) localStorage.setItem("currentInvestmentType", JSON.stringify(currInvestmentTypes));
   }, [currInvestmentTypes]);
 
   useEffect(() => {
@@ -215,8 +212,8 @@ export const AppProvider = ({ children }) => {
   }, [tempExploration]);
 
   useEffect(() => {
-    if (statesTaxes) localStorage.setItem("statesTaxes", JSON.stringify(statesTaxes));
-  }, [statesTaxes]);
+    if (stateTaxes) localStorage.setItem("stateTaxes", JSON.stringify(stateTaxes));
+  }, [stateTaxes]);
   
 
   return (
@@ -233,6 +230,7 @@ export const AppProvider = ({ children }) => {
       currInvestmentTypes, setCurrInvestmentTypes,
       takenTaxStatusAccounts, setTakenTaxStatusAccounts,
       tempExploration, setTempExploration,
+      stateTaxes, setStateTaxes,
     }}>
         {children}
     </AppContext.Provider>

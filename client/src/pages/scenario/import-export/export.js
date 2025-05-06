@@ -1,4 +1,4 @@
-
+import { stateNameToAbbreviation } from "./helper";
 import { saveAs } from "file-saver";
 import yaml from "js-yaml";
 
@@ -157,11 +157,38 @@ export function exportToYAML({
 
   const eventSeriesIdtoNameMap = Object.fromEntries([...(currIncome || []), ...(currExpense || []), ...(currInvest || []), ...(currRebalance || [])].map(e => [e._id, e.eventSeriesName]));
 
+  function convertLE(le) {
+    console.log(le);
+    const data = { type: le.type };
+    if (le.type === "fixed") {
+      data.value = le.fixedAge;
+    } else if (le.type === "normal") {
+      data.mean = le.mean;
+      data.stdev = le.stdDev;
+    }
+    return data;
+  }
+
+  function convertInflationAssumption(ia) {
+    console.log(ia);
+    const data = { type: ia.type };
+    if (ia.type === "fixed") {
+      data.value = ia.fixedRate;
+    } else if (ia.type === "normal") {
+      data.mean = ia.mean;
+      data.stdev = ia.stdDev;
+    } else if (ia.type === "uniform") {
+      data.min = ia.min;
+      data.max = ia.max;
+    }
+    return data;
+  }
+
   const yamlObject = {
     name: filteredScenario.name || "Retirement Planning Scenario",
     maritalStatus: filteredScenario.filingStatus === "single" ? "individual" : "couple",
     birthYears: [filteredScenario.birthYearUser, filteredScenario.birthYearSpouse],
-    lifeExpectancy: [filteredScenario.lifeExpectancy, filteredScenario.lifeExpectancySpouse],
+    lifeExpectancy: [convertLE(filteredScenario.lifeExpectancy), convertLE(filteredScenario.lifeExpectancySpouse)],
     investmentTypes: currInvestmentTypes.map(t => ({
       name: t.name,
       description: t.description,
@@ -259,7 +286,7 @@ export function exportToYAML({
         };
       })
     ],
-    inflationAssumption: filteredScenario.inflationAssumption,
+    inflationAssumption: convertInflationAssumption(filteredScenario.inflationAssumption),
     afterTaxContributionLimit: filteredScenario.irsLimits?.initialAfterTax || 7000,
     spendingStrategy: (filteredScenario.spendingStrategy || []).map(id => {
       const match = currExpense.find(e => e._id === id);
@@ -284,7 +311,7 @@ export function exportToYAML({
       return invesmentIdtoNameMap[id] || "Not Found";
     }),
     financialGoal: filteredScenario.financialGoal,
-    residenceState: filteredScenario.stateResident || "NY",
+    residenceState: stateNameToAbbreviation[filteredScenario.stateResident],
   };
 
   const yamlStr = yaml.dump(yamlObject, { lineWidth: -1 });

@@ -1,7 +1,8 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
 import { ThemeProvider, CssBaseline, Container, Typography, List, ListItem, ListItemText, IconButton, Box, Button } from "@mui/material";
 import { AuthContext } from "../context/authContext";
+import { AppContext } from "../context/appContext";
 import DeleteIcon from "@mui/icons-material/Delete";
 import theme from "../components/theme";
 import Navbar from "../components/navbar";
@@ -26,15 +27,19 @@ function DisplayUserName({ user }) {
 }
 
 const Profile = () => {
+    const { stateTaxes, setStateTaxes } = useContext(AppContext);
     const { user } = useContext(AuthContext);
-    const [stateTaxes, setStateTaxes] = useState(user?.stateYaml || []);
+    const [stateTaxesList, setStateTaxesList] = useState(user?.stateYaml || []);
     const navigate = useNavigate(); // Initialize useNavigate
 
-    console.log(user);
+    const stateIdToNameMap = useMemo(() => {
+        return stateTaxes.reduce((acc, curr) => {
+          acc[curr._id] = curr.state;
+          return acc;
+        }, {});
+      }, [stateTaxes]);
     
-    useEffect(() => {
-        console.log(user);
-        
+    useEffect(() => { 
         if (!user) {
             navigate("/"); // Redirect to home page if user doesn't exist
         }
@@ -42,18 +47,11 @@ const Profile = () => {
 
     useEffect(() => {
         // Whenever user.stateYaml changes, update stateTaxes
-        setStateTaxes(user?.stateYaml || null);
+        setStateTaxesList(user?.stateYaml || null);
     }, [user?.stateYaml]);
 
     const [selectedStateTax, setStateTax] = useState(null);
     const [file, setFile] = useState(null); 
-
-    // const stateTaxes = {
-    //     "New_York_Tax": { "date": new Date(2025, 2, 20) },
-    //     "New_Jersery_Tax": { "date": new Date(2025, 2, 19) },
-    //     "Texas_Tax": { "date": new Date(2025, 2, 18) },
-    // };
-    // const stateTaxes = user.stateYaml;
 
     const handleSelectState = (taxKey) => {
         setStateTax(taxKey);
@@ -80,17 +78,13 @@ const Profile = () => {
       
         try {
           const response = await axios.post("http://localhost:8080/uploadStateTaxYaml", formData);
-      
-          console.log("Upload response:", response);
-      
+          // console.log("Upload response:", response);
           if (response.status === 200) {
-            alert("File uploaded successfully!");
-      
-            const newId = response.data.data._id; // <-- the new document ID
-      
-            // ✅ Update stateTaxes by adding the new ID
-            setStateTaxes((prevStateYaml) => [...(prevStateYaml || []), newId]);
-      
+            // alert("File uploaded successfully!");
+            // console.log(response.data.data);
+            // Update stateTaxes by adding the new ID
+            setStateTaxes((prev) => [...(prev || []), {_id: response.data.data._id, state: response.data.data.state}]);
+            setStateTaxesList((prevStateYaml) => [...(prevStateYaml || []), response.data.data._id]);
           } else {
             alert("Failed to upload file. Server responded with status: " + response.status);
           }
@@ -142,7 +136,7 @@ const Profile = () => {
 
                 <Box sx={{ width: "45%" }}>
                     <List>
-                        {Object.entries(stateTaxes).map(([key, value], index) => (
+                        {Object.entries(stateTaxesList).map(([key, value], index) => (
                             <ListItem 
                                 key={key} 
                                 sx={{
@@ -154,13 +148,14 @@ const Profile = () => {
                                 onClick={() => handleSelectState(key)}
                             >
                                 <ListItemText
-                                    primary={<span style={{ fontWeight: "bold" }}>{value}</span>}
+                                    primary={<span style={{ fontWeight: "bold" }}>{stateIdToNameMap[value]}</span>}
                                     // secondary={`Date: ${value.date.toDateString()}`}
                                 />
                                 <IconButton 
                                     edge="end" 
                                     aria-label="delete" 
                                     onClick={() => alert(`Delete ${key}`)}
+                                    disabled={true}
                                 >
                                     <DeleteIcon />
                                 </IconButton>

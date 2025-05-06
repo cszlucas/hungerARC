@@ -33,7 +33,9 @@ module.exports = async function(input) {
       csvLog,
       currentYear,
       seed,
-      rmd  
+      rmd,
+      x,
+      user
     } = input;
     
     const rand = mulberry32(seed); 
@@ -54,7 +56,9 @@ module.exports = async function(input) {
       csvLog,
       currentYear,
       rand,
-      rmd
+      rmd,
+      x,
+      user
     );
   } catch (error) {
     console.error('Error in worker:', error);

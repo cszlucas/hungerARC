@@ -4,11 +4,11 @@ jest.setTimeout(15000);
 let mongoServer;
 // const { piscina } = require('../../simulation/main');
 
-if (process.env.NODE_ENV === "test") {
-  console.log = jest.fn();
-  console.error = jest.fn();
-  console.warn = jest.fn();
-}
+// if (process.env.NODE_ENV === "test") {
+//   console.log = jest.fn();
+//   console.error = jest.fn();
+//   console.warn = jest.fn();
+// }
 
 beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();

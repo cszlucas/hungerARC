@@ -148,7 +148,7 @@ function duration(event) {
 
 function getStrategy(scenario, investments, curExpenseEvent, investEvent, year) {
   // Helper: safely map by ID and filter out unfound items
-  const safeMapById = (ids, collection, label, e) => {
+  const safeMapById = (ids=[], collection, label, e) => {
     return ids
       .map((id) => {
         const item = collection.find((entry) => entry._id === id);
@@ -224,7 +224,7 @@ function formatToNumber(obj) {
   ]);
 
   //'fixedPercentages', 'initialPercentages', 'finalPercentages'
-  const booleanFields = new Set(["inflationAdjustment", "isSocialSecurity", "isDiscretionary"]);
+  const booleanFields = new Set(["inflationAdjustment", "isSocialSecurity", "isDiscretionary", "enabled"]);
 
   function recurse(o) {
     if (Array.isArray(o)) {

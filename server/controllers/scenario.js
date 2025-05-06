@@ -24,6 +24,7 @@ exports.scenario = async (req, res) => {
 
 exports.basicInfo = async (req, res) => {
   try {
+    console.log('Full req.body:', JSON.stringify(req.body, null, 2));
     if (!req.session.user) res.status(500).json({ message: "Failed to get user session" });
     const userData = req.session.user;
     const user = await User.findOne({ _id: userData._id });
@@ -31,8 +32,9 @@ exports.basicInfo = async (req, res) => {
       console.log("user not found");
       return res.status(404).json({ message: "User not found" });
     }
-
+    console.log("user", user);
     const { name, filingStatus, financialGoal, inflationAssumption, birthYearUser, lifeExpectancy, stateResident, birthYearSpouse, lifeExpectancySpouse, irsLimit } = req.body;
+
     const newBasicInfo = new Scenario({
       name,
       filingStatus,
@@ -66,10 +68,10 @@ exports.basicInfo = async (req, res) => {
     const savedBasicInfo = await newBasicInfo.save();
     user.scenarios.push(savedBasicInfo._id);
     await user.save();
-
+    console.log("USER SAVED, ", savedBasicInfo);
     res.status(201).json(savedBasicInfo);
   } catch (err) {
-    console.error("Error creating scenario:", err.message);
+    console.error("Error creating scenario:", err.stack);
     res.status(500).json({ error: err.message });
   }
 };

@@ -42,7 +42,7 @@ const InvestmentLists = () => {
   // Global app and auth context
   const {
     editMode, setEventEditMode, currInvestments, setCurrInvestments, currInvestmentTypes, 
-    currScenario, setCurrScenario, takenTaxStatusAccounts, setTakenTaxStatusAccounts
+    currScenario, setCurrScenario, takenTaxStatusAccounts, setTakenTaxStatusAccounts, setCurrInvestmentTypes
   } = useContext(AppContext);
   const { user } = useContext(AuthContext);
 
@@ -52,10 +52,7 @@ const InvestmentLists = () => {
   const [availableTaxTypes, setAvailableTaxTypes] = useState([[], []]);
   const [newInvestment, setNewInvestment] = useState(defaultInvestment);
   // Handle form input changes
-  const handleInputChange = (field, value) => {
-    setNewInvestment((prev) => ({ ...prev, [field]: value }));
-  };
-
+  const handleInputChange = (field, value) => { setNewInvestment((prev) => ({ ...prev, [field]: value })); };
   const navigate = useNavigate();
 
   // Helper: Add value to a key array in the scenario object
@@ -63,6 +60,12 @@ const InvestmentLists = () => {
     setCurrScenario((prev) => ({
       ...prev,
       [key]: [...(prev[key] || []), value],
+    }));
+  }, [setCurrScenario]);
+  const removeFromScenarioKey = useCallback((key, valueToRemove) => {
+    setCurrScenario((prev) => ({
+      ...prev,
+      [key]: (prev[key] || []).filter((value) => value !== valueToRemove),
     }));
   }, [setCurrScenario]);
 
@@ -73,8 +76,15 @@ const InvestmentLists = () => {
       [key]: [...(prev[key] || []), value],
     }));
   }, [setTakenTaxStatusAccounts]);
+  const removeFromTakenTaxStatusAccounts = useCallback((key, valueToRemove) => {
+    console.log(valueToRemove);
+    setTakenTaxStatusAccounts((prev) => ({
+      ...prev,
+      [key]: (prev[key] || []).filter((value) => value !== valueToRemove),
+    }));
+  }, [setTakenTaxStatusAccounts]);
 
-  // Create a lookup map from investment type ID to name
+  // Helper: Create a lookup map from investment type ID to name
   const investmentTypeMap = useMemo(() => {
     const map = {};
     if (Array.isArray(currInvestmentTypes)) {
@@ -107,11 +117,90 @@ const InvestmentLists = () => {
     // console.log(taxTypesList);
     setAvailableTaxTypes(taxTypesList);
 
-    if (!editing) {
-      handleInputChange("taxType", "");
-    }
+    if (!editing) { handleInputChange("taxType", ""); }
   }, [newInvestment.id, newInvestment.investmentTypeId]);
 
+  // Helper: Adds Cash Account if non exists
+  const addCashInvestment = async (scenarioId) => {
+    // Default investment type setup for a "Cash" account
+    const cashTypeAccount = {
+      name: "Cash",
+      description: "Cash Type Account",
+      expenseRatio: "0.00",
+      taxability: true,
+      annualReturn: {
+          unit: "fixed",
+          type: "fixed",
+          value: "0",
+          mean: "0",
+          stdDev: "0",
+      },
+      annualIncome: {
+          unit: "fixed",
+          type: "fixed",
+          value: "0",
+          mean: "0",
+          stdDev: "0",
+      },
+    };
+
+    // Default investment entry tied to the cash investment type
+    const cashInvestment = {
+        investmentType: "", // Will be assigned below
+        accountTaxStatus: "non-retirement",
+        value: "0",
+    };
+
+    try {
+        // Generate ObjectIds for local/guest mode
+        const investmentTypeId = new ObjectId().toHexString();
+        const investmentId = new ObjectId().toHexString();
+        if (user?.guest) {
+            // Guest users: use locally generated IDs
+            cashTypeAccount._id = investmentTypeId;
+            cashInvestment.investmentType = investmentTypeId;
+            cashInvestment._id = investmentId;
+        } else {
+            // Logged-in users: create and persist data on server
+            const createdType = await axios.post(
+                `http://localhost:8080/scenario/${scenarioId}/investmentType`,
+                cashTypeAccount,
+                { withCredentials: true }
+            );
+            const createdInvestment = await axios.post(
+                `http://localhost:8080/scenario/${scenarioId}/investment`,
+                {
+                    ...cashInvestment,
+                    investmentType: createdType.data._id,
+                },
+                { withCredentials: true }
+            );
+            cashTypeAccount._id = createdType.data._id;
+            cashInvestment.investmentType = createdType.data._id;
+            cashInvestment._id = createdInvestment.data._id;
+        }
+
+        // Update current scenario state with new investment and type
+        appendToScenarioKey("setOfInvestmentTypes", cashInvestment.investmentType);
+        appendToScenarioKey("setOfInvestments", cashInvestment._id);
+
+        // Update top-level investment state in the app context
+        await setCurrInvestments((prev) => {
+          setCurrInvestmentTypes((prev) => {
+            return [...(Array.isArray(prev) ? prev : []), cashTypeAccount];
+          });
+          return [...(Array.isArray(prev) ? prev : []), cashInvestment];
+        });
+
+        // console.log(cashInvestment);
+    } catch (error) {
+        console.error("Error saving data:", error);
+        alert("Failed to save data! Please try again.");
+    }
+  };
+  useEffect(() => {
+    if (currInvestments.length === 0) addCashInvestment(currScenario?._id || "");
+  }, [currInvestments.length]);
 
   // UI Event: Modal open/close
   const handleOpen = () => {
@@ -122,7 +211,6 @@ const InvestmentLists = () => {
     setOpen(false); 
     setEditing(false);
   };
-
 
   // Add or update investment in state (and backend if not guest)
   const handleAddInvestment = async () => {
@@ -138,18 +226,24 @@ const InvestmentLists = () => {
     // Update scenario and tax status mappings for new investment
     const handleUpdates = (investment, editing=false) => {
       if (editing) {
+        const old = currInvestments.find((inv) => inv._id === investment._id);
+        removeFromTakenTaxStatusAccounts(old.investmentType, old.accountTaxStatus);
+        if (old.accountTaxStatus === "pre-tax") {
+          removeFromScenarioKey("rothConversionStrategy", old._id);
+          removeFromScenarioKey("rmdStrategy", old._id);
+        }
         setCurrInvestments((prev) =>
           prev.map((item) => (item._id === investment._id ? investment : item))
         );
-        return;
       }
 
-      appendToScenarioKey("setOfInvestments", investment._id);
       appendToTakenTaxStatusAccounts(investment.investmentType, investment.accountTaxStatus);
       if (investment.accountTaxStatus === "pre-tax") {
         appendToScenarioKey("rothConversionStrategy", investment._id);
         appendToScenarioKey("rmdStrategy", investment._id);
       }
+      if (editing) return;
+      appendToScenarioKey("setOfInvestments", investment._id);
       appendToScenarioKey("expenseWithdrawalStrategy", investment._id);
       setCurrInvestments((prev) => [...(Array.isArray(prev) ? prev : []), investment]);
     };
@@ -164,19 +258,6 @@ const InvestmentLists = () => {
         transformed._id = id;
         const response = !user.guest ? (await axios.post(`http://localhost:8080/updateInvestment/${id}`, transformed)).data.result : transformed;
         handleUpdates(response, true);
-
-        const original = currInvestments.find((inv) => inv._id === id);
-        if (original && original.accountTaxStatus !== taxType) {
-          setTakenTaxStatusAccounts((prev) => {
-            const updated = { ...prev };
-            if (updated[investmentTypeId]) {
-              updated[investmentTypeId] = updated[investmentTypeId].filter((val) => val !== original.accountTaxStatus);
-            }
-            if (!updated[investmentTypeId]) updated[investmentTypeId] = [];
-            if (!updated[investmentTypeId].includes(taxType)) updated[investmentTypeId].push(taxType);
-            return updated;
-          });
-        }
         setEditing(false);
       }
 
@@ -200,8 +281,16 @@ const InvestmentLists = () => {
   }, []);
 
   // Delete investment locally (and optionally backend)
-  const handleDeleteInvestment = useCallback((id) => {
-    setCurrInvestments((prev) => prev.filter((item) => item._id !== id));
+  const handleDeleteInvestment = useCallback(async (item) => {
+    if (!user.guest) { await axios.post(`http://localhost:8080/deleteInvestment/${item._id}`); }
+    removeFromScenarioKey("setOfInvestments", item._id);
+    removeFromTakenTaxStatusAccounts(item.investmentType, item.accountTaxStatus);
+    if (item.accountTaxStatus === "pre-tax") {
+      removeFromScenarioKey("rothConversionStrategy", item._id);
+      removeFromScenarioKey("rmdStrategy", item._id);
+    }
+    removeFromScenarioKey("expenseWithdrawalStrategy", item._id);
+    setCurrInvestments((prev) => prev.filter((inv) => inv._id !== item._id));
   }, [setCurrInvestments]);
 
   // Investment list renderer by tax type
@@ -237,7 +326,7 @@ const InvestmentLists = () => {
               <IconButton edge="end" aria-label="edit" onClick={() => handleEditInvestment(item)}>
                 <EditIcon />
               </IconButton>
-              <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteInvestment(item._id)} disabled={isCash}>
+              <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteInvestment(item)} disabled={isCash}>
                 <DeleteIcon />
               </IconButton>
             </ListItem>
@@ -246,6 +335,7 @@ const InvestmentLists = () => {
       </List>
     );
   };
+  
 
   return (
     <ThemeProvider theme={theme}>

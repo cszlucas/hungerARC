@@ -20,92 +20,6 @@ export default function PageHeader() {
   const isActive = (pages) => pages.includes(pageName);
 
   const handleNavigation = (to) => {
-    const addCashInvestment = async (scenarioId) => {
-      // Default investment type setup for a "Cash" account
-      const cashTypeAccount = {
-        name: "Cash",
-        description: "Cash Type Account",
-        expenseRatio: "0.00",
-        taxability: true,
-        annualReturn: {
-            unit: "fixed",
-            type: "fixed",
-            value: "0",
-            mean: "0",
-            stdDev: "0",
-        },
-        annualIncome: {
-            unit: "fixed",
-            type: "fixed",
-            value: "0",
-            mean: "0",
-            stdDev: "0",
-        },
-      };
-
-      // Default investment entry tied to the cash investment type
-      const cashInvestment = {
-          investmentType: "", // Will be assigned below
-          accountTaxStatus: "non-retirement",
-          value: "0",
-      };
-
-      // Utility to append new values to array fields in scenario state
-      const handleAppendInScenario = (key, newValue) => {
-          setCurrScenario((prev) => ({
-              ...prev,
-              [key]: [...(prev[key] || []), newValue]
-          }));
-      };
-
-      try {
-          // Generate ObjectIds for local/guest mode
-          const investmentTypeId = new ObjectId().toHexString();
-          const investmentId = new ObjectId().toHexString();
-
-          if (user?.guest) {
-              // Guest users: use locally generated IDs
-              cashTypeAccount._id = investmentTypeId;
-              cashInvestment.investmentType = investmentTypeId;
-              cashInvestment._id = investmentId;
-          } else {
-              // Logged-in users: create and persist data on server
-              const createdType = await axios.post(
-                  `http://localhost:8080/scenario/${scenarioId}/investmentType`,
-                  cashTypeAccount,
-                  { withCredentials: true }
-              );
-              const createdInvestment = await axios.post(
-                  `http://localhost:8080/scenario/${scenarioId}/investment`,
-                  {
-                      ...cashInvestment,
-                      investmentType: createdType.data._id,
-                  },
-                  { withCredentials: true }
-              );
-
-              cashInvestment.investmentType = createdType.data._id;
-              cashInvestment._id = createdInvestment.data._id;
-          }
-
-          // Update current scenario state with new investment and type
-          handleAppendInScenario("setOfInvestmentTypes", cashInvestment.investmentType);
-          handleAppendInScenario("setOfInvestments", cashInvestment._id);
-
-          // Update top-level investment state in the app context
-          await setCurrInvestments((prev) => {
-            setCurrInvestmentTypes((prev) => {
-              return [...(Array.isArray(prev) ? prev : []), cashTypeAccount];
-            });
-            return [...(Array.isArray(prev) ? prev : []), cashInvestment];
-          });
-
-          // console.log(cashInvestment);
-      } catch (error) {
-          console.error("Error saving data:", error);
-          alert("Failed to save data! Please try again.");
-      }
-    };
     // Handles the save operation and post-save routing or actions
     const handleSave = async () => {
       setIsSaving(true);
@@ -142,7 +56,7 @@ export default function PageHeader() {
           setScenarioData((prev) => [...prev, { ...scenario, _id: id }]);
           setEditMode(id);
           
-          await addCashInvestment(id);
+          // await addCashInvestment(id);
         } else {
           if (!user.guest) await axios.post(`http://localhost:8080/updateScenario/${editMode}`, scenario, { withCredentials: true });
           setScenarioData((prev) => prev.map((item) => (item._id === editMode ? scenario : item)));

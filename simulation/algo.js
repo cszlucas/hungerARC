@@ -181,7 +181,7 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
       if (annualChange.type == "fixed") {
         incomeValue += amt;
       } else if (annualChange.type == "percentage") {
-        incomeValue *= 1 + amt * 0.01;
+        incomeValue *= 1 + amt;
       }
       if (incomeEvent.inflationAdjustment) {
         console.log("inflationAdjustment is true, income value goes to ", incomeValue);
@@ -189,7 +189,7 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
       }
 
       if (spouseDeath) {
-        incomeValue *= incomeEvent.userPercentage * 0.01;
+        incomeValue *= incomeEvent.userPercentage;
       }
 
       incomeEvent.initialAmount = incomeValue;
@@ -253,7 +253,7 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals, year) 
     }
 
     if (annualIncome.unit == "percentage") {
-      income *= 1 + investment.value * 0.01;
+      income *= 1 + investment.value;
     }
     // Add the income to curYearIncome, if the investment’s tax status is ‘non-retirement’ and the investment type’s taxability is ‘taxable’.
     if (investment.accountTaxStatus == "non-retirement" && investmentType.taxability==true) {
@@ -280,7 +280,7 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals, year) 
       change = annualReturn.value;
     }
     if (annualReturn.unit == "percentage") {
-      change = investment.value * (change * 0.01);
+      change = investment.value * (change);
     }
     // Add the income to the value of the investment
     investment.value += change;
@@ -295,7 +295,7 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals, year) 
       });
     }
     // Calculate this year’s expenses, by multiplying the expense ratio and the average value of the investment
-    let expenses = investmentType.expenseRatio * 0.01 * ((initialValue + investment.value) / 2);
+    let expenses = investmentType.expenseRatio * ((initialValue + investment.value) / 2);
     if(investmentType.name=="Cash" || investmentType.name=="cash"){
     console.log('investment of CASH :>> ', investment);
     }

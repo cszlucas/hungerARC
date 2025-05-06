@@ -1,14 +1,16 @@
 const StateTax = require("../server/models/stateTax.js");
 const Tax = require("../server/models/tax.js");
 const User = require("../server/models/user.js");
+const RMD = require("../server/models/rmd-schema.js");
 const { exploreData, chartData } = require("./charts.js");
 const { calculateLifeExpectancy } = require("./algo.js");
 const path = require("path");
 const { formatToNumber } = require("./helper.js");
 const { getEvent, scenarioExplorationUpdate, generateParameterCombinations } = require("./exploration.js");
-const { logFinancialEvent } = require("./logs.js");
+const { logFinancialEvent, writeCSVLog } = require("./logs.js");
 const Piscina = require("piscina");
 let numSimulations;
+const BASE_SEED = 12345;
 const timestamp = new Date();
 const piscina = new Piscina({
   filename: path.resolve(__dirname, "./worker.js"),
@@ -22,7 +24,7 @@ const piscina = new Piscina({
 
 class DataStore {
   constructor() {
-    this.taxData = this.stateTax = this.scenario = this.investment = this.income = this.expense = this.rebalance = this.invest = this.investmentType = this.user = {};
+    this.taxData = this.stateTax = this.scenario = this.investment = this.income = this.expense = this.rebalance = this.invest = this.investmentType = this.user = this.rmd = {};
   }
   async populateData(userId, residence) {
     try {
@@ -46,6 +48,8 @@ class DataStore {
       }
       this.stateTax = matchedTax;
       console.log("this.stateTax", this.stateTax);
+      const rmd = await RMD.findOne();
+      this.rmd = rmd;
       // const investmentType = await InvestmentType.find({
       //   _id: { $in: scenario.setOfInvestmentTypes },
       // });
@@ -61,7 +65,7 @@ class DataStore {
 }
 
 async function main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, numScenarioTimes) {
-  //console.log("exploration",JSON.stringify(exploration, null, 2));
+  console.log("exploration", JSON.stringify(exploration, null, 2));
 
   const dataStore = new DataStore();
   await Promise.all([dataStore.populateData(userId, scenario.stateResident)]);
@@ -71,7 +75,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   const csvLog = []; // For user_datetime.csv
   const eventLog = []; // For user_datetime.log
 
-  const { taxData, stateTax, user } = {
+  const { taxData, stateTax, user, rmd } = {
     taxData: dataStore.getData("taxData"),
     stateTax: dataStore.getData("stateTax"),
     user: dataStore.getData("user"),
@@ -94,11 +98,10 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   // console.log("scenario");
   console.dir(scenario, { depth: null });
 
-
   const startYearPrev = (new Date().getFullYear() - 1).toString();
   //calculate life expectancy
   const { lifeExpectancyUser, lifeExpectancySpouse } = calculateLifeExpectancy(scenario);
- // console.log("lifeExpectancyUser", lifeExpectancyUser);
+  // console.log("lifeExpectancyUser", lifeExpectancyUser);
   let currentYear = new Date().getFullYear();
   // console.log('lifeExpectancySpouse here :>> ', lifeExpectancySpouse);
 
@@ -111,7 +114,8 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   let explore;
   let foundData = [];
   let parameter = [];
-  let combinations;
+  let combinations = [];
+
   const typeToData = {
     Income: income,
     Expense: expense,
@@ -121,19 +125,25 @@ async function main(investmentType, invest, rebalance, expense, income, investme
 
   let duration = 1;
   // console.log("exploration :>> ", exploration);
-  let rothExploration;
+  let rothExploration = false;
   if (exploration && exploration.length) {
     for (let i = 0; i < exploration.length; i++) {
       if (exploration[i].type == "Roth Optimizer Flag") {
+        formatToNumber(exploration[i].data.optimizerSettings.enabled);
         rothExploration = exploration[i];
+        combinations = new Array(numScenarioTimes).fill(exploration[i].data.optimizerSettings.enabled);
+        // Fill the second half with the inverse
+        combinations.push(...new Array(numScenarioTimes).fill(!exploration[i].data.optimizerSettings.enabled));
+        console.log("COMBINATIONS", combinations);
+        duration = 2;
+        parameter[i] = exploration[i].type;
+        explorationData.parameter[i] = `${parameter[i]}`;
         exploration.splice(i, 1); // remove the Roth Optimizer Flag from exploration array
         break;
       }
     }
     if (rothExploration) {
-      // console.log("scenario before roth :>> ", scenario);
       scenarioExplorationUpdate(scenario, ["Roth Optimizer Flag"], [rothExploration.data.optimizerSettings]);
-      // console.log("scenario after roth :>> ", scenario);
     }
   }
 
@@ -153,10 +163,12 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   }
 
   let isFirstIteration = true;
+  let secondIteration = false;
   //return;
   for (let i = 0; i < duration; i++) {
     const workerInputs = [];
     if (exploration && exploration.length >= 1) {
+      //roth does not come into here
       logFinancialEvent({
         year: "Explore",
         type: "simulationInfo",
@@ -166,16 +178,8 @@ async function main(investmentType, invest, rebalance, expense, income, investme
       console.log("INCOME HERE, ", income);
       if (isFirstIteration) {
         foundData = exploration.map((spec) => {
-          console.log("spec type :>> ", spec.type);
-          // if (spec.type != "Roth Optimizer Flag"){
-          console.log("spec :>> ", spec);
           const dataArray = typeToData[spec.type]; // expense, income, etc.
-          console.log("dataArray HERE :>> ", dataArray);
           return getEvent(dataArray, spec.data); // get matching object
-          // } else{
-          // console.log("spec roth :>> ", spec);
-          // return spec.data;
-          // }
         });
         isFirstIteration = false;
       }
@@ -184,15 +188,19 @@ async function main(investmentType, invest, rebalance, expense, income, investme
       // console.log("DID IT CHANGE",JSON.stringify(invest, null, 2));
     }
     const singleTaxData = taxData[0];
+    if (rothExploration && secondIteration == true) {
+      rothExploration.data.optimizerSettings.enabled = !rothExploration.data.optimizerSettings.enabled; //do the opposite
+    }
 
     for (let x = 0; x < numScenarioTimes; x++) {
+      const seed = BASE_SEED + i * 100000 + x;
       logFinancialEvent({
         year: "Simulation",
         type: "simulationInfo",
         description: `ON SIMULATION NUMBER: ${x + 1}.`,
       });
       console.log(`ON SIMULATION NUMBER: ${x + 1}\n`);
-      
+
       const clonedData = JSON.parse(
         JSON.stringify({
           scenario,
@@ -209,26 +217,40 @@ async function main(investmentType, invest, rebalance, expense, income, investme
           investmentType,
           csvLog,
           currentYear,
+          seed,
+          rmd,
+          x,
+          user
         })
       );
 
       workerInputs.push(clonedData);
 
       // logs only for the first simulation
-      if (x == 0) {
-        const userName = user.email.split("@")[0];
-        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-        const baseFilename = `${userName}_${timestamp}`;
-        const csvFile = path.join(__dirname, "../server/logs", `${baseFilename}.csv`);
-        const logFile = path.join(__dirname, "../server/logs", `${baseFilename}.log`);
+      // if (x == 0) {
+        // const userName = user.email.split("@")[0];
+        // const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        // const baseFilename = `${userName}_${timestamp}`;
+        // const csvFile = path.join(__dirname, "../simulation/investment_logs", `${baseFilename}.csv`);
+        // // const logFile = path.join(__dirname, "../simulation/investment_logs", `${baseFilename}.log`);
         // writeCSVLog(csvFile, csvLog);
         // writeEventLog(logFilename, simulationResult.eventLog);
-      }
+      // }
     }
+
+
+    secondIteration = true;
     const allSimulationResults = await Promise.all(workerInputs.map((input) => piscina.run(input)));
     //console.log("allSimulationResults", JSON.stringify(allSimulationResults));
 
-    if (exploration && exploration.length >= 1) {
+    const userName = user.email.split("@")[0];
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const baseFilename = `${userName}_${timestamp}`;
+    const csvFile = path.join(__dirname, "./investment_logs", `${baseFilename}.csv`);
+    writeCSVLog(csvFile, allSimulationResults);
+    // writeCSVLog(csvFile, csvLog);
+
+    if ((exploration && exploration.length >= 1) || rothExploration) {
       explore = exploreData(allSimulationResults, explorationData, combinations[i], currentYear);
     } else {
       let years = chartData(allSimulationResults, numScenarioTimes);
@@ -237,8 +259,8 @@ async function main(investmentType, invest, rebalance, expense, income, investme
     }
   }
 
-  if (exploration && exploration.length >= 1) {
-    //console.log("EXPLORE", JSON.stringify(explore, null, 2));
+  if ((exploration && exploration.length >= 1) || rothExploration) {
+    console.log("EXPLORE", JSON.stringify(explore, null, 2));
     return explore;
   }
 }

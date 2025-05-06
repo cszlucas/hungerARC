@@ -5,12 +5,16 @@ import { AuthContext } from "../../../context/authContext";
 import yaml from "js-yaml";
 import axios from "axios";
 import { ObjectId } from "bson";
+import { abbreviationToStateName } from "./helper";
 
 const ImportBtn = () => {
     // const [ selectedScenario, setSelectedScenario] = useState(null); // Track selected scenario
-    const { scenarioData, setScenarioData, setEditMode, setCurrScenario, setCurrInvestments, setCurrIncome, setCurrExpense, setCurrInvest, setCurrRebalance, setCurrInvestmentTypes } = useContext(AppContext);
+    const { 
+      scenarioData, setScenarioData, setEditMode, setCurrScenario, setCurrInvestments, setCurrIncome, 
+      setCurrExpense, setCurrInvest, setCurrRebalance, setCurrInvestmentTypes, stateTaxes, setTakenTaxStatusAccounts
+    } = useContext(AppContext);
     const { user } = useContext(AuthContext);
-
+    
     function parseScenarioYAML(yamlObject) {
         const {
           name,
@@ -247,7 +251,8 @@ const ImportBtn = () => {
               return [...mapped, ...missing];
             })(),
             financialGoal,
-            stateResident: residenceState,
+            // stateResident: stateTaxes.find(e => e.state === abbreviationToStateName[residenceState])._id, 
+            stateResident: abbreviationToStateName[residenceState], 
           }
         };
     }
@@ -277,6 +282,13 @@ const ImportBtn = () => {
             setCurrExpense(parsed.expense);
             setCurrInvest(parsed.invest);
             setCurrRebalance(parsed.rebalance);
+            const taxStatusAccounts = parsed.investments.reduce((acc, inv) => {
+              const { investmentType: type, accountTaxStatus: status } = inv;
+              if (!acc[type]) acc[type] = [];
+              acc[type].push(status);
+              return acc;
+            }, {});
+            setTakenTaxStatusAccounts(taxStatusAccounts);
           } catch (err) {
             console.error("❌ YAML import failed:", err);
           }

@@ -32,14 +32,20 @@ exports.statetax = async (req, res) => {
 
 
 exports.getStateTax = async (req, res) => {
-  console.log("getStateTax", req.params.id);
-  const userId = req.params.id;
-  const user = await User.findById( userId );
-  console.log("user", user);
-  try{
-    const userStates = await State.find(
-      { _id: { $in: user.stateYaml } }
-    ).select('_id state'); // only select _id and name
+  // console.log("getStateTax", req.params.id);
+  if (!req.session.user) res.status(500).json({ message: "Failed to get user session" });
+  const userData = req.session.user;
+  
+  try {
+    let userStates = []
+    if (userData && userData._id) {
+      const user = await User.findById( userData._id );
+      if (user) {
+        userStates = await State.find(
+          { _id: { $in: user.stateYaml } }
+        ).select('_id state'); // only select _id and name
+      }
+    }
 
     const additionalStates = await State.find({ 
       state: { $in: ['New York', 'New Jersey', 'Connecticut'] }

@@ -7,20 +7,60 @@ if (!fs.existsSync(logDir)) {
 const timestamp = new Date();
 const { log, logFile }= createLogger();
 
-
+function formatCurrency(val) {
+  if (typeof val === "number") {
+    return `$${val.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  } else {
+    return val ?? "";
+  }
+}
 function writeCSVLog(csvFilename, simulationResult) {
   const years = simulationResult.years; // array of years like [2025, 2026,...]
   const firstYearData = simulationResult[0]; // assuming it's not empty
-  const investments = Object.keys(firstYearData).filter((key) => key !== "year");
-  console.log("investments :>> ", investments);
-  // const investments = simulationResult.investments; // ['IRA', '401k', 'Roth']
-  const valuesByYear = simulationResult; // assume array of {year: 2025, IRA: 1000, 401k: 2000, Roth: 500}
+  // console.log("simulationResult");
+  console.log("first year data: ");
+  console.dir(firstYearData, { depth: null, colors: true });
 
-  const header = ["Year", ...investments].join(",");
-  const rows = valuesByYear.map((entry) => [entry.year, ...investments.map((inv) => entry[inv])].join(","));
+  // const investments = Object.keys(firstYearData).filter((key) => key !== "year");
+  // console.log("investments :>> ", investments);
+  // // const investments = simulationResult.investments; // ['IRA', '401k', 'Roth']
+  // const valuesByYear = simulationResult; // assume array of {year: 2025, IRA: 1000, 401k: 2000, Roth: 500}
 
-  const fullCSV = [header, ...rows].join("\n");
-  fs.writeFileSync(csvFilename, fullCSV, "utf8");
+  // const header = ["Year", ...investments].join(",");
+  // const rows = valuesByYear.map((entry) => [entry.year, ...investments.map((inv) => entry[inv])].join(","));
+
+  // const fullCSV = [header, ...rows].join("\n");
+  // fs.writeFileSync(csvFilename, fullCSV, "utf8");
+   // Step 1: Gather all investment names across years
+   const investmentNames = new Set();
+   for (const yearData of firstYearData) {
+     const flatInvestments = (yearData.investments || []).flat();
+     flatInvestments.forEach((inv) => {
+       if (inv?.name) investmentNames.add(inv.name);
+     });
+   }
+   const headers = ["Year", ...Array.from(investmentNames)];
+ 
+   // Step 2: Build rows
+   const rows = firstYearData.map((yearData) => {
+     const row = { Year: yearData.year };
+     const flatInvestments = (yearData.investments || []).flat();
+ 
+     for (const name of investmentNames) {
+      //  const sum = flatInvestments
+      //    .filter((inv) => inv.name === name)
+      //    .reduce((total, inv) => total + (formatCurrency(inv.value) || 0), 0);
+      //  row[name] = sum;
+      const investment = flatInvestments.find((inv) => inv.name === name);
+      const value = investment?.value ?? 0;
+      row[name] = `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+     }
+ 
+     return headers.map((h) => row[h] ?? 0).join(",");
+   });
+ 
+   const fullCSV = [headers.join(","), ...rows].join("\n");
+   fs.writeFileSync(csvFilename, fullCSV, "utf8");
 }
 function writeEventLog(logFilename, simulationResult){
 }
