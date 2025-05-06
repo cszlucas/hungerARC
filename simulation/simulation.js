@@ -194,6 +194,7 @@ async function runSimulation(
       metGoal
     );
     metGoal = goal;
+    console.log("TAXES11...", taxes);
 
     // PAY DISCRETIONARY EXPENSES
     if (spendingStrategy && spendingStrategy.length != 0) {
@@ -305,6 +306,8 @@ function updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, c
     return;
   }
 
+  console.log("year", year);
+  console.log("investments",JSON.stringify(investments, null, 2));
   updateYearDataBucket(yearDataBuckets, yearIndex, {
     investments: investments.map((event) => ({
       name: lookup[event.investmentType.toString()] ? `${lookup[event.investmentType.toString()]} (${event.accountTaxStatus})` : "Unknown",

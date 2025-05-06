@@ -43,6 +43,7 @@ function payNonDiscretionaryExpenses(
       cash: cashInvestment.value,
     },
   });
+  console.log("TAXES33...", taxes);
   printEvents(nonDiscretionaryExpenses, year, "non-discretionary", "expense", inflationRate, spouseDeath);
   //console.log("nonDiscretionaryExpenses Amt: ", expenseAmt, "and taxes: ", taxes);
   //console.log("My cash investment: ", cashInvestment.value, "Amount I need to withdraw: ", withdrawalAmt);
@@ -90,6 +91,7 @@ function payNonDiscretionaryExpenses(
       //console.log("You paid all your non-discretionary expenses...phew");
     }
   }
+  console.log("TAXES55...", taxes);
   return {
     nonDiscretionary: nonDiscretionaryExpenses,
     taxes: taxes,
@@ -136,7 +138,9 @@ function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdr
       maximumFractionDigits: 2,
     })}, capitalGainsTax: $${capitalGainsTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
   });
-  return federalTax + stateTax + ssTax + earlyWithdrawalTax + capitalGainsTax;
+  let taxx = (federalTax + stateTax + ssTax + earlyWithdrawalTax + capitalGainsTax);
+  console.log("TAXES44...", (federalTax + stateTax + ssTax + earlyWithdrawalTax + capitalGainsTax));
+  return taxx;
 }
 
 function taxAmt(income, taxBracket, type) {

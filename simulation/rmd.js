@@ -68,8 +68,12 @@ async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOr
 
 // from the pretax account to non-retirement accounts
 function transferInvestment(preTaxInvest, allInvestmentsNonRetirement, amountTransfer, investments, year, withdrawalStrategy) {
+  //console.log("allInvestmentsNonRetirement", allInvestmentsNonRetirement);
+  //console.log("preTaxInvest", preTaxInvest);
   let nonRetirementMap = new Map(allInvestmentsNonRetirement.map((investment) => [investment.investmentType, investment]));
-  let nonRetirementInvestment = nonRetirementMap.get("preTaxInvest.investmentType");
+  let nonRetirementInvestment = nonRetirementMap.get(preTaxInvest.investmentType);
+  //console.log("nonRetirementMap", nonRetirementMap);
+  //console.log("nonRetirementInvestment", nonRetirementInvestment);
 
   if (nonRetirementInvestment) {
     // console.log("able to add value: ", amountTransfer, "to a current afterTaxInvestment ", nonRetirementInvestment._id, "of value", nonRetirementInvestment.value);
