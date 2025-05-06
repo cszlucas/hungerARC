@@ -229,8 +229,8 @@ function payFromInvestment(withdrawalAmt, investment, userAge, yearTotals, year,
   } else if (investment.value - withdrawalAmt > 0) {
     //console.log("subtract needed and keep investment:", investment._id, "type:", investment.accountTaxStatus, "value: ", investment.value);
     updateValues(investment, userAge, yearTotals, true, withdrawalAmt, year, type);
-    //investment.value -= withdrawalAmt;
-    investment.value=0;
+    investment.value -= withdrawalAmt;
+    //investment.value=0;
     //console.log("Investment now with value: ", investment.value);
     return withdrawalAmt;
   } else {
