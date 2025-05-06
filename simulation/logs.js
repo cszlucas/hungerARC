@@ -7,18 +7,12 @@ if (!fs.existsSync(logDir)) {
 const timestamp = new Date();
 const { log, logFile }= createLogger();
 
-function formatCurrency(val) {
-  if (typeof val === "number") {
-    return `$${val.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-  } else {
-    return val ?? "";
-  }
-}
+
 function writeCSVLog(csvFilename, simulationResult) {
   const years = simulationResult.years; // array of years like [2025, 2026,...]
   const firstYearData = simulationResult[0]; // assuming it's not empty
   // console.log("simulationResult");
-  console.log("first year data: ");
+  // console.log("first year data: ");
   console.dir(firstYearData, { depth: null, colors: true });
 
   // const investments = Object.keys(firstYearData).filter((key) => key !== "year");
@@ -47,13 +41,10 @@ function writeCSVLog(csvFilename, simulationResult) {
      const flatInvestments = (yearData.investments || []).flat();
  
      for (const name of investmentNames) {
-      //  const sum = flatInvestments
-      //    .filter((inv) => inv.name === name)
-      //    .reduce((total, inv) => total + (formatCurrency(inv.value) || 0), 0);
-      //  row[name] = sum;
-      const investment = flatInvestments.find((inv) => inv.name === name);
-      const value = investment?.value ?? 0;
-      row[name] = `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+       const sum = flatInvestments
+         .filter((inv) => inv.name === name)
+         .reduce((total, inv) => total + (inv.value || 0), 0);
+       row[name] = sum;
      }
  
      return headers.map((h) => row[h] ?? 0).join(",");

@@ -96,7 +96,7 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
         logFinancialEvent({
           year: year,
           type: "roth conversion",
-          description: `Investment ID ${investmentType._id} is now an after-tax account with same value of ${formatCurrency(investment.value)}. RC becomes ${formatCurrency(rc)}`,
+          description: `Investment ID ${investment._id} is now an after-tax account with same value of ${formatCurrency(investment.value)}. RC becomes ${formatCurrency(rc)}`,
         });
       } else {
         investment.value -= rc;
@@ -126,13 +126,13 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
         logFinancialEvent({
           year: year,
           type: "roth conversion",
-          description: `Investment ID ${investmentType._id} is partially transferred, value is now ${formatCurrency(investment.value)} after
+          description: `Investment ID ${investment._id} is partially transferred, value is now ${formatCurrency(investment.value)} after
             subtracting ${formatCurrency(rc)}. A new investment object is created with value ${formatCurrency(rc)} and account tax status after-tax. RC becomes 0`,
         });
         rc = 0;
       }
       //  console.log('scenario.investments :>> ', scenario.setOfInvestments);
-      // console.log('investments :>> ', investments);
+      
     }
   }
 
@@ -147,6 +147,7 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
     type: "roth conversion",
     description: "Roth conversion has now been done.",
   });
+  // console.log('investments HERE :>> ', investments);
 }
 
 function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, yearTotals, cashInvestment, curIncomeEvent, spouseDeath) {
