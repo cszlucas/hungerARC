@@ -11,7 +11,7 @@ const ImportBtn = () => {
     // const [ selectedScenario, setSelectedScenario] = useState(null); // Track selected scenario
     const { 
       scenarioData, setScenarioData, setEditMode, setCurrScenario, setCurrInvestments, setCurrIncome, 
-      setCurrExpense, setCurrInvest, setCurrRebalance, setCurrInvestmentTypes, stateTaxes
+      setCurrExpense, setCurrInvest, setCurrRebalance, setCurrInvestmentTypes, stateTaxes, setTakenTaxStatusAccounts
     } = useContext(AppContext);
     const { user } = useContext(AuthContext);
     
@@ -282,6 +282,13 @@ const ImportBtn = () => {
             setCurrExpense(parsed.expense);
             setCurrInvest(parsed.invest);
             setCurrRebalance(parsed.rebalance);
+            const taxStatusAccounts = parsed.investments.reduce((acc, inv) => {
+              const { investmentType: type, accountTaxStatus: status } = inv;
+              if (!acc[type]) acc[type] = [];
+              acc[type].push(status);
+              return acc;
+            }, {});
+            setTakenTaxStatusAccounts(taxStatusAccounts);
           } catch (err) {
             console.error("❌ YAML import failed:", err);
           }

@@ -154,14 +154,13 @@ export const AppProvider = ({ children }) => {
   
       const investments = results[0] || [];
 
-      const takenTaxStatusAccounts = investments.reduce((acc, inv) => {
+      const taxStatusAccounts = investments.reduce((acc, inv) => {
         const { investmentType: type, accountTaxStatus: status } = inv;
         if (!acc[type]) acc[type] = [];
         acc[type].push(status);
         return acc;
       }, {});
-  
-      setTakenTaxStatusAccounts(takenTaxStatusAccounts);
+      setTakenTaxStatusAccounts(taxStatusAccounts);
       setTempExploration([]);
     };
   
@@ -177,27 +176,27 @@ export const AppProvider = ({ children }) => {
   }, [currScenario]);
 
   useEffect(() => {
-      if (currInvestments) localStorage.setItem("currentInvestments", JSON.stringify(currInvestments));
+    if (currInvestments) localStorage.setItem("currentInvestments", JSON.stringify(currInvestments));
   }, [currInvestments]);
 
   useEffect(() => {
-      if (currIncome) localStorage.setItem("currentIncome", JSON.stringify(currIncome));
+    if (currIncome) localStorage.setItem("currentIncome", JSON.stringify(currIncome));
   }, [currIncome]);
 
   useEffect(() => {
-      if (currExpense) localStorage.setItem("currentExpense", JSON.stringify(currExpense));
+    if (currExpense) localStorage.setItem("currentExpense", JSON.stringify(currExpense));
   }, [currExpense]);
 
   useEffect(() => {
-      if (currInvest) localStorage.setItem("currentInvest", JSON.stringify(currInvest));
+    if (currInvest) localStorage.setItem("currentInvest", JSON.stringify(currInvest));
   }, [currInvest]);
 
   useEffect(() => {
-      if (currRebalance) localStorage.setItem("currentRebalance", JSON.stringify(currRebalance));
+    if (currRebalance) localStorage.setItem("currentRebalance", JSON.stringify(currRebalance));
   }, [currRebalance]);
 
   useEffect(() => {
-      if (currInvestmentTypes) localStorage.setItem("currentInvestmentType", JSON.stringify(currInvestmentTypes));
+    if (currInvestmentTypes) localStorage.setItem("currentInvestmentType", JSON.stringify(currInvestmentTypes));
   }, [currInvestmentTypes]);
 
   useEffect(() => {
