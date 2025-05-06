@@ -129,18 +129,21 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   if (exploration && exploration.length) {
     for (let i = 0; i < exploration.length; i++) {
       if (exploration[i].type == "Roth Optimizer Flag") {
+        formatToNumber(exploration[i].data.optimizerSettings.enabled);
         rothExploration = exploration[i];
+        combinations = new Array(numScenarioTimes).fill(exploration[i].data.optimizerSettings.enabled);
+        // Fill the second half with the inverse
+        combinations.push(...new Array(numScenarioTimes).fill(!exploration[i].data.optimizerSettings.enabled));
+        console.log("COMBINATIONS", combinations);
+        duration = 2;
         parameter[i] = exploration[i].type;
-        combinations[i] = parameter[i];
         explorationData.parameter[i] = `${parameter[i]}`;
         exploration.splice(i, 1); // remove the Roth Optimizer Flag from exploration array
         break;
       }
     }
     if (rothExploration) {
-      // console.log("scenario before roth :>> ", scenario);
       scenarioExplorationUpdate(scenario, ["Roth Optimizer Flag"], [rothExploration.data.optimizerSettings]);
-      // console.log("scenario after roth :>> ", scenario);
     }
   }
 
@@ -160,6 +163,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
   }
 
   let isFirstIteration = true;
+  let secondIteration = false;
   //return;
   for (let i = 0; i < duration; i++) {
     const workerInputs = [];
@@ -184,6 +188,9 @@ async function main(investmentType, invest, rebalance, expense, income, investme
       // console.log("DID IT CHANGE",JSON.stringify(invest, null, 2));
     }
     const singleTaxData = taxData[0];
+    if (rothExploration && secondIteration == true) {
+      rothExploration.data.optimizerSettings.enabled = !rothExploration.data.optimizerSettings.enabled; //do the opposite
+    }
 
     for (let x = 0; x < numScenarioTimes; x++) {
       const seed = BASE_SEED + i * 100000 + x;
@@ -228,6 +235,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
         // writeEventLog(logFilename, simulationResult.eventLog);
       }
     }
+    secondIteration = true;
     const allSimulationResults = await Promise.all(workerInputs.map((input) => piscina.run(input)));
     //console.log("allSimulationResults", JSON.stringify(allSimulationResults));
 
