@@ -126,6 +126,7 @@ exports.importUserData = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+
     await Promise.all([
       ...investments.map(i => new Investment(i).save()),
       ...investmentTypes.map(i => new InvestmentType(i).save()),
@@ -135,12 +136,12 @@ exports.importUserData = async (req, res) => {
       ...rebalance.map(e => new RebalanceEvent(e).save())
     ]);
     
-    await new Scenario(scenario).save();
+   const newScenario = await new Scenario(scenario).save();
 
     user.scenarios.push(scenario._id);
     await user.save();
-
-    return res.status(200).json({ message: "Scenario successfully imported" });
+    console.log("USER SAVED, ", newScenario);
+    return res.status(200).json({ message: "Scenario successfully imported",   scenario: newScenario });
 
   } catch (err) {
     console.error("Import error:", err);

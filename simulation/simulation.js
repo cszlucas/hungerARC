@@ -36,7 +36,7 @@ async function runSimulation(
   rmd
 ) {
   setGlobalRand(rand);
-  //console.log("RUN SIMULATION",JSON.stringify(stateTax, null, 2));
+  console.log("RUN SIMULATION",JSON.stringify(rmd, null, 2));
   //console.log("currentYear", currentYear);
   // previous year
   let irsLimit = scenario.irsLimit;
