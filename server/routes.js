@@ -57,7 +57,7 @@ router.post("/importScenario/", scenario.importUserData);
 //tax
 router.get("/tax", tax.tax);
 router.get("/statetax/:state", tax.statetax);
-router.get("/getStateTax/:id", tax.getStateTax);
+router.get("/getStateTax", tax.getStateTax);
 
 //webscraping
 router.get("/standardDeductions", webscraping.standardDeductions);

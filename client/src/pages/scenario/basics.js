@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box,
@@ -16,11 +16,15 @@ import {
 } from "../../components/styles";
 import { AppContext } from "../../context/appContext";
 
-const states = ["California", "Colorado", "Connecticut", "Delaware", "Hawaii", "Massachusetts", "New Jersey", "New York", "Texas"];
+// const states = ["California", "Colorado", "Connecticut", "Delaware", "Hawaii", "Massachusetts", "New Jersey", "New York", "Texas"];
 
 const Basics = () => {
-  const { currScenario, setCurrScenario } = useContext(AppContext);
+  const { currScenario, setCurrScenario, stateTaxes } = useContext(AppContext);
   const navigate = useNavigate();
+  
+  const stateLabels = useMemo(() => stateTaxes.map((e) => e.state), [stateTaxes]);
+  // const stateIds = useMemo(() => stateTaxes.map((e) => e._id), [stateTaxes]);
+  const birthYears = useMemo(() => Array.from({ length: new Date().getFullYear() - 1925 + 1 }, (_, i) => 1925 + i), []);
 
   // General handler for updating values in nested or top-level fields
   const handleInputChange = (field, value) => {
@@ -78,7 +82,7 @@ const Basics = () => {
           <CustomDropdown
             label="State Residence"
             value={currScenario.stateResident}
-            menuItems={states}
+            menuItems={stateLabels}
             setValue={(value) => handleInputChange("stateResident", value)}
           />
 
@@ -99,7 +103,7 @@ const Basics = () => {
             label="Your Birth Year"
             value={currScenario.birthYearUser}
             setValue={(value) => handleInputChange("birthYearUser", value)}
-            menuItems={Array.from({ length: new Date().getFullYear() - 1925 + 1 }, (_, i) => 1925 + i)}
+            menuItems={birthYears}
           />
 
           <CustomToggle
@@ -147,7 +151,7 @@ const Basics = () => {
               label="Spouse's Birth Year"
               value={currScenario.birthYearSpouse}
               setValue={(value) => handleInputChange("birthYearSpouse", value)}
-              menuItems={Array.from({ length: new Date().getFullYear() - 1925 + 1 }, (_, i) => 1925 + i)}
+              menuItems={birthYears}
             />
 
             <CustomToggle

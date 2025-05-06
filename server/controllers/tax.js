@@ -32,8 +32,10 @@ exports.statetax = async (req, res) => {
 
 
 exports.getStateTax = async (req, res) => {
-  console.log("getStateTax", req.params.id);
-  const userId = req.params.id;
+  // console.log("getStateTax", req.params.id);
+  if (!req.session.user) res.status(500).json({ message: "Failed to get user session" });
+  const userData = req.session.user;
+  const userId = userData._id;
   const user = await User.findById( userId );
   console.log("user", user);
   try{
