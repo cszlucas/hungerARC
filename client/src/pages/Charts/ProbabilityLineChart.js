@@ -7,24 +7,19 @@ import ReactECharts from "echarts-for-react";
  * @param {number} financialGoal - The financial threshold that determines success.
  * @returns {Object} An object containing startYear, endYear, and an array of probabilities.
  */
-export function parseProbabilityLineChartData(rawData, financialGoal) {
+export function parseProbabilityLineChartData(rawData) {
+  if (!Array.isArray(rawData) || rawData.length === 0) {
+    console.error("❌ Invalid or empty input data.");
+    return { startYear: 2025, endYear: 2025, probabilities: [] };
+  }
+
   const startYear = rawData[0]?.year ?? 2025;
   const endYear = rawData[rawData.length - 1]?.year ?? startYear;
 
   const probabilities = rawData.map((yearData) => {
-    const simulations = yearData.investments ?? [];
-    if (simulations.length === 0) return 0;
-
-    let successCount = 0;
-
-    simulations.forEach((sim) => {
-      const totalInvestment = sim.reduce((sum, item) => sum + (item?.value ?? 0), 0);
-      if (totalInvestment >= financialGoal) {
-        successCount += 1;
-      }
-    });
-
-    return successCount / simulations.length;
+    const metGoalArray = yearData.metGoal ?? [];
+    const successCount = metGoalArray.filter((v) => v === true).length;
+    return metGoalArray.length > 0 ? successCount / metGoalArray.length : 0;
   });
 
   return {
@@ -33,6 +28,8 @@ export function parseProbabilityLineChartData(rawData, financialGoal) {
     probabilities,
   };
 }
+
+
 
 /**
  * Line chart that visualizes probability over time.
