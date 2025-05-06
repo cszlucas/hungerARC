@@ -42,7 +42,7 @@ const DEFAULT_FORM_VALUES = {
     min: "",
     max: ""
   },
-  taxStatus: "non-retirement",
+  // taxStatus: "non-retirement",
   assetAllocation: {
     type: "fixed",
     fixedPercentages: {},
@@ -69,7 +69,7 @@ const Rebalance = () => {
     return structuredClone({ ...DEFAULT_FORM_VALUES, taxStatus: status }); // or use JSON.parse(JSON.stringify(...))
   };  
   const [formValues, setFormValues] = useState(() => {
-    if (eventEditMode && eventEditMode.id) { return getRebalanceById(eventEditMode.id) || getRebalanceByTaxStatus("non-retirement"); }
+    if (eventEditMode && eventEditMode.id) { return getRebalanceById(eventEditMode.id) || getRebalanceByTaxStatus(["non-retirement", "pre-tax", "after-tax"].find(type => !currRebalance.some(r => r.taxStatus === type))); }
     return getRebalanceByTaxStatus("non-retirement");
   });
   const [disable, setDisable] = useState(true);

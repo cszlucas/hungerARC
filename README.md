@@ -35,11 +35,3 @@
    cd server
    nodemon server.js
    ```
-
-4. **Start the simulation engine**
-   In another terminal, navigate to the `simulation` folder and run:
-
-   ```bash
-   cd simulation
-   nodemon main.js
-   ```

@@ -71,7 +71,7 @@ const Expense = () => {
             min: "",
             max: "",
         },
-        userPercentage: "",
+        userPercentage: 1,
         inflationAdjustment: false,
         isDiscretionary: false
     });

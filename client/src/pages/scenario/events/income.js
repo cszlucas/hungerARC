@@ -81,7 +81,7 @@ const Income = () => {
             min: "",
             max: ""
         },
-        userPercentage: "",
+        userPercentage: 1,
         inflationAdjustment: false,
         isSocialSecurity: false
     });
