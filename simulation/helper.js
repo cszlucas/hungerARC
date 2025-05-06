@@ -224,7 +224,7 @@ function formatToNumber(obj) {
   ]);
 
   //'fixedPercentages', 'initialPercentages', 'finalPercentages'
-  const booleanFields = new Set(["inflationAdjustment", "isSocialSecurity", "isDiscretionary"]);
+  const booleanFields = new Set(["inflationAdjustment", "isSocialSecurity", "isDiscretionary", "enabled"]);
 
   function recurse(o) {
     if (Array.isArray(o)) {
