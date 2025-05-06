@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useCallback } from "react";
+import React, { useState, useContext, useEffect, useCallback, useRef } from "react";
 import { 
   Typography, Button, Stack, Box, List,
   ListItem, ListItemText, IconButton, Backdrop, Paper, Switch 
@@ -65,8 +65,13 @@ const DimensionalExploration = () => {
   (currRebalance || []).forEach((e) => { rebalanceItems[0].push(e._id); rebalanceItems[1].push(e.eventSeriesName); });
 
   const [dropDownItems, setDropDownItems] = useState([[], []]);
+  const skipFormEffect = useRef(0);
 
   useEffect(() => {
+    if (skipFormEffect.current) {
+      skipFormEffect.current -= 1; // Reset it
+      return; // Skip the effect
+    }
     if (tempExplorationForm.type === "Income") {
       handleInputChange("id", "");
       setDropDownItems(incomeItems);
@@ -83,6 +88,10 @@ const DimensionalExploration = () => {
   }, [tempExplorationForm.type, handleInputChange]);
 
   useEffect(() => {
+    if (skipFormEffect.current) {
+      skipFormEffect.current -= 1; // Reset it
+      return; // Skip the effect
+    }
     handleInputChange("parameter", "");
     if (tempExplorationForm.type === "Income") handleInputChange("data", getIncomeById(tempExplorationForm.id));
     else if (tempExplorationForm.type === "Expense") handleInputChange("data", getExpenseById(tempExplorationForm.id));
@@ -98,6 +107,7 @@ const DimensionalExploration = () => {
 
   const handleCloseBackdrop = () => {
     setOpenBackdrop(false);
+    setEventEditMode(null);
   };
 
   const handleAddExploration = () => {
@@ -107,7 +117,7 @@ const DimensionalExploration = () => {
     }
     if (tempExploration.length === 1 
       && tempExplorationForm.type === tempExploration[0].type 
-      && tempExplorationForm.parameter === tempExploration[0].parameter
+      && tempExplorationForm.parameter === tempExploration[0].parameter && eventEditMode.id !== 0 
     ) {
       showAlert("You already have a dimensional scenario exploration for that parameter.", "error");
       return;
@@ -115,8 +125,8 @@ const DimensionalExploration = () => {
 
     if (eventEditMode && eventEditMode.event === "Exploration") {
       setTempExploration((prev) => 
-        prev.map((e) => 
-          e.id === eventEditMode.id ? tempExplorationForm : e
+        prev.map((e, i) => 
+          i === eventEditMode.id ? tempExplorationForm : e
         )
       );
     } else {
@@ -134,10 +144,12 @@ const DimensionalExploration = () => {
   };
 
   const handleEditExploration = (index) => {
+    skipFormEffect.current = 2;  // Skip next effect
     const selected = tempExploration[index];
     console.log(selected);
     setTempExplorationForm(selected);
-    setEventEditMode({ id: selected.id, event: "Exploration" });
+    setTempExplorationForm(selected);
+    setEventEditMode({ id: index, event: "Exploration" });
     setOpenBackdrop(true);
   };
 
