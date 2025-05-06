@@ -26,6 +26,14 @@ exports.handleAllRoutes = async (req, res) => {
           standardDeductions: 0,
           capitalGainsTaxRates: [],
         },
+        married: {
+          federalIncomeTaxRatesBrackets: [
+            { incomeRange: [0, 0], taxRate: 0 },
+            { incomeRange: [0, 0], taxRate: 0 },
+          ],
+          standardDeductions: 0,
+          capitalGainsTaxRates: [],
+        },
       });
       const savedTaxData = await newTaxData.save();
       taxId = savedTaxData._id;

@@ -59,7 +59,7 @@ const GoogleAuth = () => {
 
     return (
         <ThemeProvider theme={theme}>
-            <Navbar currentPage={""} />
+            <Navbar currentPage={"login"} />
             <GoogleOAuthProvider clientId="600916289393-qfjvma6fnncebuv070vt2h9oddeuddhd.apps.googleusercontent.com">
                 <Container sx={{ textAlign: "center", mt: 8 }}>
                     <Typography variant="h2" sx={{ mt: 20, fontWeight: "bold" }}>
