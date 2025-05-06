@@ -3,7 +3,8 @@ import { performRMDs } from "./rmd.js";
 import { payNonDiscretionaryExpenses, payDiscretionaryExpenses } from "./expenses.js";
 import { runInvestStrategy, rebalance } from "./strategy.js";
 import { getCurrentEvent, getStrategy, getRebalanceStrategy, setValues, setGlobalRand } from "./helper.js";
-import { logInvestment, logFinancialEvent } from "./logs.js";
+import { logInvestment, logFinancialEvent, writeCSVLog} from "./logs.js";
+
 import {
   findInflation,
   updateInvestmentValues,
@@ -33,10 +34,12 @@ async function runSimulation(
   csvLog,
   currentYear,
   rand,
-  rmd
+  rmd,
+  x,
+  user
 ) {
   setGlobalRand(rand);
-  //console.log("RUN SIMULATION",JSON.stringify(stateTax, null, 2));
+  // console.log("RUN SIMULATION",JSON.stringify(rmd, null, 2));
   //console.log("currentYear", currentYear);
   // previous year
   let irsLimit = scenario.irsLimit;
@@ -68,7 +71,17 @@ async function runSimulation(
     invest.purchasePrice = invest.value;
   }
 
-  setValues([...incomeEvent, ...expenseEvent, ...investEvent, ...rebalanceEvent]);
+  // if(!expenseEvent){
+  //   console.log("EXPENSE EVENT EMPTY");
+  //   expenseEvent=[];
+  // }
+  setValues([
+    ...(incomeEvent || []),
+    ...(expenseEvent || []),
+    ...(investEvent || []),
+    ...(rebalanceEvent || [])
+    // ...incomeEvent, ...expenseEvent, ...investEvent, ...rebalanceEvent
+  ]);
   // console.log("incomeEvent :>> ", incomeEvent);
   // console.log("expenseEvent :>> ", expenseEvent);
   // console.log("investEvent :>> ", investEvent);
@@ -116,7 +129,7 @@ async function runSimulation(
       }
     }
     //console.log("stateIncomeTaxBracket", stateIncomeTaxBracket);
-    let inflationRate = findInflation(scenario.inflationAssumption) * 0.01;
+    let inflationRate = findInflation(scenario.inflationAssumption);
     //console.log("EVENTS",JSON.stringify(expenseEvent, null, 2));
     let { curIncomeEvent, curExpenseEvent, curInvestEvent, curRebalanceEvent } = getCurrentEvent(year, incomeEvent, expenseEvent, investEvent, rebalanceEvent);
     //console.log("Found current event? ",JSON.stringify(curExpenseEvent, null, 2));
@@ -226,6 +239,17 @@ async function runSimulation(
     console.log("updateChart called", { yearIndex, yearDataBucketsLength: yearDataBuckets.length });
     updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, curIncomeEvent, discretionary, nonDiscretionary, taxes, yearTotals, year, inflationRate, spouseDeath);
 
+    if(x==0){
+        // const userName = user.email.split("@")[0];
+        // const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        // const baseFilename = `${userName}_${timestamp}`;
+        // const csvFile = path.join(__dirname, "./investment_logs", `${baseFilename}.csv`);
+        // const logFile = path.join(__dirname, "../simulation/investment_logs", `${baseFilename}.log`);
+        // logInvestment(investments, year, csvLog, investmentTypes);
+        // writeCSVLog(csvFile, csvLog);
+
+    }
+
     // SAVE FOR PREV YEAR
     ({ prevYearIncome, prevYearSS, prevYearEarlyWithdrawals, prevYearGains, sumInvestmentsPreTaxRMD } = savePrevYr(
       investments,
@@ -310,7 +334,7 @@ function savePrevYr(investments, investmentTypes, year, csvLog, yearTotals, prev
   //console.log("The sum of investments with value pretax (to use in RMD) is: ", sumInvestmentsPreTaxRMD, "as of year: ", year);
 
   // console.log('investments :>> ', investments);
-  logInvestment(investments, year, csvLog, investmentTypes);
+  // logInvestment(investments, year, csvLog, investmentTypes);
   //console.log("logInvestment :>> ", csvLog, "for year: ", year);
   prevYearIncome = yearTotals.curYearIncome;
   prevYearSS = yearTotals.curYearSS;

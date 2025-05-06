@@ -7,7 +7,7 @@ const { calculateLifeExpectancy } = require("./algo.js");
 const path = require("path");
 const { formatToNumber } = require("./helper.js");
 const { getEvent, scenarioExplorationUpdate, generateParameterCombinations } = require("./exploration.js");
-const { logFinancialEvent } = require("./logs.js");
+const { logFinancialEvent, writeCSVLog } = require("./logs.js");
 const Piscina = require("piscina");
 let numSimulations;
 const BASE_SEED = 12345;
@@ -219,25 +219,36 @@ async function main(investmentType, invest, rebalance, expense, income, investme
           currentYear,
           seed,
           rmd,
+          x,
+          user
         })
       );
 
       workerInputs.push(clonedData);
 
       // logs only for the first simulation
-      if (x == 0) {
-        const userName = user.email.split("@")[0];
-        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-        const baseFilename = `${userName}_${timestamp}`;
-        const csvFile = path.join(__dirname, "../server/logs", `${baseFilename}.csv`);
-        const logFile = path.join(__dirname, "../server/logs", `${baseFilename}.log`);
+      // if (x == 0) {
+        // const userName = user.email.split("@")[0];
+        // const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        // const baseFilename = `${userName}_${timestamp}`;
+        // const csvFile = path.join(__dirname, "../simulation/investment_logs", `${baseFilename}.csv`);
+        // // const logFile = path.join(__dirname, "../simulation/investment_logs", `${baseFilename}.log`);
         // writeCSVLog(csvFile, csvLog);
         // writeEventLog(logFilename, simulationResult.eventLog);
-      }
+      // }
     }
+
+
     secondIteration = true;
     const allSimulationResults = await Promise.all(workerInputs.map((input) => piscina.run(input)));
     //console.log("allSimulationResults", JSON.stringify(allSimulationResults));
+
+    const userName = user.email.split("@")[0];
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const baseFilename = `${userName}_${timestamp}`;
+    const csvFile = path.join(__dirname, "./investment_logs", `${baseFilename}.csv`);
+    writeCSVLog(csvFile, allSimulationResults);
+    // writeCSVLog(csvFile, csvLog);
 
     if ((exploration && exploration.length >= 1) || rothExploration) {
       explore = exploreData(allSimulationResults, explorationData, combinations[i], currentYear);
@@ -260,4 +271,4 @@ async function main(investmentType, invest, rebalance, expense, income, investme
 // scenario id              user id
 // main(1, "67e084385ca2a5376ad2efd2", "67e19c10a1325f92faf9f181");
 
-module.exports = { main };
+module.exports = { main, piscina };

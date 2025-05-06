@@ -14,18 +14,21 @@
     "nodemon": "^3.1.9",
     "piscina": "^4.9.2"
   },
-    "devDependencies": {
-      "jest": "^29.7.0",
-      "mongodb-memory-server": "^10.1.4",
-      "mongoose": "^8.14.1",
-      "supertest": "^7.1.0"
-    },
-    "scripts": {
-      "test": "NODE_ENV=test jest"
-    },
-    "jest": {
-      "setupFilesAfterEnv": ["./test_stuff/start.js"],
-      "testEnvironment": "node"
-    }
-
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "jest": "^29.7.0",
+    "mongodb-memory-server": "^10.1.4",
+    "mongoose": "^8.14.1",
+    "supertest": "^7.1.0"
+  },
+  "scripts": {
+    "test": "cross-env NODE_ENV=test jest --detectOpenHandles --forceExit --silent=false --verbose"
+  },
+  "jest": {
+    "setupFilesAfterEnv": [
+      "./test_stuff/start.js"
+    ],
+    "testEnvironment": "node"
+  }
 }
+
