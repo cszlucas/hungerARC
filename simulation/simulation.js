@@ -95,12 +95,12 @@ async function runSimulation(
     //console.log("CASH INVESTMENT: ", cashInvestment);
   }
 
-  let yearDataBuckets = createYearDataBuckets(2, currentYear); //2 is numYears
+  let yearDataBuckets = createYearDataBuckets((userEndYear-currentYear), currentYear); //2 is numYears
   let yearIndex = 0;
 
   //  // SIMULATION LOOP
   // manually adjusted for testing, should be year <= userEndYear !!
-  for (let year = currentYear; year <= 2027; year++) {
+  for (let year = currentYear; year <= userEndYear; year++) {
     console.log("\nSIMULATION YEAR", year);
     if (filingStatus == "married") {
       if (year == scenario.birthYearSpouse + lifeExpectancySpouse) {
