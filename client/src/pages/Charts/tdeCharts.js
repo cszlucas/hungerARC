@@ -23,24 +23,28 @@ export function parseFinalMetric2D(data, financialGoal, metric = "probability") 
   const results = [];
 
   data.values.forEach(({ value, simulations }) => {
-    const [paramA, paramB] = value; // now from value = [2025, 2026]
-
-    const finalValues = simulations.map(sim => {
-      const last = sim[sim.length - 1];
-      return last.investment.flat().reduce((sum, i) => sum + (i?.value ?? 0), 0);
-    });
+    const [paramA, paramB] = value; // e.g. value = [2025, 1]
 
     let z;
 
     if (metric === "probability") {
-      // Instead of checking investment totals, check metGoal directly
+      // Check how many simulations met the goal in the *last year where metGoal is defined*
       const successCount = simulations.filter(sim => {
-        const last = sim[sim.length - 1];
+        // Find the last year in the sim where metGoal is not null/undefined
+        const last = [...sim].reverse().find(year => year?.metGoal?.[0] != null);
+    
         return Array.isArray(last?.metGoal) && last.metGoal[0] === true;
       }).length;
-
+    
       z = simulations.length > 0 ? successCount / simulations.length : 0;
-    } else if (metric === "median") {
+    }
+     else if (metric === "median") {
+      // Compute median investment total in final year across all simulations
+      const finalValues = simulations.map(sim => {
+        const last = sim[sim.length - 1];
+        return last.investment.flat().reduce((sum, i) => sum + (i?.value ?? 0), 0);
+      });
+
       const sorted = finalValues.slice().sort((a, b) => a - b);
       const mid = Math.floor(sorted.length / 2);
       z = sorted.length % 2 === 0
@@ -53,6 +57,7 @@ export function parseFinalMetric2D(data, financialGoal, metric = "probability") 
 
   return results;
 }
+
 
   
 function createGrid(pointArray) {
@@ -224,7 +229,8 @@ function flattenChartDataByTwoParams(rawParamData, paramAIndex, valueA, paramBIn
         discretionary: [],
         nonDiscretionary: [],
         taxes: [],
-        earlyWithdrawals: []
+        earlyWithdrawals: [],
+        metGoal: []  // ✅ added here
       };
 
       simulations.forEach(sim => {
@@ -237,6 +243,7 @@ function flattenChartDataByTwoParams(rawParamData, paramAIndex, valueA, paramBIn
         yearData.nonDiscretionary.push(simYear.nonDiscretionary?.[0] ?? []);
         yearData.taxes.push(simYear.taxes?.[0] ?? 0);
         yearData.earlyWithdrawals.push(simYear.earlyWithdrawals?.[0] ?? 0);
+        yearData.metGoal.push(simYear.metGoal?.[0] ?? false);  // ✅ added here
       });
 
       flatData.push(yearData);
@@ -245,6 +252,7 @@ function flattenChartDataByTwoParams(rawParamData, paramAIndex, valueA, paramBIn
 
   return flatData;
 }
+
 
 
 const TwoDimensionalCharts = () => {
@@ -277,7 +285,7 @@ const TwoDimensionalCharts = () => {
         if (!chartData || parameterValue1 == null || parameterValue2 == null) return;
     
         const subset = flattenChartDataByTwoParams(chartData.years, 0, parameterValue1, 1, parameterValue2);
-        console.log(subset);
+        // console.log(subset);
         setRawDataSubset(subset);
     }, [parameterValue1, parameterValue2]);
 
@@ -295,13 +303,14 @@ const TwoDimensionalCharts = () => {
     const shadedQuantities = ["Total Investments", "Total Income", "Total Expenses", "Early Withdrawal Tax", "Percentage of Total Discretionary Expenses Incurred"];
 
     const finalProbResults = parseFinalMetric2D(chartData.years, financialGoal, "probability");
-    console.log(finalProbResults); // inside parseFinalMetric2D
+    // console.log(finalProbResults); // inside parseFinalMetric2D
 
     const finalMedianResults = parseFinalMetric2D(chartData.years, financialGoal, "median");
 
     const probGrid = createGrid(finalProbResults);
     const medianGrid = createGrid(finalMedianResults);
 
+    // console.log(rawDataSubset);
     const probLineData = parseProbabilityLineChartData(rawDataSubset, financialGoal);
     const shadedLineData = parseShadedLineChartBands(rawDataSubset, currQuantity);
     const {stackMeanData, stackMedianData} = parseStackedBarDataByMode(rawDataSubset, "exploration");

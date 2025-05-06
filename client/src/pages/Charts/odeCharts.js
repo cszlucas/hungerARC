@@ -143,8 +143,10 @@ export function calculateFinalYearSuccessProbabilities(data) {
     const totalSimulations = simulations.length;
 
     simulations.forEach(sim => {
-      const finalYear = sim[sim.length - 1];
-      if (Array.isArray(finalYear?.metGoal) && finalYear.metGoal[0] === true) {
+      // Find the last year with a non-null metGoal
+      const lastDefined = [...sim].reverse().find(year => year?.metGoal?.[0] != null);
+
+      if (Array.isArray(lastDefined?.metGoal) && lastDefined.metGoal[0] === true) {
         successCount += 1;
       }
     });
@@ -154,6 +156,7 @@ export function calculateFinalYearSuccessProbabilities(data) {
 
   return result;
 }
+
 
 
     
