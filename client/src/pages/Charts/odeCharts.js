@@ -74,30 +74,35 @@ function SingleLineChart({ title, metricData, yLabel }) {
     );
 }
 
-function calculateYearlySuccessProbabilities(data, financialGoal) {
+export function calculateYearlySuccessProbabilities(data) {
   const result = {};
 
   data.values.forEach(({ value, simulations }) => {
     const yearlyCounts = {};
 
-    simulations[0].forEach(({ year, investment }) => {
-      const flatInvestments = investment[0];
-      const total = flatInvestments.reduce((sum, i) => sum + (i?.value ?? 0), 0);
-      if (!yearlyCounts[year]) yearlyCounts[year] = { success: 0, total: 0 };
+    simulations.forEach(simulation => {
+      simulation.forEach(({ year, metGoal }) => {
+        if (!yearlyCounts[year]) {
+          yearlyCounts[year] = { success: 0, total: 0 };
+        }
 
-      yearlyCounts[year].total += 1;
-      if (total >= financialGoal) yearlyCounts[year].success += 1;
+        yearlyCounts[year].total += 1;
+        if (Array.isArray(metGoal) && metGoal[0] === true) {
+          yearlyCounts[year].success += 1;
+        }
+      });
     });
 
     result[value[0]] = {};
     for (const year in yearlyCounts) {
       const { success, total } = yearlyCounts[year];
-      result[value[0]][year] = success / total;
+      result[value[0]][year] = total > 0 ? success / total : 0;
     }
   });
 
   return result;
 }
+
 
 function median(arr) {
     const sorted = [...arr].sort((a, b) => a - b);
@@ -130,21 +135,26 @@ function calculateYearlyMedianInvestments(data) {
 }
 
   
-function calculateFinalYearSuccessProbabilities(data, financialGoal) {
+export function calculateFinalYearSuccessProbabilities(data) {
   const result = {};
 
   data.values.forEach(({ value, simulations }) => {
     let successCount = 0;
+    const totalSimulations = simulations.length;
 
-    const finalYear = simulations[0][simulations[0].length - 1];
-    const total = finalYear.investment[0].reduce((sum, i) => sum + (i?.value ?? 0), 0);
+    simulations.forEach(sim => {
+      const finalYear = sim[sim.length - 1];
+      if (Array.isArray(finalYear?.metGoal) && finalYear.metGoal[0] === true) {
+        successCount += 1;
+      }
+    });
 
-    if (total >= financialGoal) successCount += 1;
-    result[value[0]] = successCount / 1;  // one simulation
+    result[value[0]] = totalSimulations > 0 ? successCount / totalSimulations : 0;
   });
 
   return result;
 }
+
 
     
 function calculateFinalYearMedianInvestments(data) {
@@ -201,7 +211,7 @@ export function getParameterValuesByIndex(dataset, index) {
  * @param {number|string} selectedValue - Selected value to match (e.g., 1000).
  * @returns {Array} Flattened array of yearly simulation data.
  */
-function flattenChartDataByParam(rawParamData, paramIndex, selectedValue) {
+export function flattenChartDataByParam(rawParamData, paramIndex, selectedValue) {
   if (
     !rawParamData?.years ||
     !Array.isArray(rawParamData.years.values) ||
@@ -216,8 +226,8 @@ function flattenChartDataByParam(rawParamData, paramIndex, selectedValue) {
     return paramValues?.[paramIndex] === selectedValue;
   });
 
-  // Flatten to yearly structure
   const flatData = [];
+
   matchingEntries.forEach(entry => {
     const { simulations } = entry;
     if (!Array.isArray(simulations)) return;
@@ -232,7 +242,8 @@ function flattenChartDataByParam(rawParamData, paramIndex, selectedValue) {
         discretionary: [],
         nonDiscretionary: [],
         taxes: [],
-        earlyWithdrawals: []
+        earlyWithdrawals: [],
+        metGoal: [] // ✅ Add metGoal array
       };
 
       simulations.forEach(sim => {
@@ -245,6 +256,7 @@ function flattenChartDataByParam(rawParamData, paramIndex, selectedValue) {
         yearData.nonDiscretionary.push(simYear.nonDiscretionary?.[0] ?? []);
         yearData.taxes.push(simYear.taxes?.[0] ?? 0);
         yearData.earlyWithdrawals.push(simYear.earlyWithdrawals?.[0] ?? 0);
+        yearData.metGoal.push(simYear.metGoal?.[0] ?? false); // ✅ Add metGoal for this sim
       });
 
       flatData.push(yearData);
@@ -253,6 +265,7 @@ function flattenChartDataByParam(rawParamData, paramIndex, selectedValue) {
 
   return flatData;
 }
+
 
 export function normalizeChartDataValues(chartData) {
   if (
