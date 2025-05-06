@@ -24,7 +24,7 @@ function payNonDiscretionaryExpenses(
 ) {
   console.log("\nPAY NON-DISCRETIONARY EXPENSES");
   const nonDiscretionaryExpenses = curExpenseEvent.filter((expenseEvent) => expenseEvent.isDiscretionary === false);
-  let goal=true;
+  let goal = true;
   //console.log("nonDiscretionaryExpenses ", nonDiscretionaryExpenses);
   let expenseAmt = 0;
   for (let expense of nonDiscretionaryExpenses) {
@@ -93,7 +93,7 @@ function payNonDiscretionaryExpenses(
   return {
     nonDiscretionary: nonDiscretionaryExpenses,
     taxes: taxes,
-    metGoal: goal
+    metGoal: goal,
   };
 }
 
@@ -104,7 +104,13 @@ function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdr
   logFinancialEvent({
     year: year,
     type: "non-discretionary",
-    description: `Calculating taxes, my prev year income: ${prevYearIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, fedDeduction: ${fedDeduction.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, prevYearSS: ${prevYearSS.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    description: `Calculating taxes, my prev year income: ${prevYearIncome.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}, fedDeduction: ${fedDeduction.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, prevYearSS: ${prevYearSS.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`,
   });
   const adjustedIncome = Math.max(0, prevYearIncome - fedDeduction - prevYearSS);
   const federalTax = taxAmt(adjustedIncome, federalIncomeRange);
@@ -152,44 +158,48 @@ function taxAmt(income, taxBracket, type) {
 //withdrawalStrategy is an ordering on investments
 function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath, metGoal) {
   console.log("\nPAY DISCRETIONARY EXPENSES");
-  let goal = true;
-  let goalRemaining = financialGoal;
   let expensesPaid = 0;
+
   logFinancialEvent({
-    year: year,
+    year,
     type: "discretionary",
-    details: {
-      cash: cashInvestment.value,
-    },
+    details: { cash: cashInvestment.value },
   });
+
+  let goalRemaining = withdrawalStrategy.reduce((sum, inv) => sum + inv.value, 0);
+
   for (let expense of spendingStrategy) {
     printEvents([expense], year, "discretionary", "expense", inflationRate, spouseDeath);
-    //console.log("Expense:", expense._id, "Amount:", expenseVal, "Cash available:", cashInvestment.value);
     let expenseVal = getValueInYear(expense, year, inflationRate, spouseDeath);
     expense.initialAmount = expenseVal;
+
+    // Pay from cash first
     if (cashInvestment.value >= expenseVal) {
       cashInvestment.value -= expenseVal;
       expensesPaid += expenseVal;
       expenseVal = 0;
+
       logFinancialEvent({
-        year: year,
+        year,
         type: "discretionary",
-        description: `You paid expense ID: ${expense._id} all with cash.`,
-        details: {
-          cash: cashInvestment.value,
-        },
+        description: `Paid expense ID: ${expense._id} entirely with cash.`,
+        details: { cash: cashInvestment.value },
       });
-      //console.log("You paid expense all with cash.");
       continue;
     }
 
+    // Partial from cash
     expenseVal -= cashInvestment.value;
     cashInvestment.value = 0;
-    //console.log("withdrawalStrategy", withdrawalStrategy);
+
     printInvestments(withdrawalStrategy, year, "discretionary", "investments");
+
+    // Pay from investments
     for (let investment of withdrawalStrategy) {
       if (expenseVal <= 0) break;
-      console.log("Expense value now is: ", expenseVal);
+
+      console.log("Paying expense, remaining:", expenseVal, "from investment:", investment.value, "goalRemaining:", goalRemaining);
+
       if (goalRemaining >= expenseVal) {
         let amtPaid = payFromInvestment(expenseVal, investment, userAge, yearTotals, year, "discretionary");
         expensesPaid += amtPaid;
@@ -197,100 +207,86 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
         goalRemaining -= amtPaid;
       } else if (goalRemaining > 0) {
         let partialAmt = Math.min(expenseVal, goalRemaining);
-        expensesPaid += partialAmt;
         let amtPaid = payFromInvestment(partialAmt, investment, userAge, yearTotals, year, "discretionary");
+        expensesPaid += amtPaid;
         expenseVal -= amtPaid;
         goalRemaining -= amtPaid;
-        console.log("You paid some of the expense and then was forced to stop to not violate financial goal.", expenseVal, goalRemaining);
+
+        console.log("Partially paid to avoid violating financial goal. Remaining expense:", expenseVal);
+        break; // stop trying once goalRemaining is exhausted
       }
     }
+
     printInvestments(withdrawalStrategy, year, "discretionary", "investments");
+
     if (expenseVal > 0) {
       logFinancialEvent({
-        year: year,
+        year,
         type: "discretionary",
-        description: "You were NOT able to pay all your discretionary expenses.",
+        description: "NOT able to pay all discretionary expenses.",
       });
       return false;
     } else {
       logFinancialEvent({
-        year: year,
+        year,
         type: "discretionary",
-        description: "You were able to pay your discretionary expense without violating your financial goal.",
+        description: "Able to pay discretionary expense without violating financial goal.",
       });
     }
   }
-  return goal;
+
+  return true;
 }
 
 function payFromInvestment(withdrawalAmt, investment, userAge, yearTotals, year, type) {
-  if (investment.value == 0) {
-    console.log("This investment: ", investment._id, "is already empty", investment.value);
-    logFinancialEvent({
-      year: year,
-      type: type,
-      description: "This investment is already empty",
-    });
+  if (investment.value === 0) {
+    console.log("Investment is already empty:", investment._id);
+    logFinancialEvent({ year, type, description: "This investment is already empty" });
     return 0;
-  } else if (investment.value - withdrawalAmt > 0) {
-    //console.log("subtract needed and keep investment:", investment._id, "type:", investment.accountTaxStatus, "value: ", investment.value);
-    let withdraw = withdrawalAmt;
-    updateValues(investment, userAge, yearTotals, true, withdrawalAmt, year, type);
-    investment.value -= withdraw;
-    //investment.value=0;
-    //console.log("Investment now with value: ", investment.value);
-    return withdraw;
-  } else {
-    let amountPaid = investment.value;
-    //console.log("use up investment:", investment._id, "value: ", investment.value, "now with value 0 and move onto next");
-    updateValues(investment, userAge, yearTotals, false, amountPaid, year, type);
-    investment.value = 0;
-    return amountPaid;
   }
+
+  const amountPaid = Math.min(withdrawalAmt, investment.value);
+  const partial = amountPaid < investment.value;
+
+  updateValues(investment, userAge, yearTotals, partial, amountPaid, year, type);
+  investment.value -= amountPaid;
+
+  return amountPaid;
 }
 
 function updateValues(investment, userAge, yearTotals, partial, amountPaid, year, type) {
   if (investment.accountTaxStatus === "non-retirement") {
-    if (partial) {
-      const fractionSold = investment.value > 0 ? amountPaid / investment.value : 0;
-      const gain = fractionSold * (investment.value - investment.purchasePrice);
-      yearTotals.curYearGains += Math.max(gain, 0);
-      investment.purchasePrice -= (1 - fractionSold) * investment.purchasePrice;
-      logFinancialEvent({
-        year: year,
-        type: type,
-        description: `By a fraction update capital gains: ${gain.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, "purchase price: ${investment.purchasePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      });
-      //console.log("By a fraction update curYearGains:", gain, "purchase price:", investment.purchasePrice);
-    } else {
-      const gain = investment.value - investment.purchasePrice;
-      yearTotals.curYearGains += Math.max(gain, 0);
-      investment.purchasePrice -= 0;
-      logFinancialEvent({
-        year: year,
-        type: type,
-        description: `Update capital gains: ${gain.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, "purchase price: ${investment.purchasePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      });
-      //console.log("update curYearGains:", gain, "purchase price:", investment.purchasePrice);
-    }
+    const originalValue = investment.value + amountPaid; // value before deduction
+    const fractionSold = originalValue > 0 ? amountPaid / originalValue : 0;
+    const gain = fractionSold * Math.max(investment.value + amountPaid - investment.purchasePrice, 0);
+
+    yearTotals.curYearGains += gain;
+    investment.purchasePrice *= 1 - fractionSold;
+    investment.purchasePrice = Math.max(investment.purchasePrice, 0);
+
+    logFinancialEvent({
+      year,
+      type,
+      description: `Capital gains: ${gain.toFixed(2)}, updated purchase price: ${investment.purchasePrice.toFixed(2)}`,
+    });
   }
 
   if (investment.accountTaxStatus === "pre-tax") {
-    logFinancialEvent({
-      year: year,
-      type: type,
-      description: `Update curYearIncome: ${yearTotals.curYearIncome}, by ${amountPaid}`,
-    });
     yearTotals.curYearIncome += amountPaid;
+    logFinancialEvent({
+      year,
+      type,
+      description: `Added to curYearIncome: ${amountPaid}`,
+    });
   }
 
   if ((investment.accountTaxStatus === "pre-tax" || investment.accountTaxStatus === "after-tax") && userAge < 59) {
-    logFinancialEvent({
-      year: year,
-      type: type,
-      description: `Update curYearEarlyWithdrawals: ${yearTotals.curYearEarlyWithdrawals}, by ${amountPaid}`,
-    });
     yearTotals.curYearEarlyWithdrawals += amountPaid;
+    logFinancialEvent({
+      year,
+      type,
+      description: `Early withdrawal under 59: ${amountPaid}`,
+    });
   }
 }
 
