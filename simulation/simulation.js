@@ -39,7 +39,7 @@ async function runSimulation(
   user
 ) {
   setGlobalRand(rand);
-  // console.log("RUN SIMULATION",JSON.stringify(rmd, null, 2));
+  //console.log("RUN SIMULATION",JSON.stringify(rmd, null, 2));
   //console.log("currentYear", currentYear);
   // previous year
   let irsLimit = scenario.irsLimit;
@@ -152,6 +152,7 @@ async function runSimulation(
       },
     });
     if (sumInvestmentsPreTaxRMD > 0) {
+      //console.log("RUN SIMULATION",JSON.stringify(rmd, null, 2));
       await performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year, withdrawalStrategy, rmd);
     }
     sumInvestmentsPreTaxRMD = 0;
