@@ -90,16 +90,100 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
       //console.log("investment.value :>> ", investment.value);
       // if (investment.accountTaxStatus == "pre-tax" && rc > 0) {
       if (rc >= investment.value) {
+        // rc -= investment.value;
+        // investment.accountTaxStatus = "after-tax";
+        // console.log("investment ID ", investmentType.name, " is now after-tax account with same value");
+        // logFinancialEvent({
+        //   year: year,
+        //   type: "roth conversion",
+        //   description: `Investment ID ${investment._id} is now an after-tax account with same value of ${formatCurrency(investment.value)}. RC becomes ${formatCurrency(rc)}`,
+        // });
+        let existingAfterTaxInvestment = investments.find(inv =>
+          inv.investmentType === investment.investmentType &&
+          inv.accountTaxStatus === "after-tax"
+        );
+        // console.log('investments :>> ', investments);
+        // console.log('investment :>> ', investment);
+        if (existingAfterTaxInvestment) {
+          // console.log('investments before:>> ', investments);
+
+          // Merge the full value into the existing investment
+          // console.log('existingAfterTaxInvestment :>> ', existingAfterTaxInvestment);
+          existingAfterTaxInvestment.value += investment.value;
+      
+          console.log(
+            "investment ID",
+            investment._id,
+            "is merged into existing after-tax investment. Value increased to",
+            existingAfterTaxInvestment.value
+          );
+      
+          logFinancialEvent({
+            year: year,
+            type: "roth conversion",
+            description: `Investment ID ${investment._id} is fully transferred and merged into an existing after-tax investment. Existing investment value is now ${formatCurrency(existingAfterTaxInvestment.value)}. RC becomes ${formatCurrency(rc - investment.value)}.`,
+          });
+      
+          // Optionally, remove or mark the old investment (I1) if it's now empty
+          // investment.value = 0;
+          // investments = investments.filter(inv => inv._id !== investment._id);
+          const indexToRemove = investments.findIndex(inv => inv._id === investment._id);
+          if (indexToRemove !== -1) {
+            investments.splice(indexToRemove, 1);
+          }
+          // console.log('investments beafterfore:>> ', investments);
+          // Also remove its ID from scenario.setOfInvestments
+          scenario.setOfInvestments = scenario.setOfInvestments.filter(id => String(id) !== String(investment._id));
+          // console.log("scenario set of investment: ", scenario.setOfInvestments);
+          
+        } else {
+          // No existing investment — just change the account type
+          investment.accountTaxStatus = "after-tax";
+      
+          console.log(
+            "investment ID",
+            investment.investmentType.name,
+            "is now after-tax account with same value"
+          );
+      
+          logFinancialEvent({
+            year: year,
+            type: "roth conversion",
+            description: `Investment ID ${investment._id} is now an after-tax account with same value of ${formatCurrency(investment.value)}. RC becomes ${formatCurrency(rc - investment.value)}`,
+          });
+        }
+      
         rc -= investment.value;
-        investment.accountTaxStatus = "after-tax";
-        console.log("investment ID ", investmentType.name, " is now after-tax account with same value");
-        logFinancialEvent({
-          year: year,
-          type: "roth conversion",
-          description: `Investment ID ${investment._id} is now an after-tax account with same value of ${formatCurrency(investment.value)}. RC becomes ${formatCurrency(rc)}`,
-        });
       } else {
         investment.value -= rc;
+        
+        let existingAfterTaxInvestment = investments.find(inv =>
+          inv.investmentType === investment.investmentType &&
+          inv.accountTaxStatus === "after-tax"
+        );
+      
+        if (existingAfterTaxInvestment) {
+          existingAfterTaxInvestment.value += rc;
+
+          console.log(
+            "investment",
+            investment.investmentType.name,
+            "has a value of",
+            investment.value,
+            "after subtracting",
+            rc,
+            ". Existing after-tax investment found, value increased to",
+            existingAfterTaxInvestment.value
+          );
+      
+          logFinancialEvent({
+            year: year,
+            type: "roth conversion",
+            description: `Investment ID ${investment._id} is partially transferred, value is now ${formatCurrency(investment.value)} after subtracting ${formatCurrency(rc)}. Existing after-tax investment updated, new value is ${formatCurrency(existingAfterTaxInvestment.value)}.`,
+          });
+        } else{
+          
+
         const newInvestmentObject = {
           _id: new ObjectId(),
           investmentType: investment.investmentType,
@@ -122,15 +206,19 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
         investments.push(newInvestmentObject); // optional, depending on your context
 
         // push only the ID to the scenario
-        scenario.setOfInvestments.push(newInvestmentObject._id);
+        scenario.setOfInvestments.push(String(newInvestmentObject._id));
         logFinancialEvent({
           year: year,
           type: "roth conversion",
           description: `Investment ID ${investment._id} is partially transferred, value is now ${formatCurrency(investment.value)} after
             subtracting ${formatCurrency(rc)}. A new investment object is created with value ${formatCurrency(rc)} and account tax status after-tax. RC becomes 0`,
         });
-        rc = 0;
       }
+        rc = 0;
+
+        }
+
+
       //  console.log('scenario.investments :>> ', scenario.setOfInvestments);
       
     }

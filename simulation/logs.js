@@ -12,11 +12,11 @@ function writeCSVLog(csvFilename, simulationResult) {
   const years = simulationResult.years; // array of years like [2025, 2026,...]
   const firstYearData = simulationResult[0]; // assuming it's not empty
   // console.log("simulationResult");
-  // console.log("first year data: ");
+  console.log("first year data: ");
   console.dir(firstYearData, { depth: null, colors: true });
 
   // const investments = Object.keys(firstYearData).filter((key) => key !== "year");
-  // console.log("investments :>> ", investments);
+  // console.log("inv/estments :>> ", investments);
   // // const investments = simulationResult.investments; // ['IRA', '401k', 'Roth']
   // const valuesByYear = simulationResult; // assume array of {year: 2025, IRA: 1000, 401k: 2000, Roth: 500}
 
