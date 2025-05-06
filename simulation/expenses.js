@@ -19,10 +19,12 @@ function payNonDiscretionaryExpenses(
   withdrawalStrategy,
   yearTotals,
   inflationRate,
-  spouseDeath
+  spouseDeath,
+  metGoal
 ) {
   console.log("\nPAY NON-DISCRETIONARY EXPENSES");
   const nonDiscretionaryExpenses = curExpenseEvent.filter((expenseEvent) => expenseEvent.isDiscretionary === false);
+  let goal=true;
   //console.log("nonDiscretionaryExpenses ", nonDiscretionaryExpenses);
   let expenseAmt = 0;
   for (let expense of nonDiscretionaryExpenses) {
@@ -76,6 +78,7 @@ function payNonDiscretionaryExpenses(
         type: "non-discretionary",
         description: "You CAN NOT pay your non-discretionary expenses GO TO JAIL-Don't pass go...;A;",
       });
+      goal = false;
       //console.log("You CAN NOT pay your non-discretionary expenses GO TO JAIL-Don't pass go...;A;");
     } else {
       logFinancialEvent({
@@ -90,6 +93,7 @@ function payNonDiscretionaryExpenses(
   return {
     nonDiscretionary: nonDiscretionaryExpenses,
     taxes: taxes,
+    metGoal: goal
   };
 }
 
@@ -146,8 +150,9 @@ function taxAmt(income, taxBracket, type) {
 
 //spendingStrategy is an ordering on expenses
 //withdrawalStrategy is an ordering on investments
-function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath) {
+function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath, metGoal) {
   console.log("\nPAY DISCRETIONARY EXPENSES");
+  let goal = true;
   let goalRemaining = financialGoal;
   let expensesPaid = 0;
   logFinancialEvent({
@@ -184,7 +189,7 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
     printInvestments(withdrawalStrategy, year, "discretionary", "investments");
     for (let investment of withdrawalStrategy) {
       if (expenseVal <= 0) break;
-      //console.log("Expense value now is: ", expenseVal);
+      console.log("Expense value now is: ", expenseVal);
       if (goalRemaining >= expenseVal) {
         let amtPaid = payFromInvestment(expenseVal, investment, userAge, yearTotals, year, "discretionary");
         expensesPaid += amtPaid;
@@ -196,7 +201,7 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
         let amtPaid = payFromInvestment(partialAmt, investment, userAge, yearTotals, year, "discretionary");
         expenseVal -= amtPaid;
         goalRemaining -= amtPaid;
-        //console.log("You paid some of the expense and then was forced to stop to not violate financial goal.", expenseVal);
+        console.log("You paid some of the expense and then was forced to stop to not violate financial goal.", expenseVal, goalRemaining);
       }
     }
     printInvestments(withdrawalStrategy, year, "discretionary", "investments");
@@ -206,6 +211,7 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
         type: "discretionary",
         description: "You were NOT able to pay all your discretionary expenses.",
       });
+      return false;
     } else {
       logFinancialEvent({
         year: year,
@@ -214,7 +220,7 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
       });
     }
   }
-  return expensesPaid;
+  return goal;
 }
 
 function payFromInvestment(withdrawalAmt, investment, userAge, yearTotals, year, type) {
@@ -228,11 +234,12 @@ function payFromInvestment(withdrawalAmt, investment, userAge, yearTotals, year,
     return 0;
   } else if (investment.value - withdrawalAmt > 0) {
     //console.log("subtract needed and keep investment:", investment._id, "type:", investment.accountTaxStatus, "value: ", investment.value);
+    let withdraw = withdrawalAmt;
     updateValues(investment, userAge, yearTotals, true, withdrawalAmt, year, type);
-    investment.value -= withdrawalAmt;
+    investment.value -= withdraw;
     //investment.value=0;
     //console.log("Investment now with value: ", investment.value);
-    return withdrawalAmt;
+    return withdraw;
   } else {
     let amountPaid = investment.value;
     //console.log("use up investment:", investment._id, "value: ", investment.value, "now with value 0 and move onto next");

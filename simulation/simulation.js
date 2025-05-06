@@ -114,6 +114,7 @@ async function runSimulation(
   //  // SIMULATION LOOP
   // manually adjusted for testing, should be year <= userEndYear !!
   for (let year = currentYear; year <= userEndYear; year++) {
+    let metGoal = true;
     console.log("\nSIMULATION YEAR", year);
     if (filingStatus == "married") {
       if (year == scenario.birthYearSpouse + lifeExpectancySpouse) {
@@ -172,7 +173,7 @@ async function runSimulation(
     // account for inflation for expenses that are not in the current year
     updateInflationExpenses(curExpenseEvent, expenseEvent, inflationRate);
     //  PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
-    let { nonDiscretionary, taxes } = payNonDiscretionaryExpenses(
+    let { nonDiscretionary, taxes, goal } = payNonDiscretionaryExpenses(
       curExpenseEvent,
       cashInvestment,
       prevYearIncome,
@@ -188,12 +189,14 @@ async function runSimulation(
       withdrawalStrategy,
       yearTotals,
       inflationRate,
-      spouseDeath
+      spouseDeath,
+      metGoal
     );
+    metGoal = goal;
 
     // PAY DISCRETIONARY EXPENSES
     if (spendingStrategy && spendingStrategy.length != 0) {
-      payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath);
+      metGoal = payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath, metGoal);
     } else {
       logFinancialEvent({
         year: year,
@@ -237,7 +240,7 @@ async function runSimulation(
 
     // CHARTS
     console.log("updateChart called", { yearIndex, yearDataBucketsLength: yearDataBuckets.length });
-    updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, curIncomeEvent, discretionary, nonDiscretionary, taxes, yearTotals, year, inflationRate, spouseDeath);
+    updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, curIncomeEvent, discretionary, nonDiscretionary, taxes, yearTotals, year, inflationRate, spouseDeath, metGoal);
 
     if(x==0){
         // const userName = user.email.split("@")[0];
@@ -291,7 +294,7 @@ function preliminaries(federalIncomeTax, inflationRate, fedDeduction, capitalGai
   irsLimit *= 1 + inflationRate;
 }
 
-function updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, curIncomeEvent, discretionary, nonDiscretionary, taxes, yearTotals, year, inflationRate, spouseDeath) {
+function updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, curIncomeEvent, discretionary, nonDiscretionary, taxes, yearTotals, year, inflationRate, spouseDeath, metGoal) {
   const lookup = Object.fromEntries(investmentTypes.map((type) => [type._id.toString(), type.name]));
 
   //console.log("BUCKET BEFORE UPDATE", yearDataBuckets[yearIndex]);
@@ -323,6 +326,7 @@ function updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, c
     })),
     taxes: taxes,
     earlyWithdrawals: yearTotals.curYearEarlyWithdrawals,
+    metGoal: metGoal
   });
 }
 
