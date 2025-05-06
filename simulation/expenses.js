@@ -166,14 +166,12 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
     details: { cash: cashInvestment.value },
   });
 
-  let goalRemaining = withdrawalStrategy.reduce((sum, inv) => sum + inv.value, 0);
-
   for (let expense of spendingStrategy) {
     printEvents([expense], year, "discretionary", "expense", inflationRate, spouseDeath);
     let expenseVal = getValueInYear(expense, year, inflationRate, spouseDeath);
     expense.initialAmount = expenseVal;
 
-    // Pay from cash first
+    // Pay from cash
     if (cashInvestment.value >= expenseVal) {
       cashInvestment.value -= expenseVal;
       expensesPaid += expenseVal;
@@ -194,26 +192,36 @@ function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, 
 
     printInvestments(withdrawalStrategy, year, "discretionary", "investments");
 
-    // Pay from investments
+    // Calculate total investable funds
+    let totalInvestmentAvailable = withdrawalStrategy.reduce((sum, inv) => sum + inv.value, 0);
+
     for (let investment of withdrawalStrategy) {
       if (expenseVal <= 0) break;
 
-      console.log("Paying expense, remaining:", expenseVal, "from investment:", investment.value, "goalRemaining:", goalRemaining);
+      let projectedBalance = totalInvestmentAvailable - expenseVal;
 
-      if (goalRemaining >= expenseVal) {
+      if (projectedBalance >= financialGoal) {
+        // Safe to fully pay
         let amtPaid = payFromInvestment(expenseVal, investment, userAge, yearTotals, year, "discretionary");
         expensesPaid += amtPaid;
         expenseVal -= amtPaid;
-        goalRemaining -= amtPaid;
-      } else if (goalRemaining > 0) {
-        let partialAmt = Math.min(expenseVal, goalRemaining);
-        let amtPaid = payFromInvestment(partialAmt, investment, userAge, yearTotals, year, "discretionary");
+        totalInvestmentAvailable -= amtPaid;
+      } else if (totalInvestmentAvailable > financialGoal) {
+        // Only spend the amount above the goal
+        let spendable = totalInvestmentAvailable - financialGoal;
+        let amtPaid = payFromInvestment(spendable, investment, userAge, yearTotals, year, "discretionary");
         expensesPaid += amtPaid;
         expenseVal -= amtPaid;
-        goalRemaining -= amtPaid;
+        totalInvestmentAvailable -= amtPaid;
 
-        console.log("Partially paid to avoid violating financial goal. Remaining expense:", expenseVal);
-        break; // stop trying once goalRemaining is exhausted
+        logFinancialEvent({
+          year,
+          type: "discretionary",
+          description: `Partially paid to preserve financial goal. Remaining expense: ${expenseVal}`,
+        });
+        break;
+      } else {
+        break; // Can't spend any more without violating the goal
       }
     }
 
@@ -256,9 +264,9 @@ function payFromInvestment(withdrawalAmt, investment, userAge, yearTotals, year,
 
 function updateValues(investment, userAge, yearTotals, partial, amountPaid, year, type) {
   if (investment.accountTaxStatus === "non-retirement") {
-    const originalValue = investment.value + amountPaid; // value before deduction
+    const originalValue = investment.value + amountPaid;
     const fractionSold = originalValue > 0 ? amountPaid / originalValue : 0;
-    const gain = fractionSold * Math.max(investment.value + amountPaid - investment.purchasePrice, 0);
+    const gain = fractionSold * Math.max(originalValue - investment.purchasePrice, 0);
 
     yearTotals.curYearGains += gain;
     investment.purchasePrice *= 1 - fractionSold;
