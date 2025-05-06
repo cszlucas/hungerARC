@@ -5,6 +5,7 @@ import { ObjectId } from "mongodb";
 //RMDStrategyInvestOrder is an ordering on investments in pre-tax retirement accounts.
 async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year, withdrawalStrategy, rmdObj){
   console.log("Perform RMD", sumInvestmentsPreTaxRMD, RMDStrategyInvestOrder, userAge);
+  //console.log(rmdObj);
   if (RMDStrategyInvestOrder.length == 0) {
     logFinancialEvent({
       year: year,
@@ -15,15 +16,15 @@ async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOr
   if (userAge >= 74 && RMDStrategyInvestOrder != null) {
     console.log("\nRMDs\nUser age", userAge, "and sum of pre-tax values from prev year is", sumInvestmentsPreTaxRMD);
 
-   // console.log(rmdObj);
+    //console.log("object ", rmdObj);
     const rmdArray = rmdObj.rmd;
     const match = rmdArray.find((entry) => entry.age === userAge);
-    if (!match || !match.rmd || !match.rmd[0]) {
+    if (!match) {
       console.error("RMD data not found for age:", userAge);
       return;
     }
 
-    const distributionPeriod = match.rmd[0].distributionPeriod;
+    const distributionPeriod = match.distributionPeriod;
     const allInvestmentsNonRetirement = investments.filter((investment) => investment.accountTaxStatus.trim().toLowerCase() === "non-retirement");
 
     let rmd = sumInvestmentsPreTaxRMD / distributionPeriod;
@@ -67,8 +68,12 @@ async function performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOr
 
 // from the pretax account to non-retirement accounts
 function transferInvestment(preTaxInvest, allInvestmentsNonRetirement, amountTransfer, investments, year, withdrawalStrategy) {
+  //console.log("allInvestmentsNonRetirement", allInvestmentsNonRetirement);
+  //console.log("preTaxInvest", preTaxInvest);
   let nonRetirementMap = new Map(allInvestmentsNonRetirement.map((investment) => [investment.investmentType, investment]));
-  let nonRetirementInvestment = nonRetirementMap.get("preTaxInvest.investmentType");
+  let nonRetirementInvestment = nonRetirementMap.get(preTaxInvest.investmentType);
+  //console.log("nonRetirementMap", nonRetirementMap);
+  //console.log("nonRetirementInvestment", nonRetirementInvestment);
 
   if (nonRetirementInvestment) {
     // console.log("able to add value: ", amountTransfer, "to a current afterTaxInvestment ", nonRetirementInvestment._id, "of value", nonRetirementInvestment.value);

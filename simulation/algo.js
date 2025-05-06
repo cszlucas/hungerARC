@@ -96,7 +96,7 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
         logFinancialEvent({
           year: year,
           type: "roth conversion",
-          description: `Investment ID ${investmentType._id} is now an after-tax account with same value of ${formatCurrency(investment.value)}. RC becomes ${formatCurrency(rc)}`,
+          description: `Investment ID ${investment._id} is now an after-tax account with same value of ${formatCurrency(investment.value)}. RC becomes ${formatCurrency(rc)}`,
         });
       } else {
         investment.value -= rc;
@@ -126,13 +126,13 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
         logFinancialEvent({
           year: year,
           type: "roth conversion",
-          description: `Investment ID ${investmentType._id} is partially transferred, value is now ${formatCurrency(investment.value)} after
+          description: `Investment ID ${investment._id} is partially transferred, value is now ${formatCurrency(investment.value)} after
             subtracting ${formatCurrency(rc)}. A new investment object is created with value ${formatCurrency(rc)} and account tax status after-tax. RC becomes 0`,
         });
         rc = 0;
       }
       //  console.log('scenario.investments :>> ', scenario.setOfInvestments);
-      // console.log('investments :>> ', investments);
+      
     }
   }
 
@@ -147,6 +147,7 @@ function rothConversion(scenario, year, yearTotals, federalIncomeTax, investment
     type: "roth conversion",
     description: "Roth conversion has now been done.",
   });
+  // console.log('investments HERE :>> ', investments);
 }
 
 function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, filingStatus, scenario, yearTotals, cashInvestment, curIncomeEvent, spouseDeath) {
@@ -181,7 +182,7 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
       if (annualChange.type == "fixed") {
         incomeValue += amt;
       } else if (annualChange.type == "percentage") {
-        incomeValue *= 1 + amt * 0.01;
+        incomeValue *= 1 + amt;
       }
       if (incomeEvent.inflationAdjustment) {
         console.log("inflationAdjustment is true, income value goes to ", incomeValue);
@@ -189,7 +190,7 @@ function updateIncomeEvents(incomeEvents, year, userEndYear, inflationRate, fili
       }
 
       if (spouseDeath) {
-        incomeValue *= incomeEvent.userPercentage * 0.01;
+        incomeValue *= incomeEvent.userPercentage;
       }
 
       incomeEvent.initialAmount = incomeValue;
@@ -253,7 +254,7 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals, year) 
     }
 
     if (annualIncome.unit == "percentage") {
-      income *= 1 + investment.value * 0.01;
+      income *= 1 + investment.value;
     }
     // Add the income to curYearIncome, if the investment’s tax status is ‘non-retirement’ and the investment type’s taxability is ‘taxable’.
     if (investment.accountTaxStatus == "non-retirement" && investmentType.taxability==true) {
@@ -280,7 +281,7 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals, year) 
       change = annualReturn.value;
     }
     if (annualReturn.unit == "percentage") {
-      change = investment.value * (change * 0.01);
+      change = investment.value * (change);
     }
     // Add the income to the value of the investment
     investment.value += change;
@@ -295,7 +296,7 @@ function updateInvestmentValues(investments, investmentTypes, yearTotals, year) 
       });
     }
     // Calculate this year’s expenses, by multiplying the expense ratio and the average value of the investment
-    let expenses = investmentType.expenseRatio * 0.01 * ((initialValue + investment.value) / 2);
+    let expenses = investmentType.expenseRatio * ((initialValue + investment.value) / 2);
     if(investmentType.name=="Cash" || investmentType.name=="cash"){
     console.log('investment of CASH :>> ', investment);
     }

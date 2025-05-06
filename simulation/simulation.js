@@ -3,7 +3,8 @@ import { performRMDs } from "./rmd.js";
 import { payNonDiscretionaryExpenses, payDiscretionaryExpenses } from "./expenses.js";
 import { runInvestStrategy, rebalance } from "./strategy.js";
 import { getCurrentEvent, getStrategy, getRebalanceStrategy, setValues, setGlobalRand } from "./helper.js";
-import { logInvestment, logFinancialEvent } from "./logs.js";
+import { logInvestment, logFinancialEvent, writeCSVLog} from "./logs.js";
+
 import {
   findInflation,
   updateInvestmentValues,
@@ -33,10 +34,12 @@ async function runSimulation(
   csvLog,
   currentYear,
   rand,
-  rmd
+  rmd,
+  x,
+  user
 ) {
   setGlobalRand(rand);
-  //console.log("RUN SIMULATION",JSON.stringify(stateTax, null, 2));
+  //console.log("RUN SIMULATION",JSON.stringify(rmd, null, 2));
   //console.log("currentYear", currentYear);
   // previous year
   let irsLimit = scenario.irsLimit;
@@ -68,7 +71,17 @@ async function runSimulation(
     invest.purchasePrice = invest.value;
   }
 
-  setValues([...incomeEvent, ...expenseEvent, ...investEvent, ...rebalanceEvent]);
+  // if(!expenseEvent){
+  //   console.log("EXPENSE EVENT EMPTY");
+  //   expenseEvent=[];
+  // }
+  setValues([
+    ...(incomeEvent || []),
+    ...(expenseEvent || []),
+    ...(investEvent || []),
+    ...(rebalanceEvent || [])
+    // ...incomeEvent, ...expenseEvent, ...investEvent, ...rebalanceEvent
+  ]);
   // console.log("incomeEvent :>> ", incomeEvent);
   // console.log("expenseEvent :>> ", expenseEvent);
   // console.log("investEvent :>> ", investEvent);
@@ -101,6 +114,7 @@ async function runSimulation(
   //  // SIMULATION LOOP
   // manually adjusted for testing, should be year <= userEndYear !!
   for (let year = currentYear; year <= userEndYear; year++) {
+    let metGoal = true;
     console.log("\nSIMULATION YEAR", year);
     if (filingStatus == "married") {
       if (year == scenario.birthYearSpouse + lifeExpectancySpouse) {
@@ -116,7 +130,7 @@ async function runSimulation(
       }
     }
     //console.log("stateIncomeTaxBracket", stateIncomeTaxBracket);
-    let inflationRate = findInflation(scenario.inflationAssumption) * 0.01;
+    let inflationRate = findInflation(scenario.inflationAssumption);
     //console.log("EVENTS",JSON.stringify(expenseEvent, null, 2));
     let { curIncomeEvent, curExpenseEvent, curInvestEvent, curRebalanceEvent } = getCurrentEvent(year, incomeEvent, expenseEvent, investEvent, rebalanceEvent);
     //console.log("Found current event? ",JSON.stringify(curExpenseEvent, null, 2));
@@ -138,6 +152,7 @@ async function runSimulation(
       },
     });
     if (sumInvestmentsPreTaxRMD > 0) {
+      //console.log("RUN SIMULATION",JSON.stringify(rmd, null, 2));
       await performRMDs(investments, yearTotals, userAge, RMDStrategyInvestOrder, sumInvestmentsPreTaxRMD, year, withdrawalStrategy, rmd);
     }
     sumInvestmentsPreTaxRMD = 0;
@@ -159,7 +174,7 @@ async function runSimulation(
     // account for inflation for expenses that are not in the current year
     updateInflationExpenses(curExpenseEvent, expenseEvent, inflationRate);
     //  PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
-    let { nonDiscretionary, taxes } = payNonDiscretionaryExpenses(
+    let { nonDiscretionary, taxes, goal } = payNonDiscretionaryExpenses(
       curExpenseEvent,
       cashInvestment,
       prevYearIncome,
@@ -175,12 +190,15 @@ async function runSimulation(
       withdrawalStrategy,
       yearTotals,
       inflationRate,
-      spouseDeath
+      spouseDeath,
+      metGoal
     );
+    metGoal = goal;
+    //console.log("TAXES11...", taxes);
 
     // PAY DISCRETIONARY EXPENSES
     if (spendingStrategy && spendingStrategy.length != 0) {
-      payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath);
+      metGoal = payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath, metGoal);
     } else {
       logFinancialEvent({
         year: year,
@@ -224,7 +242,18 @@ async function runSimulation(
 
     // CHARTS
     console.log("updateChart called", { yearIndex, yearDataBucketsLength: yearDataBuckets.length });
-    updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, curIncomeEvent, discretionary, nonDiscretionary, taxes, yearTotals, year, inflationRate, spouseDeath);
+    updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, curIncomeEvent, discretionary, nonDiscretionary, taxes, yearTotals, year, inflationRate, spouseDeath, metGoal);
+
+    if(x==0){
+        // const userName = user.email.split("@")[0];
+        // const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        // const baseFilename = `${userName}_${timestamp}`;
+        // const csvFile = path.join(__dirname, "./investment_logs", `${baseFilename}.csv`);
+        // const logFile = path.join(__dirname, "../simulation/investment_logs", `${baseFilename}.log`);
+        // logInvestment(investments, year, csvLog, investmentTypes);
+        // writeCSVLog(csvFile, csvLog);
+
+    }
 
     // SAVE FOR PREV YEAR
     ({ prevYearIncome, prevYearSS, prevYearEarlyWithdrawals, prevYearGains, sumInvestmentsPreTaxRMD } = savePrevYr(
@@ -267,7 +296,7 @@ function preliminaries(federalIncomeTax, inflationRate, fedDeduction, capitalGai
   irsLimit *= 1 + inflationRate;
 }
 
-function updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, curIncomeEvent, discretionary, nonDiscretionary, taxes, yearTotals, year, inflationRate, spouseDeath) {
+function updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, curIncomeEvent, discretionary, nonDiscretionary, taxes, yearTotals, year, inflationRate, spouseDeath, metGoal) {
   const lookup = Object.fromEntries(investmentTypes.map((type) => [type._id.toString(), type.name]));
 
   //console.log("BUCKET BEFORE UPDATE", yearDataBuckets[yearIndex]);
@@ -277,6 +306,8 @@ function updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, c
     return;
   }
 
+  //console.log("year", year);
+  //console.log("investments",JSON.stringify(investments, null, 2));
   updateYearDataBucket(yearDataBuckets, yearIndex, {
     investments: investments.map((event) => ({
       name: lookup[event.investmentType.toString()] ? `${lookup[event.investmentType.toString()]} (${event.accountTaxStatus})` : "Unknown",
@@ -299,6 +330,7 @@ function updateChart(yearDataBuckets, yearIndex, investments, investmentTypes, c
     })),
     taxes: taxes,
     earlyWithdrawals: yearTotals.curYearEarlyWithdrawals,
+    metGoal: metGoal
   });
 }
 
@@ -310,7 +342,7 @@ function savePrevYr(investments, investmentTypes, year, csvLog, yearTotals, prev
   //console.log("The sum of investments with value pretax (to use in RMD) is: ", sumInvestmentsPreTaxRMD, "as of year: ", year);
 
   // console.log('investments :>> ', investments);
-  logInvestment(investments, year, csvLog, investmentTypes);
+  // logInvestment(investments, year, csvLog, investmentTypes);
   //console.log("logInvestment :>> ", csvLog, "for year: ", year);
   prevYearIncome = yearTotals.curYearIncome;
   prevYearSS = yearTotals.curYearSS;

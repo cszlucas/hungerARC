@@ -19,7 +19,7 @@ import { parseStackedBarDataByMode, GroupedStackedBarChart } from "./StackedBarC
 import { AppContext } from "../../context/appContext";
 
 
-function parseFinalMetric2D(data, financialGoal, metric = "probability") {
+export function parseFinalMetric2D(data, financialGoal, metric = "probability") {
   const results = [];
 
   data.values.forEach(({ value, simulations }) => {
@@ -31,9 +31,15 @@ function parseFinalMetric2D(data, financialGoal, metric = "probability") {
     });
 
     let z;
+
     if (metric === "probability") {
-      const successCount = finalValues.filter(v => v >= financialGoal).length;
-      z = successCount / finalValues.length;
+      // Instead of checking investment totals, check metGoal directly
+      const successCount = simulations.filter(sim => {
+        const last = sim[sim.length - 1];
+        return Array.isArray(last?.metGoal) && last.metGoal[0] === true;
+      }).length;
+
+      z = simulations.length > 0 ? successCount / simulations.length : 0;
     } else if (metric === "median") {
       const sorted = finalValues.slice().sort((a, b) => a - b);
       const mid = Math.floor(sorted.length / 2);
@@ -47,6 +53,7 @@ function parseFinalMetric2D(data, financialGoal, metric = "probability") {
 
   return results;
 }
+
   
 function createGrid(pointArray) {
     const xVals = [...new Set(pointArray.map(p => p.paramA))].sort((a, b) => a - b);
@@ -288,7 +295,7 @@ const TwoDimensionalCharts = () => {
     const shadedQuantities = ["Total Investments", "Total Income", "Total Expenses", "Early Withdrawal Tax", "Percentage of Total Discretionary Expenses Incurred"];
 
     const finalProbResults = parseFinalMetric2D(chartData.years, financialGoal, "probability");
-    // console.log(finalProbResults); // inside parseFinalMetric2D
+    console.log(finalProbResults); // inside parseFinalMetric2D
 
     const finalMedianResults = parseFinalMetric2D(chartData.years, financialGoal, "median");
 

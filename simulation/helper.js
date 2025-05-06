@@ -148,7 +148,7 @@ function duration(event) {
 
 function getStrategy(scenario, investments, curExpenseEvent, investEvent, year) {
   // Helper: safely map by ID and filter out unfound items
-  const safeMapById = (ids, collection, label, e) => {
+  const safeMapById = (ids=[], collection, label, e) => {
     return ids
       .map((id) => {
         const item = collection.find((entry) => entry._id === id);

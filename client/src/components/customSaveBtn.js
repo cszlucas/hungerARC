@@ -44,8 +44,10 @@ const CustomSave = ({ label = "Save", routeTo, color = "secondary", disable = fa
         let id = new ObjectId().toHexString();
 
         if (!user.guest) {
+          console.log("Saving scenario for user, scenario:", scenario);
           const response = await axios.post("http://localhost:8080/basicInfo/", scenario, { withCredentials: true });
           id = response.data._id;
+          console.log("Response from server:", response.data);
         }
 
         setCurrScenario((prev) => ({ ...prev, _id: id }));

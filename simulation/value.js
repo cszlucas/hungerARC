@@ -11,7 +11,7 @@ function getValueInYear(event, year, inflationRate, spouseDeath) {
 
   // Account for if spouse is out of simulation
   if (spouseDeath) {
-    amount *= event.userPercentage * 0.01;
+    amount *= event.userPercentage;
   }
 
   console.log('duration.calculated :>> ', duration.calculated);
@@ -24,17 +24,17 @@ function getValueInYear(event, year, inflationRate, spouseDeath) {
 
       switch (annualChange.distribution) {
         case "none":
-          amount += annualChange.type === "percentage" ? amount * (annualChange.amount ?? 0) * 0.01 : annualChange.amount ?? 0;
+          amount += annualChange.type === "percentage" ? amount * (annualChange.amount ?? 0): annualChange.amount ?? 0;
           break;
 
         case "normal":
           change = randomNormal(annualChange.mean, annualChange.stdDev);
-          amount += annualChange.type === "percentage" ? amount * change * 0.01 : change;
+          amount += annualChange.type === "percentage" ? amount * change : change;
           break;
 
         case "uniform":
           change = randomUniform(annualChange.min, annualChange.max);
-          amount += annualChange.type === "percentage" ? amount * change * 0.01 : change;
+          amount += annualChange.type === "percentage" ? amount * change : change;
           break;
 
         default:
