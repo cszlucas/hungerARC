@@ -22,7 +22,10 @@ const Basics = () => {
   const { currScenario, setCurrScenario, stateTaxes } = useContext(AppContext);
   const navigate = useNavigate();
   
-  const stateLabels = useMemo(() => stateTaxes.map((e) => e.state), [stateTaxes]);
+  const stateLabels = useMemo(() => {
+    const states = stateTaxes.map((e) => e.state);
+    return Array.from(new Set(states));
+  }, [stateTaxes]);  
   // const stateIds = useMemo(() => stateTaxes.map((e) => e._id), [stateTaxes]);
   const birthYears = useMemo(() => Array.from({ length: new Date().getFullYear() - 1925 + 1 }, (_, i) => 1925 + i), []);
 

@@ -49,16 +49,27 @@ Cypress.Commands.add('loginAsGuest', () => {
   
   
   // Select from a MUI <TextField select>
-  Cypress.Commands.add('selectDropdown', (labelText, value) => {
+  Cypress.Commands.add('selectAutocomplete', (labelText, optionLabel) => {
+    // Step 1: Find the dropdown by its label
     cy.contains(labelText)
-      .parent()
-      .find('.MuiSelect-select')
+      .should('be.visible')
+      .parent() // this gets you to the Box around Typography + Autocomplete
+      .within(() => {
+        // Step 2: Focus the input (input inside TextField rendered by Autocomplete)
+        cy.get('input').click().type(optionLabel);
+      });
+  
+    // Step 3: Select the option from the dropdown popover
+    cy.get('li[role="option"]')
+      .contains(optionLabel)
+      .should('be.visible')
       .click();
-    cy.get(`li[data-value="${value}"]`).click();
+  
+    // Step 4: Verify that the input now contains the selected label
     cy.contains(labelText)
       .parent()
-      .find('.MuiSelect-select')
-      .should('contain', value);
+      .find('input')
+      .should('have.value', optionLabel);
   });
   
   // Fill a labeled input
