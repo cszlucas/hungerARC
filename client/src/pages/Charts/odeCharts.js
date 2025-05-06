@@ -254,16 +254,45 @@ function flattenChartDataByParam(rawParamData, paramIndex, selectedValue) {
   return flatData;
 }
 
+export function normalizeChartDataValues(chartData) {
+  if (
+    !chartData?.years?.values ||
+    !Array.isArray(chartData.years.values)
+  ) {
+    console.error("❌ Invalid chartData format");
+    return chartData;
+  }
+
+  const normalized = {
+    ...chartData,
+    years: {
+      ...chartData.years,
+      values: chartData.years.values.map(entry => ({
+        ...entry,
+        value: Array.isArray(entry.value) ? entry.value : [entry.value],
+      }))
+    }
+  };
+
+  return normalized;
+}
+
+
 
 const OneDimensionalCharts = () => {
     const location = useLocation();
     // const odeData = location.state?.odeData || [];
-    const chartData = location.state?.chartData || [];
+    let chartData = location.state?.chartData || [];
     console.log(chartData);
     const {currScenario} = useContext(AppContext);
     const financialGoal = currScenario.financialGoal;
 
     const parameter = chartData.years.parameter[0];
+  
+    if (parameter === "Roth Optimizer Flag")
+    {
+      chartData = normalizeChartDataValues(chartData);
+    }
     const paramValues = getParameterValuesByIndex(chartData, 0);
     console.log(paramValues);
 
@@ -311,7 +340,11 @@ const OneDimensionalCharts = () => {
     useEffect(() => {
     }, [limit]);
 
-    const chartTypes = ["Probability Line Chart", "Shaded Line Chart", "Stacked Bar Chart", "Multi-Line Chart", "Line Chart of Selected Quantity"];
+    let chartTypes = ["Probability Line Chart", "Shaded Line Chart", "Stacked Bar Chart", "Multi-Line Chart", "Line Chart of Selected Quantity"];
+    if (parameter === "Roth Optimizer Flag")
+    {
+      chartTypes = ["Probability Line Chart", "Shaded Line Chart", "Stacked Bar Chart", "Multi-Line Chart"];
+    }
     const multiQuantities = ["probability of success", "median total investments"];
     const lineChartQuantities = ["final probability of success", "final median total investments"];
     const shadedQuantities = ["Total Investments", "Total Income", "Total Expenses", "Early Withdrawal Tax", "Percentage of Total Discretionary Expenses Incurred"];
