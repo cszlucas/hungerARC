@@ -16,19 +16,24 @@ import Invest from "./pages/scenario/events/invest";
 import Rebalance from "./pages/scenario/events/rebalance";
 import RunSimulations from "./pages/scenario/runSimulations";
 import Strategies from "./pages/scenario/strategies";
-import Charts from "./pages/charts";
-
+import Charts from "./pages/Charts/charts";
+import OneDimensionalCharts from "./pages/Charts/odeCharts";
+import TwoDimensionalCharts from "./pages/Charts/tdeCharts";
+import Test from "./test";
 import reportWebVitals from "./reportWebVitals";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import { AuthProvider } from "./context/authContext";
 import { AppProvider } from "./context/appContext";
+import { AlertProvider } from "./context/alertContext";
+
 
 const router = createBrowserRouter([
   { path: "/", element: <Login />, },
   { path: "/login", element: <Login />, },
   { path: "/profile", element: <Profile />, },
   { path: "/scenarios", element: <ScenarioList />, },
+  { path: "/test", element: <Test />, },
   {
     path: "/scenario/",
     element: <Scenarios />, // ✅ Make Scenarios the parent component
@@ -47,14 +52,18 @@ const router = createBrowserRouter([
       { path: "run_simulations", element: <RunSimulations /> },
     ],
   },
-  {path: "/charts", element: <Charts/>}
+  {path: "/charts", element: <Charts/>},
+  {path: "/ode", element: <OneDimensionalCharts/>},
+  {path: "/tde", element: <TwoDimensionalCharts/>}
 ]);
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
     <AuthProvider>
       <AppProvider>
-        <RouterProvider router={router} />
+        <AlertProvider>
+          <RouterProvider router={router} />
+        </AlertProvider>
       </AppProvider>
     </AuthProvider>
 );

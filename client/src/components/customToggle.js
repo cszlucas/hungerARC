@@ -11,11 +11,6 @@ const CustomToggle = ({ title, labels = [], values=[], sideView=false, width, va
         setValue(event.target.value);
     };
 
-    const capitalizeFirstLetter = (str) => {
-        if (!str) return "";  // Handle empty or null strings
-        return str.charAt(0).toUpperCase() + str.slice(1);
-    };
-
     return (<>
         
             {sideView ? (

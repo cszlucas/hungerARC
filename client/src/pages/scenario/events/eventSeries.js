@@ -1,21 +1,15 @@
 import React, { useContext } from "react";
-import {
-  ThemeProvider, CssBaseline, Container, Stack, Box,
-} from "@mui/material";
-import theme from "../../../components/theme";
-import Navbar from "../../../components/navbar";
+import { Stack, Box } from "@mui/material";
 
-import {
-    backContinueContainerStyles,
-    buttonStyles,
-    rowBoxStyles,
-} from "../../../components/styles";
+import { rowBoxStyles, } from "../../../components/styles";
 
 import CustomDropdown from "../../../components/customDropDown"; 
 import CustomInput from "../../../components/customInputBox";
 import CustomToggle from "../../../components/customToggle";
 
 import { AppContext } from "../../../context/appContext";
+
+const mongoose = require("mongoose");
 
 const EventSeries = ({ formValues, setFormValues }) => {
 // const EventSeries = () => {
@@ -37,6 +31,14 @@ const EventSeries = ({ formValues, setFormValues }) => {
         buildMap(currExpense);
         buildMap(currInvest);
         buildMap(currRebalance);
+        
+        // if (dimensionalExplorationMode[0]) {
+        //     tempExploration.forEach((e) => { 
+        //         if (e.setting === "Start Year / Duration") {
+        //             eventSeriesMap.set(e.data._id, { name: e.data.eventSeriesName, startYear: e.data.startYear });
+        //         }
+        //     });
+        // }
 
         if (eventEditMode === "new") {
             for (const key of eventSeriesMap.keys()) {
@@ -46,7 +48,12 @@ const EventSeries = ({ formValues, setFormValues }) => {
         }
 
         const validSet = new Set();
-        const notValidSet = new Set([eventEditMode.id]);
+        // const notValidSet = new Set([eventEditMode.id]);
+        const notValidSet = new Set();
+
+        if (eventEditMode !== "new" && eventEditMode?.id) {
+            notValidSet.add(eventEditMode.id);
+        }
 
         const resolveValue = (key, path = new Set()) => {
             if (notValidSet.has(key)) {
@@ -125,161 +132,159 @@ const EventSeries = ({ formValues, setFormValues }) => {
 
     return (
         <>
-            <Box sx={{width: "100%"}}>
-            <CustomInput 
-                title="Event name" 
-                value={formValues.eventSeriesName} 
-                setValue={(value) => handleInputChange("eventSeriesName", value)} 
-            />
+            <Box sx={{minWidth: 400, width: "auto"}}>
+                <CustomInput 
+                    title="Event name" 
+                    value={formValues.eventSeriesName} 
+                    setValue={(value) => handleInputChange("eventSeriesName", value)} 
+                />
 
-            <CustomInput 
-                title="Description (Optional)" 
-                type="multiline" 
-                value={formValues.eventSeriesDescription} 
-                setValue={(value) => handleInputChange("eventSeriesDescription", value)} 
-            />
+                <CustomInput 
+                    title="Description (Optional)" 
+                    type="multiline" 
+                    value={formValues.eventSeriesDescription} 
+                    setValue={(value) => handleInputChange("eventSeriesDescription", value)} 
+                />
             </Box>
 
             <Box sx={rowBoxStyles}>
-            <Box width={{width: 400}}>
+                <Box sx={{minWidth: 350}}>
+                    <CustomToggle
+                        title="Start Year"
+                        labels={["Fixed", "Normal", "Uniform", "Same as", "After"]}
+                        values={["fixedAmt", "normal", "uniform", "same", "after"]}
+                        value={formValues.startYear.type}
+                        setValue={(value) => handleInputChange("startYear.type", value)}
+                    />
+
+                    <Box sx={{mt:2}}></Box>
+
+                    {formValues.startYear.type === "fixedAmt" && (
+                        <Stack direction="row" spacing={1} alignItems="start">
+                            <CustomDropdown
+                                label="Value"
+                                value={formValues.startYear.value}
+                                setValue={(value) => handleInputChange("startYear.value", value)}
+                                menuItems={Array.from({ length: 200 }, (_, i) => new Date().getFullYear() + i)}
+                            />
+                        </Stack>
+                    )}
+                    {formValues.startYear.type === "normal" && (
+                        <Stack direction="row" spacing={1} alignItems="start">
+                            <CustomDropdown
+                                label="Mean"
+                                value={formValues.startYear.mean}
+                                setValue={(value) => handleInputChange("startYear.mean", value)}
+                                menuItems={Array.from({ length: 200 }, (_, i) => new Date().getFullYear() + i)}
+                            />
+                            <CustomInput 
+                                title="Standard Deviation"
+                                type="number"
+                                value={formValues.startYear.stdDev}
+                                setValue={(value) => handleInputChange("startYear.stdDev", value)}
+                            />
+                        </Stack>
+                    )}
+                    {formValues.startYear.type === "uniform" && (
+                        <Stack direction="row" spacing={1} alignItems="start">
+                            <CustomDropdown
+                                label="Min"
+                                value={formValues.startYear.min}
+                                setValue={(value) => handleInputChange("startYear.min", value)}
+                                menuItems={Array.from({ length: 200 }, (_, i) => new Date().getFullYear() + i)}
+                            />
+                            <CustomDropdown
+                                label="Max"
+                                value={formValues.startYear.max}
+                                setValue={(value) => handleInputChange("startYear.max", value)}
+                                menuItems={Array.from({ length: 200 }, (_, i) => new Date().getFullYear() + i)}
+                            />
+                        </Stack>
+                    )}
+                    {formValues.startYear.type === "same" && (
+                        <Stack direction="row" spacing={1} alignItems="start">
+                            <CustomDropdown 
+                                label={"Event Series"}
+                                value={formValues.startYear.refer}
+                                setValue={(value) => handleInputChange("startYear.refer", value)}
+                                menuLabels={menuLabels}
+                                menuItems={menuItems}
+                                width={250}
+                            />
+                        </Stack>
+                    )}
+                    {formValues.startYear.type === "after" && (
+                        <Stack direction="row" spacing={1} alignItems="start">
+                            <CustomDropdown 
+                                label={"Event Series"}
+                                value={formValues.startYear.refer}
+                                setValue={(value) => handleInputChange("startYear.refer", value)}
+                                menuLabels={menuLabels}
+                                menuItems={menuItems}
+                                width={250}
+                            />
+                        </Stack>
+                    )}
+                </Box>
+
+                {/* Input Fields Below in Columns */}
+                <Box>
                 <CustomToggle
-                    title="Start Year"
-                    labels={["Fixed", "Normal", "Uniform", "Same as", "After"]}
-                    values={["fixedAmt", "normal", "uniform", "same", "after"]}
-                    value={formValues.startYear.type}
-                    setValue={(value) => handleInputChange("startYear.type", value)}
+                    title="Duration"
+                    labels={["Fixed", "Normal", "Uniform"]}
+                    values={["fixedAmt", "normal", "uniform"]}
+                    width={100}
+                    value={formValues.duration.type}
+                    setValue={(value) => handleInputChange("duration.type", value)}
                 />
 
                 <Box sx={{mt:2}}></Box>
 
-                {formValues.startYear.type === "fixedAmt" && (
+                {formValues.duration.type === "fixedAmt" && (
                     <Stack direction="row" spacing={1} alignItems="start">
-                        <CustomInput 
-                            title="Value"
-                            type="number"
-                            value={formValues.startYear.value}
-                            setValue={(value) => handleInputChange("startYear.value", value)}
-                        />
+                    <CustomInput 
+                        title="Value"
+                        type="number"
+                        value={formValues.duration.value}
+                        setValue={(value) => handleInputChange("duration.value", value)}
+                    />
                     </Stack>
                 )}
-                {formValues.startYear.type === "normal" && (
+
+                {formValues.duration.type === "normal" && (
                     <Stack direction="row" spacing={1} alignItems="start">
                         <CustomInput 
                             title="Mean"
                             type="number"
-                            value={formValues.startYear.mean}
-                            setValue={(value) => handleInputChange("startYear.mean", value)}
+                            value={formValues.duration.mean}
+                            setValue={(value) => handleInputChange("duration.mean", value)}
                         />
                         <CustomInput 
                             title="Standard Deviation"
                             type="number"
-                            value={formValues.startYear.stdDev}
-                            setValue={(value) => handleInputChange("startYear.stdDev", value)}
+                            value={formValues.duration.stdDev}
+                            setValue={(value) => handleInputChange("duration.stdDev", value)}
                         />
                     </Stack>
                 )}
-                {formValues.startYear.type === "uniform" && (
+
+                {formValues.duration.type === "uniform" && (
                     <Stack direction="row" spacing={1} alignItems="start">
                         <CustomInput 
                             title="Min"
                             type="number"
-                            value={formValues.startYear.min}
-                            setValue={(value) => handleInputChange("startYear.min", value)}
+                            value={formValues.duration.min}
+                            setValue={(value) => handleInputChange("duration.min", value)}
                         />
                         <CustomInput 
                             title="Max"
                             type="number"
-                            value={formValues.startYear.max}
-                            setValue={(value) => handleInputChange("startYear.max", value)}
+                            value={formValues.duration.max}
+                            setValue={(value) => handleInputChange("duration.max", value)}
                         />
                     </Stack>
                 )}
-                {formValues.startYear.type === "same" && (
-                    <Stack direction="row" spacing={1} alignItems="start">
-                        <CustomDropdown 
-                            label={"Event Series"}
-                            value={formValues.startYear.refer}
-                            setValue={(value) => handleInputChange("startYear.refer", value)}
-                            menuLabels={menuLabels}
-                            menuItems={menuItems}
-                            width={250}
-                        />
-                    </Stack>
-                )}
-                {formValues.startYear.type === "after" && (
-                    <Stack direction="row" spacing={1} alignItems="start">
-                        <CustomDropdown 
-                            label={"Event Series"}
-                            value={formValues.startYear.refer}
-                            setValue={(value) => handleInputChange("startYear.refer", value)}
-                            menuLabels={menuLabels}
-                            menuItems={menuItems}
-                            width={250}
-                        />
-                    </Stack>
-                )}
-            </Box>
-
-            <Box sx={{mt:2}}></Box>
-
-            {/* Input Fields Below in Columns */}
-            <Box>
-            <CustomToggle
-                title="Duration"
-                labels={["Fixed", "Normal", "Uniform"]}
-                values={["fixedAmt", "normal", "uniform"]}
-                width={100}
-                value={formValues.duration.type}
-                setValue={(value) => handleInputChange("duration.type", value)}
-            />
-
-            <Box sx={{mt:2}}></Box>
-
-            {formValues.duration.type === "fixedAmt" && (
-                <Stack direction="row" spacing={1} alignItems="start">
-                <CustomInput 
-                    title="Value"
-                    type="number"
-                    value={formValues.duration.value}
-                    setValue={(value) => handleInputChange("duration.value", value)}
-                />
-                </Stack>
-            )}
-
-            {formValues.duration.type === "normal" && (
-                <Stack direction="row" spacing={1} alignItems="start">
-                    <CustomInput 
-                        title="Mean"
-                        type="number"
-                        value={formValues.duration.mean}
-                        setValue={(value) => handleInputChange("duration.mean", value)}
-                    />
-                    <CustomInput 
-                        title="Standard Deviation"
-                        type="number"
-                        value={formValues.duration.stdDev}
-                        setValue={(value) => handleInputChange("duration.stdDev", value)}
-                    />
-                </Stack>
-            )}
-
-            {formValues.duration.type === "uniform" && (
-                <Stack direction="row" spacing={1} alignItems="start">
-                    <CustomInput 
-                        title="Min"
-                        type="number"
-                        value={formValues.duration.min}
-                        setValue={(value) => handleInputChange("duration.min", value)}
-                    />
-                    <CustomInput 
-                        title="Max"
-                        type="number"
-                        value={formValues.duration.max}
-                        setValue={(value) => handleInputChange("duration.max", value)}
-                    />
-                </Stack>
-            )}
-            </Box>
+                </Box>
             </Box>
         </>
     );

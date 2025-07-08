@@ -1,39 +1,28 @@
-import React, { useState, useContext, useMemo, useEffect, startTransition } from "react";
+import axios from "axios";
+import React, { useState, useContext, useEffect } from "react";
 import { flushSync } from "react-dom";
 
 import {
-  ThemeProvider,
-  CssBaseline,
-  Container,
-  Typography,
-  Button,
-  Stack,
-  Box,
-  List,
-  MenuItem,
-  ListItem,
-  ListItemText,
-  TextField,
-  IconButton
+  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Alert, MenuItem, TextField,
 } from "@mui/material";
 import theme from "../../../components/theme";
 import Navbar from "../../../components/navbar";
 import PageHeader from "../../../components/pageHeader";
-import { stackStyles, titleStyles, buttonStyles, backContinueContainerStyles, textFieldStyles, rowBoxStyles } from "../../../components/styles";
+import { 
+  stackStyles, titleStyles, buttonStyles, backContinueContainerStyles, rowBoxStyles 
+} from "../../../components/styles";
 
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import CustomInput from "../../../components/customInputBox";
-import CustomToggle from "../../../components/customToggle";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
-import axios from "axios";
 import { AuthContext } from "../../../context/authContext";
+import { useAlert } from "../../../context/alertContext";
+
 import EventSeries from "./eventSeries";
 import { ObjectId } from "bson";
+import AssetAllocation from "./assetAllocation";
 
 const DEFAULT_FORM_VALUES = {
-  _id: "",
+  _id: null,
   eventSeriesName: "",
   eventSeriesDescription: "",
   startYear: {
@@ -43,7 +32,7 @@ const DEFAULT_FORM_VALUES = {
     stdDev: "",
     min: "",
     max: "",
-    refer: ""
+    refer: null,
   },
   duration: {
     type: "fixedAmt",
@@ -53,8 +42,8 @@ const DEFAULT_FORM_VALUES = {
     min: "",
     max: ""
   },
-  taxStatus: "non-tax",
-  rebalanceAllocation: {
+  // taxStatus: "non-retirement",
+  assetAllocation: {
     type: "fixed",
     fixedPercentages: {},
     initialPercenatages: {},
@@ -62,48 +51,67 @@ const DEFAULT_FORM_VALUES = {
   }
 };
 const TAX_MAP = {
-  "non-tax": "Taxable",
+  "non-retirement": "Taxable",
   "pre-tax": "Tax-Deferred",
-  "after-tax": "Tax-free",
+  "after-tax": "Tax-Free",
 };
 
 const Rebalance = () => {
-  const { currRebalance, setCurrRebalance, currInvestments, currInvestmentTypes, setCurrScenario, editMode } = useContext(AppContext);
+  const { currRebalance, setCurrRebalance, setCurrScenario, editMode } = useContext(AppContext);
   const { eventEditMode, setEventEditMode } = useContext(AppContext);
   const { user } = useContext(AuthContext);
-  
-  const investmentTypeMap = useMemo(() => (
-    Object.fromEntries(currInvestmentTypes.map(i => [i._id, i]))
-  ), [currInvestmentTypes]);
-  const investmentMap = useMemo(() => (
-    Object.fromEntries(currInvestments.map(i => [i._id, i]))
-  ), [currInvestments]);
+  const { showAlert } = useAlert();
 
-  const getInvestmentTypeById = (id) => investmentTypeMap[id] || { _id: "NULL", name: "Unknown Type" };
-  const getInvestmentById = (id) => investmentMap[id] || null;
   const getRebalanceById = (id) => currRebalance.find(r => r._id === id) || null;
-  const getRebalanceByTaxStatus = (status) => currRebalance.find(r => r.taxStatus === status) || DEFAULT_FORM_VALUES;
+  const getRebalanceByTaxStatus = (status) => {
+    const found = currRebalance.find(r => r.taxStatus === status);
+    if (found) return found;
+    return structuredClone({ ...DEFAULT_FORM_VALUES, taxStatus: status }); // or use JSON.parse(JSON.stringify(...))
+  };  
+  const [formValues, setFormValues] = useState(() => {
+    if (eventEditMode && eventEditMode.id) { return getRebalanceById(eventEditMode.id) || getRebalanceByTaxStatus(["non-retirement", "pre-tax", "after-tax"].find(type => !currRebalance.some(r => r.taxStatus === type))); }
+    return getRebalanceByTaxStatus("non-retirement");
+  });
+  const [disable, setDisable] = useState(true);
+  const [percentError, setPercentError] = useState(false);
   
-  const allowedInvestments = currInvestments.filter((item) => getInvestmentTypeById(item.investmentType).name !== "Cash");
-  const [formValues, setFormValues] = useState(getRebalanceById(eventEditMode.id) || getRebalanceByTaxStatus("non-tax"));
-  const [selectedInvestment, setSelectedInvestment] = useState("");
-  const displayedList = formValues.rebalanceAllocation;
-  console.log(displayedList);
-  // useEffect(()=> {
-    
-  // }, [eventEditMode]);
+  // Enable Save button only if all required fields are filled correctly
+  useEffect(() => {
+    function checkValidNum(eventValue) {
+      return eventValue >= 0 && typeof eventValue === "number" && !isNaN(eventValue);
+    }
+
+    const expression = formValues.eventSeriesName 
+      && (formValues.startYear.type !== "fixedAmt" 
+        || checkValidNum(formValues.startYear.value)) 
+      && (formValues.startYear.type !== "normal" 
+        || (checkValidNum(formValues.startYear.mean) && checkValidNum(formValues.startYear.stdDev))) 
+      && (formValues.startYear.type !== "uniform" 
+        || (checkValidNum(formValues.startYear.min) && checkValidNum(formValues.startYear.max) 
+        && formValues.startYear.min <= formValues.startYear.max)) 
+      && (["same", "after"].includes(formValues.startYear.type) 
+        ? formValues.startYear.refer : true) 
+      && (formValues.duration.type !== "fixedAmt" 
+        || checkValidNum(formValues.duration.value)) 
+      && (formValues.duration.type !== "normal" 
+        || (checkValidNum(formValues.duration.mean) && checkValidNum(formValues.duration.stdDev))) 
+      && (formValues.duration.type !== "uniform" 
+        || (checkValidNum(formValues.duration.min) && checkValidNum(formValues.duration.max) 
+        && formValues.duration.min <= formValues.duration.max)) 
+      && (formValues.assetAllocation.type === "fixed" 
+        ? Object.keys(formValues.assetAllocation.fixedPercentages).length > 0 : true)
+      && (formValues.assetAllocation.type === "glidePath" 
+        ? Object.keys(formValues.assetAllocation.initialPercentages).length > 0 : true);
+
+    setDisable(!expression);
+  }, [formValues]);
 
   const handleTaxStatusChange = (selectedTaxStatus) => {
-    const match = currRebalance?.find((r) => r.taxStatus === selectedTaxStatus);
-    
-    if (match) { setEventEditMode((prev) => ({ ...prev, id: match._id })); } 
-    else { setEventEditMode((prev) => ({ ...prev, id: "new" })); }
-    const updatedForms = {...DEFAULT_FORM_VALUES, taxStatus: selectedTaxStatus};
-    const newForm = match || updatedForms;
-  
-    setFormValues(newForm);
-    setSelectedInvestment("");
+    const match = getRebalanceByTaxStatus(selectedTaxStatus);
+    setEventEditMode((prev) => ({ ...prev, id: match._id ?? "new" }));
+    setFormValues(match);
   };
+
   const handleInputChange = (field, value) => {
     const fieldParts = field.split("."); // Split the field into parts (e.g., "lifeExpectancy.mean")
   
@@ -128,50 +136,13 @@ const Rebalance = () => {
     });
   };
 
-  const filteredInvestments = allowedInvestments.filter((investment) => {
-    const matchesTaxStatus = investment.accountTaxStatus === formValues.taxStatus;
-  
-    const { type, fixedPercentages = {}, initialPercentages = {} } = formValues.rebalanceAllocation;
-  
-    const alreadyAllocated =
-      type === "fixed"
-        ? Object.prototype.hasOwnProperty.call(fixedPercentages, investment._id)
-        : Object.prototype.hasOwnProperty.call(initialPercentages, investment._id);
-  
-    return matchesTaxStatus && !alreadyAllocated; // If investment matches with given tax status as well its not already allocated
-  });
-
-  const [pendingPercentage, setPendingPercentage] = useState("");
-  const [pendingInitial, setPendingInitial] = useState("");
-  const [pendingFinal, setPendingFinal] = useState("");
-
-  // const [taxableInvestments, setTaxableInvestments] = useState([]); //keep
-  // const [taxDeferredInvestments, setTaxDeferredInvestments] = useState([]); //keep
-  // const [taxFreeInvestments, setTaxFreeInvestments] = useState([]); //keep
-
   const navigate = useNavigate();
 
   const handleSave = async () => {
-    // const cleanRebalanceAllocation = (form) => {
-    //   const cleaned = { ...form };
-    //   const allocation = { ...form.rebalanceAllocation };
-    
-    //   if (allocation.type === "fixed") {
-    //     allocation.initialPercentages = {};
-    //     allocation.finalPercentages = {};
-    //   } else if (allocation.type === "glidePath") {
-    //     allocation.fixedPercentages = {};
-    //   }
-    
-    //   cleaned.rebalanceAllocation = allocation;
-    //   return cleaned;
-    // };
-    // const cleanedFormValues = cleanRebalanceAllocation(formValues);
-
-    const cleanedAllocation = formValues.rebalanceAllocation.type === "fixed"
-            ? { ...formValues.rebalanceAllocation, initialPercentages: {}, finalPercentages: {} }
-            : { ...formValues.rebalanceAllocation, fixedPercentages: {} };
-    const cleanedFormValues = { ...formValues, rebalanceAllocation: cleanedAllocation };
+    const cleanedAllocation = formValues.assetAllocation.type === "fixed"
+            ? { ...formValues.assetAllocation, initialPercentages: {}, finalPercentages: {} }
+            : { ...formValues.assetAllocation, fixedPercentages: {} };
+    const cleanedFormValues = { ...formValues, assetAllocation: cleanedAllocation };
     setFormValues(cleanedFormValues);
 
     if (eventEditMode.id === "new") {
@@ -199,155 +170,6 @@ const Rebalance = () => {
       });
     }
   };
-  
-  const handleAddInvestment = () => {
-    if (!selectedInvestment) return;
-  
-    const investment = getInvestmentById(selectedInvestment);
-    if (!investment) return;
-  
-    setFormValues((prev) => {
-      const updatedRebalance = { ...prev.rebalanceAllocation };
-      const allocationType = prev.rebalanceAllocation.type;
-  
-      if (allocationType === "fixed") {
-        if (!updatedRebalance.fixedPercentages) updatedRebalance.fixedPercentages = {};
-        updatedRebalance.fixedPercentages[selectedInvestment] = pendingPercentage;
-      } else if (allocationType === "glidePath") {
-        if (!updatedRebalance.initialPercentages) updatedRebalance.initialPercentages = {};
-        if (!updatedRebalance.finalPercentages) updatedRebalance.finalPercentages = {};
-  
-        updatedRebalance.initialPercentages[selectedInvestment] = pendingInitial;
-        updatedRebalance.finalPercentages[selectedInvestment] = pendingFinal;
-      }
-  
-      return {
-        ...prev,
-        rebalanceAllocation: updatedRebalance,
-      };
-    });
-  
-    // Categorize investment
-    // const alreadyInList = (list) =>
-    //   list.some((inv) => inv.investmentTypeName === investment.investmentTypeName);
-  
-    // if (formValues.taxStatus === "non-tax" && !alreadyInList(taxableInvestments)) {
-    //   setTaxableInvestments([...taxableInvestments, investment]);
-    // } else if (formValues.taxStatus === "pre-tax" && !alreadyInList(taxDeferredInvestments)) {
-    //   setTaxDeferredInvestments([...taxDeferredInvestments, investment]);
-    // } else if (formValues.taxStatus === "after-tax" && !alreadyInList(taxFreeInvestments)) {
-    //   setTaxFreeInvestments([...taxFreeInvestments, investment]);
-    // }
-  
-    // Clear selection + pending inputs
-    setSelectedInvestment("");
-    setPendingPercentage("");
-    setPendingInitial("");
-    setPendingFinal("");
-  };
-
-  const handleDeleteInvestment = (investmentId) => {
-    setFormValues((prev) => {
-      const updated = { ...prev };
-      const type = updated.rebalanceAllocation.type;
-      
-      // Parse, delete, then update allocation
-      if (type === "fixed") {
-        const updatedFixed = { ...updated.rebalanceAllocation.fixedPercentages };
-        delete updatedFixed[investmentId];
-
-        updated.rebalanceAllocation.fixedPercentages = updatedFixed;
-      } else if (type === "glidePath") {
-        const updatedInitial = { ...updated.rebalanceAllocation.initialPercentages };
-        const updatedFinal = { ...updated.rebalanceAllocation.finalPercentages };
-        delete updatedInitial[investmentId];
-        delete updatedFinal[investmentId];
-
-        updated.rebalanceAllocation.initialPercentages = updatedInitial;
-        updated.rebalanceAllocation.finalPercentages = updatedFinal;
-      }
-
-      return updated;
-    });
-  };
-  
-  const handleEditInvestment = (investmentId) => {
-    setSelectedInvestment(investmentId);
-    const { type, fixedPercentages, initialPercentages, finalPercentages } = formValues.rebalanceAllocation;
-  
-    if (type === "fixed") {
-      setPendingPercentage(fixedPercentages[investmentId] ?? "");
-    } else if (type === "glidePath") {
-      setPendingInitial(initialPercentages[investmentId] ?? "");
-      setPendingFinal(finalPercentages[investmentId] ?? "");
-    }
-  };
-  
-  const InvestList = ({ rebalanceAllocation, getInvestmentNameById }) => {
-    const displayList = [];
-
-    if (!rebalanceAllocation || !rebalanceAllocation.type) {
-      return <div>No allocation data to display</div>;
-    }
-  
-    const { type, fixedPercentages = {}, initialPercentages = {}, finalPercentages = {} } = rebalanceAllocation;
-  
-    if (type === "glidePath") {
-      Object.keys(initialPercentages).forEach((id) => {
-        const investment = getInvestmentNameById(id); // should return full investment object
-        const typeObj = getInvestmentTypeById(investment?.investmentType);
-        displayList.push({
-          _id: id,
-          investmentTypeName: typeObj?.name || "Unknown Investment",
-          initial: initialPercentages[id] * 100,
-          final: finalPercentages[id] * 100,
-        });
-      });
-    } else if (type === "fixed") {
-      Object.keys(fixedPercentages).forEach((id) => {
-        const investment = getInvestmentNameById(id); // full object
-        const typeObj = getInvestmentTypeById(investment?.investmentType);
-        displayList.push({
-          _id: id,
-          investmentTypeName: typeObj?.name || "Unknown Investment",
-          percent: fixedPercentages[id],
-        });
-      });
-    }
-
-    return (
-      <List>
-        {displayList.map((item, index) => (
-          <ListItem
-            key={`${item.investmentTypeName}-${index}`}
-            sx={{
-              backgroundColor: index % 2 === 0 ? "#BBBBBB" : "#D9D9D9",
-              "&:hover": { backgroundColor: "#B0B0B0" },
-            }}
-            secondaryAction={
-              <>
-                 <IconButton edge="end" onClick={() => handleEditInvestment(item._id)}>
-                  <EditIcon />
-                </IconButton>
-                <IconButton edge="end" onClick={() => handleDeleteInvestment(item._id)}>
-                  <DeleteIcon />
-                </IconButton>
-              </>
-            }
-          >
-            <ListItemText
-              primary={<span style={{ fontWeight: "bold" }}>{item.investmentTypeName || "Unknown Investment"}</span>}
-              secondary={
-                item.initial !== undefined && item.final !== undefined
-                  ? `${item.initial}% → ${item.final}%`
-                  : item.percent !== undefined ? `${item.percent}%` : "—"
-              }
-            />
-          </ListItem>
-        ))}
-      </List>
-    );
-  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -366,7 +188,7 @@ const Rebalance = () => {
               </Typography>
               <TextField
                 select
-                value={formValues.taxStatus || "non-tax"}
+                value={formValues.taxStatus || "non-retirement"}
                 onChange={(e) => { handleTaxStatusChange(e.target.value); }}
                 sx ={{ 
                   mt: -1,
@@ -384,7 +206,7 @@ const Rebalance = () => {
                   },
                 }}
               >
-                <MenuItem value="non-tax">Taxable</MenuItem>
+                <MenuItem value="non-retirement">Taxable</MenuItem>
                 <MenuItem value="pre-tax">Tax-Deferred</MenuItem>
                 <MenuItem value="after-tax">Tax-Free</MenuItem>
               </TextField>
@@ -402,101 +224,13 @@ const Rebalance = () => {
 
         <Box sx={rowBoxStyles }>
           {/* Left Column - Tax Category & Investment Dropdowns */}
-          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, width: 350, maxWidth: 500 }}>
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 400, maxWidth: 500 }}>
             {/* Tax Category Dropdown */}
             <EventSeries formValues={formValues} setFormValues={setFormValues} />
           </Box>
           {/* Right Column - Investment List for the selected tax type */}
-          <Box sx={{width: 350}}>
-            <Typography variant="h6" sx={{ fontWeight: "bold", marginTop: 4, marginBottom: 2 }}>
-              Add Asset Allocation
-            </Typography>
-            {/* Investment Dropdown - Populated Based on Tax Category */}
-            <Box sx={{ display: "inline-flex", flexDirection: "column", width: "auto", mb:2 }}>
-              <Typography variant="body1" sx={{ marginBottom: 1, fontWeight: "medium" }}>
-                Investment
-              </Typography>
-              <TextField select 
-                value={selectedInvestment} 
-                onChange={(e) => setSelectedInvestment(e.target.value)} 
-                fullWidth sx={textFieldStyles} 
-                disabled={!formValues.taxStatus}
-              >
-                <MenuItem value="" disabled>
-                  Select
-                </MenuItem>
-                {filteredInvestments.map((investment) => (
-                  <MenuItem key={investment._id} value={investment._id}>
-                    {getInvestmentTypeById(investment.investmentType).name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Box>
-
-            <Stack spacing={3} >
-              {/* Toggle Allocation Type */}
-              <CustomToggle
-                title="Allocations"
-                labels={["Fixed", "Glide Path"]}
-                values={["fixed", "glidePath"]}
-                sideView={false}
-                width={100}
-                value={formValues.rebalanceAllocation.type}
-                setValue={(value) =>
-                  handleInputChange("rebalanceAllocation.type", value)
-                }
-              />
-
-              {/* Input Fields Below in Columns */}
-              {formValues.rebalanceAllocation.type === "fixed" && (
-                <CustomInput
-                  title="Value"
-                  type="number"
-                  adornment="%"
-                  value={pendingPercentage ?? "" }
-                  setValue={setPendingPercentage}
-                />
-              )}
-              {formValues.rebalanceAllocation.type === "glidePath" && (
-                <Stack direction="row" spacing={4} alignItems="start">
-                  <CustomInput
-                    title="Initial Percentage"
-                    type="number"
-                    adornment="%"
-                    value={pendingInitial ?? ""}
-                    setValue={setPendingInitial}
-                  />
-                  <CustomInput
-                    title="Final Percentage"
-                    type="number"
-                    adornment="%"
-                    value={pendingFinal ?? ""}
-                    setValue={setPendingFinal}
-                  />
-                </Stack>
-              )}
-            </Stack>
-
-            {/* Add Button */}
-            <Stack direction="row" spacing={4} sx={{mt: 4}}>
-              <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                {TAX_MAP[formValues.taxStatus] || "Investments"}
-              </Typography>
-              <Button
-                variant="contained"
-                color="primary"
-                sx={{ textTransform: "none" }}
-                onClick={handleAddInvestment}
-                disabled={!selectedInvestment} // Disable if no investment selected
-              >
-                Add
-              </Button>
-            </Stack>
-            
-            <InvestList
-              rebalanceAllocation={displayedList}
-              getInvestmentNameById={getInvestmentById}
-            />
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            <AssetAllocation formValues={formValues} setFormValues={setFormValues} isRebalance={true} setPercentError={setPercentError}/>
           </Box>
         </Box>
 
@@ -519,9 +253,14 @@ const Rebalance = () => {
 
           <Button variant="contained" color="success" sx={buttonStyles} 
             onClick={()=> {
+              if (percentError) {
+                showAlert("Fixed or initial and final allocation percentages must each sum to exactly 100%.", "error");
+                return;
+              }
               handleSave();
               navigate("/scenario/event_series_list");
             }}
+            disabled={disable}
           >
             Save & Continue
           </Button>

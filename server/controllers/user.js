@@ -1,5 +1,4 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/user.js");
+const User = require("../models/user");
 const multer = require("multer");
 const yaml = require("js-yaml");
 const StateTax = require("../models/stateTax");
@@ -7,48 +6,66 @@ const StateTax = require("../models/stateTax");
 const upload = multer({ storage: multer.memoryStorage() });
 
 exports.auth = async (req, res) => {
-  // mongoose.connection.on("connected", () => console.log("MongoDB is connected ✅"));
-  // mongoose.connection.on("error", (err) => console.error("MongoDB connection error ❌:", err));
   const { googleId, email, guest } = req.body;
-  console.log("Received data:", { googleId, email, guest });
+  // console.log("Received data:", { googleId, email, guest });
+
   try {
     let user = await User.findOne({ $or: [{ googleId }, { email }] });
 
-    console.log(user);
-
     if (!user) {
       user = new User({ googleId, email, guest, lastLogin: Date.now() });
-      console.log(user);
       await user.save();
-      console.log("user saved!");
+      console.log("User saved!");
     } else {
       user.lastLogin = Date.now();
       await user.save();
     }
 
-    // Generate JWT token
-    console.log("JWT_SECRET:", process.env.JWT_SECRET);
-
-    const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
-
-    res.json({ user, token });
+    req.session.user = user;
+    
+    res.json(req.session.user);
   } catch (err) {
-    console.log(err.message);
+    console.error(err.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
-exports.scenarios = async (req, res) => {
-  const { id } = req.params; // Get user ID from route parameters
+exports.guestAuth = (req, res) => {
+  const guestUser = {
+    email: "Guest@hungerArc.com",
+    guest: true,
+    scenarios: [],
+    stateYaml: [],
+  };
+  req.session.user = guestUser;
+  res.json(guestUser);
+};
 
+exports.sessionCheck = (req, res) => {
+  if (req.session.user) {
+    res.json(req.session.user);
+  } else {
+    res.status(401).json({ message: "Not logged in" });
+  }
+};
+
+exports.logout = (req, res) => {
+  req.session.destroy((err) => {
+    if (err) return res.status(500).json({ message: "Logout failed" });
+    res.clearCookie("session-id");
+    res.json({ message: "Logged out" });
+  });
+};
+
+exports.scenarios = async (req, res) => {
   try {
     // Find the user by ID and populate the scenarios array
-    const user = await User.findById(id).populate('scenarios');
+    if (!req.session.user) res.status(500).json({ message: "Failed to get user session" });
+    const userData = req.session.user;
+    const user = await User.findById(userData._id).populate('scenarios');
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' }); // Handle if no user is found
+      return res.status(404).json({ message: "User not found" });
     }
 
     res.status(200).json(user.scenarios); // Send back the populated scenarios

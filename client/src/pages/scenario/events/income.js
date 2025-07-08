@@ -1,13 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import {
-    ThemeProvider,
-    CssBaseline,
-    Container,
-    Button,
-    Stack,
-    Box,
-    Checkbox,
-    Typography
+    ThemeProvider, CssBaseline, Container, Button, Stack, Box, Checkbox, Typography
 } from "@mui/material";
 
 import theme from "../../../components/theme";
@@ -58,7 +51,7 @@ const Income = () => {
 
     // Form state for the income event series
     const [formValues, setFormValues] = useState(indieIncome || {
-        _id: "",
+        _id: null,
         eventSeriesName: "",
         description: "",
         startYear: {
@@ -68,7 +61,7 @@ const Income = () => {
             stdDev: "",
             min: "",
             max: "",
-            refer: "",
+            refer: null,
         },
         duration: {
             type: "fixedAmt",
@@ -88,26 +81,45 @@ const Income = () => {
             min: "",
             max: ""
         },
-        userPercentage: "",
+        userPercentage: 1,
         inflationAdjustment: false,
         isSocialSecurity: false
     });
     // Handles the enabling or disabling the save button
     const [disable, setDisable] = useState(true);
     useEffect(() => {
-        const expression = formValues.eventSeriesName 
-            && (formValues.startYear.type !== "fixedAmt" || (formValues.startYear.value))
-            && (formValues.startYear.type !== "normal" || (formValues.startYear.mean && formValues.startYear.stdDev))
-            && (formValues.startYear.type !== "uniform" || (formValues.startYear.min && formValues.startYear.max))
-            && ((formValues.startYear.type !== "same" && formValues.startYear.type !== "after") || (formValues.startYear.refer))
-            && (formValues.duration.type !== "fixedAmt" || (formValues.duration.value))
-            && (formValues.duration.type !== "normal" || (formValues.duration.mean && formValues.duration.stdDev))
-            && (formValues.duration.type !== "uniform" || (formValues.duration.min && formValues.duration.max))
-            && formValues.initialAmount
-            && (formValues.annualChange.distribution !== "none" || formValues.annualChange.amount)
-            && (formValues.annualChange.distribution !== "normal" || (formValues.annualChange.mean && formValues.annualChange.stdDev))
-            && (formValues.annualChange.distribution !== "uniform" || (formValues.annualChange.min && formValues.annualChange.max));
+        function checkValidNum(eventValue) {
+            return eventValue >= 0 && typeof eventValue === "number" && !isNaN(eventValue);
+        }
 
+        const expression = formValues.eventSeriesName 
+            && (formValues.startYear.type !== "fixedAmt" 
+                || checkValidNum(formValues.startYear.value))
+            && (formValues.startYear.type !== "normal" 
+                || (checkValidNum(formValues.startYear.mean) && checkValidNum(formValues.startYear.stdDev)))
+            && (formValues.startYear.type !== "uniform" 
+                || (checkValidNum(formValues.startYear.min) && checkValidNum(formValues.startYear.max) 
+                && formValues.startYear.min <= formValues.startYear.max))
+            && ((formValues.startYear.type !== "same" && formValues.startYear.type !== "after") 
+                || (formValues.startYear.refer))
+            && (formValues.duration.type !== "fixedAmt" 
+                || checkValidNum(formValues.duration.value))
+            && (formValues.duration.type !== "normal" 
+                || (checkValidNum(formValues.duration.mean) && checkValidNum(formValues.duration.stdDev)))
+            && (formValues.duration.type !== "uniform" 
+                || (checkValidNum(formValues.duration.min) && checkValidNum(formValues.duration.max) 
+                && formValues.duration.min <= formValues.duration.max))
+            && checkValidNum(formValues.initialAmount)
+            && (currScenario.filingStatus !== "married" 
+                || checkValidNum(formValues.userPercentage))
+            && (formValues.annualChange.distribution !== "none" 
+                || checkValidNum(formValues.annualChange.amount))
+            && (formValues.annualChange.distribution !== "normal" 
+                || (checkValidNum(formValues.annualChange.mean) && checkValidNum(formValues.annualChange.stdDev)))
+            && (formValues.annualChange.distribution !== "uniform" 
+                || (checkValidNum(formValues.annualChange.min) && checkValidNum(formValues.annualChange.max) 
+                && formValues.annualChange.min <= formValues.annualChange.max));
+        
         setDisable(expression ? false : true);
     }, [formValues]);
     
@@ -194,7 +206,7 @@ const Income = () => {
 
                 <Box sx={rowBoxStyles}>
                     {/* Column 1: General Event Info */}
-                    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, width: 400 }}>
+                    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 400 }}>
                         <EventSeries formValues={formValues} setFormValues={setFormValues} />
                     </Box>
 

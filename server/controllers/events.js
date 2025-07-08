@@ -9,13 +9,14 @@ const Scenario = require("../models/scenario.js");
 exports.createIncomeEvent = async (req, res) => {
   const { id } = req.params;
   try {
-    const { eventSeriesName, description, startYear, duration, initialAmount, annualChange, userPercentage, inflationAdjustment, isSocialSecurity } = req.body;
+    const { _id, eventSeriesName, description, startYear, duration, initialAmount, annualChange, userPercentage, inflationAdjustment, isSocialSecurity } = req.body;
 
     console.log(annualChange);
     console.log(annualChange.type);
 
     // creates a new income event using extracted request body data
     const newIncomeEvent = new IncomeEvent({
+      _id: _id ?? new ObjectId(),
       eventSeriesName,
       description,
       startYear,
@@ -46,6 +47,7 @@ exports.createIncomeEvent = async (req, res) => {
 
     res.status(201).json(savedIncomeEvent);
   } catch (err) {
+    console.log(err.message);
     res.status(500).json({ error: err.message });
   }
 };
@@ -111,18 +113,16 @@ exports.getAllIncomeEventsByScenario = async (req, res) => {
 exports.createExpenseEvent = async (req, res) => {
   const { id } = req.params;
   try {
-    const { eventSeriesName, description, startYear, duration, initialAmount, annualChange, userPercentage, inflationAdjustment, isDiscretionary } = req.body;
+    const { _id, eventSeriesName, description, startYear, duration, initialAmount, annualChange, userPercentage, inflationAdjustment, isDiscretionary } = req.body;
 
     const newExpenseEvent = new ExpenseEvent({
+      _id: _id ?? new ObjectId(),
       eventSeriesName,
       description,
       startYear,
       duration,
       initialAmount,
-      annualChange: {
-        type: annualChange.type,
-        amount: annualChange.amount,
-      },
+      annualChange: annualChange,
       userPercentage,
       inflationAdjustment,
       isDiscretionary,
@@ -185,11 +185,12 @@ exports.deleteExpenseEvent = async (req, res) => {
 // add a new invest event to investevent collection
 exports.createInvestStrategy = async (req, res) => {
   const { id } = req.params;
-  const { eventSeriesName, description, startYear, duration, type, assetAllocation, maxCash } = req.body;
-  console.log("create invest strategy");
-  console.log("assetAllocation", assetAllocation);
+  const { _id, eventSeriesName, description, startYear, duration, type, assetAllocation, maxCash } = req.body;
+  //console.log("create invest strategy");
+  //console.log("assetAllocation", assetAllocation);
   try {
     const investEvent = new InvestEvent({
+      _id: _id ?? new ObjectId(),
       eventSeriesName,
       description,
       startYear,
@@ -272,20 +273,21 @@ exports.deleteInvestEvent = async (req, res) => {
 // add a new rebalance event to rebalanceevent collection
 exports.createRebalanceStrategy = async (req, res) => {
   const { id } = req.params;
-  const { eventSeriesName, description, startYear, duration, taxStatus, rebalanceAllocation } = req.body;
+  const { _id, eventSeriesName, description, startYear, duration, taxStatus, assetAllocation } = req.body;
 
   try {
     const rebalanceEvent = new RebalanceEvent({
+      _id: _id ?? new ObjectId(),
       eventSeriesName,
       description,
       startYear,
       duration,
       taxStatus,
-      rebalanceAllocation: {
-        type: rebalanceAllocation.type,  
-        initialPercentages: rebalanceAllocation.initialPercentages,  
-        finalPercentages: rebalanceAllocation.finalPercentages,  
-        fixedPercentages: rebalanceAllocation.fixedPercentages,  
+      assetAllocation: {
+        type: assetAllocation.type,  
+        initialPercentages: assetAllocation.initialPercentages,  
+        finalPercentages: assetAllocation.finalPercentages,  
+        fixedPercentages: assetAllocation.fixedPercentages,  
       },
     });
 

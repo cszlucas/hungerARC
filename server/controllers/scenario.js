@@ -1,11 +1,13 @@
 const mongoose = require("mongoose");
 const Scenario = require("../models/scenario.js");
 const Investment = require("../models/investment.js");
+const InvestmentType = require("../models/investmentType.js");
+const { BaseEventSeries, IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent, AnnualChange } = require("../models/eventSeries.js");
+
 const User = require("../models/user.js");
 const { ObjectId } = mongoose.Types;
 const axios = require("axios");
-const { ExpenseEvent } = require("../models/eventSeries.js");
-const { main } = require('../../simulation/algo.js');
+const { main } = require("../../simulation/main.js");
 
 exports.scenario = async (req, res) => {
   const scenarioId = new ObjectId(req.params.id);
@@ -21,17 +23,24 @@ exports.scenario = async (req, res) => {
 };
 
 exports.basicInfo = async (req, res) => {
-  const { id } = req.params; //user id
-  console.log("Received request with ID:", req.params.id);
   try {
+    console.log('Full req.body:', JSON.stringify(req.body, null, 2));
+    if (!req.session.user) res.status(500).json({ message: "Failed to get user session" });
+    const userData = req.session.user;
+    const user = await User.findOne({ _id: userData._id });
+    if (!user) {
+      console.log("user not found");
+      return res.status(404).json({ message: "User not found" });
+    }
+    console.log("user", user);
     const { name, filingStatus, financialGoal, inflationAssumption, birthYearUser, lifeExpectancy, stateResident, birthYearSpouse, lifeExpectancySpouse, irsLimit } = req.body;
-    console.log("why");
+
     const newBasicInfo = new Scenario({
       name,
       filingStatus,
       financialGoal,
       inflationAssumption: {
-        type: inflationAssumption.inflationAssumptionType,
+        type: inflationAssumption.type,
         fixedRate: inflationAssumption.fixedRate,
         mean: inflationAssumption.mean,
         stdDev: inflationAssumption.stdDev,
@@ -40,14 +49,14 @@ exports.basicInfo = async (req, res) => {
       },
       birthYearUser,
       lifeExpectancy: {
-        type: lifeExpectancy.lifeExpectancyType,
+        type: lifeExpectancy.type,
         fixedAge: lifeExpectancy.fixedAge,
         mean: lifeExpectancy.mean,
         stdDev: lifeExpectancy.stdDev,
       },
       birthYearSpouse,
       lifeExpectancySpouse: {
-        type: lifeExpectancySpouse.lifeExpectancyType,
+        type: lifeExpectancySpouse.type,
         fixedAge: lifeExpectancySpouse.fixedAge,
         mean: lifeExpectancySpouse.mean,
         stdDev: lifeExpectancySpouse.stdDev,
@@ -57,17 +66,12 @@ exports.basicInfo = async (req, res) => {
     });
 
     const savedBasicInfo = await newBasicInfo.save();
-    const user = await User.findOne({ _id: id });
-    if (!user) {
-      console.log("user not found");
-      return res.status(404).json({ message: "user not found" });
-    }
     user.scenarios.push(savedBasicInfo._id);
     await user.save();
-
+    console.log("USER SAVED, ", savedBasicInfo);
     res.status(201).json(savedBasicInfo);
   } catch (err) {
-    console.error("Error creating scenario:", err.message);
+    console.error("Error creating scenario:", err.stack);
     res.status(500).json({ error: err.message });
   }
 };
@@ -76,8 +80,8 @@ exports.updateScenario = async (req, res) => {
   const { id } = req.params;
   const updateData = req.body;
   try {
-    const result = await Scenario.updateOne({ _id: new ObjectId(id) }, { $set: updateData });
-    return res.status(200).json({ message: "Scenario updated successfully" });
+    const result = await Scenario.findByIdAndUpdate( new ObjectId(id), { $set: updateData }, { new: true });
+    return res.status(200).json({ message: "Scenario updated successfully", scenario: result });
   } catch (err) {
     console.error("Error adding to scenario:", err);
     res.status(500).json({ error: err.message });
@@ -109,274 +113,70 @@ exports.deleteScenario = async (req, res) => {
 };
 
 exports.importUserData = async (req, res) => {
-  const { id } = req.params; //user id
-  const {
-    name,
-    maritalStatus,
-    birthYearSpouse,
-    birthYearUser,
-    lifeExpectancy,
-    setOfinvestmentTypes,
-    setOfinvestments,
-    income,
-    expense,
-    invest,
-    rebalance,
-    inflationAssumption,
-    afterTaxContributionLimit,
-    spendingStrategy,
-    expenseWithdrawalStrategy,
-    rmdStrategy,
-    optimizerSettings,
-    rothConversionStrategy,
-    financialGoal,
-    stateResident,
-  } = req.body;
 
-  for (const x of lifeExpectancy) {
-    x.lifeExpectancyType = x.type;
-    if (x.lifeExpectancyType === "fixed") {
-      x.fixedAge = x.value;
-    }
-    if (x.lifeExpectancyType === "normal") {
-      x.stdDev = x.stdev;
-    }
-  }
-
-  if (inflationAssumption) {
-    inflationAssumption.inflationAssumptionType = inflationAssumption.type;
-  
-    if (inflationAssumption.inflationAssumptionType === "fixed") {
-      inflationAssumption.fixedRate = inflationAssumption.value;
-    }
-  }
-  
-  const basicInfoData = {
-    name: name,
-    filingStatus: maritalStatus === "couple" ? "couple" : "single",
-    financialGoal: financialGoal,
-    inflationAssumption: inflationAssumption,
-    birthYearUser: birthYearUser,
-    lifeExpectancy: lifeExpectancy[0],
-    birthYearSpouse: birthYearSpouse ?? null,
-    lifeExpectancySpouse: lifeExpectancy[1],
-    stateResident: stateResident,
-    irsLimit: afterTaxContributionLimit,
-  };
-
-  console.log("lifeExpectancy[0]", lifeExpectancy[0], lifeExpectancy[1]);
   try {
-    const response = await axios.post(`http://localhost:8080/basicInfo/user/${id}`, basicInfoData);
-
-    console.log(response.data);
-    let scenarioId = response.data._id;
-    console.log("scenarioId", scenarioId);
-
-    const eventMappings = [
-      { data: income, route: "incomeEvent" },
-      { data: expense, route: "expenseEvent" },
-      { data: invest, route: "investStrategy" },
-      { data: rebalance, route: "rebalanceStrategy" },
-    ];
-
-    for (const { data, route } of eventMappings) {
-      try {
-        console.log("data", data);
-
-        formatIssues(data);
-
-        await axios.post(`http://localhost:8080/scenario/${scenarioId}/${route}`, data[0]);
-      } catch (error) {
-        if (error.response) {
-          console.error(`Error creating ${route}:`, error.response.data);
-        } else {
-          console.error(`Error creating ${route}:`, error.message);
-        }
-      }
+    if (!req.session.user) {
+      return res.status(500).json({ message: "Failed to get user session" });  // ✅ added return
     }
 
-    const inv = [
-      { data: setOfinvestmentTypes, route: "investmentType" },
-      { data: setOfinvestments, route: "investment" },
-    ];
+    const userData = req.session.user;
+    const { investments, investmentTypes, income, expense, invest, rebalance, scenario } = req.body;
 
-    let typeMap = {};
-
-    for (const { data: rawData, route } of inv) {
-      const data = Array.isArray(rawData) ? rawData : [rawData];
-
-      formatIssues(data);
-
-      try {
-        for (const x of data) {
-          if (route === "investmentType") {
-            console.log("posting to investmentType:", x);
-            const response = await axios.post(`http://localhost:8080/scenario/${scenarioId}/${route}`, x);
-            //console.log("response:", response.data);
-            typeMap[response.data.name] = response.data._id;
-            console.log("type id: ", typeMap[response.data.name]);
-          }
-        }
-
-        if (route === "investment") {
-          console.log("data.map", data);
-
-          // Loop through each investment and send them one at a time
-          for (const inv of data) {
-            // Check if the investment type exists in typeMap
-            console.log("mapping investmentType:", inv.investmentType, "->", typeMap[inv.investmentType]);
-
-            const investmentToCreate = {
-              investmentType: typeMap[inv.investmentType], // Map to ObjectId
-              value: inv.value,
-              accountTaxStatus: inv.accountTaxStatus,
-            };
-
-            // Now post each investment individually
-            try {
-              const response = await axios.post(`http://localhost:8080/scenario/${scenarioId}/${route}`, investmentToCreate);
-              console.log("Investment created:", response.data); // Full response for each investment
-            } catch (error) {
-              console.error("Error creating investment:", error);
-            }
-          }
-        }
-      } catch (error) {
-        if (error.response) {
-          console.error(`Error creating ${route}:`, error.response.data);
-        } else {
-          console.error(`Error creating ${route}:`, error.message);
-        }
-      }
-    }
-    try {
-      const expenseWithdrawalStrategyIds = await mapStrategyNamesToIds("investments", expenseWithdrawalStrategy);
-      const RMDStrategyIds = await mapStrategyNamesToIds("investments", rmdStrategy);
-      //console.log("spendingStrategy", spendingStrategy);
-      const spendingStrategyIds = await mapStrategyNamesToIds("expense", spendingStrategy);
-      const rothStrategy = await mapStrategyNamesToIds("investments", rothConversionStrategy);
-      console.log("expenseWithdrawalStrategyIds", expenseWithdrawalStrategyIds);
-      console.log("RMDStrategyIds", RMDStrategyIds);
-      console.log("spendingStrategyIds", spendingStrategyIds);
-      console.log("rothStrategy", rothStrategy);
-
-      await axios.post(`http://localhost:8080/updateScenario/${scenarioId}`, {
-        spendingStrategy: spendingStrategyIds,
-        expenseWithdrawalStrategy: expenseWithdrawalStrategyIds,
-        rmdStrategy: RMDStrategyIds,
-        rothConversionStrategy: rothStrategy,
-        optimizerSettings: optimizerSettings,
-        // Include other strategies if needed
-      });
-    } catch (error) {
-      if (error.response) {
-        console.error(`Error creating:`, error.response.data);
-      } else {
-        console.error(`Error creating:`, error.message);
-      }
+    const user = await User.findOne({ _id: userData._id });
+    if (!user) {
+      console.log("user not found");
+      return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json({ scenario: response.data });
-  } catch (error) {
-    console.error("Import failed:", error);
-    res.status(500).json({ error: error.message });
+
+    await Promise.all([
+      ...investments.map(i => new Investment(i).save()),
+      ...investmentTypes.map(i => new InvestmentType(i).save()),
+      ...income.map(e => new IncomeEvent(e).save()),
+      ...expense.map(e => new ExpenseEvent(e).save()),
+      ...invest.map(e => new InvestEvent(e).save()),
+      ...rebalance.map(e => new RebalanceEvent(e).save())
+    ]);
+    
+   const newScenario = await new Scenario(scenario).save();
+
+    user.scenarios.push(scenario._id);
+    await user.save();
+    console.log("USER SAVED, ", newScenario);
+    return res.status(200).json({ message: "Scenario successfully imported",   scenario: newScenario });
+
+  } catch (err) {
+    console.error("Import error:", err);
+    return res.status(500).json({ message: "Server error during import" });
   }
 };
 
 
-async function mapStrategyNamesToIds(type, strategyNames) {
-  let typeMap = {};
-
-  if (type === "expense") {
-    const expenses = await ExpenseEvent.find({
-      eventSeriesName: { $in: strategyNames },
-    });
-    typeMap = expenses.reduce((acc, expense) => {
-      acc[expense.eventSeriesName] = expense._id;
-      return acc;
-    }, {});
-    //console.log("expenses", expenses);
-  } else if (type === "investments") {
-    const investments = await Investment.find().populate("investmentType");
-
-    typeMap = investments.reduce((acc, inv) => {
-      const typeName = inv.investmentType?.name; // populated from ref
-      const taxStatus = inv.accountTaxStatus;
-
-      if (typeName && taxStatus) {
-        const compoundId = `${typeName} ${taxStatus}`;
-        acc[compoundId] = inv._id;
-      }
-
-      return acc;
-    }, {});
-  }
-
-  return strategyNames.map((name) => typeMap[name]).filter((id) => id !== undefined);
-}
-
-function formatIssues(data) {
-  for (const d of data) {
-    if (d.startYear?.type === "fixed") {
-      d.startYear.type = "fixedAmt";
-    }
-    if (d.startYear?.type === "startWith") {
-      d.startYear.type = "same";
-    }
-    if (d.duration?.type === "fixed") {
-      d.duration.type = "fixedAmt";
-    }
-    if (d.annualChange?.type === "percent") {
-      d.annualChange.type = "percentage";
-    }
-    if (d.annualChange?.type === "amount") {
-      d.annualChange.type = "fixed";
-      d.annualChange.amount = 0;
-    }
-    // if (d.name === "cash") {
-    //   d.name = "cash2";
-    // }
-    if (d.annualReturn?.unit === "amount") {
-      d.annualReturn.unit = "fixed";
-    }
-    if (d.annualReturn?.unit === "percent") {
-      d.annualReturn.unit = "percentage";
-    }
-    if (d.annualIncome?.unit === "amount") {
-      d.annualIncome.unit = "fixed";
-    }
-    if (d.annualIncome?.unit === "percent") {
-      d.annualIncome.unit = "percentage";
-    }
-  }
-}
-
 exports.simulateScenario = async (req, res) => {
   try {
-    const { scenarioId, userId, simulationCount = 1 } = req.query;
+    const { investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, simulationCount = 1 } = req.query;
 
-    if (!scenarioId || !userId) {
-      return res.status(400).json({ error: 'Missing scenarioId or userId' });
+    if (!userId) {
+      return res.status(400).json({ error: "Missing userId" });
     }
 
     // Run the simulation
-    const {
-      shadedChart,
-      probabilityChart,
-      barChartAverage,
-      barChartMedian,
-    } = await main(simulationCount, scenarioId, userId);
+    years = await main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, simulationCount);
+    // const { shadedChart, probabilityChart, barChartAverage, barChartMedian } = await main(investmentType, invest, rebalance, expense, income, investment, scenario, exploration, userId, simulationCount, scenarioId);
+    // const { shadedChart, probabilityChart, barChartAverage, barChartMedian } = await main(simulationCount, scenarioId, userId);
 
     // Send results to frontend
+    // res.status(200).json({
+    //   shadedChart,
+    //   probabilityChart,
+    //   barChartAverage,
+    //   barChartMedian,
+    // });
     res.status(200).json({
-      shadedChart,
-      probabilityChart,
-      barChartAverage,
-      barChartMedian,
+      years
     });
   } catch (err) {
-    console.error('Simulation error:', err);
-    res.status(500).json({ error: 'Simulation failed' });
+    console.error("Simulation error:", err);
+    res.status(500).json({ error: "Simulation failed" });
   }
-}
-
+};

@@ -1,8 +1,8 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
-  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, TextField, 
-  List, ListItem, ListItemText, IconButton, Backdrop, Dialog, DialogActions, DialogContent, DialogTitle 
+  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box,
+  List, ListItem, ListItemText, IconButton, Backdrop, Dialog, DialogContent, DialogTitle 
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import PaymentsIcon from "@mui/icons-material/Payments";
@@ -22,11 +22,11 @@ import {
 
 const EventSeriesList = () => {
   const [openBackdrop, setOpenBackdrop] = useState(false);
-  const {currIncome, setCurrIncome} = useContext(AppContext);
-  const {currExpense, setCurrExpense} = useContext(AppContext);
-  const {currInvest, setCurrInvest} = useContext(AppContext);
-  const {currRebalance, setCurrRebalance} = useContext(AppContext);
-  const {eventEditMode, setEventEditMode} = useContext(AppContext);
+  const {currIncome} = useContext(AppContext);
+  const {currExpense} = useContext(AppContext);
+  const {currInvest} = useContext(AppContext);
+  const {currRebalance} = useContext(AppContext);
+  const {setEventEditMode} = useContext(AppContext);
 
   let safeCurrIncome = Array.isArray(currIncome) ? currIncome : [];
   let safeCurrExpense = Array.isArray(currExpense) ? currExpense : [];
@@ -39,10 +39,8 @@ const EventSeriesList = () => {
   safeCurrInvest = Array.isArray(currInvest) ? currInvest.map(event => ({ ...event, type: "Invest" })) : []; 
   safeCurrRebalance = Array.isArray(currRebalance) ? currRebalance.map(event => ({ ...event, type: "Rebalance" })) : [];
 
-  console.log(safeCurrRebalance);
-
   const currEventSeries = [...safeCurrIncome, ...safeCurrExpense, ...safeCurrInvest, ...safeCurrRebalance];
-  console.log(currEventSeries);
+  // console.log(currEventSeries);
 
   const navigate = useNavigate();
 
@@ -193,25 +191,38 @@ const EventSeriesList = () => {
 
             <DialogContent>
               <Stack direction="row" spacing={3} sx={{ justifyContent: "center" }}>
-                <Button variant="contained" onClick={handleAddIncome} 
-                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}>
+                <Button 
+                  variant="contained" 
+                  onClick={handleAddIncome} 
+                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}
+                >
                   <PaymentsIcon sx={{ fontSize: 60, marginBottom: 1 }} />
                   Income
                 </Button>
-                <Button variant="contained" onClick={handleAddExpense}
-                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}>
+                <Button 
+                  variant="contained" 
+                  onClick={handleAddExpense}
+                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}
+                >
                   <SellIcon sx={{ fontSize: 60, marginBottom: 1 }} />
                   Expense
                 </Button>
               </Stack>
               <Stack direction="row" spacing={3} sx={{ justifyContent: "center", mt: 2 }}>
-                <Button variant="contained" onClick={handleAddInvest}
-                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}>
+                <Button 
+                  variant="contained" 
+                  onClick={handleAddInvest}
+                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}
+                >
                   <AccountBalanceIcon sx={{ fontSize: 60, marginBottom: 1 }} />
                   Invest
                 </Button>
-                <Button variant="contained" onClick={handleAddRebalance}
-                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}>
+                <Button 
+                  variant="contained" 
+                  onClick={handleAddRebalance}
+                  sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 200, marginBottom: 1 }}
+                  disabled={currRebalance.length >= 3}
+                >
                   <BalanceIcon sx={{ fontSize: 60, marginBottom: 1 }} />
                   Rebalance
                 </Button>

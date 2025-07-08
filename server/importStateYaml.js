@@ -2,7 +2,7 @@ const fs = require("fs");
 const yaml = require("js-yaml");
 const StateTax = require("./models/stateTax");
 
-const mongoose = require("mongoose");
+//const mongoose = require("mongoose");
 
 const path = require("path");
 require('dotenv').config({
@@ -17,7 +17,7 @@ mongoose.connect(process.env.MONGO_URI, {
 .then(() => console.log("Connected to MongoDB"))
 .catch((err) => console.error("Could not connect to MongoDB", err));
 
-const parseYaml = async (filePath) => {
+exports.createStateTaxes = async (filePath) => {
   try {
     console.log("in here");
     const fileContents = fs.readFileSync(filePath, "utf8");
@@ -43,11 +43,11 @@ const parseYaml = async (filePath) => {
       };
     });
 
-    // await StateTax.insertMany(stateTax);
+    await StateTax.insertMany(stateTax);
     console.log("state tax is in db");
   } catch (error) {
     console.log("error in parsing yaml file: ", error);
   }
 };
 
-module.exports = parseYaml;
+// module.exports = parseYaml;

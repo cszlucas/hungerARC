@@ -6,10 +6,14 @@ const investments = require("./controllers/investments.js");
 const scenario = require("./controllers/scenario.js");
 const tax = require("./controllers/tax.js");
 const webscraping = require("./controllers/webscraping.js");
+const stateTax = require("./importStateYaml.js");
 
 // user
-router.get("/user/:id/scenarios", user.scenarios);
+router.get("/user/scenarios", user.scenarios);
 router.post("/auth/google", user.auth);
+router.post("/auth/guest", user.guestAuth);
+router.get("/auth/session", user.sessionCheck);
+router.post("/auth/logout", user.logout);
 router.post("/uploadStateTaxYaml", user.uploadStateTaxYaml);
 
 // events
@@ -45,14 +49,15 @@ router.post("/deleteInvestmentType/:id", investments.deleteInvestmentType);
 
 // scenario
 router.get("/scenario/:id", scenario.scenario);
-router.post("/basicInfo/user/:id", scenario.basicInfo);
+router.post("/basicInfo/", scenario.basicInfo);
 router.post("/updateScenario/:id", scenario.updateScenario);
 router.post("/scenarioInvestments", scenario.scenarioInvestments);
 router.post("/deleteScenario/:id", scenario.deleteScenario);
-router.post("/importScenario/user/:id", scenario.importUserData);
+router.post("/importScenario/", scenario.importUserData);
 //tax
 router.get("/tax", tax.tax);
 router.get("/statetax/:state", tax.statetax);
+router.get("/getStateTax", tax.getStateTax);
 
 //webscraping
 router.get("/standardDeductions", webscraping.standardDeductions);
@@ -61,6 +66,7 @@ router.get("/incomeMarried", webscraping.incomeMarried);
 router.get("/capitalGains", webscraping.capitalGains);
 router.get("/rmd", webscraping.rmd);
 router.get("/handleAllRoutes", webscraping.handleAllRoutes);
+router.post("/statetax", stateTax.createStateTaxes);
 
 // simulation
 router.get("/runSimulation", scenario.simulateScenario);

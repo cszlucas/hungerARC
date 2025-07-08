@@ -4,14 +4,8 @@ import theme from "../../../components/theme";
 import Navbar from "../../../components/navbar";
 import PageHeader from "../../../components/pageHeader";
 import {
-  stackStyles,
-  titleStyles,
-  textFieldStyles,
-  numFieldStyles,
-  toggleButtonGroupStyles,
-  backContinueContainerStyles,
-  buttonStyles,
-  rowBoxStyles,
+  stackStyles, titleStyles, numFieldStyles, toggleButtonGroupStyles, backContinueContainerStyles,
+  buttonStyles, rowBoxStyles,
 } from "../../../components/styles";  // Import your modular styles
 
 const EventSeries = () => {

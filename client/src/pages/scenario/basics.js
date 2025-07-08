@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box,
@@ -12,15 +12,22 @@ import CustomToggle from "../../components/customToggle";
 import CustomDropdown from "../../components/customDropDown";
 import CustomSave from "../../components/customSaveBtn";
 import {
-  stackStyles, titleStyles, textFieldStyles, backContinueContainerStyles, buttonStyles, rowBoxStyles,
+  stackStyles, titleStyles, backContinueContainerStyles, buttonStyles, rowBoxStyles,
 } from "../../components/styles";
 import { AppContext } from "../../context/appContext";
 
-const states = ["California", "Colorado", "Connecticut", "Delaware", "Hawaii", "Massachusetts", "New Jersey", "New York"];
+// const states = ["California", "Colorado", "Connecticut", "Delaware", "Hawaii", "Massachusetts", "New Jersey", "New York", "Texas"];
 
 const Basics = () => {
-  const { currScenario, setCurrScenario } = useContext(AppContext);
+  const { currScenario, setCurrScenario, stateTaxes } = useContext(AppContext);
   const navigate = useNavigate();
+  
+  const stateLabels = useMemo(() => {
+    const states = stateTaxes.map((e) => e.state);
+    return Array.from(new Set(states));
+  }, [stateTaxes]);  
+  // const stateIds = useMemo(() => stateTaxes.map((e) => e._id), [stateTaxes]);
+  const birthYears = useMemo(() => Array.from({ length: new Date().getFullYear() - 1925 + 1 }, (_, i) => 1925 + i), []);
 
   // General handler for updating values in nested or top-level fields
   const handleInputChange = (field, value) => {
@@ -71,13 +78,14 @@ const Basics = () => {
             type="number"
             value={currScenario.financialGoal}
             setValue={(value) => handleInputChange("financialGoal", value)}
+            adornment="$"
             inputProps={{ min: 0 }}
           />
 
           <CustomDropdown
             label="State Residence"
             value={currScenario.stateResident}
-            menuItems={states}
+            menuItems={stateLabels}
             setValue={(value) => handleInputChange("stateResident", value)}
           />
 
@@ -94,12 +102,11 @@ const Basics = () => {
 
         {/* User Demographics and Life Expectancy */}
         <Box sx={rowBoxStyles}>
-          <CustomInput
-            title="Your Birth Year"
-            type="number"
+          <CustomDropdown
+            label="Your Birth Year"
             value={currScenario.birthYearUser}
             setValue={(value) => handleInputChange("birthYearUser", value)}
-            inputProps={{ min: 1900, max: new Date().getFullYear() }}
+            menuItems={birthYears}
           />
 
           <CustomToggle
@@ -118,7 +125,7 @@ const Basics = () => {
               type="number"
               value={currScenario.lifeExpectancy.fixedAge}
               setValue={(value) => handleInputChange("lifeExpectancy.fixedAge", value)}
-              inputProps={{ min: 0 }}
+              inputProps={{ min: 0, max: 150 }}
             />
           ) : (
             <>
@@ -127,14 +134,14 @@ const Basics = () => {
                 type="number"
                 value={currScenario.lifeExpectancy.mean}
                 setValue={(value) => handleInputChange("lifeExpectancy.mean", value)}
-                inputProps={{ min: 0 }}
+                inputProps={{ min: 0, max: 100 }}
               />
               <CustomInput
                 title="Standard Deviation"
                 type="number"
                 value={currScenario.lifeExpectancy.stdDev}
                 setValue={(value) => handleInputChange("lifeExpectancy.stdDev", value)}
-                inputProps={{ min: 0 }}
+                inputProps={{ min: 0, max: 60 }}
               />
             </>
           )}
@@ -143,11 +150,11 @@ const Basics = () => {
         {/* Spouse Inputs if Married */}
         {currScenario.filingStatus === "married" && (
           <Box sx={rowBoxStyles}>
-            <CustomInput
-              title="Spouse's Birth Year"
-              type="number"
+            <CustomDropdown
+              label="Spouse's Birth Year"
               value={currScenario.birthYearSpouse}
               setValue={(value) => handleInputChange("birthYearSpouse", value)}
+              menuItems={birthYears}
             />
 
             <CustomToggle
@@ -166,7 +173,7 @@ const Basics = () => {
                 type="number"
                 value={currScenario.lifeExpectancySpouse.fixedAge}
                 setValue={(value) => handleInputChange("lifeExpectancySpouse.fixedAge", value)}
-                inputProps={{ min: 0 }}
+                inputProps={{ min: 0, max: 150 }}
               />
             ) : (
               <>
@@ -175,25 +182,33 @@ const Basics = () => {
                   type="number"
                   value={currScenario.lifeExpectancySpouse.mean}
                   setValue={(value) => handleInputChange("lifeExpectancySpouse.mean", value)}
-                  inputProps={{ min: 0 }}
+                  inputProps={{ min: 0, max: 100 }}
                 />
                 <CustomInput
                   title="Standard Deviation"
                   type="number"
                   value={currScenario.lifeExpectancySpouse.stdDev}
                   setValue={(value) => handleInputChange("lifeExpectancySpouse.stdDev", value)}
-                  inputProps={{ min: 0 }}
+                  inputProps={{ min: 0, max: 50 }}
                 />
               </>
             )}
           </Box>
         )}
 
+        <CustomInput
+          title="IRS Limit"
+          type="number"
+          adornment="$"
+          value={currScenario.irsLimit}
+          setValue={(value) => handleInputChange("irsLimit", value)}
+          inputProps={{ min: 0 }}
+        />
+
         {/* Inflation Assumptions */}
         <Typography variant="h6" sx={{ fontWeight: "bold", marginTop: 4, marginBottom: 2 }}>
           Inflation Assumptions
         </Typography>
-
         <Box sx={rowBoxStyles}>
           <CustomToggle
             title="Distribution"

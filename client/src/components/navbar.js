@@ -28,9 +28,17 @@ export default function NavBar({ currentPage }) {
     setOpen(state);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:8080/auth/logout", {
+        method: "POST",
+        credentials: "include", // important to send the session cookie
+      });
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
+  
     localStorage.clear();
-    localStorage.setItem("edit", null);
     navigate("/login");
   };
 
@@ -65,7 +73,7 @@ export default function NavBar({ currentPage }) {
             component={Link}
             to={routePath}
             sx={{
-              backgroundColor: isCurrent ? "#424242" : "inherit",
+              backgroundColor: isCurrent ? "#004530" : "inherit",
               color: isCurrent ? "#fff" : "inherit",
               px: 2,
               py: 1.25,
@@ -136,7 +144,18 @@ export default function NavBar({ currentPage }) {
         </Toolbar>
       </AppBar>
       { currentPage != "login" &&
-      <Drawer anchor="right" open={open} onClose={toggleDrawer(false)} onClick={(e) => e.stopPropagation()}>
+      <Drawer 
+        anchor="right" 
+        open={open} 
+        onClose={toggleDrawer(false)} 
+        onClick={(e) => e.stopPropagation()}
+        PaperProps={{
+          sx: {
+            backgroundColor: "#00825B",
+            color: "#fff", // Optional: sets text color for better contrast
+          },
+        }}
+      >
         {DrawerList}
       </Drawer> 
       } 

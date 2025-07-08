@@ -1,8 +1,11 @@
-import React, { useState, useContext, useMemo } from "react";
-import { ThemeProvider, CssBaseline, Container, Typography, Box, Grid, List, ListItem, ListItemText, IconButton, Button, Stack, Switch } from "@mui/material";
+import React, { useState, useContext, useMemo, useEffect } from "react";
+import { 
+  ThemeProvider, CssBaseline, Container, Typography, Box, Grid, List, ListItem, 
+  ListItemText, IconButton, Button, Stack, Switch 
+} from "@mui/material";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import DeleteIcon from "@mui/icons-material/Delete";
+import CustomDropdown from "../../components/customDropDown";
 import theme from "../../components/theme";
 import Navbar from "../../components/navbar";
 import PageHeader from "../../components/pageHeader";
@@ -10,16 +13,17 @@ import CustomInput from "../../components/customInputBox";
 import { AppContext } from "../../context/appContext";
 import { useNavigate } from "react-router-dom";
 import {
-  backContinueContainerStyles,
-  buttonStyles,
-  rowBoxStyles,
-  stackStyles,
-  titleStyles
+  backContinueContainerStyles, buttonStyles, rowBoxStyles, stackStyles, titleStyles
 } from "../../components/styles";
 import CustomSave from "../../components/customSaveBtn";
 import axios from "axios";
 import { AuthContext } from "../../context/authContext";
 
+const TAX_MAP = {
+  "non-retirement": "Taxable",
+  "pre-tax": "Tax-Deferred",
+  "after-tax": "Tax-Free",
+};
 
 const StrategyList = ({ list, setList, fieldName, setScenario }) => {
   const handleMove = (index, direction) => {
@@ -48,7 +52,10 @@ const StrategyList = ({ list, setList, fieldName, setScenario }) => {
               "&:hover": { backgroundColor: "#B0B0B0" },
             }}
           >
-            <ListItemText primary={<span style={{ fontWeight: "bold" }}>{item.name}</span>} />
+            <ListItemText primary={<>
+              <span style={{ fontWeight: "bold" }}>{item.name}</span>
+            </>}
+            secondary={TAX_MAP[item.accountTaxStatus]}/>
 
             {index > 0 && (
               <IconButton onClick={() => handleMove(index, -1)}>
@@ -70,23 +77,15 @@ const StrategyList = ({ list, setList, fieldName, setScenario }) => {
 
 const Strategies = () => {
   const navigate = useNavigate();
-  const { currScenario, setCurrScenario, scenarioData, setScenarioData, currInvestments, currExpense, currInvestmentTypes, editMode } = useContext(AppContext);
-  const [isRothOptimized, setIsRothOptimized] = useState(currScenario.isRothOptimized || false);
+  const { currScenario, setCurrScenario, setScenarioData, currInvestments, currExpense, currInvestmentTypes, editMode } = useContext(AppContext);
+  const [isRothOptimized, setIsRothOptimized] = useState(currScenario.optimizerSettings.enabled || false);
   const [startYear, setStartYear] = useState(currScenario.optimizerSettings?.startYear || "");
   const [endYear, setEndYear] = useState(currScenario.optimizerSettings?.endYear || "");
   const { user } = useContext(AuthContext);
 
-  // ✅ Toggle Handler for Roth Optimizer
-  const handleToggleRothOptimizer = () => {
-    setIsRothOptimized(prev => {
-      const newValue = !prev;
-      setCurrScenario(prevScenario => ({
-        ...prevScenario,
-        isRothOptimized: newValue,
-      }));
-      return newValue;
-    });
-  };
+  useEffect(() => {
+    setIsRothOptimized(currScenario.optimizerSettings.enabled);
+  }, [currScenario.optimizerSettings.enabled]);
 
   const handleCurrScenarioChange = (field, value) => {
     const fieldParts = field.split("."); // Split the field into parts (e.g., "lifeExpectancy.mean")
@@ -160,7 +159,7 @@ const Strategies = () => {
         }
       }
 
-      if (!matchedInvestment) return { id, name: "Unknown Investment Strategy" };
+      if (!matchedInvestment) return { id, name: "Unknown Investment Strategy", accountTaxStatus: "" };
 
       let matchedInvestmentType = null;
 
@@ -171,7 +170,11 @@ const Strategies = () => {
         }
       }
 
-      return { id, name: matchedInvestmentType ? matchedInvestmentType.name : "Unknown Investment Type" };
+      return { 
+        id, 
+        name: matchedInvestmentType ? matchedInvestmentType.name : "Unknown Investment Type",
+        accountTaxStatus: matchedInvestment.accountTaxStatus, 
+      };
     });
   };
 
@@ -228,7 +231,12 @@ const Strategies = () => {
                 <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                   Roth Conversion Strategy:
                 </Typography>
-                <Switch checked={isRothOptimized} onChange={handleToggleRothOptimizer} color="secondary" />
+                <Switch 
+                  checked={isRothOptimized} 
+                  onChange={() => {
+                    handleCurrScenarioChange("optimizerSettings.enabled", !isRothOptimized);
+                  }} 
+                  color="secondary" />
               </Stack>
               {isRothOptimized && (
                 <>
@@ -239,25 +247,23 @@ const Strategies = () => {
                     setScenario={setCurrScenario} 
                   />
                   <Box sx={{...rowBoxStyles, mt: 2}}>
-                    <CustomInput
-                      title="Start Year"
-                      type="number"
+                    <CustomDropdown
+                      label="Start Year"
                       value={startYear}
                       setValue={(value)=>{ 
                         setStartYear(value);
                         handleCurrScenarioChange("optimizerSettings.startYear", value);
                       }}
-                      inputProps={{ min: 0 }}
+                      menuItems={Array.from({ length: 200 }, (_, i) => new Date().getFullYear() + i)}
                     />
-                    <CustomInput
-                      title="End Year"
-                      type="number"
+                    <CustomDropdown
+                      label="End Year"
                       value={endYear}
                       setValue={(value)=>{ 
                         setEndYear(value);
                         handleCurrScenarioChange("optimizerSettings.endYear", value);
                       }}
-                      inputProps={{ min: 0 }}
+                      menuItems={Array.from({ length: 200 }, (_, i) => new Date().getFullYear() + i)}
                     />
                   </Box>
                 </>
