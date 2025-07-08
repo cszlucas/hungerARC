@@ -126,6 +126,13 @@ require('dotenv').config({
 });
 
 console.log("🔍 MONGO_URI:", process.env.MONGO_URI);
+try {
+  require('mongodb');
+  console.log("✅ MongoDB module is installed");
+} catch (err) {
+  console.error("❌ MongoDB module is NOT installed");
+}
+
 
 
   const app = express();
