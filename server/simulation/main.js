@@ -1,7 +1,7 @@
-const StateTax = require("../server/models/stateTax.js");
-const Tax = require("../server/models/tax.js");
-const User = require("../server/models/user.js");
-const RMD = require("../server/models/rmd-schema.js");
+const StateTax = require("../models/stateTax.js");
+const Tax = require("../models/tax.js");
+const User = require("../models/user.js");
+const RMD = require("../models/rmd-schema.js");
 const { exploreData, chartData } = require("./charts.js");
 const { calculateLifeExpectancy } = require("./algo.js");
 const path = require("path");
@@ -220,7 +220,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
           seed,
           rmd,
           x,
-          user
+          user,
         })
       );
 
@@ -228,16 +228,15 @@ async function main(investmentType, invest, rebalance, expense, income, investme
 
       // logs only for the first simulation
       // if (x == 0) {
-        // const userName = user.email.split("@")[0];
-        // const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-        // const baseFilename = `${userName}_${timestamp}`;
-        // const csvFile = path.join(__dirname, "../simulation/investment_logs", `${baseFilename}.csv`);
-        // // const logFile = path.join(__dirname, "../simulation/investment_logs", `${baseFilename}.log`);
-        // writeCSVLog(csvFile, csvLog);
-        // writeEventLog(logFilename, simulationResult.eventLog);
+      // const userName = user.email.split("@")[0];
+      // const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      // const baseFilename = `${userName}_${timestamp}`;
+      // const csvFile = path.join(__dirname, "../simulation/investment_logs", `${baseFilename}.csv`);
+      // // const logFile = path.join(__dirname, "../simulation/investment_logs", `${baseFilename}.log`);
+      // writeCSVLog(csvFile, csvLog);
+      // writeEventLog(logFilename, simulationResult.eventLog);
       // }
     }
-
 
     secondIteration = true;
     const allSimulationResults = await Promise.all(workerInputs.map((input) => piscina.run(input)));
