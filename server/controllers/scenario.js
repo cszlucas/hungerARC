@@ -7,7 +7,7 @@ const { BaseEventSeries, IncomeEvent, ExpenseEvent, InvestEvent, RebalanceEvent,
 const User = require("../models/user.js");
 const { ObjectId } = mongoose.Types;
 const axios = require("axios");
-const { main } = require("../../simulation/main.js");
+const { main } = require("../simulation/main.js");
 
 exports.scenario = async (req, res) => {
   const scenarioId = new ObjectId(req.params.id);
@@ -24,7 +24,7 @@ exports.scenario = async (req, res) => {
 
 exports.basicInfo = async (req, res) => {
   try {
-    console.log('Full req.body:', JSON.stringify(req.body, null, 2));
+    console.log("Full req.body:", JSON.stringify(req.body, null, 2));
     if (!req.session.user) res.status(500).json({ message: "Failed to get user session" });
     const userData = req.session.user;
     const user = await User.findOne({ _id: userData._id });
@@ -80,7 +80,7 @@ exports.updateScenario = async (req, res) => {
   const { id } = req.params;
   const updateData = req.body;
   try {
-    const result = await Scenario.findByIdAndUpdate( new ObjectId(id), { $set: updateData }, { new: true });
+    const result = await Scenario.findByIdAndUpdate(new ObjectId(id), { $set: updateData }, { new: true });
     return res.status(200).json({ message: "Scenario updated successfully", scenario: result });
   } catch (err) {
     console.error("Error adding to scenario:", err);
@@ -113,10 +113,9 @@ exports.deleteScenario = async (req, res) => {
 };
 
 exports.importUserData = async (req, res) => {
-
   try {
     if (!req.session.user) {
-      return res.status(500).json({ message: "Failed to get user session" });  // ✅ added return
+      return res.status(500).json({ message: "Failed to get user session" }); // ✅ added return
     }
 
     const userData = req.session.user;
@@ -128,29 +127,26 @@ exports.importUserData = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-
     await Promise.all([
-      ...investments.map(i => new Investment(i).save()),
-      ...investmentTypes.map(i => new InvestmentType(i).save()),
-      ...income.map(e => new IncomeEvent(e).save()),
-      ...expense.map(e => new ExpenseEvent(e).save()),
-      ...invest.map(e => new InvestEvent(e).save()),
-      ...rebalance.map(e => new RebalanceEvent(e).save())
+      ...investments.map((i) => new Investment(i).save()),
+      ...investmentTypes.map((i) => new InvestmentType(i).save()),
+      ...income.map((e) => new IncomeEvent(e).save()),
+      ...expense.map((e) => new ExpenseEvent(e).save()),
+      ...invest.map((e) => new InvestEvent(e).save()),
+      ...rebalance.map((e) => new RebalanceEvent(e).save()),
     ]);
-    
-   const newScenario = await new Scenario(scenario).save();
+
+    const newScenario = await new Scenario(scenario).save();
 
     user.scenarios.push(scenario._id);
     await user.save();
     console.log("USER SAVED, ", newScenario);
-    return res.status(200).json({ message: "Scenario successfully imported",   scenario: newScenario });
-
+    return res.status(200).json({ message: "Scenario successfully imported", scenario: newScenario });
   } catch (err) {
     console.error("Import error:", err);
     return res.status(500).json({ message: "Server error during import" });
   }
 };
-
 
 exports.simulateScenario = async (req, res) => {
   try {
@@ -173,7 +169,7 @@ exports.simulateScenario = async (req, res) => {
     //   barChartMedian,
     // });
     res.status(200).json({
-      years
+      years,
     });
   } catch (err) {
     console.error("Simulation error:", err);
