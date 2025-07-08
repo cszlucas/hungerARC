@@ -121,10 +121,13 @@ const MongoStore = require("connect-mongo");
 const parseYaml = require("./importStateYaml.js");
 
 
-  // Manually load the .env file
-  dotenv.config({ path: path.resolve(__dirname, "process.env") });
-  // console.log("Loaded SESSION_SECRET:", process.env.SESSION_SECRET);
-  
+require('dotenv').config({
+  path: path.resolve(__dirname, '../.env'), // adjust if .env is in root
+});
+
+console.log("🔍 MONGO_URI:", process.env.MONGO_URI);
+
+
   const app = express();
   const PORT = 8080;
 
@@ -149,7 +152,7 @@ if (process.env.NODE_ENV !== 'test') {
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-      mongoUrl: "mongodb://localhost:27017/hungerarc",
+      mongoUrl: process.env.MONGO_URI,
       collectionName: "sessions",
       ttl: 7 * 24 * 60 * 60, // 1 week
     }),
@@ -161,7 +164,7 @@ if (process.env.NODE_ENV !== 'test') {
     }
   }));
 
-    mongoose.connect("mongodb://localhost:27017/hungerarc", {
+    mongoose.connect(process.env.MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true
     }).then(() => {
