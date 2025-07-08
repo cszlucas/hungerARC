@@ -45,7 +45,7 @@ async function runSimulation(
   let irsLimit = scenario.irsLimit;
   let filingStatus = scenario.filingStatus;
   let spouseDeath = false;
-  let federalIncomeTax, stateIncomeTaxBracket, fedDeduction, stateDeduction, capitalGains;
+  let federalIncomeTax, stateIncomeTaxBracket, fedDeduction, stateDeduction, capitalGains, stateOperation;
   // previous year's tax
   if (filingStatus == "single") {
     federalIncomeTax = tax.single.federalIncomeTaxRatesBrackets;
@@ -53,6 +53,7 @@ async function runSimulation(
     capitalGains = tax.single.capitalGainsTaxRates;
     if (stateTax) {
       stateIncomeTaxBracket = stateTax.taxDetails[startYearPrev].single.stateIncomeTaxRatesBrackets;
+      stateOperation = stateTax.operation;
       // stateDeduction = stateTax.taxDetails[prevYear].single.standardDeduction;
     }
   } else {
@@ -171,9 +172,13 @@ async function runSimulation(
     if (scenario.optimizerSettings.enabled && year >= scenario.optimizerSettings.startYear && year <= scenario.optimizerSettings.endYear) {
       rothConversion(scenario, year, yearTotals, federalIncomeTax, investmentTypes, investments, rothConversionStrategyInvestments, fedDeduction);
     }
+    console.log('state oeration in simulation :>> ', stateOperation);
+    // console.log('investments WORK :>> ', investments);
     // account for inflation for expenses that are not in the current year
     updateInflationExpenses(curExpenseEvent, expenseEvent, inflationRate);
     //  PAY NON-DISCRETIONARY EXPENSES AND PREVIOUS YEAR TAXES
+
+    
     let { nonDiscretionary, taxes, goal } = payNonDiscretionaryExpenses(
       curExpenseEvent,
       cashInvestment,
@@ -191,14 +196,16 @@ async function runSimulation(
       yearTotals,
       inflationRate,
       spouseDeath,
-      metGoal
+      metGoal,
+      stateOperation
     );
+
     metGoal = goal;
     //console.log("TAXES11...", taxes);
 
     // PAY DISCRETIONARY EXPENSES
     if (spendingStrategy && spendingStrategy.length != 0) {
-      metGoal = payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath, metGoal);
+      metGoal = payDiscretionaryExpenses(scenario.financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath, metGoal, stateOperation);
     } else {
       logFinancialEvent({
         year: year,

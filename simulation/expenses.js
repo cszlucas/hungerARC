@@ -20,7 +20,8 @@ function payNonDiscretionaryExpenses(
   yearTotals,
   inflationRate,
   spouseDeath,
-  metGoal
+  metGoal,
+  stateOperation
 ) {
   console.log("\nPAY NON-DISCRETIONARY EXPENSES");
   const nonDiscretionaryExpenses = curExpenseEvent.filter((expenseEvent) => expenseEvent.isDiscretionary === false);
@@ -32,7 +33,7 @@ function payNonDiscretionaryExpenses(
     expense.initialAmount = amt;
     expenseAmt += amt;
   }
-  const taxes = getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, capitalGains, userAge, fedDeduction, year);
+  const taxes = getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeTax, stateIncomeTaxBracket, capitalGains, userAge, fedDeduction, year, stateOperation);
   let withdrawalAmt = expenseAmt + taxes;
   logFinancialEvent({
     year: year,
@@ -100,7 +101,7 @@ function payNonDiscretionaryExpenses(
 }
 
 //calculate TAX
-function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGains, userAge, fedDeduction, year) {
+function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdrawals, federalIncomeRange, stateIncomeRange, capitalGains, userAge, fedDeduction, year, stateOperation) {
   console.log("CALCULATING TAXES, my prev year income: ", prevYearIncome);
   //console.log("stateIncomeRange", stateIncomeRange);
   logFinancialEvent({
@@ -116,8 +117,8 @@ function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdr
   });
   const adjustedIncome = Math.max(0, prevYearIncome - fedDeduction - prevYearSS);
   const federalTax = taxAmt(adjustedIncome, federalIncomeRange);
-  const stateTax = taxAmt(adjustedIncome, stateIncomeRange);
-
+  const stateTax = taxAmt(adjustedIncome, stateIncomeRange, "state", stateOperation);
+  console.log("WHY");
   const ssTax = taxAmt(prevYearSS * 0.85, federalIncomeRange);
 
   let earlyWithdrawalTax = 0;
@@ -143,12 +144,24 @@ function getTaxes(prevYearIncome, prevYearSS, prevYearGains, prevYearEarlyWithdr
   return taxx;
 }
 
-function taxAmt(income, taxBracket, type) {
+function taxAmt(income, taxBracket, type, operation) {
+  // console.log('type :>> ', type);
+  // console.log('taxBracket :>> ', taxBracket);
+
   if (taxBracket) {
     for (let range of taxBracket) {
       if (income >= range.incomeRange[0] && income <= range.incomeRange[1]) {
         if (type === "capitalGains") {
           return income > 0 ? income * (range.gainsRate / 100) : 0;
+        } else if(type === "state"){
+          console.log('operation :>> ', operation);
+          if (operation == "add"){
+            // console.log("GAA", (income * (range.taxRate / 100))+range.change);
+            // console.log('range.change :>> ', range.change);
+          return (income * (range.taxRate / 100))+range.change;
+          } else if(operation == "subtract"){
+          return (income * (range.taxRate / 100))-range.change;
+          }
         } else {
           return income * (range.taxRate / 100);
         }
@@ -160,7 +173,7 @@ function taxAmt(income, taxBracket, type) {
 
 //spendingStrategy is an ordering on expenses
 //withdrawalStrategy is an ordering on investments
-function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath, metGoal) {
+function payDiscretionaryExpenses(financialGoal, cashInvestment, year, userAge, spendingStrategy, withdrawalStrategy, yearTotals, inflationRate, spouseDeath, metGoal, stateOperation) {
   console.log("\nPAY DISCRETIONARY EXPENSES");
   let expensesPaid = 0;
 
