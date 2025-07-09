@@ -5,9 +5,7 @@ import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 // MUI Components
-import {
-  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Alert,
-} from "@mui/material";
+import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Alert } from "@mui/material";
 
 // Custom component imports
 import EventSeries from "./eventSeries";
@@ -18,9 +16,7 @@ import PageHeader from "../../../components/pageHeader";
 import AssetAllocation from "./assetAllocation";
 
 // Style imports
-import {
-  stackStyles, titleStyles, buttonStyles, rowBoxStyles, backContinueContainerStyles,
-} from "../../../components/styles";
+import { stackStyles, titleStyles, buttonStyles, rowBoxStyles, backContinueContainerStyles } from "../../../components/styles";
 
 // Contexts
 import { AppContext } from "../../../context/appContext";
@@ -95,28 +91,18 @@ const Invest = () => {
       return eventValue >= 0 && typeof eventValue === "number" && !isNaN(eventValue);
     }
 
-    const expression = formValues.eventSeriesName 
-      && (formValues.startYear.type !== "fixedAmt" 
-        || checkValidNum(formValues.startYear.value)) 
-      && (formValues.startYear.type !== "normal" 
-        || (checkValidNum(formValues.startYear.mean) && checkValidNum(formValues.startYear.stdDev))) 
-      && (formValues.startYear.type !== "uniform" 
-        || (checkValidNum(formValues.startYear.min) && checkValidNum(formValues.startYear.max) 
-        && formValues.startYear.min <= formValues.startYear.max)) 
-      && (["same", "after"].includes(formValues.startYear.type) 
-        ? formValues.startYear.refer : true) 
-      && checkValidNum(formValues.maxCash) 
-      && (formValues.duration.type !== "fixedAmt" 
-        || checkValidNum(formValues.duration.value)) 
-      && (formValues.duration.type !== "normal" 
-        || (checkValidNum(formValues.duration.mean) && checkValidNum(formValues.duration.stdDev))) 
-      && (formValues.duration.type !== "uniform" 
-        || (checkValidNum(formValues.duration.min) && checkValidNum(formValues.duration.max) 
-        && formValues.duration.min <= formValues.duration.max)) 
-      && (formValues.assetAllocation.type === "fixed" 
-        ? Object.keys(formValues.assetAllocation.fixedPercentages).length > 0 : true)
-      && (formValues.assetAllocation.type === "glidePath" 
-        ? Object.keys(formValues.assetAllocation.initialPercentages).length > 0 : true);
+    const expression =
+      formValues.eventSeriesName &&
+      (formValues.startYear.type !== "fixedAmt" || checkValidNum(formValues.startYear.value)) &&
+      (formValues.startYear.type !== "normal" || (checkValidNum(formValues.startYear.mean) && checkValidNum(formValues.startYear.stdDev))) &&
+      (formValues.startYear.type !== "uniform" || (checkValidNum(formValues.startYear.min) && checkValidNum(formValues.startYear.max) && formValues.startYear.min <= formValues.startYear.max)) &&
+      (["same", "after"].includes(formValues.startYear.type) ? formValues.startYear.refer : true) &&
+      checkValidNum(formValues.maxCash) &&
+      (formValues.duration.type !== "fixedAmt" || checkValidNum(formValues.duration.value)) &&
+      (formValues.duration.type !== "normal" || (checkValidNum(formValues.duration.mean) && checkValidNum(formValues.duration.stdDev))) &&
+      (formValues.duration.type !== "uniform" || (checkValidNum(formValues.duration.min) && checkValidNum(formValues.duration.max) && formValues.duration.min <= formValues.duration.max)) &&
+      (formValues.assetAllocation.type === "fixed" ? Object.keys(formValues.assetAllocation.fixedPercentages).length > 0 : true) &&
+      (formValues.assetAllocation.type === "glidePath" ? Object.keys(formValues.assetAllocation.initialPercentages).length > 0 : true);
 
     setDisable(!expression);
   }, [formValues]);
@@ -156,9 +142,8 @@ const Invest = () => {
   };
 
   const handleSave = async () => {
-    const cleanedAllocation = formValues.assetAllocation.type === "fixed"
-      ? { ...formValues.assetAllocation, initialPercentages: {}, finalPercentages: {} }
-      : { ...formValues.assetAllocation, fixedPercentages: {} };
+    const cleanedAllocation =
+      formValues.assetAllocation.type === "fixed" ? { ...formValues.assetAllocation, initialPercentages: {}, finalPercentages: {} } : { ...formValues.assetAllocation, fixedPercentages: {} };
 
     const updatedFormValues = { ...formValues, assetAllocation: cleanedAllocation };
 
@@ -166,7 +151,7 @@ const Invest = () => {
       let id = new ObjectId().toHexString();
 
       if (!user.guest) {
-        const response = await axios.post(`http://localhost:8080/scenario/${editMode}/investStrategy`, updatedFormValues);
+        const response = await axios.post(`${process.env.REACT_APP_API_URL}/scenario/${editMode}/investStrategy`, updatedFormValues);
         id = response.data._id;
       }
 
@@ -180,7 +165,7 @@ const Invest = () => {
       }));
     } else {
       if (!user.guest) {
-        await axios.post(`http://localhost:8080/updateInvestStrategy/${eventEditMode.id}`, updatedFormValues);
+        await axios.post(`${process.env.REACT_APP_API_URL}/updateInvestStrategy/${eventEditMode.id}`, updatedFormValues);
       }
       setCurrInvest((prev) => {
         const filtered = prev.filter((item) => item._id !== eventEditMode.id);
@@ -210,33 +195,17 @@ const Invest = () => {
         <Box sx={rowBoxStyles}>
           <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 400 }}>
             <EventSeries formValues={formValues} setFormValues={setFormValues} />
-            <CustomInput
-              title="Maximum Cash"
-              type="number"
-              adornment="$"
-              value={formValues.maxCash}
-              setValue={(value) => handleInputChange("maxCash", value)}
-              inputProps={{ min: 0 }}
-            />
+            <CustomInput title="Maximum Cash" type="number" adornment="$" value={formValues.maxCash} setValue={(value) => handleInputChange("maxCash", value)} inputProps={{ min: 0 }} />
           </Box>
 
           <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <AssetAllocation
-              formValues={formValues}
-              setFormValues={setFormValues}
-              setPercentError={setPercentError}
-            />
+            <AssetAllocation formValues={formValues} setFormValues={setFormValues} setPercentError={setPercentError} />
           </Box>
         </Box>
 
         {/* Navigation Buttons */}
         <Box sx={backContinueContainerStyles}>
-          <Button
-            variant="contained"
-            color="primary"
-            sx={buttonStyles}
-            onClick={() => navigate("/scenario/event_series_list")}
-          >
+          <Button variant="contained" color="primary" sx={buttonStyles} onClick={() => navigate("/scenario/event_series_list")}>
             Cancel
           </Button>
 

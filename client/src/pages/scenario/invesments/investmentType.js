@@ -1,9 +1,7 @@
 import axios from "axios";
 import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Checkbox , Alert
-} from "@mui/material";
+import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Checkbox, Alert } from "@mui/material";
 
 import theme from "../../../components/theme";
 import Navbar from "../../../components/navbar";
@@ -14,29 +12,23 @@ import { AppContext } from "../../../context/appContext";
 import { AuthContext } from "../../../context/authContext";
 import { useAlert } from "../../../context/alertContext";
 
-import { 
-  backContinueContainerStyles, buttonStyles, rowBoxStyles 
-} from "../../../components/styles";
+import { backContinueContainerStyles, buttonStyles, rowBoxStyles } from "../../../components/styles";
 
 import { ObjectId } from "bson";
 
 const InvestmentType = () => {
-  const {
-    editMode, eventEditMode, setEventEditMode, currInvestmentTypes, setCurrInvestmentTypes, setCurrScenario,
-  } = useContext(AppContext);
+  const { editMode, eventEditMode, setEventEditMode, currInvestmentTypes, setCurrInvestmentTypes, setCurrScenario } = useContext(AppContext);
   const { user } = useContext(AuthContext);
   const { showAlert } = useAlert();
-  
+
   const navigate = useNavigate();
-  
+
   /**
    * Utility to retrieve an investment type object by its ID
    */
   const getInvestmentTypeById = (id) => {
     if (!id) return null;
-    return Array.isArray(currInvestmentTypes)
-      ? currInvestmentTypes.find((item) => item?._id === id) || null
-      : null;
+    return Array.isArray(currInvestmentTypes) ? currInvestmentTypes.find((item) => item?._id === id) || null : null;
   };
 
   /**
@@ -87,26 +79,23 @@ const InvestmentType = () => {
       };
     });
   };
-  
+
   // Handles the enabling or disabling the save button
   const [disable, setDisable] = useState(true);
   useEffect(() => {
-      function checkValidNum(eventValue) {
-        return eventValue >= 0 && typeof eventValue === "number" && !isNaN(eventValue);
-      }
-      let expression = formValues.name && checkValidNum(formValues.expenseRatio)
-        && (formValues.annualReturn.type !== "fixed" 
-          || checkValidNum(formValues.annualReturn.value))
-        && (formValues.annualReturn.type !== "normal" 
-          || checkValidNum(formValues.annualReturn.mean) && checkValidNum(formValues.annualReturn.stdDev))
-        && (formValues.annualIncome.type !== "fixed" 
-          || checkValidNum(formValues.annualIncome.value))
-        && (formValues.annualIncome.type !== "normal" 
-          || checkValidNum(formValues.annualIncome.mean) && checkValidNum(formValues.annualIncome.stdDev));
-      
-      setDisable(!expression);
-  }, [formValues]);
+    function checkValidNum(eventValue) {
+      return eventValue >= 0 && typeof eventValue === "number" && !isNaN(eventValue);
+    }
+    let expression =
+      formValues.name &&
+      checkValidNum(formValues.expenseRatio) &&
+      (formValues.annualReturn.type !== "fixed" || checkValidNum(formValues.annualReturn.value)) &&
+      (formValues.annualReturn.type !== "normal" || (checkValidNum(formValues.annualReturn.mean) && checkValidNum(formValues.annualReturn.stdDev))) &&
+      (formValues.annualIncome.type !== "fixed" || checkValidNum(formValues.annualIncome.value)) &&
+      (formValues.annualIncome.type !== "normal" || (checkValidNum(formValues.annualIncome.mean) && checkValidNum(formValues.annualIncome.stdDev)));
 
+    setDisable(!expression);
+  }, [formValues]);
 
   /**
    * Save handler for new and existing investment types
@@ -115,39 +104,43 @@ const InvestmentType = () => {
     let id = eventEditMode;
 
     if (id === "new" && formValues.name.toLowerCase() === "cash") {
-      showAlert("You cannot name an investment-type account \"Cash.\"", "error");
+      showAlert('You cannot name an investment-type account "Cash."', "error");
       return;
     }
 
     /**
      * Handles state update after adding a new investment type locally
      */
-    const handleUpdates = (formData, editing=false) => {
+    const handleUpdates = (formData, editing = false) => {
       if (editing) {
-        setCurrInvestmentTypes((prev) => prev.map((it) => {
-          if (it._id === formData._id) return formData;
-          return it;
-        }));
+        setCurrInvestmentTypes((prev) =>
+          prev.map((it) => {
+            if (it._id === formData._id) return formData;
+            return it;
+          })
+        );
         return;
       }
 
       setCurrScenario((prev) => ({
-        ...prev, 
-        ["setOfInvestmentTypes"]: [...(prev["setOfInvestmentTypes"] || []), formData._id], 
+        ...prev,
+        ["setOfInvestmentTypes"]: [...(prev["setOfInvestmentTypes"] || []), formData._id],
       }));
       setCurrInvestmentTypes((prev) => [...(Array.isArray(prev) ? prev : []), formData]);
     };
 
     try {
-      if (!user.guest) {  // For non-guest users, sync with server
+      if (!user.guest) {
+        // For non-guest users, sync with server
         if (id === "new") {
-          const response = await axios.post(`http://localhost:8080/scenario/${editMode}/investmentType`, formValues);
+          const response = await axios.post(`${process.env.REACT_APP_API_URL}/scenario/${editMode}/investmentType`, formValues);
           handleUpdates(response.data);
         } else {
-          const response = await axios.post(`http://localhost:8080/updateInvestmentType/${id}`, formValues);
+          const response = await axios.post(`${process.env.REACT_APP_API_URL}/updateInvestmentType/${id}`, formValues);
           handleUpdates(response.data.result, true);
         }
-      } else {  // For guest users, generate local ID and update only local state
+      } else {
+        // For guest users, generate local ID and update only local state
         if (id === "new") {
           formValues._id = new ObjectId().toHexString();
           handleUpdates(formValues);
@@ -182,17 +175,8 @@ const InvestmentType = () => {
         <Box sx={rowBoxStyles}>
           {/* Left Panel - Basic Info */}
           <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <CustomInput
-              title="Name"
-              value={formValues.name}
-              setValue={(value) => handleInputChange("name", value)}
-            />
-            <CustomInput
-              title="Description (Optional)"
-              type="multiline"
-              value={formValues.description}
-              setValue={(value) => handleInputChange("description", value)}
-            />
+            <CustomInput title="Name" value={formValues.name} setValue={(value) => handleInputChange("name", value)} />
+            <CustomInput title="Description (Optional)" type="multiline" value={formValues.description} setValue={(value) => handleInputChange("description", value)} />
             <CustomInput
               title="Expense Ratio"
               type="number"
@@ -208,10 +192,7 @@ const InvestmentType = () => {
               <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                 Taxability
               </Typography>
-              <Checkbox
-                checked={formValues.taxability}
-                onChange={(e) => handleInputChange("taxability", e.target.checked)}
-              />
+              <Checkbox checked={formValues.taxability} onChange={(e) => handleInputChange("taxability", e.target.checked)} />
             </Stack>
           </Box>
 
@@ -330,12 +311,7 @@ const InvestmentType = () => {
 
         {/* Bottom Control Buttons */}
         <Box sx={backContinueContainerStyles}>
-          <Button
-            variant="contained"
-            color="primary"
-            sx={buttonStyles}
-            onClick={() => navigate("/scenario/investment_lists")}
-          >
+          <Button variant="contained" color="primary" sx={buttonStyles} onClick={() => navigate("/scenario/investment_lists")}>
             Cancel
           </Button>
           <Button

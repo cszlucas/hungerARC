@@ -1,13 +1,9 @@
 import React, { useState, useContext, useEffect } from "react";
-import { 
-  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Alert,
-} from "@mui/material";
+import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Alert } from "@mui/material";
 import theme from "../../components/theme";
 import Navbar from "../../components/navbar";
 import PageHeader from "../../components/pageHeader";
-import {
-  stackStyles, titleStyles, textFieldStyles, backContinueContainerStyles, buttonStyles, rowBoxStyles,
-} from "../../components/styles";  // Import your modular styles
+import { stackStyles, titleStyles, textFieldStyles, backContinueContainerStyles, buttonStyles, rowBoxStyles } from "../../components/styles"; // Import your modular styles
 import CustomInput from "../../components/customInputBox";
 import CustomShare from "../../components/customShareBtn";
 import { useNavigate } from "react-router-dom";
@@ -20,10 +16,9 @@ import { exportToYAML } from "./import-export/export";
 import DimensionalExploration from "../explore";
 // import investment from "../../../../server/models/investment";
 
-
 const RunSimulation = () => {
   const [numSimulations, setNumSimulations] = useState("1");
-  const {currScenario, currInvestmentTypes, currInvestments, currIncome, currExpense, currInvest, currRebalance, tempExploration} = useContext(AppContext);
+  const { currScenario, currInvestmentTypes, currInvestments, currIncome, currExpense, currInvest, currRebalance, tempExploration } = useContext(AppContext);
   const { user } = useContext(AuthContext);
   const { showAlert } = useAlert();
   const [unfilledError, setUnfilledError] = useState(false);
@@ -37,15 +32,15 @@ const RunSimulation = () => {
       currIncome,
       currExpense,
       currInvest,
-      currRebalance
+      currRebalance,
     });
   };
 
   const navigate = useNavigate();
 
   const getChartData = async () => {
-    try {      
-      console.log(user.guest ? "guest" : user._id );
+    try {
+      console.log(user.guest ? "guest" : user._id);
       const entireFormData = {
         investmentType: currInvestmentTypes,
         investment: currInvestments,
@@ -56,33 +51,28 @@ const RunSimulation = () => {
         scenario: currScenario,
         exploration: tempExploration,
         simulationCount: numSimulations,
-        userId: user.guest ? "guest" : user._id 
+        userId: user.guest ? "guest" : user._id,
       };
 
       // console.log(entireFormData);
-      const response = await axios.get("http://localhost:8080/runSimulation", {
+      const response = await axios.get("${process.env.REACT_APP_API_URL}/runSimulation", {
         params: entireFormData,
       });
 
-      if (tempExploration.length == 0)
-      {
+      if (tempExploration.length == 0) {
         navigate("/charts", {
-          state: { chartData: response.data }
+          state: { chartData: response.data },
         });
-      }
-      else if (tempExploration.length == 1)
-      {
+      } else if (tempExploration.length == 1) {
         navigate("/ode", {
-          state: { chartData: response.data }
+          state: { chartData: response.data },
         });
-      }
-      else
-      {
+      } else {
         navigate("/tde", {
-          state: { chartData: response.data }
+          state: { chartData: response.data },
         });
       }
-  
+
       // return response.data; // optional: just return the data, not the whole Axios response
     } catch (error) {
       console.error("Error fetching simulation data:", error);
@@ -96,35 +86,33 @@ const RunSimulation = () => {
       return eventValue >= 0 && typeof eventValue === "number" && !isNaN(eventValue);
     }
 
-    const validInputs = currScenario.name
-      && checkValidNum(currScenario.financialGoal)
-      && currScenario.stateResident
-      && checkValidNum(currScenario.birthYearUser) 
-      && (currScenario.lifeExpectancy.type !== "fixed" 
-        || checkValidNum(currScenario.lifeExpectancy.fixedAge))
-      && (currScenario.lifeExpectancy.type !== "normal" 
-        || (checkValidNum(currScenario.lifeExpectancy.mean) && checkValidNum(currScenario.lifeExpectancy.stdDev)))
-      && (currScenario.filingStatus !== "married" 
-        || (checkValidNum(currScenario.birthYearSpouse) 
-          && (currScenario.lifeExpectancySpouse.type !== "fixed" 
-            || checkValidNum(currScenario.lifeExpectancySpouse.fixedAge))
-          && (currScenario.lifeExpectancySpouse.type !== "normal" 
-            || (checkValidNum(currScenario.lifeExpectancySpouse.mean) && checkValidNum(currScenario.lifeExpectancySpouse.stdDev)))))
-      && checkValidNum(currScenario.irsLimit)
-      && (currScenario.inflationAssumption.type !== "fixed" || checkValidNum(currScenario.inflationAssumption.fixedRate))
-      && (currScenario.inflationAssumption.type !== "normal" 
-        || (checkValidNum(currScenario.inflationAssumption.mean) && checkValidNum(currScenario.inflationAssumption.stdDev)))
-      && (currScenario.inflationAssumption.type !== "uniform" 
-        || (checkValidNum(currScenario.inflationAssumption.min) && checkValidNum(currScenario.inflationAssumption.max)));
-    
+    const validInputs =
+      currScenario.name &&
+      checkValidNum(currScenario.financialGoal) &&
+      currScenario.stateResident &&
+      checkValidNum(currScenario.birthYearUser) &&
+      (currScenario.lifeExpectancy.type !== "fixed" || checkValidNum(currScenario.lifeExpectancy.fixedAge)) &&
+      (currScenario.lifeExpectancy.type !== "normal" || (checkValidNum(currScenario.lifeExpectancy.mean) && checkValidNum(currScenario.lifeExpectancy.stdDev))) &&
+      (currScenario.filingStatus !== "married" ||
+        (checkValidNum(currScenario.birthYearSpouse) &&
+          (currScenario.lifeExpectancySpouse.type !== "fixed" || checkValidNum(currScenario.lifeExpectancySpouse.fixedAge)) &&
+          (currScenario.lifeExpectancySpouse.type !== "normal" || (checkValidNum(currScenario.lifeExpectancySpouse.mean) && checkValidNum(currScenario.lifeExpectancySpouse.stdDev))))) &&
+      checkValidNum(currScenario.irsLimit) &&
+      (currScenario.inflationAssumption.type !== "fixed" || checkValidNum(currScenario.inflationAssumption.fixedRate)) &&
+      (currScenario.inflationAssumption.type !== "normal" || (checkValidNum(currScenario.inflationAssumption.mean) && checkValidNum(currScenario.inflationAssumption.stdDev))) &&
+      (currScenario.inflationAssumption.type !== "uniform" || (checkValidNum(currScenario.inflationAssumption.min) && checkValidNum(currScenario.inflationAssumption.max)));
+
     if (!validInputs) {
       showAlert("All of Scenario's basic info must be filled.", "error");
       flag = true;
     }
-    
-    if (currScenario.inflationAssumption.type === "uniform" 
-    && (checkValidNum(currScenario.inflationAssumption.min) && checkValidNum(currScenario.inflationAssumption.max)
-    && currScenario.inflationAssumption.min > currScenario.inflationAssumption.max)) {
+
+    if (
+      currScenario.inflationAssumption.type === "uniform" &&
+      checkValidNum(currScenario.inflationAssumption.min) &&
+      checkValidNum(currScenario.inflationAssumption.max) &&
+      currScenario.inflationAssumption.min > currScenario.inflationAssumption.max
+    ) {
       showAlert("Inflation Assumpation Min is greater then Max.", "error");
       flag = true;
     }
@@ -135,7 +123,7 @@ const RunSimulation = () => {
     }
     return flag;
   };
-  
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -149,7 +137,7 @@ const RunSimulation = () => {
 
           {/* Use marginLeft: auto to push the Box to the right */}
           <Box direction="row" spacing={2} sx={{ display: "flex", gap: 2, marginLeft: "auto", marginTop: 2 }}>
-            <CustomShare/>
+            <CustomShare />
 
             <Button
               variant="contained"
@@ -186,30 +174,25 @@ const RunSimulation = () => {
         {/* Stack for title and save button */}
         <Box sx={rowBoxStyles} justifyContent="space-between">
           <Box>
-            <Typography variant="h5" sx={{fontWeight: "bold", mb: 3}}>
+            <Typography variant="h5" sx={{ fontWeight: "bold", mb: 3 }}>
               Simulation
             </Typography>
-            <CustomInput
-              title='Number of times to run'
-              type='number'
-              value={numSimulations}
-              setValue={setNumSimulations}
-              inputProps={{ min: "1" }}
-            />
+            <CustomInput title="Number of times to run" type="number" value={numSimulations} setValue={setNumSimulations} inputProps={{ min: "1" }} />
           </Box>
           <Box>
-            <DimensionalExploration/>
+            <DimensionalExploration />
           </Box>
         </Box>
 
         {/* Back and Continue buttons */}
         <Box sx={backContinueContainerStyles}>
-          <Button variant="contained" color="primary" sx={buttonStyles}
-            onClick={() => navigate("/scenario/strategies")}
-          >
+          <Button variant="contained" color="primary" sx={buttonStyles} onClick={() => navigate("/scenario/strategies")}>
             Back
           </Button>
-          <Button variant="contained" color="secondary" sx={buttonStyles}
+          <Button
+            variant="contained"
+            color="secondary"
+            sx={buttonStyles}
             onClick={() => {
               if (!checkForErrors()) getChartData();
             }}

@@ -2,15 +2,11 @@ import axios from "axios";
 import React, { useState, useContext, useEffect } from "react";
 import { flushSync } from "react-dom";
 
-import {
-  ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Alert, MenuItem, TextField,
-} from "@mui/material";
+import { ThemeProvider, CssBaseline, Container, Typography, Button, Stack, Box, Alert, MenuItem, TextField } from "@mui/material";
 import theme from "../../../components/theme";
 import Navbar from "../../../components/navbar";
 import PageHeader from "../../../components/pageHeader";
-import { 
-  stackStyles, titleStyles, buttonStyles, backContinueContainerStyles, rowBoxStyles 
-} from "../../../components/styles";
+import { stackStyles, titleStyles, buttonStyles, backContinueContainerStyles, rowBoxStyles } from "../../../components/styles";
 
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../context/appContext";
@@ -40,15 +36,15 @@ const DEFAULT_FORM_VALUES = {
     mean: "",
     stdDev: "",
     min: "",
-    max: ""
+    max: "",
   },
   // taxStatus: "non-retirement",
   assetAllocation: {
     type: "fixed",
     fixedPercentages: {},
     initialPercenatages: {},
-    finalPercentages: {}
-  }
+    finalPercentages: {},
+  },
 };
 const TAX_MAP = {
   "non-retirement": "Taxable",
@@ -62,46 +58,38 @@ const Rebalance = () => {
   const { user } = useContext(AuthContext);
   const { showAlert } = useAlert();
 
-  const getRebalanceById = (id) => currRebalance.find(r => r._id === id) || null;
+  const getRebalanceById = (id) => currRebalance.find((r) => r._id === id) || null;
   const getRebalanceByTaxStatus = (status) => {
-    const found = currRebalance.find(r => r.taxStatus === status);
+    const found = currRebalance.find((r) => r.taxStatus === status);
     if (found) return found;
     return structuredClone({ ...DEFAULT_FORM_VALUES, taxStatus: status }); // or use JSON.parse(JSON.stringify(...))
-  };  
+  };
   const [formValues, setFormValues] = useState(() => {
-    if (eventEditMode && eventEditMode.id) { return getRebalanceById(eventEditMode.id) || getRebalanceByTaxStatus(["non-retirement", "pre-tax", "after-tax"].find(type => !currRebalance.some(r => r.taxStatus === type))); }
+    if (eventEditMode && eventEditMode.id) {
+      return getRebalanceById(eventEditMode.id) || getRebalanceByTaxStatus(["non-retirement", "pre-tax", "after-tax"].find((type) => !currRebalance.some((r) => r.taxStatus === type)));
+    }
     return getRebalanceByTaxStatus("non-retirement");
   });
   const [disable, setDisable] = useState(true);
   const [percentError, setPercentError] = useState(false);
-  
+
   // Enable Save button only if all required fields are filled correctly
   useEffect(() => {
     function checkValidNum(eventValue) {
       return eventValue >= 0 && typeof eventValue === "number" && !isNaN(eventValue);
     }
 
-    const expression = formValues.eventSeriesName 
-      && (formValues.startYear.type !== "fixedAmt" 
-        || checkValidNum(formValues.startYear.value)) 
-      && (formValues.startYear.type !== "normal" 
-        || (checkValidNum(formValues.startYear.mean) && checkValidNum(formValues.startYear.stdDev))) 
-      && (formValues.startYear.type !== "uniform" 
-        || (checkValidNum(formValues.startYear.min) && checkValidNum(formValues.startYear.max) 
-        && formValues.startYear.min <= formValues.startYear.max)) 
-      && (["same", "after"].includes(formValues.startYear.type) 
-        ? formValues.startYear.refer : true) 
-      && (formValues.duration.type !== "fixedAmt" 
-        || checkValidNum(formValues.duration.value)) 
-      && (formValues.duration.type !== "normal" 
-        || (checkValidNum(formValues.duration.mean) && checkValidNum(formValues.duration.stdDev))) 
-      && (formValues.duration.type !== "uniform" 
-        || (checkValidNum(formValues.duration.min) && checkValidNum(formValues.duration.max) 
-        && formValues.duration.min <= formValues.duration.max)) 
-      && (formValues.assetAllocation.type === "fixed" 
-        ? Object.keys(formValues.assetAllocation.fixedPercentages).length > 0 : true)
-      && (formValues.assetAllocation.type === "glidePath" 
-        ? Object.keys(formValues.assetAllocation.initialPercentages).length > 0 : true);
+    const expression =
+      formValues.eventSeriesName &&
+      (formValues.startYear.type !== "fixedAmt" || checkValidNum(formValues.startYear.value)) &&
+      (formValues.startYear.type !== "normal" || (checkValidNum(formValues.startYear.mean) && checkValidNum(formValues.startYear.stdDev))) &&
+      (formValues.startYear.type !== "uniform" || (checkValidNum(formValues.startYear.min) && checkValidNum(formValues.startYear.max) && formValues.startYear.min <= formValues.startYear.max)) &&
+      (["same", "after"].includes(formValues.startYear.type) ? formValues.startYear.refer : true) &&
+      (formValues.duration.type !== "fixedAmt" || checkValidNum(formValues.duration.value)) &&
+      (formValues.duration.type !== "normal" || (checkValidNum(formValues.duration.mean) && checkValidNum(formValues.duration.stdDev))) &&
+      (formValues.duration.type !== "uniform" || (checkValidNum(formValues.duration.min) && checkValidNum(formValues.duration.max) && formValues.duration.min <= formValues.duration.max)) &&
+      (formValues.assetAllocation.type === "fixed" ? Object.keys(formValues.assetAllocation.fixedPercentages).length > 0 : true) &&
+      (formValues.assetAllocation.type === "glidePath" ? Object.keys(formValues.assetAllocation.initialPercentages).length > 0 : true);
 
     setDisable(!expression);
   }, [formValues]);
@@ -114,20 +102,21 @@ const Rebalance = () => {
 
   const handleInputChange = (field, value) => {
     const fieldParts = field.split("."); // Split the field into parts (e.g., "lifeExpectancy.mean")
-  
+
     setFormValues((prev) => {
       // Update the nested object
       if (fieldParts.length === 2) {
         const [parent, child] = fieldParts; // 'lifeExpectancy' and 'mean'
         return {
           ...prev,
-          [parent]: { // Spread the parent object (lifeExpectancy)
+          [parent]: {
+            // Spread the parent object (lifeExpectancy)
             ...prev[parent],
             [child]: value, // Update the child property (mean)
           },
         };
       }
-  
+
       // For top-level fields (no dot notation)
       return {
         ...prev,
@@ -139,31 +128,30 @@ const Rebalance = () => {
   const navigate = useNavigate();
 
   const handleSave = async () => {
-    const cleanedAllocation = formValues.assetAllocation.type === "fixed"
-            ? { ...formValues.assetAllocation, initialPercentages: {}, finalPercentages: {} }
-            : { ...formValues.assetAllocation, fixedPercentages: {} };
+    const cleanedAllocation =
+      formValues.assetAllocation.type === "fixed" ? { ...formValues.assetAllocation, initialPercentages: {}, finalPercentages: {} } : { ...formValues.assetAllocation, fixedPercentages: {} };
     const cleanedFormValues = { ...formValues, assetAllocation: cleanedAllocation };
     setFormValues(cleanedFormValues);
 
     if (eventEditMode.id === "new") {
       let id = new ObjectId().toHexString();
-  
+
       if (!user.guest) {
-        const response = await axios.post(`http://localhost:8080/scenario/${editMode}/rebalanceStrategy`, cleanedFormValues);
+        const response = await axios.post(`${process.env.REACT_APP_API_URL}/scenario/${editMode}/rebalanceStrategy`, cleanedFormValues);
         id = response.data._id;
       }
-  
+
       handleInputChange("_id", id);
       setCurrRebalance((prev) => [...prev, { ...cleanedFormValues, _id: id }]);
       setEventEditMode({ type: "Rebalance", id });
-  
+
       setCurrScenario((prevScenario) => ({
         ...prevScenario,
         rebalanceEventSeries: [...(prevScenario?.rebalanceEventSeries || []), id],
       }));
     } else {
-      if (!user.guest) await axios.post(`http://localhost:8080/updateRebalanceStrategy/${eventEditMode.id}`, cleanedFormValues);
-  
+      if (!user.guest) await axios.post(`${process.env.REACT_APP_API_URL}/updateRebalanceStrategy/${eventEditMode.id}`, cleanedFormValues);
+
       setCurrRebalance((prev) => {
         const newList = prev.filter((item) => item._id !== eventEditMode.id);
         return [...newList, cleanedFormValues];
@@ -189,11 +177,13 @@ const Rebalance = () => {
               <TextField
                 select
                 value={formValues.taxStatus || "non-retirement"}
-                onChange={(e) => { handleTaxStatusChange(e.target.value); }}
-                sx ={{ 
+                onChange={(e) => {
+                  handleTaxStatusChange(e.target.value);
+                }}
+                sx={{
                   mt: -1,
-                  ml: 1, 
-                  mr: 1, 
+                  ml: 1,
+                  mr: 1,
                   minWidth: "100px",
                   minheight: "10px",
                   "& .MuiOutlinedInput-root": {
@@ -222,7 +212,7 @@ const Rebalance = () => {
 
         <PageHeader />
 
-        <Box sx={rowBoxStyles }>
+        <Box sx={rowBoxStyles}>
           {/* Left Column - Tax Category & Investment Dropdowns */}
           <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 400, maxWidth: 500 }}>
             {/* Tax Category Dropdown */}
@@ -230,29 +220,32 @@ const Rebalance = () => {
           </Box>
           {/* Right Column - Investment List for the selected tax type */}
           <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <AssetAllocation formValues={formValues} setFormValues={setFormValues} isRebalance={true} setPercentError={setPercentError}/>
+            <AssetAllocation formValues={formValues} setFormValues={setFormValues} isRebalance={true} setPercentError={setPercentError} />
           </Box>
         </Box>
 
         {/* Back and Continue buttons */}
         <Box sx={backContinueContainerStyles}>
-        <Button
-          variant="contained"
-          color="primary"
-          sx={buttonStyles}
-          onClick={() => {
-            flushSync(() => {
-              localStorage.setItem("editEvent", JSON.stringify(null));
-              setEventEditMode(null);
-            });
-            navigate("/scenario/event_series_list");
-          }}
-        >
-          Back
-        </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={buttonStyles}
+            onClick={() => {
+              flushSync(() => {
+                localStorage.setItem("editEvent", JSON.stringify(null));
+                setEventEditMode(null);
+              });
+              navigate("/scenario/event_series_list");
+            }}
+          >
+            Back
+          </Button>
 
-          <Button variant="contained" color="success" sx={buttonStyles} 
-            onClick={()=> {
+          <Button
+            variant="contained"
+            color="success"
+            sx={buttonStyles}
+            onClick={() => {
               if (percentError) {
                 showAlert("Fixed or initial and final allocation percentages must each sum to exactly 100%.", "error");
                 return;

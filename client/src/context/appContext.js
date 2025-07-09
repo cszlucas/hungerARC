@@ -6,29 +6,29 @@ import { AuthContext } from "./authContext";
 export const AppContext = createContext();
 
 export const defaultInfo = {
-  "name": "",
-  "filingStatus": "single",
-  "financialGoal": "",
-  "stateResident": "New York",
-  "birthYearUser": "",
-  "lifeExpectancy": { "type": "fixed", "fixedAge": "" },
-  "birthYearSpouse": "",
-  "lifeExpectancySpouse": { "type": "fixed", "fixedAge": "" },
-  "expenseEventSeries": [],
-  "expenseWithdrawalStrategy": [],
-  "incomeEventSeries": [],
-  "inflationAssumption": { "type": "fixed", "fixedRate": "" },
-  "investEventSeries": [],
-  "irsLimit": "",
-  "optimizerSettings": { "enabled": false, "startYear": "", "endYear": "" },
-  "rebalanceEventSeries": [],
-  "rmdStrategy": [],
-  "rothConversionStrategy": [],
-  "setOfInvestmentTypes": [],
-  "setOfInvestments": [],
-  "spendingStrategy": [],
-  "__v": 0,
-  "_id": ""
+  name: "",
+  filingStatus: "single",
+  financialGoal: "",
+  stateResident: "New York",
+  birthYearUser: "",
+  lifeExpectancy: { type: "fixed", fixedAge: "" },
+  birthYearSpouse: "",
+  lifeExpectancySpouse: { type: "fixed", fixedAge: "" },
+  expenseEventSeries: [],
+  expenseWithdrawalStrategy: [],
+  incomeEventSeries: [],
+  inflationAssumption: { type: "fixed", fixedRate: "" },
+  investEventSeries: [],
+  irsLimit: "",
+  optimizerSettings: { enabled: false, startYear: "", endYear: "" },
+  rebalanceEventSeries: [],
+  rmdStrategy: [],
+  rothConversionStrategy: [],
+  setOfInvestmentTypes: [],
+  setOfInvestments: [],
+  spendingStrategy: [],
+  __v: 0,
+  _id: "",
 };
 
 // Function to retrieve initial scenarios from localStorage or fetch from backend
@@ -48,7 +48,7 @@ export const getInitialState = async (user) => {
     }
 
     // Fetch scenarios from the backend
-    const response = await axios.get("http://localhost:8080/user/scenarios", { withCredentials: true }); // Adjust API route
+    const response = await axios.get("${process.env.REACT_APP_API_URL}/user/scenarios", { withCredentials: true }); // Adjust API route
     // console.log(response.data);
     if (response.data) {
       localStorage.setItem("scenarioData", JSON.stringify(response.data));
@@ -69,29 +69,29 @@ const readStateFromLS = (key_value) => {
 
 const retrieveScenarioData = async (scenarioId, dataType) => {
   try {
-      const validTypes = ["investments", "incomeEvent", "expenseEvent", "invest", "rebalance", "investmentType"];
-      
-      const validTypesMap = {
-        "investments": "currentInvestments", 
-        "incomeEvent": "currentIncome",
-        "expenseEvent": "currentExpense",
-        "invest": "currentInvest",
-        "rebalance": "currentRebalance",
-        "investmentType": "currentInvestmentType",
-      };
+    const validTypes = ["investments", "incomeEvent", "expenseEvent", "invest", "rebalance", "investmentType"];
 
-      if (!validTypes.includes(dataType)) {
-          console.error(`Invalid data type: ${dataType}`);
-          return;
-      }
-      
-      const response = await axios.get(`http://localhost:8080/scenario/${scenarioId}/${dataType}`);
-      const data = response.data || [];
-      localStorage.setItem(`${validTypesMap[dataType]}`, JSON.stringify(data));
-      
-      return data;
+    const validTypesMap = {
+      investments: "currentInvestments",
+      incomeEvent: "currentIncome",
+      expenseEvent: "currentExpense",
+      invest: "currentInvest",
+      rebalance: "currentRebalance",
+      investmentType: "currentInvestmentType",
+    };
+
+    if (!validTypes.includes(dataType)) {
+      console.error(`Invalid data type: ${dataType}`);
+      return;
+    }
+
+    const response = await axios.get(`${process.env.REACT_APP_API_URL}/scenario/${scenarioId}/${dataType}`);
+    const data = response.data || [];
+    localStorage.setItem(`${validTypesMap[dataType]}`, JSON.stringify(data));
+
+    return data;
   } catch (error) {
-      console.error(`Error retrieving ${dataType}:`, error);
+    console.error(`Error retrieving ${dataType}:`, error);
   }
 };
 
@@ -107,36 +107,40 @@ export const AppProvider = ({ children }) => {
   const [currInvestmentTypes, setCurrInvestmentTypes] = useState(readStateFromLS("currentInvestmentType") || []);
   const [takenTaxStatusAccounts, setTakenTaxStatusAccounts] = useState(readStateFromLS("takenTaxStatusAccounts") || []);
 
-  const [currIncome, setCurrIncome] = useState(readStateFromLS("currentIncome") || []);  // incomeEvents[],    // income event series
-  const [currExpense, setCurrExpense] = useState(readStateFromLS("currentExpense") || []);   // expenseEvents[],   // expense event series
-  const [currInvest, setCurrInvest] = useState(readStateFromLS("currentInvest") || []);  // investEvents[],    // invest event series
-  const [currRebalance, setCurrRebalance] = useState(readStateFromLS("currentRebalance") || []);   // rebalanceEvents[], // rebalance event series
-  
-  const [tempExploration, setTempExploration] = useState(readStateFromLS("tempExploration") || []); 
+  const [currIncome, setCurrIncome] = useState(readStateFromLS("currentIncome") || []); // incomeEvents[],    // income event series
+  const [currExpense, setCurrExpense] = useState(readStateFromLS("currentExpense") || []); // expenseEvents[],   // expense event series
+  const [currInvest, setCurrInvest] = useState(readStateFromLS("currentInvest") || []); // investEvents[],    // invest event series
+  const [currRebalance, setCurrRebalance] = useState(readStateFromLS("currentRebalance") || []); // rebalanceEvents[], // rebalance event series
+
+  const [tempExploration, setTempExploration] = useState(readStateFromLS("tempExploration") || []);
   const [stateTaxes, setStateTaxes] = useState(readStateFromLS("stateTaxes") || []);
   const { user } = useContext(AuthContext);
-  
+
   useEffect(() => {
     const fetchData = async () => {
-      const data = await getInitialState(user);  // Await the resolved data
-      setScenarioData(data);  // Set the resolved data, not the Promise
-      const response = await axios.get("http://localhost:8080/getStateTax", { withCredentials: true });
-      if (response.data) { setStateTaxes(response.data); }
+      const data = await getInitialState(user); // Await the resolved data
+      setScenarioData(data); // Set the resolved data, not the Promise
+      const response = await axios.get("${process.env.REACT_APP_API_URL}/getStateTax", { withCredentials: true });
+      if (response.data) {
+        setStateTaxes(response.data);
+      }
     };
-    if (user) { fetchData(); }
-  }, [user]);  // Trigger a refetch when user changes
-  
+    if (user) {
+      fetchData();
+    }
+  }, [user]); // Trigger a refetch when user changes
+
   useEffect(() => {
     localStorage.setItem("edit", JSON.stringify(editMode));
-  
+
     const loadScenarioData = async () => {
       if (!editMode || editMode === "new" || user.guest) return;
-  
+
       const getScenarioById = (id) => scenarioData?.find((scenario) => scenario._id === id) || null;
-  
+
       const scenario = getScenarioById(editMode);
       setCurrScenario(scenario);
-  
+
       const dataTypes = [
         { key: "investments", setter: setCurrInvestments },
         { key: "incomeEvent", setter: setCurrIncome },
@@ -145,13 +149,11 @@ export const AppProvider = ({ children }) => {
         { key: "rebalance", setter: setCurrRebalance },
         { key: "investmentType", setter: setCurrInvestmentTypes },
       ];
-  
-      const results = await Promise.all(
-        dataTypes.map(({ key }) => retrieveScenarioData(editMode, key))
-      );
-  
+
+      const results = await Promise.all(dataTypes.map(({ key }) => retrieveScenarioData(editMode, key)));
+
       dataTypes.forEach(({ setter }, i) => setter(results[i]));
-  
+
       const investments = results[0] || [];
 
       const taxStatusAccounts = investments.reduce((acc, inv) => {
@@ -163,9 +165,9 @@ export const AppProvider = ({ children }) => {
       setTakenTaxStatusAccounts(taxStatusAccounts);
       setTempExploration([]);
     };
-  
+
     loadScenarioData();
-  }, [editMode]);  
+  }, [editMode]);
 
   useEffect(() => {
     localStorage.setItem("scenarioData", JSON.stringify(scenarioData));
@@ -214,25 +216,39 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     if (stateTaxes) localStorage.setItem("stateTaxes", JSON.stringify(stateTaxes));
   }, [stateTaxes]);
-  
 
   return (
-    <AppContext.Provider value={{ 
-      scenarioData, setScenarioData, 
-      editMode, setEditMode,
-      eventEditMode, setEventEditMode,
-      currScenario, setCurrScenario,
-      currInvestments, setCurrInvestments, 
-      currIncome, setCurrIncome,
-      currExpense, setCurrExpense,
-      currInvest, setCurrInvest,
-      currRebalance, setCurrRebalance,
-      currInvestmentTypes, setCurrInvestmentTypes,
-      takenTaxStatusAccounts, setTakenTaxStatusAccounts,
-      tempExploration, setTempExploration,
-      stateTaxes, setStateTaxes,
-    }}>
-        {children}
+    <AppContext.Provider
+      value={{
+        scenarioData,
+        setScenarioData,
+        editMode,
+        setEditMode,
+        eventEditMode,
+        setEventEditMode,
+        currScenario,
+        setCurrScenario,
+        currInvestments,
+        setCurrInvestments,
+        currIncome,
+        setCurrIncome,
+        currExpense,
+        setCurrExpense,
+        currInvest,
+        setCurrInvest,
+        currRebalance,
+        setCurrRebalance,
+        currInvestmentTypes,
+        setCurrInvestmentTypes,
+        takenTaxStatusAccounts,
+        setTakenTaxStatusAccounts,
+        tempExploration,
+        setTempExploration,
+        stateTaxes,
+        setStateTaxes,
+      }}
+    >
+      {children}
     </AppContext.Provider>
   );
 };
