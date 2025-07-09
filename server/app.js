@@ -43,7 +43,7 @@ function createApp({ sessionMiddleware } = {}) {
         resave: false,
         saveUninitialized: false,
         store: MongoStore.create({
-          mongoUrl: "mongodb://localhost:27017/hungerarc",
+          mongoUrl: process.env.MONGO_URI,
           collectionName: "sessions",
           ttl: 7 * 24 * 60 * 60,
         }),
