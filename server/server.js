@@ -139,6 +139,9 @@ if (process.env.NODE_ENV !== "test") {
   // --- MIDDLEWARE ---
   const allowedOrigins = [process.env.FRONTEND_TESTING, process.env.FRONTEND_URI];
 
+  console.log('Incoming request origin:', origin);
+  console.log('Allowed origins:', allowedOrigins);
+
   app.use(
     cors({
       origin: function (origin, callback) {
