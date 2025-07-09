@@ -55,7 +55,7 @@ const RunSimulation = () => {
       };
 
       // console.log(entireFormData);
-      const response = await axios.get("${process.env.REACT_APP_API_URL}/runSimulation", {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/runSimulation`, {
         params: entireFormData,
       });
 
