@@ -1,8 +1,5 @@
 import React, { useState, useContext, useMemo, useEffect } from "react";
-import { 
-  ThemeProvider, CssBaseline, Container, Typography, Box, Grid, List, ListItem, 
-  ListItemText, IconButton, Button, Stack, Switch 
-} from "@mui/material";
+import { ThemeProvider, CssBaseline, Container, Typography, Box, Grid, List, ListItem, ListItemText, IconButton, Button, Stack, Switch } from "@mui/material";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import CustomDropdown from "../../components/customDropDown";
@@ -12,9 +9,7 @@ import PageHeader from "../../components/pageHeader";
 import CustomInput from "../../components/customInputBox";
 import { AppContext } from "../../context/appContext";
 import { useNavigate } from "react-router-dom";
-import {
-  backContinueContainerStyles, buttonStyles, rowBoxStyles, stackStyles, titleStyles
-} from "../../components/styles";
+import { backContinueContainerStyles, buttonStyles, rowBoxStyles, stackStyles, titleStyles } from "../../components/styles";
 import CustomSave from "../../components/customSaveBtn";
 import axios from "axios";
 import { AuthContext } from "../../context/authContext";
@@ -34,9 +29,9 @@ const StrategyList = ({ list, setList, fieldName, setScenario }) => {
       setList(newList);
 
       // Update `currScenario` with the new order
-      setScenario(prev => ({
+      setScenario((prev) => ({
         ...prev,
-        [fieldName]: newList.map(item => item.id),
+        [fieldName]: newList.map((item) => item.id),
       }));
     }
   };
@@ -52,10 +47,14 @@ const StrategyList = ({ list, setList, fieldName, setScenario }) => {
               "&:hover": { backgroundColor: "#B0B0B0" },
             }}
           >
-            <ListItemText primary={<>
-              <span style={{ fontWeight: "bold" }}>{item.name}</span>
-            </>}
-            secondary={TAX_MAP[item.accountTaxStatus]}/>
+            <ListItemText
+              primary={
+                <>
+                  <span style={{ fontWeight: "bold" }}>{item.name}</span>
+                </>
+              }
+              secondary={TAX_MAP[item.accountTaxStatus]}
+            />
 
             {index > 0 && (
               <IconButton onClick={() => handleMove(index, -1)}>
@@ -89,20 +88,21 @@ const Strategies = () => {
 
   const handleCurrScenarioChange = (field, value) => {
     const fieldParts = field.split("."); // Split the field into parts (e.g., "lifeExpectancy.mean")
-  
+
     setCurrScenario((prev) => {
       // Update the nested object
       if (fieldParts.length === 2) {
         const [parent, child] = fieldParts; // 'lifeExpectancy' and 'mean'
         return {
           ...prev,
-          [parent]: { // Spread the parent object (lifeExpectancy)
+          [parent]: {
+            // Spread the parent object (lifeExpectancy)
             ...prev[parent],
             [child]: value, // Update the child property (mean)
           },
         };
       }
-  
+
       // For top-level fields (no dot notation)
       return {
         ...prev,
@@ -120,13 +120,13 @@ const Strategies = () => {
       optimizerSettings: {
         enabled: currScenario.optimizerSettings?.enabled,
         startYear: startYear,
-        endYear: endYear
+        endYear: endYear,
       },
-      isRothOptimized
+      isRothOptimized,
     };
 
-    if (!user.guest) await axios.post(`http://localhost:8080/updateScenario/${editMode}`, formValues);
-    setScenarioData(prev => prev.map(item => (item._id === editMode ? currScenario : item)));
+    if (!user.guest) await axios.post(`${process.env.REACT_APP_API_URL}/updateScenario/${editMode}`, formValues);
+    setScenarioData((prev) => prev.map((item) => (item._id === editMode ? currScenario : item)));
     // console.log(scenarioData);
     // console.log("Data successfully updated:", response.data);
   };
@@ -134,7 +134,7 @@ const Strategies = () => {
   const spendingStrategy = useMemo(() => {
     if (!Array.isArray(currExpense)) return [];
 
-    return (currScenario.spendingStrategy ?? []).map(id => {
+    return (currScenario.spendingStrategy ?? []).map((id) => {
       let matchedExpense = null;
 
       for (let i = 0; i < currExpense.length; i++) {
@@ -149,7 +149,7 @@ const Strategies = () => {
   }, [currScenario.spendingStrategy, currExpense]);
 
   const mapInvestmentsToNames = (strategyList) => {
-    return strategyList.map(id => {
+    return strategyList.map((id) => {
       let matchedInvestment = null;
 
       for (let i = 0; i < currInvestments.length; i++) {
@@ -170,10 +170,10 @@ const Strategies = () => {
         }
       }
 
-      return { 
-        id, 
+      return {
+        id,
         name: matchedInvestmentType ? matchedInvestmentType.name : "Unknown Investment Type",
-        accountTaxStatus: matchedInvestment.accountTaxStatus, 
+        accountTaxStatus: matchedInvestment.accountTaxStatus,
       };
     });
   };
@@ -191,9 +191,7 @@ const Strategies = () => {
           <Typography variant="h2" component="h1" sx={titleStyles}>
             Strategies
           </Typography>
-          <Button variant="contained" color="secondary" sx={buttonStyles} 
-            onClick={handleSave}
-          >
+          <Button variant="contained" color="secondary" sx={buttonStyles} onClick={handleSave}>
             Save
           </Button>
         </Stack>
@@ -206,24 +204,14 @@ const Strategies = () => {
               <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 2 }}>
                 Spending Strategy:
               </Typography>
-              <StrategyList 
-                list={spendingStrategy} 
-                setList={() => {}} 
-                fieldName="spendingStrategy" 
-                setScenario={setCurrScenario} 
-              />
+              <StrategyList list={spendingStrategy} setList={() => {}} fieldName="spendingStrategy" setScenario={setCurrScenario} />
             </Grid>
 
             <Grid item xs={12} md={6}>
               <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 2 }}>
                 Expense Withdrawal Strategy:
               </Typography>
-              <StrategyList 
-                list={expenseWithdrawalStrategy} 
-                setList={() => {}} 
-                fieldName="expenseWithdrawalStrategy" 
-                setScenario={setCurrScenario} 
-              />
+              <StrategyList list={expenseWithdrawalStrategy} setList={() => {}} fieldName="expenseWithdrawalStrategy" setScenario={setCurrScenario} />
             </Grid>
 
             <Grid item xs={12} md={6}>
@@ -231,26 +219,22 @@ const Strategies = () => {
                 <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                   Roth Conversion Strategy:
                 </Typography>
-                <Switch 
-                  checked={isRothOptimized} 
+                <Switch
+                  checked={isRothOptimized}
                   onChange={() => {
                     handleCurrScenarioChange("optimizerSettings.enabled", !isRothOptimized);
-                  }} 
-                  color="secondary" />
+                  }}
+                  color="secondary"
+                />
               </Stack>
               {isRothOptimized && (
                 <>
-                  <StrategyList 
-                    list={rothConversionStrategy} 
-                    setList={() => {}} 
-                    fieldName="rothConversionStrategy" 
-                    setScenario={setCurrScenario} 
-                  />
-                  <Box sx={{...rowBoxStyles, mt: 2}}>
+                  <StrategyList list={rothConversionStrategy} setList={() => {}} fieldName="rothConversionStrategy" setScenario={setCurrScenario} />
+                  <Box sx={{ ...rowBoxStyles, mt: 2 }}>
                     <CustomDropdown
                       label="Start Year"
                       value={startYear}
-                      setValue={(value)=>{ 
+                      setValue={(value) => {
                         setStartYear(value);
                         handleCurrScenarioChange("optimizerSettings.startYear", value);
                       }}
@@ -259,7 +243,7 @@ const Strategies = () => {
                     <CustomDropdown
                       label="End Year"
                       value={endYear}
-                      setValue={(value)=>{ 
+                      setValue={(value) => {
                         setEndYear(value);
                         handleCurrScenarioChange("optimizerSettings.endYear", value);
                       }}
@@ -274,25 +258,15 @@ const Strategies = () => {
               <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                 RMD Strategy:
               </Typography>
-              <StrategyList 
-                list={rmdStrategy} 
-                setList={() => {}} 
-                fieldName="rmdStrategy" 
-                setScenario={setCurrScenario} 
-              />
+              <StrategyList list={rmdStrategy} setList={() => {}} fieldName="rmdStrategy" setScenario={setCurrScenario} />
             </Grid>
           </Grid>
-        </Box> 
-          <Box sx={backContinueContainerStyles}>
-            <Button 
-              variant="contained" 
-              color="primary" 
-              sx={buttonStyles}
-              onClick={() => navigate("/scenario/event_series_list")}
-            >
-                Back
-            </Button>
-            <CustomSave label={"Finish"} routeTo={"/scenario/run_simulations"}/>
+        </Box>
+        <Box sx={backContinueContainerStyles}>
+          <Button variant="contained" color="primary" sx={buttonStyles} onClick={() => navigate("/scenario/event_series_list")}>
+            Back
+          </Button>
+          <CustomSave label={"Finish"} routeTo={"/scenario/run_simulations"} />
         </Box>
       </Container>
     </ThemeProvider>

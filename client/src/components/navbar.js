@@ -19,10 +19,7 @@ export default function NavBar({ currentPage }) {
   const navigate = useNavigate();
 
   const toggleDrawer = (state) => (event) => {
-    if (
-      event.type === "keydown" &&
-      (event.key === "Tab" || event.key === "Shift")
-    ) {
+    if (event.type === "keydown" && (event.key === "Tab" || event.key === "Shift")) {
       return;
     }
     setOpen(state);
@@ -30,14 +27,14 @@ export default function NavBar({ currentPage }) {
 
   const handleLogout = async () => {
     try {
-      await fetch("http://localhost:8080/auth/logout", {
+      await fetch("${process.env.REACT_APP_API_URL}/auth/logout", {
         method: "POST",
         credentials: "include", // important to send the session cookie
       });
     } catch (err) {
       console.error("Logout failed", err);
     }
-  
+
     localStorage.clear();
     navigate("/login");
   };
@@ -58,32 +55,31 @@ export default function NavBar({ currentPage }) {
         justifyContent: "space-between",
       }}
       role="presentation"
-      onClick={(e) => e.stopPropagation()}  // 👈 Prevent closing when clicking inside
+      onClick={(e) => e.stopPropagation()} // 👈 Prevent closing when clicking inside
     >
       {/* Top Section */}
       <List>
-      {menuItems.map((text) => {
-        const isCurrent = currentPage.toLowerCase() === text.toLowerCase();
-        const routePath = `/${text.toLowerCase()}`;
+        {menuItems.map((text) => {
+          const isCurrent = currentPage.toLowerCase() === text.toLowerCase();
+          const routePath = `/${text.toLowerCase()}`;
 
-        return (
-          <ListItem
-            key={text}
-            disablePadding
-            component={Link}
-            to={routePath}
-            sx={{
-              backgroundColor: isCurrent ? "#004530" : "inherit",
-              color: isCurrent ? "#fff" : "inherit",
-              px: 2,
-              py: 1.25,
-            }}
-          >
-            <ListItemText primary={text} />
-          </ListItem>
-        );
-      })}
-
+          return (
+            <ListItem
+              key={text}
+              disablePadding
+              component={Link}
+              to={routePath}
+              sx={{
+                backgroundColor: isCurrent ? "#004530" : "inherit",
+                color: isCurrent ? "#fff" : "inherit",
+                px: 2,
+                py: 1.25,
+              }}
+            >
+              <ListItemText primary={text} />
+            </ListItem>
+          );
+        })}
       </List>
 
       {/* Bottom Section */}
@@ -94,11 +90,7 @@ export default function NavBar({ currentPage }) {
           <ListItem disablePadding>
             <Box sx={{ display: "flex", alignItems: "center", width: "100%", padding: "10px 16px" }}>
               <ListItemText primary={isDarkMode ? "Dark Mode" : "Light Mode"} />
-              <Switch
-                checked={isDarkMode}
-                onChange={handleThemeToggle}
-                color="primary"
-              />
+              <Switch checked={isDarkMode} onChange={handleThemeToggle} color="primary" />
             </Box>
           </ListItem>
 
@@ -119,7 +111,7 @@ export default function NavBar({ currentPage }) {
               "&:focus": {
                 outline: "none",
                 backgroundColor: "transparent",
-              }
+              },
             }}
           >
             <ListItemText primary="Logout" />
@@ -136,29 +128,29 @@ export default function NavBar({ currentPage }) {
           <Typography variant="h5" sx={{ flexGrow: 1, marginTop: 2, marginBottom: 2 }}>
             Hunger <span style={{ color: "#00825B" }}>Finance</span>
           </Typography>
-          { currentPage != "login" &&
-          <IconButton edge="end" color="inherit" onClick={toggleDrawer(true)}>
-            <MenuIcon />
-          </IconButton>
-          }
+          {currentPage != "login" && (
+            <IconButton edge="end" color="inherit" onClick={toggleDrawer(true)}>
+              <MenuIcon />
+            </IconButton>
+          )}
         </Toolbar>
       </AppBar>
-      { currentPage != "login" &&
-      <Drawer 
-        anchor="right" 
-        open={open} 
-        onClose={toggleDrawer(false)} 
-        onClick={(e) => e.stopPropagation()}
-        PaperProps={{
-          sx: {
-            backgroundColor: "#00825B",
-            color: "#fff", // Optional: sets text color for better contrast
-          },
-        }}
-      >
-        {DrawerList}
-      </Drawer> 
-      } 
+      {currentPage != "login" && (
+        <Drawer
+          anchor="right"
+          open={open}
+          onClose={toggleDrawer(false)}
+          onClick={(e) => e.stopPropagation()}
+          PaperProps={{
+            sx: {
+              backgroundColor: "#00825B",
+              color: "#fff", // Optional: sets text color for better contrast
+            },
+          }}
+        >
+          {DrawerList}
+        </Drawer>
+      )}
     </>
   );
 }

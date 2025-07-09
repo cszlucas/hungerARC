@@ -24,9 +24,7 @@ export default function PageHeader() {
     const handleSave = async () => {
       setIsSaving(true);
       try {
-        const scenarioToSave = currScenario.name === ""
-          ? { ...currScenario, name: "Untitled Scenario" }
-          : currScenario;
+        const scenarioToSave = currScenario.name === "" ? { ...currScenario, name: "Untitled Scenario" } : currScenario;
 
         if (currScenario.name === "") {
           setCurrScenario(scenarioToSave);
@@ -48,19 +46,19 @@ export default function PageHeader() {
           let id = new ObjectId().toHexString();
 
           if (!user.guest) {
-            const response = await axios.post("http://localhost:8080/basicInfo/", scenario, { withCredentials: true });
+            const response = await axios.post("${process.env.REACT_APP_API_URL}/basicInfo/", scenario, { withCredentials: true });
             id = response.data._id;
           }
 
           setCurrScenario((prev) => ({ ...prev, _id: id }));
           setScenarioData((prev) => [...prev, { ...scenario, _id: id }]);
           setEditMode(id);
-          
+
           // await addCashInvestment(id);
         } else {
-          if (!user.guest) await axios.post(`http://localhost:8080/updateScenario/${editMode}`, scenario, { withCredentials: true });
+          if (!user.guest) await axios.post(`${process.env.REACT_APP_API_URL}/updateScenario/${editMode}`, scenario, { withCredentials: true });
           setScenarioData((prev) => prev.map((item) => (item._id === editMode ? scenario : item)));
-        } 
+        }
       } catch (error) {
         console.error("Error:", error);
         alert("Something Went Wrong!");

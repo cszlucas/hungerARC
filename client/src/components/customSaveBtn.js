@@ -20,9 +20,7 @@ const CustomSave = ({ label = "Save", routeTo, color = "secondary", disable = fa
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const scenarioToSave = currScenario.name === ""
-        ? { ...currScenario, name: "Untitled Scenario" }
-        : currScenario;
+      const scenarioToSave = currScenario.name === "" ? { ...currScenario, name: "Untitled Scenario" } : currScenario;
 
       if (currScenario.name === "") {
         setCurrScenario(scenarioToSave);
@@ -45,7 +43,7 @@ const CustomSave = ({ label = "Save", routeTo, color = "secondary", disable = fa
 
         if (!user.guest) {
           console.log("Saving scenario for user, scenario:", scenario);
-          const response = await axios.post("http://localhost:8080/basicInfo/", scenario, { withCredentials: true });
+          const response = await axios.post("${process.env.REACT_APP_API_URL}/basicInfo/", scenario, { withCredentials: true });
           id = response.data._id;
           console.log("Response from server:", response.data);
         }
@@ -53,12 +51,12 @@ const CustomSave = ({ label = "Save", routeTo, color = "secondary", disable = fa
         setCurrScenario((prev) => ({ ...prev, _id: id }));
         setScenarioData((prev) => [...prev, { ...scenario, _id: id }]);
         setEditMode(id);
-        
+
         // await addCashInvestment(id);
       } else {
-        if (!user.guest) await axios.post(`http://localhost:8080/updateScenario/${editMode}`, scenario, { withCredentials: true });
+        if (!user.guest) await axios.post(`${process.env.REACT_APP_API_URL}/updateScenario/${editMode}`, scenario, { withCredentials: true });
         setScenarioData((prev) => prev.map((item) => (item._id === editMode ? scenario : item)));
-      } 
+      }
     } catch (error) {
       console.error("Error:", error);
       alert("Something Went Wrong!");
@@ -69,13 +67,7 @@ const CustomSave = ({ label = "Save", routeTo, color = "secondary", disable = fa
   };
 
   return (
-    <Button
-      variant="contained"
-      color={color}
-      sx={buttonStyles}
-      onClick={handleSave}
-      disabled={isSaving || disable}
-    >
+    <Button variant="contained" color={color} sx={buttonStyles} onClick={handleSave} disabled={isSaving || disable}>
       {label}
     </Button>
   );
