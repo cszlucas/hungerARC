@@ -146,7 +146,7 @@ if (process.env.NODE_ENV !== 'test') {
 
   // --- MIDDLEWARE ---
   app.use(cors({
-    origin: "http://localhost:3000", // React frontend
+    origin: [process.env.FRONTEND_TESTING, process.env.FRONTEND_URI], 
     credentials: true               // allow cookies
   }));
 
@@ -196,7 +196,7 @@ if (process.env.NODE_ENV !== 'test') {
   console.log("your testing jest");
   
     app.use(cors({
-      origin: "http://localhost:3000",
+      origin: [process.env.FRONTEND_TESTING, process.env.FRONTEND_URI],
       credentials: true
     }));
   

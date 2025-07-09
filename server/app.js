@@ -6,6 +6,10 @@ const cors = require("cors");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const path = require("path");
+require('dotenv').config({
+  path: path.resolve(__dirname, '../.env'),
+});
+
 
 const routes = require('./routes');
 
@@ -14,7 +18,7 @@ function createApp({ sessionMiddleware } = {}) {
   const app = express();
 
   app.use(cors({
-    origin: "http://localhost:3000",
+    origin: [process.env.FRONTEND_TESTING, process.env.FRONTEND_URI],
     credentials: true
   }));
 
