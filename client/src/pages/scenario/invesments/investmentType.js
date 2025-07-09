@@ -104,7 +104,7 @@ const InvestmentType = () => {
     let id = eventEditMode;
 
     if (id === "new" && formValues.name.toLowerCase() === "cash") {
-      showAlert('You cannot name an investment-type account "Cash."', "error");
+      showAlert("You cannot name an investment-type account Cash.", "error");
       return;
     }
 
