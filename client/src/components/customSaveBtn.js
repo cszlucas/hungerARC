@@ -43,7 +43,7 @@ const CustomSave = ({ label = "Save", routeTo, color = "secondary", disable = fa
 
         if (!user.guest) {
           console.log("Saving scenario for user, scenario:", scenario);
-          const response = await axios.post("${process.env.REACT_APP_API_URL}/basicInfo/", scenario, { withCredentials: true });
+          const response = await axios.post(`${process.env.REACT_APP_API_URL}/basicInfo/`, scenario, { withCredentials: true });
           id = response.data._id;
           console.log("Response from server:", response.data);
         }

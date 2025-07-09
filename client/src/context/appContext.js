@@ -48,7 +48,7 @@ export const getInitialState = async (user) => {
     }
 
     // Fetch scenarios from the backend
-    const response = await axios.get("${process.env.REACT_APP_API_URL}/user/scenarios", { withCredentials: true }); // Adjust API route
+    const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/scenarios`, { withCredentials: true }); // Adjust API route
     // console.log(response.data);
     if (response.data) {
       localStorage.setItem("scenarioData", JSON.stringify(response.data));
@@ -120,7 +120,7 @@ export const AppProvider = ({ children }) => {
     const fetchData = async () => {
       const data = await getInitialState(user); // Await the resolved data
       setScenarioData(data); // Set the resolved data, not the Promise
-      const response = await axios.get("${process.env.REACT_APP_API_URL}/getStateTax", { withCredentials: true });
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/getStateTax`, { withCredentials: true });
       if (response.data) {
         setStateTaxes(response.data);
       }

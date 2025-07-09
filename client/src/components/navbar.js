@@ -27,7 +27,7 @@ export default function NavBar({ currentPage }) {
 
   const handleLogout = async () => {
     try {
-      await fetch("${process.env.REACT_APP_API_URL}/auth/logout", {
+      await fetch(`${process.env.REACT_APP_API_URL}/auth/logout`, {
         method: "POST",
         credentials: "include", // important to send the session cookie
       });

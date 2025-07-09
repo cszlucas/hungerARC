@@ -277,7 +277,7 @@ const ImportBtn = () => {
 
         // console.log("✅ Parsed YAML:", parsed);
         if (!user.guest) {
-          await axios.post("${process.env.REACT_APP_API_URL}/importScenario/", parsed, { withCredentials: true });
+          await axios.post(`${process.env.REACT_APP_API_URL}/importScenario/`, parsed, { withCredentials: true });
         }
         // const response = await axios.post("${process.env.REACT_APP_API_URL}/importScenario/", parsed, { withCredentials: true });
 

@@ -83,7 +83,7 @@ const Profile = () => {
     }
 
     try {
-      const response = await axios.post("${process.env.REACT_APP_API_URL}/uploadStateTaxYaml", formData);
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/uploadStateTaxYaml`, formData);
       // console.log("Upload response:", response);
       if (response.status === 200) {
         // alert("File uploaded successfully!");

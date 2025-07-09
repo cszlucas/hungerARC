@@ -13,7 +13,7 @@ const GoogleAuth = () => {
   const navigate = useNavigate();
 
   const handleAllRoutes = async () => {
-    await fetch("${process.env.REACT_APP_API_URL}/handleAllRoutes", { method: "GET" });
+    await fetch(`${process.env.REACT_APP_API_URL}/handleAllRoutes`, { method: "GET" });
     // console.log((await response.json()));
   };
 
@@ -27,7 +27,7 @@ const GoogleAuth = () => {
       guest: false,
     };
 
-    const res = await fetch("${process.env.REACT_APP_API_URL}/auth/google", {
+    const res = await fetch(`${process.env.REACT_APP_API_URL}/auth/google`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(userData),
@@ -45,7 +45,7 @@ const GoogleAuth = () => {
   };
 
   const handleGuestLogin = async () => {
-    const res = await fetch("${process.env.REACT_APP_API_URL}/auth/guest", {
+    const res = await fetch(`${process.env.REACT_APP_API_URL}/auth/guest`, {
       method: "POST",
       credentials: "include",
     });

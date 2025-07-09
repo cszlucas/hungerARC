@@ -46,7 +46,7 @@ export default function PageHeader() {
           let id = new ObjectId().toHexString();
 
           if (!user.guest) {
-            const response = await axios.post("${process.env.REACT_APP_API_URL}/basicInfo/", scenario, { withCredentials: true });
+            const response = await axios.post(`${process.env.REACT_APP_API_URL}/basicInfo/`, scenario, { withCredentials: true });
             id = response.data._id;
           }
 
