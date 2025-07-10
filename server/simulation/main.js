@@ -248,8 +248,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
 
     const csvFile = path.join(__dirname, "./investment_logs", `${baseFilename}.csv`);
    
-    writeCSVLog(csvFile, allSimulationResults);
-    // writeCSVLog(csvFile, csvLog);
+    //writeCSVLog(csvFile, allSimulationResults);
 
     if ((exploration && exploration.length >= 1) || rothExploration) {
       explore = exploreData(allSimulationResults, explorationData, combinations[i], currentYear);
