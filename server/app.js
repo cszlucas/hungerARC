@@ -15,6 +15,13 @@ const routes = require("./routes");
 function createApp({ sessionMiddleware } = {}) {
   const app = express();
 
+  try {
+    require("mongoose");
+    console.log("✅ Mongoose module is installed in app.js");
+  } catch (err) {
+    console.error("❌ Mongoose module is NOT installed in app.js");
+  }
+
   if (process.env.NODE_ENV === "production") {
     app.set("trust proxy", 1); // Required for secure cookies on Heroku, Render, etc.
   }

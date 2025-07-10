@@ -120,6 +120,13 @@ require("dotenv").config({
   path: path.resolve(__dirname, "../.env"), // adjust if .env is in root
 });
 
+try {
+  require("mongoose");
+  console.log("✅ Mongoose module is installed");
+} catch (err) {
+  console.error("❌ Mongoose module is NOT installed");
+}
+
 console.log("🔍 MONGO_URI:", process.env.MONGO_URI);
 try {
   require("mongodb");
