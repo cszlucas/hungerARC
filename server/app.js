@@ -26,7 +26,7 @@ function createApp({ sessionMiddleware } = {}) {
     app.set("trust proxy", 1); // Required for secure cookies on Heroku, Render, etc.
   }
 
-  const allowedOrigins = [process.env.FRONTEND_TESTING, process.env.FRONTEND_URI];
+  const allowedOrigins = [process.env.FRONTEND_TESTING, process.env.FRONTEND_URI, process.env.FRONTEND_ORIGIN];
 
   app.use(
     cors({

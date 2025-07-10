@@ -147,7 +147,7 @@ const routes = require("./routes.js");
 if (process.env.NODE_ENV !== "test") {
   // --- MIDDLEWARE ---
   app.set("trust proxy", 1);
-  const allowedOrigins = [process.env.FRONTEND_TESTING, process.env.FRONTEND_URI];
+  const allowedOrigins = [process.env.FRONTEND_TESTING, process.env.FRONTEND_URI, process.env.FRONTEND_ORIGIN];
   console.log("FRONTEND_TESTING:", process.env.FRONTEND_TESTING);
   console.log("FRONTEND_URI:", process.env.FRONTEND_URI);
 
@@ -214,7 +214,7 @@ if (process.env.NODE_ENV !== "test") {
 } else {
   console.log("your testing jest");
 
-  const allowedOrigins = [process.env.FRONTEND_TESTING, process.env.FRONTEND_URI];
+  const allowedOrigins = [process.env.FRONTEND_TESTING, process.env.FRONTEND_URI, process.env.FRONTEND_ORIGIN];
 
   app.use(
     cors({
