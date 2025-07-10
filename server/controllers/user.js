@@ -22,7 +22,7 @@ exports.auth = async (req, res) => {
     }
 
     req.session.user = user;
-    
+
     res.json(req.session.user);
   } catch (err) {
     console.error(err.message);
@@ -59,19 +59,21 @@ exports.logout = (req, res) => {
 
 exports.scenarios = async (req, res) => {
   try {
-    // Find the user by ID and populate the scenarios array
-    if (!req.session.user) res.status(500).json({ message: "Failed to get user session" });
+    if (!req.session || !req.session.user) {
+      return res.status(401).json({ message: "Failed to get user session" });
+    }
+
     const userData = req.session.user;
-    const user = await User.findById(userData._id).populate('scenarios');
+    const user = await User.findById(userData._id).populate("scenarios");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json(user.scenarios); // Send back the populated scenarios
+    return res.status(200).json(user.scenarios);
   } catch (error) {
-    console.error('Error fetching user scenarios:', error.message);
-    res.status(500).json({ error: 'Server error while fetching scenarios' }); // Handle server errors
+    console.error("Error fetching user scenarios:", error.message);
+    return res.status(500).json({ error: "Server error while fetching scenarios" });
   }
 };
 
@@ -80,19 +82,19 @@ exports.uploadStateTaxYaml = [
   async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-      
+
       const yamlContent = req.file.buffer.toString("utf8");
       const data = yaml.load(yamlContent);
       parsedData = parseUserYaml(data);
       const newTax = new StateTax(parsedData);
       await newTax.save();
-      const { id } = req.body; 
+      const { id } = req.body;
       const updatedUser = await User.findByIdAndUpdate(
         id,
         { $push: { stateYaml: newTax._id } }, // assuming 'scenario' is an array
         { new: true }
       );
-     
+
       if (!updatedUser) return res.status(404).json({ error: "User not found" });
 
       res.status(200).json({ message: "State tax uploaded", data: newTax });
@@ -103,7 +105,7 @@ exports.uploadStateTaxYaml = [
   },
 ];
 
-function parseUserYaml(data){
+function parseUserYaml(data) {
   const state = data; // assuming `data` looks like { name: { ... } }
 
   const taxDetails = {};

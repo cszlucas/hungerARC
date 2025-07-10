@@ -137,6 +137,7 @@ const routes = require("./routes.js");
 
 if (process.env.NODE_ENV !== "test") {
   // --- MIDDLEWARE ---
+  app.set("trust proxy", 1);
   const allowedOrigins = [process.env.FRONTEND_TESTING, process.env.FRONTEND_URI];
   console.log("FRONTEND_TESTING:", process.env.FRONTEND_TESTING);
   console.log("FRONTEND_URI:", process.env.FRONTEND_URI);

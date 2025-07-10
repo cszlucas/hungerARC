@@ -15,6 +15,10 @@ const routes = require("./routes");
 function createApp({ sessionMiddleware } = {}) {
   const app = express();
 
+  if (process.env.NODE_ENV === "production") {
+    app.set("trust proxy", 1); // Required for secure cookies on Heroku, Render, etc.
+  }
+
   const allowedOrigins = [process.env.FRONTEND_TESTING, process.env.FRONTEND_URI];
 
   app.use(
@@ -23,6 +27,7 @@ function createApp({ sessionMiddleware } = {}) {
         if (!origin || allowedOrigins.includes(origin)) {
           callback(null, true);
         } else {
+          console.error("Blocked by CORS:", origin);
           callback(new Error("Not allowed by CORS"));
         }
       },
