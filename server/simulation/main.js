@@ -247,7 +247,7 @@ async function main(investmentType, invest, rebalance, expense, income, investme
     const baseFilename = `${userName}_${timestamp}`;
 
     const csvFile = path.join(__dirname, "./investment_logs", `${baseFilename}.csv`);
-    const dir = path.dirname(csvFilename);
+    const dir = path.dirname(csvFile);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir);
     }
