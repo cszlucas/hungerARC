@@ -245,7 +245,12 @@ async function main(investmentType, invest, rebalance, expense, income, investme
     const userName = user.email.split("@")[0];
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const baseFilename = `${userName}_${timestamp}`;
+
     const csvFile = path.join(__dirname, "./investment_logs", `${baseFilename}.csv`);
+    const dir = path.dirname(csvFilename);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir);
+    }
     writeCSVLog(csvFile, allSimulationResults);
     // writeCSVLog(csvFile, csvLog);
 
