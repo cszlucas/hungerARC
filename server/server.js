@@ -106,6 +106,8 @@
 
 // module.exports = app;
 
+console.log('🛠 Working directory:', process.cwd());
+
 const express = require("express");
 const axios = require("axios");
 const mongoose = require("mongoose");
